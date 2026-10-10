@@ -306,7 +306,7 @@ func (s *Service) CreateHost(dto CreateHostDTO) (*database.Host, error) {
 
 func (s *Service) GetAllHosts() ([]database.Host, error) {
 	var hosts []database.Host
-	err := s.db.Order("view_position asc, created_at asc").Find(&hosts).Error
+	err := s.db.Order("view_position asc").Find(&hosts).Error
 	return hosts, err
 }
 
@@ -342,7 +342,7 @@ func (s *Service) DeleteHost(uuid string) error {
 
 func (s *Service) GetAllProfiles() ([]database.ConfigProfile, error) {
 	var profiles []database.ConfigProfile
-	err := s.db.Order("view_position asc, created_at asc").Find(&profiles).Error
+	err := s.db.Order("view_position asc").Find(&profiles).Error
 	return profiles, err
 }
 

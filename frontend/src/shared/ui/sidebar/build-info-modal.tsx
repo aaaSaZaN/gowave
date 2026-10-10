@@ -4,10 +4,8 @@ import {
     Box,
     Button,
     CopyButton,
-    Divider,
     Group,
     Paper,
-    SimpleGrid,
     Stack,
     Text,
     Tooltip
@@ -17,18 +15,14 @@ import { useState } from 'react'
 import {
     TbBrandGithub,
     TbBrandTelegram,
-    TbCalendar,
     TbCheck,
     TbCopy,
     TbGitBranch,
-    TbHash,
     TbDownload
 } from 'react-icons/tb'
 
-import { formatTimeUtil } from '@shared/utils/time-utils'
 import { instance } from '@shared/api'
 
-import { CopyableCodeBlock } from '../copyable-code-block'
 import { Logo } from '../logo'
 import classes from './build-info-modal.module.css'
 
@@ -89,79 +83,46 @@ export function BuildInfoModal({ remnawaveMetadata, isNewVersionAvailable }: Bui
             )}
 
             <Paper className={classes.mainCard} p="md">
-                <Stack gap="md">
-                    <Group justify="space-between">
-                        <Group gap="sm">
-                            <Badge
-                                color="cyan"
-                                leftSection={<Logo size={16} />}
-                                size="lg"
-                                variant="light"
-                            >
-                                {remnawaveMetadata.version}
-                            </Badge>
-
-                            <Badge
-                                color={
-                                    remnawaveMetadata.git?.backend?.branch === 'dev' ? 'red' : 'teal'
-                                }
-                                leftSection={<TbGitBranch size={16} />}
-                                size="lg"
-                                variant="light"
-                            >
-                                {remnawaveMetadata.git?.backend?.branch || 'main'}
-                            </Badge>
-                        </Group>
-                        <CopyButton
-                            timeout={2000}
-                            value={JSON.stringify(remnawaveMetadata, null, 2)}
+                <Group justify="space-between">
+                    <Group gap="sm">
+                        <Badge
+                            color="cyan"
+                            leftSection={<Logo size={16} />}
+                            size="lg"
+                            variant="light"
                         >
-                            {({ copied, copy }) => (
-                                <Tooltip label="Copy build info">
-                                    <ActionIcon
-                                        color={copied ? 'teal' : 'gray'}
-                                        onClick={copy}
-                                        size="md"
-                                        variant="subtle"
-                                    >
-                                        {copied ? <TbCheck size={14} /> : <TbCopy size={14} />}
-                                    </ActionIcon>
-                                </Tooltip>
-                            )}
-                        </CopyButton>
+                            {remnawaveMetadata.version}
+                        </Badge>
+
+                        <Badge
+                            color={
+                                remnawaveMetadata.git?.backend?.branch === 'dev' ? 'red' : 'teal'
+                            }
+                            leftSection={<TbGitBranch size={16} />}
+                            size="lg"
+                            variant="light"
+                        >
+                            {remnawaveMetadata.git?.backend?.branch || 'main'}
+                        </Badge>
                     </Group>
-
-                    <Divider className={classes.divider} />
-
-                    <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
-                        <Paper className={classes.buildTimeCard} p="sm" radius="md">
-                            <Group gap="xs" mb={6}>
-                                <TbCalendar color="var(--mantine-color-indigo-5)" size={14} />
-                                <Text c="indigo.5" fw={600} size="xs" tt="uppercase">
-                                    Build Time
-                                </Text>
-                            </Group>
-                            <Text c="gray.3" ff="monospace" size="xs">
-                                {formatTimeUtil({
-                                    time: remnawaveMetadata.build.time,
-                                    template: 'NUMERIC_DATETIME'
-                                })}
-                            </Text>
-                        </Paper>
-
-                        <Paper className={classes.buildNumberCard} p="sm" radius="md">
-                            <Group gap="xs" mb={6}>
-                                <TbHash color="var(--mantine-color-violet-5)" size={14} />
-                                <Text c="violet.5" fw={600} size="xs" tt="uppercase">
-                                    Build
-                                </Text>
-                            </Group>
-                            <Text c="gray.3" ff="monospace" size="xs">
-                                {remnawaveMetadata.build.number}
-                            </Text>
-                        </Paper>
-                    </SimpleGrid>
-                </Stack>
+                    <CopyButton
+                        timeout={2000}
+                        value={JSON.stringify(remnawaveMetadata, null, 2)}
+                    >
+                        {({ copied, copy }) => (
+                            <Tooltip label="Copy build info">
+                                <ActionIcon
+                                    color={copied ? 'teal' : 'gray'}
+                                    onClick={copy}
+                                    size="md"
+                                    variant="subtle"
+                                >
+                                    {copied ? <TbCheck size={14} /> : <TbCopy size={14} />}
+                                </ActionIcon>
+                            </Tooltip>
+                        )}
+                    </CopyButton>
+                </Group>
             </Paper>
 
             <Group gap="sm" grow>
