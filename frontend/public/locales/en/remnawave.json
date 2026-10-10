@@ -32,6 +32,7 @@
     "action": {
       "actions": "Actions",
       "add": "Add",
+      "add-all-users": "Add all users",
       "add-users": "Add users",
       "bulk-actions": "Bulk actions",
       "bulk-edit": "Bulk edit",
@@ -118,6 +119,8 @@
       "click-to-see-all": "Click to see all",
       "configured": "Configured",
       "confirm-action-description": "Are you sure you want to perform this action? This action cannot be undone.",
+      "confirm-add-all-users-to-internal-squad": "This adds every user to the internal squad “{{squadName}}” and grants access to its inbounds.",
+      "confirm-add-all-users-to-external-squad": "This assigns the external squad “{{squadName}}” to every user, replacing their current external squad.",
       "copied": "Copied",
       "error": "Error",
       "event-sent": "Event sent",

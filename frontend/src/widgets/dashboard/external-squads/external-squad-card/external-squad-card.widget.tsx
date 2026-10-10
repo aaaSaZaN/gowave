@@ -12,7 +12,7 @@ import { formatInt } from '@shared/utils/misc'
 interface IProps {
     disableReordering?: boolean
     externalSquad: GetExternalSquadsCommand.Response['response']['externalSquads'][number]
-    handleAddToUsers: (externalSquadUuid: string) => void
+    handleAddToUsers: (externalSquadUuid: string, externalSquadName: string) => void
     handleCloneExternalSquad: (externalSquadUuid: string) => void
     handleDeleteExternalSquad: (externalSquadUuid: string) => void
     handleRemoveFromUsers: (externalSquadUuid: string) => void
@@ -85,9 +85,9 @@ export function ExternalSquadCardWidget(props: IProps) {
                         <Menu.Item
                             color="teal"
                             leftSection={<TbUsersPlus size={18} />}
-                            onClick={() => handleAddToUsers(externalSquad.uuid)}
+                            onClick={() => handleAddToUsers(externalSquad.uuid, externalSquad.name)}
                         >
-                            {t('common.action.add-users')}
+                            {t('common.action.add-all-users')}
                         </Menu.Item>
                         <Menu.Item
                             color="red"

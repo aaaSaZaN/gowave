@@ -463,44 +463,74 @@ func (h *Handler) SquadBulkAction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	uuidParam := chi.URLParam(r, "uuid")
 	path := r.URL.Path
+	var err error
 
 	if strings.Contains(path, "/internal-squads/") {
 		if strings.HasSuffix(path, "/add-users") {
-			// Add all users
-			h.db.Exec(`
+			// Add all users. WHERE disambiguates INSERT ... SELECT ... ON CONFLICT
+			// for SQLite and the query error must reach the caller.
+			err = h.db.Exec(`
 				INSERT INTO internal_squad_members (internal_squad_uuid, user_id)
 				SELECT ?, id FROM users
+				WHERE 1 = 1
 				ON CONFLICT (internal_squad_uuid, user_id) DO NOTHING
-			`, uuidParam)
+			`, uuidParam).Error
 		} else if strings.HasSuffix(path, "/add-many-users") {
 			var body struct {
 				UserIDs []uint64 `json:"userIds"`
 			}
-			_ = json.NewDecoder(r.Body).Decode(&body)
-			for _, uid := range body.UserIDs {
-				h.db.Exec(`
-					INSERT INTO internal_squad_members (internal_squad_uuid, user_id)
-					VALUES (?, ?)
-					ON CONFLICT (internal_squad_uuid, user_id) DO NOTHING
-				`, uuidParam, uid)
+			if decodeErr := json.NewDecoder(r.Body).Decode(&body); decodeErr != nil {
+				http.Error(w, `{"message":"Invalid request body"}`, http.StatusBadRequest)
+				return
 			}
+			err = h.db.Transaction(func(tx *gorm.DB) error {
+				for _, uid := range body.UserIDs {
+					if err := tx.Exec(`
+						INSERT INTO internal_squad_members (internal_squad_uuid, user_id)
+						VALUES (?, ?)
+						ON CONFLICT (internal_squad_uuid, user_id) DO NOTHING
+					`, uuidParam, uid).Error; err != nil {
+						return err
+					}
+				}
+				return nil
+			})
 		} else if strings.HasSuffix(path, "/remove-users") {
-			h.db.Where("internal_squad_uuid = ?", uuidParam).Delete(&database.InternalSquadMember{})
+			err = h.db.Where("internal_squad_uuid = ?", uuidParam).Delete(&database.InternalSquadMember{}).Error
 		} else if strings.HasSuffix(path, "/remove-many-users") {
 			var body struct {
 				UserIDs []uint64 `json:"userIds"`
 			}
-			_ = json.NewDecoder(r.Body).Decode(&body)
-			if len(body.UserIDs) > 0 {
-				h.db.Where("internal_squad_uuid = ? AND user_id IN ?", uuidParam, body.UserIDs).Delete(&database.InternalSquadMember{})
+			if decodeErr := json.NewDecoder(r.Body).Decode(&body); decodeErr != nil {
+				http.Error(w, `{"message":"Invalid request body"}`, http.StatusBadRequest)
+				return
 			}
+			if len(body.UserIDs) > 0 {
+				err = h.db.Where("internal_squad_uuid = ? AND user_id IN ?", uuidParam, body.UserIDs).Delete(&database.InternalSquadMember{}).Error
+			}
+		} else {
+			http.Error(w, `{"message":"Unknown squad action"}`, http.StatusBadRequest)
+			return
 		}
 	} else if strings.Contains(path, "/external-squads/") {
 		if strings.HasSuffix(path, "/add-users") {
-			h.db.Model(&database.User{}).Where("1 = 1").Update("external_squad_uuid", uuidParam)
+			// This intentionally replaces the external squad for every user.
+			err = h.db.Model(&database.User{}).Where("1 = 1").Update("external_squad_uuid", uuidParam).Error
 		} else if strings.HasSuffix(path, "/remove-users") {
-			h.db.Model(&database.User{}).Where("external_squad_uuid = ?", uuidParam).Update("external_squad_uuid", nil)
+			err = h.db.Model(&database.User{}).Where("external_squad_uuid = ?", uuidParam).Update("external_squad_uuid", nil).Error
+		} else {
+			http.Error(w, `{"message":"Unknown squad action"}`, http.StatusBadRequest)
+			return
 		}
+	} else {
+		http.Error(w, `{"message":"Unknown squad action"}`, http.StatusBadRequest)
+		return
+	}
+
+	if err != nil {
+		log.Printf("[SQUADS] bulk action failed path=%s squad=%s: %v", path, uuidParam, err)
+		http.Error(w, `{"message":"Failed to update squad members"}`, http.StatusInternalServerError)
+		return
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{

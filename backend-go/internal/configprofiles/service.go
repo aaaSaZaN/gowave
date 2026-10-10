@@ -306,7 +306,7 @@ func (s *Service) CreateHost(dto CreateHostDTO) (*database.Host, error) {
 
 func (s *Service) GetAllHosts() ([]database.Host, error) {
 	var hosts []database.Host
-	err := s.db.Find(&hosts).Error
+	err := s.db.Order("view_position asc, created_at asc").Find(&hosts).Error
 	return hosts, err
 }
 

@@ -32,6 +32,7 @@
     "action": {
       "actions": "操作",
       "add": "添加",
+      "add-all-users": "添加所有用户",
       "add-users": "添加用户",
       "bulk-actions": "批量操作",
       "bulk-edit": "批量编辑",
@@ -118,6 +119,8 @@
       "click-to-see-all": "点击查看全部",
       "configured": "已配置",
       "confirm-action-description": "您确定要执行此操作吗？此操作不能撤消。",
+      "confirm-add-all-users-to-internal-squad": "此操作会将所有用户加入内部用户组“{{squadName}}”，并授予他们访问该组入站配置的权限。",
+      "confirm-add-all-users-to-external-squad": "此操作会将所有用户的外部用户组设为“{{squadName}}”，并替换他们当前的外部用户组。",
       "copied": "已复制",
       "error": "错误",
       "event-sent": "发送事件",

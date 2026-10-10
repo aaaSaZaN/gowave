@@ -123,13 +123,15 @@ export function ExternalSquadsGridWidget(props: IProps) {
         })
     }
 
-    const handleAddToUsers = (externalSquadUuid: string) => {
+    const handleAddToUsers = (externalSquadUuid: string, externalSquadName: string) => {
         modals.openConfirmModal({
-            title: t('common.action.confirm-action'),
+            title: t('common.action.add-all-users'),
             centered: true,
-            children: t('common.message.confirm-action-description'),
+            children: t('common.message.confirm-add-all-users-to-external-squad', {
+                squadName: externalSquadName
+            }),
             labels: {
-                confirm: t('common.action.add'),
+                confirm: t('common.action.add-all-users'),
                 cancel: t('common.action.cancel')
             },
             cancelProps: { variant: 'subtle' },

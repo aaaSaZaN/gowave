@@ -32,6 +32,7 @@
     "action": {
       "actions": "Actions",
       "add": "افزودن",
+      "add-all-users": "افزودن همه کاربران",
       "add-users": "افزودن کاربران",
       "bulk-actions": "Bulk actions",
       "bulk-edit": "Bulk edit",
@@ -118,6 +119,8 @@
       "click-to-see-all": "برای دیدن همه کلیک کنید",
       "configured": "Configured",
       "confirm-action-description": "آیا از انجام دادن این عملیات مطمئن هستید؟ این کار غیرقابل بازگشت است.",
+      "confirm-add-all-users-to-internal-squad": "این کار همه کاربران را به اسکاد داخلی «{{squadName}}» اضافه می‌کند و به آن‌ها دسترسی به اینباندهای آن می‌دهد.",
+      "confirm-add-all-users-to-external-squad": "این کار اسکاد خارجی «{{squadName}}» را برای همه کاربران تنظیم و اسکاد خارجی فعلی آن‌ها را جایگزین می‌کند.",
       "copied": "کپی شد",
       "error": "خطا",
       "event-sent": "رویداد ارسال شد",

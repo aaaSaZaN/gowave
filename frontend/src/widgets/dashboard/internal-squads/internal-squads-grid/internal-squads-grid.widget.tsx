@@ -115,13 +115,15 @@ export function InternalSquadsGridWidget(props: IProps) {
         })
     }
 
-    const handleAddToUsers = (internalSquadUuid: string) => {
+    const handleAddToUsers = (internalSquadUuid: string, internalSquadName: string) => {
         modals.openConfirmModal({
-            title: t('common.action.add-users'),
+            title: t('common.action.add-all-users'),
             centered: true,
-            children: t('common.message.confirm-action-description'),
+            children: t('common.message.confirm-add-all-users-to-internal-squad', {
+                squadName: internalSquadName
+            }),
             labels: {
-                confirm: t('common.action.add'),
+                confirm: t('common.action.add-all-users'),
                 cancel: t('common.action.cancel')
             },
             cancelProps: { variant: 'subtle' },

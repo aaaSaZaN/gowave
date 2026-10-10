@@ -101,7 +101,7 @@ export function InternalSquadCardWidget(props: IProps) {
                             leftSection={<TbUsersPlus size={18} />}
                             onClick={() => handleAddToUsers(internalSquad.uuid, internalSquad.name)}
                         >
-                            {t('common.action.add-users')}
+                            {t('common.action.add-all-users')}
                         </Menu.Item>
                         <Menu.Item
                             color="red"

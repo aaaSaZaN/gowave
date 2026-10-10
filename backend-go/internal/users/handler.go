@@ -3,6 +3,7 @@ package users
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -701,24 +702,62 @@ func (h *Handler) BulkUserAction(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) PatchUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var body struct {
-		ID        *uint64 `json:"id"`
-		ShortUUID string  `json:"shortUuid"`
-		Username  string  `json:"username"`
+	var body map[string]json.RawMessage
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body == nil {
+		http.Error(w, `{"message":"Invalid request body"}`, http.StatusBadRequest)
+		return
 	}
-	_ = json.NewDecoder(r.Body).Decode(&body)
+
 	var user *database.User
-	if body.ID != nil {
-		user, _ = h.service.GetByID(*body.ID)
-	} else if body.ShortUUID != "" {
-		user, _ = h.service.GetByShortUUID(body.ShortUUID)
-	} else if body.Username != "" {
-		user, _ = h.service.GetByUsername(body.Username)
+	if rawID, ok := body["id"]; ok && string(rawID) != "null" {
+		var id uint64
+		if err := json.Unmarshal(rawID, &id); err != nil || id == 0 {
+			http.Error(w, `{"message":"Invalid user ID"}`, http.StatusBadRequest)
+			return
+		}
+		user, _ = h.service.GetByID(id)
+	} else if rawShortUUID, ok := body["shortUuid"]; ok {
+		var shortUUID string
+		if err := json.Unmarshal(rawShortUUID, &shortUUID); err != nil || shortUUID == "" {
+			http.Error(w, `{"message":"Invalid short UUID"}`, http.StatusBadRequest)
+			return
+		}
+		user, _ = h.service.GetByShortUUID(shortUUID)
+	} else if rawUsername, ok := body["username"]; ok {
+		var username string
+		if err := json.Unmarshal(rawUsername, &username); err != nil || username == "" {
+			http.Error(w, `{"message":"Invalid username"}`, http.StatusBadRequest)
+			return
+		}
+		user, _ = h.service.GetByUsername(username)
+	} else {
+		http.Error(w, `{"message":"User ID or username is required"}`, http.StatusBadRequest)
+		return
 	}
 	if user == nil {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]interface{}{"message": "User not found"})
 		return
 	}
-	json.NewEncoder(w).Encode(SingleUserResponse{Response: FormatUser(user, h.subPublicDomain)})
+
+	updates := make(map[string]interface{}, len(body))
+	for key, rawValue := range body {
+		if key == "id" || key == "shortUuid" {
+			continue
+		}
+		var value interface{}
+		if err := json.Unmarshal(rawValue, &value); err != nil {
+			http.Error(w, `{"message":"Invalid request body"}`, http.StatusBadRequest)
+			return
+		}
+		updates[key] = value
+	}
+
+	updatedUser, err := h.service.Update(user.ID, updates)
+	if err != nil {
+		log.Printf("[USERS] failed to patch user id=%d: %v", user.ID, err)
+		http.Error(w, `{"message":"Failed to update user"}`, http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(SingleUserResponse{Response: FormatUser(updatedUser, h.subPublicDomain)})
 }

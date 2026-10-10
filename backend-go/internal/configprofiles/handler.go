@@ -1,6 +1,8 @@
 package configprofiles
 
 import (
+	"github.com/google/uuid"
+
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -808,10 +810,31 @@ func (h *Handler) DeleteHost(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) CloneHost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	var body struct {
+		CloneFromUuid string `json:"cloneFromUuid"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.CloneFromUuid == "" {
+		http.Error(w, `{"message":"Invalid body"}`, http.StatusBadRequest)
+		return
+	}
+
+	var host database.Host
+	if err := h.service.DB().Where("uuid = ?", body.CloneFromUuid).First(&host).Error; err != nil {
+		http.Error(w, `{"message":"Host not found"}`, http.StatusNotFound)
+		return
+	}
+
+	host.UUID = uuid.NewString()
+	host.Remark = host.Remark + " (Clone)"
+
+	if err := h.service.DB().Create(&host).Error; err != nil {
+		http.Error(w, `{"message":"Failed to clone"}`, http.StatusInternalServerError)
+		return
+	}
+
+	formatted, _ := formatHostResponse(h.service.DB(), &host)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"success": true,
-		},
+		"response": formatted,
 	})
 }
 
@@ -840,11 +863,61 @@ func (h *Handler) ReorderHosts(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) BulkHostsAction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"success": true,
-		},
-	})
+	path := r.URL.Path
+
+	if strings.HasSuffix(path, "/delete") || strings.HasSuffix(path, "/enable") || strings.HasSuffix(path, "/disable") {
+		var body struct {
+			UUIDs []string `json:"uuids"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			http.Error(w, `{"message":"Invalid request body"}`, http.StatusBadRequest)
+			return
+		}
+		if len(body.UUIDs) > 0 {
+			if strings.HasSuffix(path, "/delete") {
+				for _, uid := range body.UUIDs {
+					_ = h.service.DeleteHost(uid)
+				}
+			} else if strings.HasSuffix(path, "/disable") {
+				h.service.DB().Model(&database.Host{}).Where("uuid IN ?", body.UUIDs).Update("is_disabled", true)
+			} else if strings.HasSuffix(path, "/enable") {
+				h.service.DB().Model(&database.Host{}).Where("uuid IN ?", body.UUIDs).Update("is_disabled", false)
+			}
+		}
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	if strings.HasSuffix(path, "/update") {
+		var body struct {
+			UUIDs                        []string `json:"uuids"`
+			Port                         *int     `json:"port"`
+			Tags                         []string `json:"tags"`
+			InternalSquadsMode           *string  `json:"internalSquadsMode"`
+			ExcludeFromSubscriptionTypes []string `json:"excludeFromSubscriptionTypes"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&body); err == nil && len(body.UUIDs) > 0 {
+			updates := map[string]interface{}{}
+			if body.Port != nil {
+				updates["port"] = *body.Port
+			}
+			if body.InternalSquadsMode != nil {
+				updates["internal_squads_mode"] = *body.InternalSquadsMode
+			}
+			if body.Tags != nil {
+				updates["tags"] = database.StringArray(body.Tags)
+			}
+			if body.ExcludeFromSubscriptionTypes != nil {
+				updates["exclude_from_subscription_types"] = database.StringArray(body.ExcludeFromSubscriptionTypes)
+			}
+			if len(updates) > 0 {
+				h.service.DB().Model(&database.Host{}).Where("uuid IN ?", body.UUIDs).Updates(updates)
+			}
+		}
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 }
 
 func (h *Handler) Preview(w http.ResponseWriter, r *http.Request) {
