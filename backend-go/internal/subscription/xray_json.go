@@ -525,6 +525,7 @@ func buildOutbound(user *database.User, hm XrayHostMeta, tag string) map[string]
 		hostHeader := h.Host
 		mode := "auto"
 		var extra interface{}
+		var headers map[string]interface{}
 
 		if rawInbMap != nil {
 			if ss, ok := rawInbMap["streamSettings"].(map[string]interface{}); ok {
@@ -535,6 +536,13 @@ func buildOutbound(user *database.User, hm XrayHostMeta, tag string) map[string]
 					if hStr, ok := xs["host"].(string); ok && hostHeader == "" {
 						hostHeader = hStr
 					}
+						if hdrs, ok := xs["headers"].(map[string]interface{}); ok {
+							headers = hdrs
+							if hStr, ok := hdrs["Host"].(string); ok && hostHeader == "" {
+								hostHeader = hStr
+							}
+						}
+
 					if m, ok := xs["mode"].(string); ok && m != "" {
 						mode = m
 					}
@@ -563,6 +571,10 @@ func buildOutbound(user *database.User, hm XrayHostMeta, tag string) map[string]
 		if extra != nil {
 			xhttpObj["extra"] = extra
 		}
+		if headers != nil && len(headers) > 0 {
+			xhttpObj["headers"] = headers
+		}
+
 		streamSettings["xhttpSettings"] = xhttpObj
 
 	} else if network == "httpupgrade" {

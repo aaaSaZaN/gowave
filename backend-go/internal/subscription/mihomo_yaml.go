@@ -1,6 +1,8 @@
 package subscription
 
 import (
+	"fmt"
+
 	"encoding/json"
 	"strings"
 
@@ -8,6 +10,141 @@ import (
 
 	"gopkg.in/yaml.v3"
 )
+
+type mihomoFieldMap struct {
+	src      string
+	dst      string
+	asString bool
+}
+
+var xhttpFieldMaps = []mihomoFieldMap{
+	{"noGRPCHeader", "no-grpc-header", false},
+	{"xPaddingBytes", "x-padding-bytes", true},
+	{"xPaddingObfsMode", "x-padding-obfs-mode", false},
+	{"xPaddingKey", "x-padding-key", false},
+	{"xPaddingHeader", "x-padding-header", false},
+	{"xPaddingPlacement", "x-padding-placement", false},
+	{"xPaddingMethod", "x-padding-method", false},
+	{"uplinkHTTPMethod", "uplink-http-method", false},
+	{"sessionIDPlacement", "session-placement", false},
+	{"sessionIDKey", "session-key", false},
+	{"sessionIDTable", "session-table", false},
+	{"sessionIDLength", "session-length", true},
+	{"seqPlacement", "seq-placement", false},
+	{"seqKey", "seq-key", false},
+	{"uplinkDataPlacement", "uplink-data-placement", false},
+	{"uplinkDataKey", "uplink-data-key", false},
+	{"uplinkChunkSize", "uplink-chunk-size", false},
+	{"scMaxEachPostBytes", "sc-max-each-post-bytes", false},
+	{"scMinPostsIntervalMs", "sc-min-posts-interval-ms", false},
+	{"scStreamUpServerSecs", "sc-stream-up-server-secs", true},
+}
+
+var xmuxFieldMaps = []mihomoFieldMap{
+	{"maxConnections", "max-connections", true},
+	{"maxConcurrency", "max-concurrency", true},
+	{"cMaxReuseTimes", "c-max-reuse-times", true},
+	{"hMaxRequestTimes", "h-max-request-times", true},
+	{"hMaxReusableSecs", "h-max-reusable-secs", true},
+	{"hKeepAlivePeriod", "h-keep-alive-period", false},
+}
+
+func applyMihomoFieldMap(source map[string]interface{}, target map[string]interface{}, fieldMap []mihomoFieldMap) {
+	for _, mapping := range fieldMap {
+		if val, ok := source[mapping.src]; ok && val != nil {
+			if mapping.asString {
+				switch v := val.(type) {
+				case float64:
+					target[mapping.dst] = fmt.Sprintf("%.0f", v)
+				case int, int32, int64:
+					target[mapping.dst] = fmt.Sprintf("%d", v)
+				default:
+					target[mapping.dst] = fmt.Sprintf("%v", val)
+				}
+			} else {
+				target[mapping.dst] = val
+			}
+		}
+	}
+}
+
+func buildMihomoXhttpDownloadSettings(ds map[string]interface{}, hm XrayHostMeta) map[string]interface{} {
+	settings := map[string]interface{}{}
+
+	if address, ok := ds["address"].(string); ok && address != "" {
+		settings["server"] = address
+	}
+	if port, ok := ds["port"].(float64); ok {
+		settings["port"] = port
+	}
+
+	if sec, ok := ds["security"].(string); ok && (sec == "tls" || sec == "reality") {
+		settings["tls"] = true
+
+		if tlsRaw, ok := ds["tlsSettings"].(map[string]interface{}); ok {
+			if sn, ok := tlsRaw["serverName"].(string); ok && sn != "" {
+				settings["servername"] = sn
+			}
+			if fp, ok := tlsRaw["fingerprint"].(string); ok && fp != "" {
+				settings["client-fingerprint"] = fp
+			}
+			if alpn, ok := tlsRaw["alpn"].([]interface{}); ok && len(alpn) > 0 {
+				settings["alpn"] = alpn
+			}
+			if allowInsecure, ok := tlsRaw["allowInsecure"].(bool); ok && allowInsecure {
+				settings["skip-cert-verify"] = true
+			}
+		}
+
+		if sec == "reality" {
+			if realRaw, ok := ds["realitySettings"].(map[string]interface{}); ok {
+				realityOpts := map[string]interface{}{}
+				if pk, ok := realRaw["publicKey"].(string); ok && pk != "" {
+					realityOpts["public-key"] = pk
+				}
+				if shortId, ok := realRaw["shortId"].(string); ok && shortId != "" {
+					realityOpts["short-id"] = shortId
+				}
+
+				if hm.Host != nil && hm.Host.MihomoX25519 {
+					realityOpts["support-x25519mlkem768"] = true
+				}
+
+				if len(realityOpts) > 0 {
+					settings["reality-opts"] = realityOpts
+				}
+			}
+		}
+	} else if sec, ok := ds["security"].(string); ok && sec != "none" && sec != "" {
+		// unsupported security maybe
+	}
+
+	// Also path and host
+	if path, ok := ds["path"].(string); ok && path != "" {
+		settings["path"] = path
+	}
+	if host, ok := ds["host"].(string); ok && host != "" {
+		settings["host"] = host
+	}
+	if headers, ok := ds["headers"].(map[string]interface{}); ok {
+		settings["headers"] = headers
+	}
+
+	if extra, ok := ds["extra"].(map[string]interface{}); ok {
+		applyMihomoFieldMap(extra, settings, xhttpFieldMaps)
+		if xmuxRaw, ok := extra["xmux"]; ok && xmuxRaw != nil {
+			if xmux, ok := xmuxRaw.(map[string]interface{}); ok {
+				reuseSettings := map[string]interface{}{}
+				applyMihomoFieldMap(xmux, reuseSettings, xmuxFieldMaps)
+				if len(reuseSettings) > 0 {
+					settings["reuse-settings"] = reuseSettings
+				}
+			}
+		}
+	}
+
+	return settings
+}
 
 func GenerateMihomoYAML(user *database.User, hosts []XrayHostMeta, templateYaml string, targetType string) (string, error) {
 	if targetType == "" {
@@ -324,6 +461,26 @@ func buildMihomoProxyNode(user *database.User, hm XrayHostMeta) map[string]inter
 			node["network"] = network
 		}
 
+		// Flow
+		flow := ResolveVlessFlow(rawInbMap, network, security)
+		if flow != "" && flow != "none" {
+			node["flow"] = flow
+		}
+		// Encryption
+		encryption := "none"
+		if rawInbMap != nil {
+			if settingsMap, ok := rawInbMap["settings"].(map[string]interface{}); ok {
+				if dec, ok := settingsMap["decryption"].(string); ok && dec != "" && dec != "none" {
+					if enc, err := DeriveVlessEncryption(dec); err == nil && enc != "" {
+						encryption = enc
+					}
+				}
+			}
+		}
+		if encryption != "" && encryption != "none" {
+			node["encryption"] = encryption
+		}
+
 		// Security: Reality
 		if security == "reality" {
 			node["tls"] = true
@@ -351,15 +508,15 @@ func buildMihomoProxyNode(user *database.User, hm XrayHostMeta) map[string]inter
 				shortID = realityCfg.ShortIds[0]
 			}
 
-			node["reality-opts"] = map[string]interface{}{
+			realityOpts := map[string]interface{}{
 				"public-key": publicKey,
 				"short-id":   shortID,
 			}
-
-			flow := ResolveVlessFlow(rawInbMap, network, security)
-			if flow == "xtls-rprx-vision" {
-				node["flow"] = "xtls-rprx-vision"
+			if hm.Host != nil && hm.Host.MihomoX25519 {
+				realityOpts["support-x25519mlkem768"] = true
 			}
+			node["reality-opts"] = realityOpts
+
 		} else if security == "tls" {
 			node["tls"] = true
 			node["servername"] = serverName
@@ -399,6 +556,22 @@ func buildMihomoProxyNode(user *database.User, hm XrayHostMeta) map[string]inter
 					}
 				}
 			}
+			var headers map[string]interface{}
+			if rawInbMap != nil {
+				if stMap, ok := rawInbMap["streamSettings"].(map[string]interface{}); ok {
+					if xhMap, ok := stMap["xhttpSettings"].(map[string]interface{}); ok {
+						if hdrs, ok := xhMap["headers"].(map[string]interface{}); ok {
+							headers = hdrs
+						}
+					}
+				}
+			}
+			if host == "" && headers != nil {
+				if hStr, ok := headers["Host"].(string); ok {
+					host = hStr
+				}
+			}
+
 			if host != "" {
 				wsOpts["headers"] = map[string]interface{}{
 					"Host": host,
@@ -424,10 +597,77 @@ func buildMihomoProxyNode(user *database.User, hm XrayHostMeta) map[string]inter
 					host = hStr
 				}
 			}
+			var headers map[string]interface{}
+			if rawInbMap != nil {
+				if stMap, ok := rawInbMap["streamSettings"].(map[string]interface{}); ok {
+					if xhMap, ok := stMap["xhttpSettings"].(map[string]interface{}); ok {
+						if hdrs, ok := xhMap["headers"].(map[string]interface{}); ok {
+							headers = hdrs
+						}
+					}
+				}
+			}
+			if host == "" && headers != nil {
+				if hStr, ok := headers["Host"].(string); ok {
+					host = hStr
+				}
+			}
+
 			if host != "" {
 				xhttpOpts["host"] = host
 			}
-			xhttpOpts["mode"] = "auto"
+			if headers != nil && len(headers) > 0 {
+				xhttpOpts["headers"] = headers
+
+			}
+
+			mode := "auto"
+			if rawInb.StreamSettings != nil && rawInb.StreamSettings.XhttpSettings != nil {
+				if m, ok := rawInb.StreamSettings.XhttpSettings["mode"].(string); ok && m != "" {
+					mode = m
+				}
+			}
+			xhttpOpts["mode"] = mode
+
+			var extra map[string]interface{}
+			if rawInbMap != nil {
+				if stMap, ok := rawInbMap["streamSettings"].(map[string]interface{}); ok {
+					if xhMap, ok := stMap["xhttpSettings"].(map[string]interface{}); ok {
+						if ex, ok := xhMap["extra"].(map[string]interface{}); ok {
+							extra = ex
+						}
+					}
+				}
+			}
+			if h.XhttpExtraParams != "" && h.XhttpExtraParams != "{}" && h.XhttpExtraParams != "null" {
+				var hostExtra map[string]interface{}
+				if err := json.Unmarshal([]byte(h.XhttpExtraParams), &hostExtra); err == nil {
+					extra = hostExtra
+				}
+			}
+			if extra != nil {
+				applyMihomoFieldMap(extra, xhttpOpts, xhttpFieldMaps)
+
+				if xmuxRaw, ok := extra["xmux"]; ok && xmuxRaw != nil {
+					if xmux, ok := xmuxRaw.(map[string]interface{}); ok {
+						reuseSettings := map[string]interface{}{}
+						applyMihomoFieldMap(xmux, reuseSettings, xmuxFieldMaps)
+						if len(reuseSettings) > 0 {
+							xhttpOpts["reuse-settings"] = reuseSettings
+						}
+					}
+				}
+
+				if dsRaw, ok := extra["downloadSettings"]; ok && dsRaw != nil {
+					if dsMap, ok := dsRaw.(map[string]interface{}); ok {
+						dsConfig := buildMihomoXhttpDownloadSettings(dsMap, hm)
+						if len(dsConfig) > 0 {
+							xhttpOpts["download-settings"] = dsConfig
+						}
+					}
+				}
+			}
+
 			node["xhttp-opts"] = xhttpOpts
 		} else if network == "grpc" {
 			serviceName := h.Path
