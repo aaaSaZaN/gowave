@@ -42,15 +42,10 @@ func (h *Handler) getHostsForUser(userID uint64) []database.Host {
 		return nil
 	}
 
-	var hosts []database.Host
 	if count == 0 {
-		if err := h.db.Where("is_disabled = ? AND is_hidden = ?", false, false).
-			Order("view_position ASC").Find(&hosts).Error; err != nil {
-			log.Printf("[SUBSCRIPTION] failed to load hosts for user id=%d: %v", userID, err)
-			return nil
-		}
-		return hosts
+		return []database.Host{}
 	}
+	var hosts []database.Host
 
 	type squadInbound struct {
 		SquadUUID   string `gorm:"column:internal_squad_uuid"`
@@ -136,6 +131,125 @@ func (h *Handler) getHostsForUser(userID uint64) []database.Host {
 	}
 
 	return availableHosts
+}
+
+type CustomRemarksConfig struct {
+	ExpiredUsers           []string `json:"expiredUsers"`
+	LimitedUsers           []string `json:"limitedUsers"`
+	DisabledUsers          []string `json:"disabledUsers"`
+	EmptyHosts             []string `json:"emptyHosts"`
+	HWIDMaxDevicesExceeded []string `json:"HWIDMaxDevicesExceeded"`
+	HWIDNotSupported       []string `json:"HWIDNotSupported"`
+}
+
+func (h *Handler) resolveFallbackRemarks(user *database.User, settings *database.SubscriptionSetting, hostCount int) []string {
+	var customRemarks CustomRemarksConfig
+	if settings.CustomRemarks != "" && settings.CustomRemarks != "null" && settings.CustomRemarks != "{}" {
+		_ = json.Unmarshal([]byte(settings.CustomRemarks), &customRemarks)
+	}
+
+	if user.ExternalSquadUUID != nil && *user.ExternalSquadUUID != "" {
+		var squad database.ExternalSquad
+		if err := h.db.Where("uuid = ?", *user.ExternalSquadUUID).First(&squad).Error; err == nil {
+			if squad.CustomRemarks != "" && squad.CustomRemarks != "null" && squad.CustomRemarks != "{}" {
+				var sqRemarks CustomRemarksConfig
+				if err := json.Unmarshal([]byte(squad.CustomRemarks), &sqRemarks); err == nil {
+					if len(sqRemarks.EmptyHosts) > 0 {
+						customRemarks.EmptyHosts = sqRemarks.EmptyHosts
+					}
+					if len(sqRemarks.ExpiredUsers) > 0 {
+						customRemarks.ExpiredUsers = sqRemarks.ExpiredUsers
+					}
+					if len(sqRemarks.LimitedUsers) > 0 {
+						customRemarks.LimitedUsers = sqRemarks.LimitedUsers
+					}
+					if len(sqRemarks.DisabledUsers) > 0 {
+						customRemarks.DisabledUsers = sqRemarks.DisabledUsers
+					}
+					if len(sqRemarks.HWIDMaxDevicesExceeded) > 0 {
+						customRemarks.HWIDMaxDevicesExceeded = sqRemarks.HWIDMaxDevicesExceeded
+					}
+					if len(sqRemarks.HWIDNotSupported) > 0 {
+						customRemarks.HWIDNotSupported = sqRemarks.HWIDNotSupported
+					}
+				}
+			}
+		}
+	}
+
+	if settings.IsShowCustomRemarks && user.Status != "ACTIVE" {
+		switch strings.ToUpper(user.Status) {
+		case "EXPIRED":
+			if len(customRemarks.ExpiredUsers) > 0 {
+				return customRemarks.ExpiredUsers
+			}
+			return []string{"⌛ Subscription expired", "Contact support"}
+		case "DISABLED":
+			if len(customRemarks.DisabledUsers) > 0 {
+				return customRemarks.DisabledUsers
+			}
+			return []string{"🚫 Subscription disabled", "Contact support"}
+		case "LIMITED":
+			if len(customRemarks.LimitedUsers) > 0 {
+				return customRemarks.LimitedUsers
+			}
+			return []string{"🚧 Subscription limited", "Contact support"}
+		}
+	}
+
+	if hostCount == 0 {
+		if len(customRemarks.EmptyHosts) > 0 {
+			return customRemarks.EmptyHosts
+		}
+		return []string{
+			"→ Remnawave",
+			"→ No hosts found",
+			"→ Check Hosts tab",
+			"→ Check Internal Squads tab",
+		}
+	}
+
+	return nil
+}
+
+func (h *Handler) createFallbackHosts(user *database.User, remarks []string) ([]database.Host, []XrayHostMeta) {
+	if len(remarks) == 0 {
+		return nil, nil
+	}
+
+	hosts := make([]database.Host, 0, len(remarks))
+	metas := make([]XrayHostMeta, 0, len(remarks))
+
+	for _, remark := range remarks {
+		finalRemark := strings.TrimSpace(h.formatHeaderValue(remark, user))
+		if finalRemark == "" {
+			continue
+		}
+
+		dummyHost := database.Host{
+			UUID:          "00000000-0000-0000-0000-000000000000",
+			Remark:        finalRemark,
+			Address:       "0.0.0.0",
+			Port:          1,
+			SecurityLayer: "NONE",
+			IsDisabled:    false,
+			IsHidden:      false,
+		}
+
+		dummyInbound := database.ConfigProfileInbound{
+			UUID:       "00000000-0000-0000-0000-000000000000",
+			Type:       "vless",
+			RawInbound: `{"protocol":"vless","settings":{"clients":[{"id":"00000000-0000-0000-0000-000000000000"}]},"streamSettings":{"network":"tcp","security":"none"}}`,
+		}
+
+		hosts = append(hosts, dummyHost)
+		metas = append(metas, XrayHostMeta{
+			Host:    &dummyHost,
+			Inbound: &dummyInbound,
+		})
+	}
+
+	return hosts, metas
 }
 
 func (h *Handler) getHostsWithInboundsForUser(userID uint64) []XrayHostMeta {
@@ -265,7 +379,11 @@ func (h *Handler) GetSubscription(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user.Status != "ACTIVE" {
+	// Load SubscriptionSetting
+	var settings database.SubscriptionSetting
+	h.db.First(&settings)
+
+	if user.Status != "ACTIVE" && !settings.IsShowCustomRemarks {
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte(`{"message":"Account is disabled"}`))
 		return
@@ -283,10 +401,6 @@ func (h *Handler) GetSubscription(w http.ResponseWriter, r *http.Request) {
 	reqHeaders["x-remnawave-injected-client-type"] = clientType
 	reqHeaders["x-remnawave-injected-user-username"] = user.Username
 	reqHeaders["x-remnawave-injected-short-uuid"] = user.ShortUUID
-
-	// Load SubscriptionSetting
-	var settings database.SubscriptionSetting
-	h.db.First(&settings)
 
 	// Match SRR
 	srrRes := MatchSRRRules(settings.ResponseRules, reqHeaders, clientType)
@@ -483,6 +597,18 @@ func (h *Handler) GetSubscription(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(k, v)
 	}
 
+	var hosts []database.Host
+	var hostsMeta []XrayHostMeta
+	if user.Status == "ACTIVE" {
+		hosts = h.getHostsForUser(user.ID)
+		hostsMeta = h.getHostsWithInboundsForUser(user.ID)
+	}
+
+	fallbackRemarks := h.resolveFallbackRemarks(&user, &settings, len(hosts))
+	if len(fallbackRemarks) > 0 {
+		hosts, hostsMeta = h.createFallbackHosts(&user, fallbackRemarks)
+	}
+
 	// Determine output content
 	var contentType string
 	var body string
@@ -505,7 +631,6 @@ func (h *Handler) GetSubscription(w http.ResponseWriter, r *http.Request) {
 
 	if targetType == "XRAY_JSON" {
 		contentType = "application/json; charset=utf-8"
-		hostsMeta := h.getHostsWithInboundsForUser(user.ID)
 		tmplJSON := h.getTemplateForUser(&user, "XRAY_JSON", overrideTmpl)
 		jsonBody, err := GenerateXrayJSON(&user, hostsMeta, tmplJSON, func(host *database.Host) string {
 			return h.getHostXrayTemplate(host, tmplJSON)
@@ -517,7 +642,6 @@ func (h *Handler) GetSubscription(w http.ResponseWriter, r *http.Request) {
 		body = jsonBody
 	} else if targetType == "MIHOMO" || targetType == "CLASH" || targetType == "STASH" {
 		contentType = "text/yaml; charset=utf-8"
-		hostsMeta := h.getHostsWithInboundsForUser(user.ID)
 		tmplYAML := h.getTemplateForUser(&user, targetType, overrideTmpl)
 		if tmplYAML == "" && targetType != "MIHOMO" {
 			tmplYAML = h.getTemplateForUser(&user, "MIHOMO", overrideTmpl)
@@ -530,7 +654,6 @@ func (h *Handler) GetSubscription(w http.ResponseWriter, r *http.Request) {
 		body = yamlBody
 	} else if targetType == "SINGBOX" {
 		contentType = "application/json; charset=utf-8"
-		hostsMeta := h.getHostsWithInboundsForUser(user.ID)
 		tmplJSON := h.getTemplateForUser(&user, "SINGBOX", overrideTmpl)
 		jsonBody, err := GenerateSingboxJSON(&user, hostsMeta, tmplJSON)
 		if err != nil {
@@ -540,7 +663,6 @@ func (h *Handler) GetSubscription(w http.ResponseWriter, r *http.Request) {
 		body = jsonBody
 	} else {
 		contentType = "text/plain; charset=utf-8"
-		hosts := h.getHostsForUser(user.ID)
 		body = h.generator.generateBase64Links(&user, hosts)
 	}
 
@@ -632,7 +754,17 @@ func (h *Handler) GetSubscriptionInfo(w http.ResponseWriter, r *http.Request) {
 		subscriptionURL = fmt.Sprintf("https://%s/%s", r.Host, user.ShortUUID)
 	}
 
-	hosts := h.getHostsForUser(user.ID)
+	var settings database.SubscriptionSetting
+	h.db.First(&settings)
+
+	var hosts []database.Host
+	if user.Status == "ACTIVE" {
+		hosts = h.getHostsForUser(user.ID)
+	}
+	fallbackRemarks := h.resolveFallbackRemarks(&user, &settings, len(hosts))
+	if len(fallbackRemarks) > 0 {
+		hosts, _ = h.createFallbackHosts(&user, fallbackRemarks)
+	}
 	rawLinks := h.generator.generateRawLinks(&user, hosts)
 
 	infoResp := SubscriptionInfoResponse{

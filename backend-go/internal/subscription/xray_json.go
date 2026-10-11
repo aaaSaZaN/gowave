@@ -384,8 +384,13 @@ func buildOutbound(user *database.User, hm XrayHostMeta, tag string) map[string]
 		}
 	}
 
+	userUUID := user.VlessUUID
+	if h.UUID == "00000000-0000-0000-0000-000000000000" {
+		userUUID = "00000000-0000-0000-0000-000000000000"
+	}
+
 	userObj := map[string]interface{}{
-		"id":         user.VlessUUID,
+		"id":         userUUID,
 		"encryption": encryption,
 	}
 	if flow != "" && flow != "none" {

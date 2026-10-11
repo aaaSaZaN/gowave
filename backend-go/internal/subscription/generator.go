@@ -3,6 +3,7 @@ package subscription
 import (
 	"encoding/base64"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"remnawave-go/internal/database"
@@ -12,6 +13,10 @@ type Generator struct{}
 
 func NewGenerator() *Generator {
 	return &Generator{}
+}
+
+func urlEncode(s string) string {
+	return strings.ReplaceAll(url.QueryEscape(s), "+", "%20")
 }
 
 func (g *Generator) Generate(user *database.User, hosts []database.Host, userAgent string) (string, string) {
@@ -42,8 +47,18 @@ func (g *Generator) generateRawLinks(user *database.User, hosts []database.Host)
 		if h.SecurityLayer != "" && h.SecurityLayer != "DEFAULT" {
 			security = strings.ToLower(h.SecurityLayer)
 		}
-		link := fmt.Sprintf("vless://%s@%s:%d?security=%s&sni=%s&fp=%s#%s",
-			user.VlessUUID, h.Address, h.Port, security, h.Sni, h.Fingerprint, h.Remark)
+		uuid := user.VlessUUID
+		if h.UUID == "00000000-0000-0000-0000-000000000000" {
+			uuid = "00000000-0000-0000-0000-000000000000"
+		}
+		var link string
+		if security == "none" || security == "" {
+			link = fmt.Sprintf("vless://%s@%s:%d?encryption=none&security=none&type=tcp#%s",
+				uuid, h.Address, h.Port, urlEncode(h.Remark))
+		} else {
+			link = fmt.Sprintf("vless://%s@%s:%d?security=%s&sni=%s&fp=%s#%s",
+				uuid, h.Address, h.Port, security, h.Sni, h.Fingerprint, urlEncode(h.Remark))
+		}
 		lines = append(lines, link)
 	}
 	if lines == nil {
@@ -65,6 +80,10 @@ func (g *Generator) generateClashYAML(user *database.User, hosts []database.Host
 		if h.IsDisabled || h.IsHidden || IsExcluded(h.ExcludeFromSubscriptionTypes, "CLASH") {
 			continue
 		}
+		uuid := user.VlessUUID
+		if h.UUID == "00000000-0000-0000-0000-000000000000" {
+			uuid = "00000000-0000-0000-0000-000000000000"
+		}
 		sb.WriteString(fmt.Sprintf(`  - name: "%s"
     type: vless
     server: %s
@@ -74,7 +93,7 @@ func (g *Generator) generateClashYAML(user *database.User, hosts []database.Host
     tls: true
     servername: %s
     client-fingerprint: %s
-`, h.Remark, h.Address, h.Port, user.VlessUUID, h.Sni, h.Fingerprint))
+`, h.Remark, h.Address, h.Port, uuid, h.Sni, h.Fingerprint))
 	}
 	return sb.String()
 }
@@ -84,6 +103,10 @@ func (g *Generator) generateSingboxJSON(user *database.User, hosts []database.Ho
 	for _, h := range hosts {
 		if h.IsDisabled || h.IsHidden || IsExcluded(h.ExcludeFromSubscriptionTypes, "SINGBOX") {
 			continue
+		}
+		uuid := user.VlessUUID
+		if h.UUID == "00000000-0000-0000-0000-000000000000" {
+			uuid = "00000000-0000-0000-0000-000000000000"
 		}
 		outbound := fmt.Sprintf(`    {
       "type": "vless",
@@ -99,7 +122,7 @@ func (g *Generator) generateSingboxJSON(user *database.User, hosts []database.Ho
           "fingerprint": "%s"
         }
       }
-    }`, h.Remark, h.Address, h.Port, user.VlessUUID, h.Sni, h.Fingerprint)
+    }`, h.Remark, h.Address, h.Port, uuid, h.Sni, h.Fingerprint)
 		outbounds = append(outbounds, outbound)
 	}
 

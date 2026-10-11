@@ -466,12 +466,16 @@ func buildMihomoProxyNode(user *database.User, hm XrayHostMeta) map[string]inter
 
 	// 2. VLESS Protocol
 	if protocol == "vless" {
+		nodeUUID := user.VlessUUID
+		if h.UUID == "00000000-0000-0000-0000-000000000000" {
+			nodeUUID = "00000000-0000-0000-0000-000000000000"
+		}
 		node := map[string]interface{}{
 			"name":            h.Remark,
 			"type":            "vless",
 			"server":          h.Address,
 			"port":            h.Port,
-			"uuid":            user.VlessUUID,
+			"uuid":            nodeUUID,
 			"udp":             true,
 			"packet-encoding": "xudp",
 		}

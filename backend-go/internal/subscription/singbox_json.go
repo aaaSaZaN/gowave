@@ -153,12 +153,16 @@ func buildSingboxOutbound(user *database.User, hm XrayHostMeta) map[string]inter
 
 	// 2. VLESS
 	if protocol == "vless" {
+		nodeUUID := user.VlessUUID
+		if h.UUID == "00000000-0000-0000-0000-000000000000" {
+			nodeUUID = "00000000-0000-0000-0000-000000000000"
+		}
 		ob := map[string]interface{}{
 			"type":        "vless",
 			"tag":         h.Remark,
 			"server":      h.Address,
 			"server_port": h.Port,
-			"uuid":        user.VlessUUID,
+			"uuid":        nodeUUID,
 		}
 
 		flow := ResolveVlessFlow(rawInbMap, network, security)
