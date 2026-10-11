@@ -2,6 +2,8 @@ package subscription
 
 import (
 	"fmt"
+	"math"
+	"strconv"
 
 	"encoding/json"
 	"strings"
@@ -62,7 +64,24 @@ func applyMihomoFieldMap(source map[string]interface{}, target map[string]interf
 					target[mapping.dst] = fmt.Sprintf("%v", val)
 				}
 			} else {
-				target[mapping.dst] = val
+				switch v := val.(type) {
+				case float64:
+					if v == math.Trunc(v) && !math.IsNaN(v) && !math.IsInf(v, 0) {
+						target[mapping.dst] = int64(v)
+					} else {
+						target[mapping.dst] = v
+					}
+				case string:
+					if !strings.Contains(v, "-") && strings.ContainsAny(strings.ToLower(v), "e") {
+						if f, err := strconv.ParseFloat(v, 64); err == nil && f == math.Trunc(f) && !math.IsNaN(f) && !math.IsInf(f, 0) {
+							target[mapping.dst] = int64(f)
+							continue
+						}
+					}
+					target[mapping.dst] = v
+				default:
+					target[mapping.dst] = val
+				}
 			}
 		}
 	}
@@ -75,7 +94,7 @@ func buildMihomoXhttpDownloadSettings(ds map[string]interface{}, hm XrayHostMeta
 		settings["server"] = address
 	}
 	if port, ok := ds["port"].(float64); ok {
-		settings["port"] = port
+		settings["port"] = int(port)
 	}
 
 	if sec, ok := ds["security"].(string); ok && (sec == "tls" || sec == "reality") {
