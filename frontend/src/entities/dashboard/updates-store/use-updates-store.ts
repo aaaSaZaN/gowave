@@ -29,8 +29,8 @@ const initialState: IState = {
     isLoading: false,
     lastUpdateTimestamp: 0,
     remnawaveInfo: {
-        latestVersion: '2.2.3',
-        starsCount: 1869
+        latestVersion: '',
+        starsCount: 0
     }
 }
 
@@ -93,7 +93,8 @@ export const useUpdatesStore = create<IActions & IState>()(
         {
             name: 'updatesStore',
             storage: createJSONStorage(() => localStorage),
-            version: 1,
+            version: 2,
+            migrate: () => ({ ...initialState }),
             partialize: (state) => ({
                 lastUpdateTimestamp: state.lastUpdateTimestamp,
                 remnawaveInfo: state.remnawaveInfo

@@ -22,9 +22,18 @@ export function VersionControl() {
     const [isNewVersionAvailable, isDev] = useMemo(() => {
         if (!remnawaveMetadata) return [false, false]
 
-        const currentVersion = remnawaveMetadata.version
-        const latest = remnawaveInfo.latestVersion || '0.0.0'
-        return [semver.gt(latest, currentVersion), remnawaveMetadata.git?.backend?.branch !== 'main']
+        const currentVersion = semver.clean(remnawaveMetadata.version) || remnawaveMetadata.version
+        const latest = semver.clean(remnawaveInfo.latestVersion) || remnawaveInfo.latestVersion
+
+        const hasUpdate = Boolean(
+            latest &&
+            currentVersion &&
+            semver.valid(latest) &&
+            semver.valid(currentVersion) &&
+            semver.gt(latest, currentVersion)
+        )
+
+        return [hasUpdate, remnawaveMetadata.git?.backend?.branch !== 'main']
     }, [remnawaveInfo.latestVersion, remnawaveMetadata])
 
     if (isLoading || !remnawaveMetadata) {
