@@ -204,12 +204,24 @@ func (h *Handler) DeleteProvider(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetNodes(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var billingNodes []database.InfraBillingNode
-	h.db.Find(&billingNodes)
+	h.db.Order("created_at asc").Find(&billingNodes)
 
 	res := make([]map[string]interface{}, 0, len(billingNodes))
 	for _, bn := range billingNodes {
 		var prov database.InfraProvider
 		h.db.Where("uuid = ?", bn.ProviderUUID).First(&prov)
+
+		var nodeObj interface{} = nil
+		if bn.NodeUUID != nil && *bn.NodeUUID != "" {
+			var n database.Node
+			if err := h.db.Where("uuid = ?", *bn.NodeUUID).First(&n).Error; err == nil {
+				nodeObj = map[string]interface{}{
+					"uuid":        n.UUID,
+					"name":        n.Name,
+					"countryCode": n.CountryCode,
+				}
+			}
+		}
 
 		res = append(res, map[string]interface{}{
 			"uuid":         bn.UUID,
@@ -222,23 +234,67 @@ func (h *Handler) GetNodes(w http.ResponseWriter, r *http.Request) {
 				"loginUrl":    prov.LoginURL,
 				"faviconLink": prov.FaviconLink,
 			},
-			"node":          nil,
+			"node":          nodeObj,
 			"nextBillingAt": bn.NextBillingAt.UTC().Format(time.RFC3339),
 			"createdAt":     bn.CreatedAt.UTC().Format(time.RFC3339),
 			"updatedAt":     bn.UpdatedAt.UTC().Format(time.RFC3339),
 		})
 	}
 
+	// Available nodes that can be linked to a billing node (not yet assigned)
+	var availableNodes []struct {
+		UUID        string `gorm:"column:uuid"`
+		Name        string `gorm:"column:name"`
+		CountryCode string `gorm:"column:country_code"`
+	}
+	h.db.Table("nodes as n").
+		Select("n.uuid, n.name, n.country_code").
+		Joins("LEFT JOIN infra_billing_nodes as ibn ON ibn.node_uuid = n.uuid").
+		Where("ibn.node_uuid IS NULL").
+		Order("n.view_position asc").
+		Scan(&availableNodes)
+
+	availRes := make([]map[string]interface{}, 0, len(availableNodes))
+	for _, an := range availableNodes {
+		availRes = append(availRes, map[string]interface{}{
+			"uuid":        an.UUID,
+			"name":        an.Name,
+			"countryCode": an.CountryCode,
+		})
+	}
+
+	// Calculate stats
+	now := time.Now().UTC()
+	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+	startOfNextMonth := startOfMonth.AddDate(0, 1, 0)
+	upcomingThreshold := now.AddDate(0, 0, 7)
+
+	var upcomingCount int64
+	h.db.Model(&database.InfraBillingNode{}).
+		Where("next_billing_at <= ?", upcomingThreshold).
+		Count(&upcomingCount)
+
+	var currentMonthPayments float64
+	h.db.Model(&database.InfraBillingHistory{}).
+		Where("billed_at >= ? AND billed_at < ?", startOfMonth, startOfNextMonth).
+		Select("COALESCE(SUM(amount), 0)").
+		Scan(&currentMonthPayments)
+
+	var totalSpent float64
+	h.db.Model(&database.InfraBillingHistory{}).
+		Select("COALESCE(SUM(amount), 0)").
+		Scan(&totalSpent)
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"response": map[string]interface{}{
 			"totalBillingNodes":          len(res),
 			"billingNodes":               res,
-			"availableBillingNodes":      []interface{}{},
-			"totalAvailableBillingNodes": 0,
+			"availableBillingNodes":      availRes,
+			"totalAvailableBillingNodes": len(availRes),
 			"stats": map[string]interface{}{
-				"upcomingNodesCount":   0,
-				"currentMonthPayments": 0,
-				"totalSpent":           0,
+				"upcomingNodesCount":   upcomingCount,
+				"currentMonthPayments": math.Round(currentMonthPayments*100) / 100,
+				"totalSpent":           math.Round(totalSpent*100) / 100,
 			},
 		},
 	})
@@ -248,7 +304,7 @@ func (h *Handler) CreateNode(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var body struct {
-		Name          string    `json:"name"`
+		Name          *string   `json:"name"`
 		NodeUUID      *string   `json:"nodeUuid"`
 		ProviderUUID  string    `json:"providerUuid"`
 		NextBillingAt time.Time `json:"nextBillingAt"`
@@ -259,10 +315,20 @@ func (h *Handler) CreateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	nameStr := ""
+	if body.Name != nil && strings.TrimSpace(*body.Name) != "" {
+		nameStr = strings.TrimSpace(*body.Name)
+	} else if body.NodeUUID != nil && *body.NodeUUID != "" {
+		var n database.Node
+		if err := h.db.Where("uuid = ?", *body.NodeUUID).First(&n).Error; err == nil {
+			nameStr = n.Name
+		}
+	}
+
 	now := time.Now().UTC()
 	bn := database.InfraBillingNode{
 		UUID:          uuid.New().String(),
-		Name:          strings.TrimSpace(body.Name),
+		Name:          nameStr,
 		NodeUUID:      body.NodeUUID,
 		ProviderUUID:  body.ProviderUUID,
 		NextBillingAt: body.NextBillingAt,
@@ -285,6 +351,7 @@ func (h *Handler) UpdateNode(w http.ResponseWriter, r *http.Request) {
 
 	var body struct {
 		UUID          string     `json:"uuid"`
+		UUIDs         []string   `json:"uuids"`
 		Name          *string    `json:"name"`
 		NodeUUID      *string    `json:"nodeUuid"`
 		ProviderUUID  *string    `json:"providerUuid"`
@@ -296,28 +363,51 @@ func (h *Handler) UpdateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var bn database.InfraBillingNode
-	if err := h.db.Where("uuid = ?", body.UUID).First(&bn).Error; err != nil {
+	// Support both bulk updates (uuids: [...]) and single update (uuid: "...")
+	targetUUIDs := body.UUIDs
+	if len(targetUUIDs) == 0 && body.UUID != "" {
+		targetUUIDs = []string{body.UUID}
+	}
+	if len(targetUUIDs) == 0 {
+		if urlUUID := chi.URLParam(r, "uuid"); urlUUID != "" {
+			targetUUIDs = []string{urlUUID}
+		}
+	}
+
+	if len(targetUUIDs) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{"message": "UUID or UUIDs required"})
+		return
+	}
+
+	updates := map[string]interface{}{
+		"updated_at": time.Now().UTC(),
+	}
+	if body.Name != nil {
+		updates["name"] = strings.TrimSpace(*body.Name)
+	}
+	if body.NodeUUID != nil {
+		updates["node_uuid"] = body.NodeUUID
+	}
+	if body.ProviderUUID != nil {
+		updates["provider_uuid"] = *body.ProviderUUID
+	}
+	if body.NextBillingAt != nil {
+		updates["next_billing_at"] = *body.NextBillingAt
+	}
+
+	res := h.db.Model(&database.InfraBillingNode{}).Where("uuid IN ?", targetUUIDs).Updates(updates)
+	if res.Error != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{"message": "Failed to update billing node"})
+		return
+	}
+	if res.RowsAffected == 0 {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]interface{}{"message": "Billing node not found"})
 		return
 	}
 
-	if body.Name != nil {
-		bn.Name = strings.TrimSpace(*body.Name)
-	}
-	if body.NodeUUID != nil {
-		bn.NodeUUID = body.NodeUUID
-	}
-	if body.ProviderUUID != nil {
-		bn.ProviderUUID = *body.ProviderUUID
-	}
-	if body.NextBillingAt != nil {
-		bn.NextBillingAt = *body.NextBillingAt
-	}
-	bn.UpdatedAt = time.Now().UTC()
-
-	h.db.Save(&bn)
 	h.GetNodes(w, r)
 }
 
