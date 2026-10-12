@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"mime"
 	"net/http"
 	"os"
 	"os/signal"
@@ -309,7 +310,11 @@ func main() {
 		stubHandler.RegisterRoutes(protected)
 	})
 
-	staticDirs := []string{"./static", "../frontend/dist", "./frontend/dist"}
+	_ = mime.AddExtensionType(".wasm", "application/wasm")
+	_ = mime.AddExtensionType(".json", "application/json")
+	_ = mime.AddExtensionType(".js", "application/javascript")
+
+	staticDirs := []string{"./frontend/dist", "./dist", "../frontend/dist", "./static", "/opt/gowave/frontend/dist", "/opt/gowave/dist"}
 	var staticDir string
 	for _, dir := range staticDirs {
 		if _, err := os.Stat(dir); err == nil {
@@ -328,6 +333,24 @@ func main() {
 				fs.ServeHTTP(w, r)
 				return
 			}
+
+			// If requested with /assets/ prefix, check directly in root of staticDir:
+			// (handles schemas like /assets/xray.schema.json, /assets/main.wasm, /assets/wasm_exec.js)
+			if strings.HasPrefix(r.URL.Path, "/assets/") {
+				altPath := filepath.Join(staticDir, strings.TrimPrefix(r.URL.Path, "/assets/"))
+				if info, err := os.Stat(altPath); err == nil && !info.IsDir() {
+					http.ServeFile(w, r, altPath)
+					return
+				}
+			}
+
+			// If an asset / file was requested (has file extension), do NOT return index.html
+			ext := filepath.Ext(r.URL.Path)
+			if ext != "" && ext != ".html" {
+				http.NotFound(w, r)
+				return
+			}
+
 			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 			http.ServeFile(w, r, filepath.Join(staticDir, "index.html"))
 		}
