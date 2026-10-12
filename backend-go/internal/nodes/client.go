@@ -628,7 +628,7 @@ func (c *Client) RemoveUser(node *database.Node, payload RemoveUserRequestPayloa
 		return err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("node returned status %d: %s", resp.StatusCode, string(body))
 	}
