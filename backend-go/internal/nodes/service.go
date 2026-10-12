@@ -250,6 +250,20 @@ func (s *Service) StartNode(node *database.Node, force bool) (bool, error) {
 	return ok, err
 }
 
+func (s *Service) RestartNodesByProfile(profileUUID string) {
+	if s.client == nil || profileUUID == "" {
+		return
+	}
+	var nodesList []database.Node
+	if err := s.db.Where("active_config_profile_uuid = ? AND is_disabled = ?", profileUUID, false).Find(&nodesList).Error; err != nil {
+		return
+	}
+	for i := range nodesList {
+		node := nodesList[i]
+		go s.StartNode(&node, true)
+	}
+}
+
 func (s *Service) PollNodeStats(node *database.Node) {
 	if s.client == nil || !node.IsConnected {
 		return

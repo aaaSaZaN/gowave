@@ -107,6 +107,7 @@ func main() {
 	}
 	nodeHandler := nodes.NewHandler(nodeService)
 	cpService := configprofiles.NewService(db)
+	cpService.SetSyncer(nodeService)
 	cpHandler := configprofiles.NewHandler(cpService)
 	subHandler := subscription.NewHandler(db, cfg.SubPublicDomain)
 	sysHandler := system.NewHandler(db)

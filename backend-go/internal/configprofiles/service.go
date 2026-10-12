@@ -12,12 +12,25 @@ import (
 	"gorm.io/gorm"
 )
 
-type Service struct {
-	db *gorm.DB
+type NodeProfileSyncer interface {
+	RestartNodesByProfile(profileUUID string)
 }
 
-func NewService(db *gorm.DB) *Service {
-	return &Service{db: db}
+type Service struct {
+	db     *gorm.DB
+	syncer NodeProfileSyncer
+}
+
+func NewService(db *gorm.DB, syncer ...NodeProfileSyncer) *Service {
+	var s NodeProfileSyncer
+	if len(syncer) > 0 {
+	s = syncer[0]
+	}
+	return &Service{db: db, syncer: s}
+}
+
+func (s *Service) SetSyncer(syncer NodeProfileSyncer) {
+	s.syncer = syncer
 }
 
 func (s *Service) DB() *gorm.DB {
@@ -428,6 +441,10 @@ func (s *Service) UpdateProfile(uuidParam string, name *string, configRaw []byte
 		return nil
 	}); err != nil {
 		return nil, err
+	}
+
+	if len(sortedBytes) > 0 && s.syncer != nil {
+		go s.syncer.RestartNodesByProfile(profile.UUID)
 	}
 
 	return s.GetProfileByUUID(profile.UUID)
