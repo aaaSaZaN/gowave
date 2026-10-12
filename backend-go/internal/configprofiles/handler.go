@@ -23,15 +23,15 @@ func NewHandler(service *Service) *Handler {
 }
 
 type InboundResponse struct {
-	UUID         string      `json:"uuid"`
-	ProfileUUID  string      `json:"profileUuid"`
-	Tag          string      `json:"tag"`
-	Type         string      `json:"type"`
-	Network      *string     `json:"network"`
-	Security     *string     `json:"security"`
-	Port         *int        `json:"port"`
-	RawInbound   interface{} `json:"rawInbound"`
-	ActiveSquads []string    `json:"activeSquads,omitempty"`
+	UUID         string          `json:"uuid"`
+	ProfileUUID  string          `json:"profileUuid"`
+	Tag          string          `json:"tag"`
+	Type         string          `json:"type"`
+	Network      *string         `json:"network"`
+	Security     *string         `json:"security"`
+	Port         *int            `json:"port"`
+	RawInbound   json.RawMessage `json:"rawInbound"`
+	ActiveSquads []string        `json:"activeSquads,omitempty"`
 }
 
 type NodeSummary struct {
@@ -45,7 +45,7 @@ type ProfileResponse struct {
 	ViewPosition int               `json:"viewPosition"`
 	Name         string            `json:"name"`
 	Tags         []string          `json:"tags"`
-	Config       interface{}       `json:"config"`
+	Config       json.RawMessage   `json:"config"`
 	Inbounds     []InboundResponse `json:"inbounds"`
 	Nodes        []NodeSummary     `json:"nodes"`
 	CreatedAt    string            `json:"createdAt"`
@@ -53,9 +53,13 @@ type ProfileResponse struct {
 }
 
 func formatInbound(ib *database.ConfigProfileInbound) InboundResponse {
-	var raw interface{}
+	raw := json.RawMessage("{}")
 	if ib.RawInbound != "" {
-		_ = json.Unmarshal([]byte(ib.RawInbound), &raw)
+		if sorted, err := SortInboundConfig([]byte(ib.RawInbound)); err == nil {
+			raw = json.RawMessage(sorted)
+		} else {
+			raw = json.RawMessage(ib.RawInbound)
+		}
 	}
 	return InboundResponse{
 		UUID:         ib.UUID,
@@ -69,14 +73,14 @@ func formatInbound(ib *database.ConfigProfileInbound) InboundResponse {
 		ActiveSquads: []string{},
 	}
 }
-
 func (h *Handler) formatProfile(p *database.ConfigProfile) ProfileResponse {
-	var cfg interface{} = map[string]interface{}{}
+	cfg := json.RawMessage("{}")
 	if p.Config != "" {
-		_ = json.Unmarshal([]byte(p.Config), &cfg)
-	}
-	if cfg == nil {
-		cfg = map[string]interface{}{}
+		if sorted, err := SortXrayConfig([]byte(p.Config)); err == nil {
+			cfg = json.RawMessage(sorted)
+		} else {
+			cfg = json.RawMessage(p.Config)
+		}
 	}
 
 	tags := []string(p.Tags)
@@ -114,11 +118,10 @@ func (h *Handler) formatProfile(p *database.ConfigProfile) ProfileResponse {
 		Config:       cfg,
 		Inbounds:     inboundsResp,
 		Nodes:        nodesResp,
-		CreatedAt:    p.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:    p.UpdatedAt.UTC().Format(time.RFC3339),
+		CreatedAt:    p.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:    p.UpdatedAt.Format(time.RFC3339),
 	}
 }
-
 func (h *Handler) GetConfigProfilesTags(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	tags := []string{}
@@ -195,15 +198,15 @@ func (h *Handler) CreateConfigProfile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var body struct {
-		Name   string                 `json:"name"`
-		Config map[string]interface{} `json:"config"`
+		Name   string          `json:"name"`
+		Config json.RawMessage `json:"config"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, `{"message":"Invalid request body"}`, http.StatusBadRequest)
 		return
 	}
 
-	if body.Name == "" || body.Config == nil {
+	if body.Name == "" || len(body.Config) == 0 {
 		http.Error(w, `{"message":"Name and config are required"}`, http.StatusBadRequest)
 		return
 	}
@@ -220,7 +223,6 @@ func (h *Handler) CreateConfigProfile(w http.ResponseWriter, r *http.Request) {
 		"response": h.formatProfile(profile),
 	})
 }
-
 func (h *Handler) GetConfigProfile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -241,9 +243,9 @@ func (h *Handler) UpdateConfigProfile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var body struct {
-		UUID   string                  `json:"uuid"`
-		Name   *string                 `json:"name"`
-		Config *map[string]interface{} `json:"config"`
+		UUID   string           `json:"uuid"`
+		Name   *string          `json:"name"`
+		Config *json.RawMessage `json:"config"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, `{"message":"Invalid request body"}`, http.StatusBadRequest)
@@ -255,7 +257,7 @@ func (h *Handler) UpdateConfigProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var cfg map[string]interface{}
+	var cfg []byte
 	if body.Config != nil {
 		cfg = *body.Config
 	}
@@ -271,7 +273,6 @@ func (h *Handler) UpdateConfigProfile(w http.ResponseWriter, r *http.Request) {
 		"response": h.formatProfile(profile),
 	})
 }
-
 func (h *Handler) DeleteConfigProfile(w http.ResponseWriter, r *http.Request) {
 	uuidParam := chi.URLParam(r, "uuid")
 	_ = h.service.DeleteProfile(uuidParam)

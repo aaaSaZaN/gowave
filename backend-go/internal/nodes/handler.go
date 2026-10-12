@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"remnawave-go/internal/configprofiles"
 	"remnawave-go/internal/database"
 
 	"github.com/go-chi/chi/v5"
@@ -87,9 +88,13 @@ func formatNodeResponse(service *Service, n *database.Node) map[string]interface
 		}
 		activeIbList := make([]map[string]interface{}, 0, len(inbounds))
 		for _, ib := range inbounds {
-			var raw interface{}
+			var raw json.RawMessage = []byte("{}")
 			if ib.RawInbound != "" {
-				_ = json.Unmarshal([]byte(ib.RawInbound), &raw)
+				if sorted, err := configprofiles.SortInboundConfig([]byte(ib.RawInbound)); err == nil {
+					raw = json.RawMessage(sorted)
+				} else {
+					raw = json.RawMessage(ib.RawInbound)
+				}
 			}
 			activeIbList = append(activeIbList, map[string]interface{}{
 				"uuid":        ib.UUID,

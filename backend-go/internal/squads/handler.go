@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
+	"remnawave-go/internal/configprofiles"
 	"remnawave-go/internal/database"
 )
 
@@ -65,9 +66,13 @@ func formatInternalSquad(db *gorm.DB, s *database.InternalSquad) map[string]inte
 
 	inboundsRes := make([]map[string]interface{}, 0, len(cpiList))
 	for _, inb := range cpiList {
-		var rawInb interface{}
+		var rawInb json.RawMessage = []byte("{}")
 		if inb.RawInbound != "" && inb.RawInbound != "null" {
-			_ = json.Unmarshal([]byte(inb.RawInbound), &rawInb)
+			if sorted, err := configprofiles.SortInboundConfig([]byte(inb.RawInbound)); err == nil {
+				rawInb = json.RawMessage(sorted)
+			} else {
+				rawInb = json.RawMessage(inb.RawInbound)
+			}
 		}
 		inboundsRes = append(inboundsRes, map[string]interface{}{
 			"uuid":        inb.UUID,

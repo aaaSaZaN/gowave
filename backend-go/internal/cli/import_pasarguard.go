@@ -260,9 +260,9 @@ func ImportFromPasarGuard(destDB *gorm.DB, source string) error {
 			}
 
 			traffic := database.UserTraffic{
-				ID:                        gwUser.ID,
-				UsedTrafficBytes:          u.UsedTraffic,
-				LifetimeUsedTrafficBytes:  u.UsedTraffic,
+				ID:                       gwUser.ID,
+				UsedTrafficBytes:         u.UsedTraffic,
+				LifetimeUsedTrafficBytes: u.UsedTraffic,
 			}
 			_ = tx.Create(&traffic).Error
 

@@ -17,12 +17,12 @@ type SRRSettings struct {
 }
 
 type SRRRule struct {
-	Name                  string                 `json:"name"`
-	Description           string                 `json:"description"`
-	Enabled               bool                   `json:"enabled"`
-	Operator              string                 `json:"operator"` // "AND" or "OR"
-	Conditions            []SRRCondition         `json:"conditions"`
-	ResponseType          string                 `json:"responseType"`
+	Name                  string                    `json:"name"`
+	Description           string                    `json:"description"`
+	Enabled               bool                      `json:"enabled"`
+	Operator              string                    `json:"operator"` // "AND" or "OR"
+	Conditions            []SRRCondition            `json:"conditions"`
+	ResponseType          string                    `json:"responseType"`
 	ResponseModifications *SRRResponseModifications `json:"responseModifications"`
 }
 

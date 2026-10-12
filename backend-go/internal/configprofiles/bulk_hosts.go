@@ -63,20 +63,48 @@ func (h *Handler) BulkUpdateHosts(w http.ResponseWriter, r *http.Request) {
 				updates := make(map[string]interface{})
 
 				// Handle some common fields
-				if v, ok := rawBody["remark"]; ok { updates["remark"] = v }
-				if v, ok := rawBody["address"]; ok { updates["address"] = v }
-				if v, ok := rawBody["port"]; ok { updates["port"] = v }
-				if v, ok := rawBody["path"]; ok { updates["path"] = v }
-				if v, ok := rawBody["sni"]; ok { updates["sni"] = v }
-				if v, ok := rawBody["host"]; ok { updates["host"] = v }
-				if v, ok := rawBody["alpn"]; ok { updates["alpn"] = v }
-				if v, ok := rawBody["fingerprint"]; ok { updates["fingerprint"] = v }
-				if v, ok := rawBody["network"]; ok { updates["network"] = v }
-				if v, ok := rawBody["securityLayer"]; ok { updates["security_layer"] = v }
-				if v, ok := rawBody["xrayCoreTemplate"]; ok { updates["xray_core_template"] = v }
-				if v, ok := rawBody["isFallback"]; ok { updates["is_fallback"] = v }
-				if v, ok := rawBody["isDisabled"]; ok { updates["is_disabled"] = v }
-				if v, ok := rawBody["isHidden"]; ok { updates["is_hidden"] = v }
+				if v, ok := rawBody["remark"]; ok {
+					updates["remark"] = v
+				}
+				if v, ok := rawBody["address"]; ok {
+					updates["address"] = v
+				}
+				if v, ok := rawBody["port"]; ok {
+					updates["port"] = v
+				}
+				if v, ok := rawBody["path"]; ok {
+					updates["path"] = v
+				}
+				if v, ok := rawBody["sni"]; ok {
+					updates["sni"] = v
+				}
+				if v, ok := rawBody["host"]; ok {
+					updates["host"] = v
+				}
+				if v, ok := rawBody["alpn"]; ok {
+					updates["alpn"] = v
+				}
+				if v, ok := rawBody["fingerprint"]; ok {
+					updates["fingerprint"] = v
+				}
+				if v, ok := rawBody["network"]; ok {
+					updates["network"] = v
+				}
+				if v, ok := rawBody["securityLayer"]; ok {
+					updates["security_layer"] = v
+				}
+				if v, ok := rawBody["xrayCoreTemplate"]; ok {
+					updates["xray_core_template"] = v
+				}
+				if v, ok := rawBody["isFallback"]; ok {
+					updates["is_fallback"] = v
+				}
+				if v, ok := rawBody["isDisabled"]; ok {
+					updates["is_disabled"] = v
+				}
+				if v, ok := rawBody["isHidden"]; ok {
+					updates["is_hidden"] = v
+				}
 
 				if len(updates) > 0 {
 					h.service.DB().Model(&database.Host{}).Where("uuid IN ?", uuids).Updates(updates)

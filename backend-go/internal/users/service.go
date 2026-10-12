@@ -598,7 +598,7 @@ func (s *Service) Update(id uint64, updates map[string]interface{}) (*database.U
 	updatedUser, err := s.GetByID(id)
 	if err == nil && s.syncer != nil {
 		if strings.ToUpper(updatedUser.Status) == "ACTIVE" {
-		s.syncer.SyncUserToNodes(updatedUser, prevVlessUUID)
+			s.syncer.SyncUserToNodes(updatedUser, prevVlessUUID)
 		} else {
 			s.syncer.RemoveUserFromNodes(updatedUser)
 		}

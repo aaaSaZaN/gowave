@@ -355,14 +355,14 @@ func (s *Service) GetProfileByUUID(uuid string) (*database.ConfigProfile, error)
 	return &profile, nil
 }
 
-func (s *Service) CreateProfile(name string, configMap map[string]interface{}) (*database.ConfigProfile, error) {
+func (s *Service) CreateProfile(name string, configRaw []byte) (*database.ConfigProfile, error) {
 	var count int64
 	s.db.Model(&database.ConfigProfile{}).Where("name = ?", name).Count(&count)
 	if count > 0 {
 		return nil, fmt.Errorf("config profile with name '%s' already exists", name)
 	}
 
-	configBytes, err := json.Marshal(configMap)
+	sortedBytes, err := SortXrayConfig(configRaw)
 	if err != nil {
 		return nil, fmt.Errorf("invalid config json: %w", err)
 	}
@@ -378,7 +378,7 @@ func (s *Service) CreateProfile(name string, configMap map[string]interface{}) (
 		ViewPosition: maxPos + 1,
 		Name:         name,
 		Tags:         database.StringArray{},
-		Config:       string(configBytes),
+		Config:       string(sortedBytes),
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}
@@ -387,14 +387,14 @@ func (s *Service) CreateProfile(name string, configMap map[string]interface{}) (
 		if err := tx.Create(profile).Error; err != nil {
 			return err
 		}
-		return syncInbounds(tx, profileUUID, configMap, true)
+		return syncInbounds(tx, profileUUID, sortedBytes, true)
 	}); err != nil {
 		return nil, err
 	}
 	return profile, nil
 }
 
-func (s *Service) UpdateProfile(uuidParam string, name *string, configMap map[string]interface{}) (*database.ConfigProfile, error) {
+func (s *Service) UpdateProfile(uuidParam string, name *string, configRaw []byte) (*database.ConfigProfile, error) {
 	profile, err := s.GetProfileByUUID(uuidParam)
 	if err != nil {
 		return nil, err
@@ -408,20 +408,22 @@ func (s *Service) UpdateProfile(uuidParam string, name *string, configMap map[st
 		updates["name"] = *name
 	}
 
-	if configMap != nil {
-		configBytes, err := json.Marshal(configMap)
+	var sortedBytes []byte
+	if len(configRaw) > 0 {
+		var err error
+		sortedBytes, err = SortXrayConfig(configRaw)
 		if err != nil {
 			return nil, fmt.Errorf("invalid config json: %w", err)
 		}
-		updates["config"] = string(configBytes)
+		updates["config"] = string(sortedBytes)
 	}
 
 	if err := s.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&database.ConfigProfile{}).Where("uuid = ?", profile.UUID).Updates(updates).Error; err != nil {
 			return err
 		}
-		if configMap != nil {
-			return syncInbounds(tx, profile.UUID, configMap, false)
+		if len(sortedBytes) > 0 {
+			return syncInbounds(tx, profile.UUID, sortedBytes, false)
 		}
 		return nil
 	}); err != nil {
@@ -440,17 +442,22 @@ func (s *Service) DeleteProfile(uuidParam string) error {
 	})
 }
 
-func syncInbounds(tx *gorm.DB, profileUUID string, configMap map[string]interface{}, creating bool) error {
-	inboundsRaw, ok := configMap["inbounds"].([]interface{})
-	if !ok {
+func syncInbounds(tx *gorm.DB, profileUUID string, configBytes []byte, creating bool) error {
+	var root struct {
+		Inbounds []json.RawMessage `json:"inbounds"`
+	}
+	if err := json.Unmarshal(configBytes, &root); err != nil {
 		if creating {
 			return nil
 		}
-		if _, supplied := configMap["inbounds"]; !supplied {
+		return err
+	}
+	if root.Inbounds == nil {
+		if creating {
 			return nil
 		}
-		inboundsRaw = []interface{}{}
 	}
+
 	var existing []database.ConfigProfileInbound
 	if err := tx.Where("profile_uuid = ?", profileUUID).Find(&existing).Error; err != nil {
 		return err
@@ -460,15 +467,23 @@ func syncInbounds(tx *gorm.DB, profileUUID string, configMap map[string]interfac
 		existingByTag[inbound.Tag] = inbound
 	}
 
-	seenTags := make(map[string]struct{}, len(inboundsRaw))
-	for _, item := range inboundsRaw {
-		ibMap, ok := item.(map[string]interface{})
-		if !ok {
+	seenTags := make(map[string]struct{}, len(root.Inbounds))
+	for _, itemRaw := range root.Inbounds {
+		var meta struct {
+			Tag            string      `json:"tag"`
+			Protocol       string      `json:"protocol"`
+			Port           interface{} `json:"port"`
+			StreamSettings struct {
+				Network  *string `json:"network"`
+				Security *string `json:"security"`
+			} `json:"streamSettings"`
+		}
+		if err := json.Unmarshal(itemRaw, &meta); err != nil {
 			continue
 		}
 
-		tag, _ := ibMap["tag"].(string)
-		proto, _ := ibMap["protocol"].(string)
+		tag := meta.Tag
+		proto := meta.Protocol
 		if strings.TrimSpace(tag) == "" || strings.TrimSpace(proto) == "" {
 			return fmt.Errorf("inbound tag and protocol are required")
 		}
@@ -477,30 +492,37 @@ func syncInbounds(tx *gorm.DB, profileUUID string, configMap map[string]interfac
 		}
 		seenTags[tag] = struct{}{}
 
-		var network *string
-		var security *string
-		if ss, ok := ibMap["streamSettings"].(map[string]interface{}); ok {
-			if net, ok := ss["network"].(string); ok && net != "" {
-				network = &net
-			}
-			if sec, ok := ss["security"].(string); ok && sec != "" {
-				security = &sec
-			}
+		var network *string = meta.StreamSettings.Network
+		var security *string = meta.StreamSettings.Security
+		if network != nil && *network == "" {
+			network = nil
+		}
+		if security != nil && *security == "" {
+			security = nil
 		}
 
 		var port *int
-		if pFloat, ok := ibMap["port"].(float64); ok {
-			pInt := int(pFloat)
+		switch p := meta.Port.(type) {
+		case float64:
+			pInt := int(p)
 			port = &pInt
-		} else if pInt, ok := ibMap["port"].(int); ok {
-			port = &pInt
+		case int:
+			port = &p
+		case string:
+			if first := strings.Split(p, ",")[0]; first != "" {
+				var pInt int
+				if _, err := fmt.Sscanf(first, "%d", &pInt); err == nil {
+					port = &pInt
+				}
+			}
+		}
+
+		sortedRaw, err := SortInboundConfig(itemRaw)
+		if err != nil {
+			sortedRaw = itemRaw
 		}
 
 		ibUUID := uuid.NewString()
-		rawBytes, err := json.Marshal(ibMap)
-		if err != nil {
-			return err
-		}
 		inbound := database.ConfigProfileInbound{
 			UUID:        ibUUID,
 			ProfileUUID: profileUUID,
@@ -509,7 +531,7 @@ func syncInbounds(tx *gorm.DB, profileUUID string, configMap map[string]interfac
 			Network:     network,
 			Security:    security,
 			Port:        port,
-			RawInbound:  string(rawBytes),
+			RawInbound:  string(sortedRaw),
 		}
 		if previous, exists := existingByTag[tag]; exists {
 			inbound.UUID = previous.UUID

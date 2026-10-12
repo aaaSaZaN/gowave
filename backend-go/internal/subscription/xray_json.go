@@ -541,12 +541,12 @@ func buildOutbound(user *database.User, hm XrayHostMeta, tag string) map[string]
 					if hStr, ok := xs["host"].(string); ok && hostHeader == "" {
 						hostHeader = hStr
 					}
-						if hdrs, ok := xs["headers"].(map[string]interface{}); ok {
-							headers = hdrs
-							if hStr, ok := hdrs["Host"].(string); ok && hostHeader == "" {
-								hostHeader = hStr
-							}
+					if hdrs, ok := xs["headers"].(map[string]interface{}); ok {
+						headers = hdrs
+						if hStr, ok := hdrs["Host"].(string); ok && hostHeader == "" {
+							hostHeader = hStr
 						}
+					}
 
 					if m, ok := xs["mode"].(string); ok && m != "" {
 						mode = m
