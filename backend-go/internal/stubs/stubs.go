@@ -20,7 +20,6 @@ import (
 
 	"sync"
 
-	"remnawave-go/internal/auth"
 	"remnawave-go/internal/database"
 	"remnawave-go/internal/keygen"
 	"remnawave-go/internal/nodes"
@@ -892,88 +891,17 @@ func (s *StubHandler) VerifyPasskeyReg(w http.ResponseWriter, r *http.Request) {
 
 func (s *StubHandler) GetPasskeyAuthOptions(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var setting database.RemnawaveSetting
-	s.db.First(&setting)
-	rpId := "localhost"
-	if setting.PasskeySettings != "" && setting.PasskeySettings != "{}" {
-		var ps map[string]interface{}
-		if err := json.Unmarshal([]byte(setting.PasskeySettings), &ps); err == nil {
-			if id, ok := ps["rpId"].(string); ok && id != "" {
-				rpId = id
-			}
-		}
-	}
-	if rpId == "localhost" && r.Host != "" {
-		host := r.Host
-		if strings.Contains(host, ":") {
-			host = strings.Split(host, ":")[0]
-		}
-		rpId = host
-	}
-
-	chalBytes := make([]byte, 32)
-	rand.Read(chalBytes)
-	challenge := base64.RawURLEncoding.EncodeToString(chalBytes)
-
-	var passkeys []database.Passkey
-	s.db.Find(&passkeys)
-	allow := make([]map[string]interface{}, 0, len(passkeys))
-	for _, pk := range passkeys {
-		transports := []string{"internal"}
-		if pk.Transports != "" {
-			transports = strings.Split(pk.Transports, ",")
-		}
-		allow = append(allow, map[string]interface{}{
-			"id":         pk.ID,
-			"type":       "public-key",
-			"transports": transports,
-		})
-	}
-
+	w.WriteHeader(http.StatusNotImplemented)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"challenge":        challenge,
-			"timeout":          60000,
-			"rpId":             rpId,
-			"allowCredentials": allow,
-		},
+		"message": "Passkey authentication is not supported",
 	})
 }
 
 func (s *StubHandler) VerifyPasskeyAuth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
-	var body struct {
-		Response struct {
-			ID string `json:"id"`
-		} `json:"response"`
-	}
-	_ = json.NewDecoder(r.Body).Decode(&body)
-
-	var admin database.Admin
-	if body.Response.ID != "" {
-		var pk database.Passkey
-		if err := s.db.Where("id = ?", body.Response.ID).First(&pk).Error; err == nil && pk.AdminUUID != "" {
-			s.db.Where("uuid = ?", pk.AdminUUID).First(&admin)
-		}
-	}
-	if admin.UUID == "" {
-		if err := s.db.First(&admin).Error; err != nil {
-			http.Error(w, `{"message":"No admin found"}`, http.StatusUnauthorized)
-			return
-		}
-	}
-
-	token, err := auth.GenerateToken(admin.UUID, admin.Username, admin.Role, s.appSecret, s.jwtLifetime)
-	if err != nil {
-		http.Error(w, `{"message":"Internal server error"}`, http.StatusInternalServerError)
-		return
-	}
-
+	w.WriteHeader(http.StatusNotImplemented)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"accessToken": token,
-		},
+		"message": "Passkey authentication is not supported",
 	})
 }
 

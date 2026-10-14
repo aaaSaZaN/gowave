@@ -104,16 +104,7 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp.Response.Authentication.Password.Enabled = setting.PasswordAuthEnabled
-	var isPasskeyEnabled bool
-	if setting.PasskeySettings != "" && setting.PasskeySettings != "{}" {
-		var ps map[string]interface{}
-		if err := json.Unmarshal([]byte(setting.PasskeySettings), &ps); err == nil {
-			if en, ok := ps["enabled"].(bool); ok {
-				isPasskeyEnabled = en
-			}
-		}
-	}
-	resp.Response.Authentication.Passkey.Enabled = isPasskeyEnabled
+	resp.Response.Authentication.Passkey.Enabled = false // Disabled until secure WebAuthn is implemented
 	resp.Response.Authentication.OAuth2.Providers = map[string]bool{
 		"github":   false,
 		"pocketid": false,
