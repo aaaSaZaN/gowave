@@ -101,12 +101,10 @@ func main() {
 	nodeService := nodes.NewService(db, nodeClient)
 	userService.SetSyncer(nodeService)
 	scheduler.SetSyncer(nodeService)
-	if nodeClient != nil {
-		go nodeService.StartHealthCheckLoop(cronCtx)
-		go nodeService.SyncAllUsersToConnectedNodes()
-	}
+	go nodeService.StartHealthCheckLoop(cronCtx)
+	go nodeService.SyncAllUsersToConnectedNodes()
 	nodeHandler := nodes.NewHandler(nodeService)
-	cpService := configprofiles.NewService(db)
+	cpService := configprofiles.NewService(db, nodeService)
 	cpService.SetSyncer(nodeService)
 	cpHandler := configprofiles.NewHandler(cpService)
 	subHandler := subscription.NewHandler(db, cfg.SubPublicDomain)
@@ -245,9 +243,11 @@ func main() {
 		protected.Post("/api/config-profiles", cpHandler.CreateConfigProfile)
 		protected.Get("/api/config-profiles/{uuid}", cpHandler.GetConfigProfile)
 		protected.Patch("/api/config-profiles", cpHandler.UpdateConfigProfile)
+		protected.Patch("/api/config-profiles/{uuid}", cpHandler.UpdateConfigProfile)
 		protected.Delete("/api/config-profiles/{uuid}", cpHandler.DeleteConfigProfile)
 		protected.Post("/api/config-profiles/actions/reorder", cpHandler.ReorderConfigProfiles)
 		protected.Get("/api/config-profiles/{uuid}/inbounds", cpHandler.GetProfileInbounds)
+		protected.Get("/api/config-profiles/{uuid}/computed-config", cpHandler.GetComputedConfig)
 		protected.Get("/api/config-profiles/{uuid}/computed-config", cpHandler.GetComputedConfig)
 
 		protected.Get("/api/internal-squads", squadsHandler.GetInternalSquads)

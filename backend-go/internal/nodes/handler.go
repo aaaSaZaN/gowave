@@ -266,6 +266,11 @@ func (h *Handler) GetNodes(w http.ResponseWriter, r *http.Request) {
 
 	resp := make([]map[string]interface{}, 0, len(nodesList))
 	for _, n := range nodesList {
+		metrics := h.service.GetNodeMetrics(n.UUID)
+		if (metrics == nil || metrics.Versions == nil) && !n.IsDisabled {
+			nodeCopy := n
+			go h.service.CheckNodeHealth(&nodeCopy)
+		}
 		resp = append(resp, formatNodeResponse(h.service, &n))
 	}
 
@@ -325,6 +330,11 @@ func (h *Handler) GetNode(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]interface{}{"message": "Node not found"})
 		return
+	}
+
+	metrics := h.service.GetNodeMetrics(node.UUID)
+	if (metrics == nil || metrics.Versions == nil) && !node.IsDisabled {
+		h.service.CheckNodeHealth(node)
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -500,9 +510,26 @@ func (h *Handler) ResetTraffic(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) RestartNode(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	uuidParam := chi.URLParam(r, "uuid")
-	if node, err := h.service.GetByUUID(uuidParam); err == nil {
-		go h.service.StartNode(node, true)
+	node, err := h.service.GetByUUID(uuidParam)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]interface{}{"message": "Node not found"})
+		return
 	}
+
+	ok, startErr := h.service.StartNode(node, true)
+	if !ok || startErr != nil {
+		msg := "Failed to restart node"
+		if startErr != nil {
+			msg = startErr.Error()
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": msg,
+		})
+		return
+	}
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"response": map[string]interface{}{
 			"success": true,
@@ -649,13 +676,14 @@ func (h *Handler) GetNodeLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.service.client == nil {
+	client := h.service.Client()
+	if client == nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{"message": "Node client not configured"})
 		return
 	}
 
-	logs, err := h.service.client.GetLogs(node, logType, lines)
+	logs, err := client.GetLogs(node, logType, lines)
 	if err != nil {
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{
@@ -689,13 +717,14 @@ func (h *Handler) GetNodeUpdates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.service.client == nil {
+	client := h.service.Client()
+	if client == nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{"message": "Node client not configured"})
 		return
 	}
 
-	updates, err := h.service.client.CheckUpdates(node, repo)
+	updates, err := client.CheckUpdates(node, repo)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{"message": err.Error()})
@@ -725,18 +754,24 @@ func (h *Handler) ApplyNodeUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.service.client == nil {
+	client := h.service.Client()
+	if client == nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{"message": "Node client not configured"})
 		return
 	}
 
-	result, err := h.service.client.ApplyUpdate(node, body)
+	result, err := client.ApplyUpdate(node, body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{"message": err.Error()})
 		return
 	}
+
+	go func(n database.Node) {
+		time.Sleep(2 * time.Second)
+		h.service.CheckNodeHealth(&n)
+	}(*node)
 
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"response": result,

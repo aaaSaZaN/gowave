@@ -3,6 +3,7 @@ package configprofiles
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -443,8 +444,12 @@ func (s *Service) UpdateProfile(uuidParam string, name *string, configRaw []byte
 		return nil, err
 	}
 
-	if len(sortedBytes) > 0 && s.syncer != nil {
-		go s.syncer.RestartNodesByProfile(profile.UUID)
+	if len(sortedBytes) > 0 {
+		if s.syncer != nil {
+			go s.syncer.RestartNodesByProfile(profile.UUID)
+		} else {
+			log.Printf("[CONFIG PROFILE] Warning: syncer is nil, skipping RestartNodesByProfile for %s", profile.UUID)
+		}
 	}
 
 	return s.GetProfileByUUID(profile.UUID)

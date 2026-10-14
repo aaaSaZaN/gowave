@@ -252,7 +252,33 @@ func (c *Client) StartXray(node *database.Node, payload map[string]interface{}) 
 	}
 	defer resp.Body.Close()
 
-	return resp.StatusCode == http.StatusOK, nil
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		if len(body) > 0 {
+			return false, fmt.Errorf("node returned status %d: %s", resp.StatusCode, string(body))
+		}
+		return false, fmt.Errorf("node returned status %d", resp.StatusCode)
+	}
+
+	var res struct {
+		Response struct {
+			IsStarted bool    `json:"isStarted"`
+			Error     *string `json:"error"`
+		} `json:"response"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		return true, nil
+	}
+
+	if !res.Response.IsStarted {
+		msg := "failed to start xray"
+		if res.Response.Error != nil && *res.Response.Error != "" {
+			msg = *res.Response.Error
+		}
+		return false, errors.New(msg)
+	}
+
+	return true, nil
 }
 
 func (c *Client) StopXray(node *database.Node) (bool, error) {

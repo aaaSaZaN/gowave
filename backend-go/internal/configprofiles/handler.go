@@ -1,8 +1,7 @@
 package configprofiles
 
 import (
-	"github.com/google/uuid"
-
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -11,6 +10,7 @@ import (
 	"remnawave-go/internal/database"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -211,7 +211,16 @@ func (h *Handler) CreateConfigProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	profile, err := h.service.CreateProfile(body.Name, body.Config)
+	var cfg []byte
+	if len(body.Config) > 0 {
+		cfg = body.Config
+		var unquoted string
+		if err := json.Unmarshal(cfg, &unquoted); err == nil {
+			cfg = []byte(unquoted)
+		}
+	}
+
+	profile, err := h.service.CreateProfile(body.Name, cfg)
 	if err != nil {
 		w.WriteHeader(http.StatusConflict)
 		json.NewEncoder(w).Encode(map[string]interface{}{"message": err.Error()})
@@ -252,17 +261,25 @@ func (h *Handler) UpdateConfigProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if body.UUID == "" {
+	uuidVal := body.UUID
+	if uuidVal == "" {
+		uuidVal = chi.URLParam(r, "uuid")
+	}
+	if uuidVal == "" {
 		http.Error(w, `{"message":"UUID is required"}`, http.StatusBadRequest)
 		return
 	}
 
 	var cfg []byte
-	if body.Config != nil {
+	if body.Config != nil && len(*body.Config) > 0 && !bytes.Equal(*body.Config, []byte("null")) {
 		cfg = *body.Config
+		var unquoted string
+		if err := json.Unmarshal(cfg, &unquoted); err == nil {
+			cfg = []byte(unquoted)
+		}
 	}
 
-	profile, err := h.service.UpdateProfile(body.UUID, body.Name, cfg)
+	profile, err := h.service.UpdateProfile(uuidVal, body.Name, cfg)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]interface{}{"message": err.Error()})

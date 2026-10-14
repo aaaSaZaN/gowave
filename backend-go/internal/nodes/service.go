@@ -3,6 +3,7 @@ package nodes
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -58,11 +59,92 @@ type Service struct {
 }
 
 func NewService(db *gorm.DB, client *Client) *Service {
-	return &Service{
+	s := &Service{
 		db:          db,
 		client:      client,
 		nodeMetrics: make(map[string]*NodeHotMetrics),
 	}
+	s.initMetricsFromDB()
+	return s
+}
+
+func (s *Service) initMetricsFromDB() {
+	var metas []database.NodeMeta
+	if err := s.db.Find(&metas).Error; err == nil {
+		s.metricsMu.Lock()
+		defer s.metricsMu.Unlock()
+		for _, m := range metas {
+			if m.Metadata == "" {
+				continue
+			}
+			var hot NodeHotMetrics
+			if err := json.Unmarshal([]byte(m.Metadata), &hot); err == nil {
+				var node database.Node
+				if err := s.db.Select("uuid").Where("id = ?", m.NodeID).First(&node).Error; err == nil && node.UUID != "" {
+					s.nodeMetrics[node.UUID] = &hot
+				}
+			}
+		}
+	}
+}
+
+func (s *Service) UpdateNodeMetrics(nodeUUID string, fn func(m *NodeHotMetrics)) {
+	s.metricsMu.Lock()
+	defer s.metricsMu.Unlock()
+	m := s.nodeMetrics[nodeUUID]
+	if m == nil {
+		m = &NodeHotMetrics{}
+		s.nodeMetrics[nodeUUID] = m
+	}
+	fn(m)
+}
+
+func (s *Service) Client() *Client {
+	s.metricsMu.RLock()
+	if s.client != nil {
+		s.metricsMu.RUnlock()
+		return s.client
+	}
+	s.metricsMu.RUnlock()
+
+	s.metricsMu.Lock()
+	defer s.metricsMu.Unlock()
+	if s.client != nil {
+		return s.client
+	}
+	var k database.Keygen
+	if err := s.db.Order("created_at asc").First(&k).Error; err == nil && len(k.CACert) > 0 {
+		if c, err := NewNodeClient([]byte(k.CACert), []byte(k.ClientCert), []byte(k.ClientKey), []byte(k.PrivKey), []byte(k.PubKey)); err == nil {
+			s.client = c
+			return c
+		}
+	}
+	return nil
+}
+
+func isSystemOrUnsecureProtocol(proto string) bool {
+	switch strings.ToLower(proto) {
+	case "dokodemo-door", "http", "mixed", "tun", "tunnel", "wireguard", "dns", "api", "metrics":
+		return true
+	default:
+		return false
+	}
+}
+
+func (s *Service) GetNodeActiveInboundTags(node *database.Node) []string {
+	var activeTags []string
+	s.db.Table("config_profile_inbounds_to_nodes").
+		Select("config_profile_inbounds.tag").
+		Joins("JOIN config_profile_inbounds ON config_profile_inbounds_to_nodes.config_profile_inbound_uuid = config_profile_inbounds.uuid").
+		Where("config_profile_inbounds_to_nodes.node_uuid = ?", node.UUID).
+		Pluck("tag", &activeTags)
+
+	if len(activeTags) == 0 && node.ActiveConfigProfileUUID != nil && *node.ActiveConfigProfileUUID != "" {
+		s.db.Table("config_profile_inbounds").
+			Where("profile_uuid = ?", *node.ActiveConfigProfileUUID).
+			Pluck("tag", &activeTags)
+	}
+	return activeTags
 }
 
 func (s *Service) GetNodeMetrics(nodeUUID string) *NodeHotMetrics {
@@ -100,11 +182,12 @@ type CreateNodeDTO struct {
 }
 
 func (s *Service) CheckNodeHealth(node *database.Node) (bool, string) {
-	if s.client == nil {
+	client := s.Client()
+	if client == nil {
 		return false, "node client not configured"
 	}
 	wasConnected := node.IsConnected
-	hr, err := s.client.CheckHealth(node)
+	hr, err := client.CheckHealth(node)
 	alive := hr.IsAlive
 	msg := hr.StatusMsg
 	now := time.Now().UTC()
@@ -122,47 +205,72 @@ func (s *Service) CheckNodeHealth(node *database.Node) (bool, string) {
 	s.db.Model(&database.Node{}).Where("uuid = ?", node.UUID).Updates(updates)
 	node.IsConnected = alive
 
-	metrics := s.GetNodeMetrics(node.UUID)
-	if metrics == nil {
-		metrics = &NodeHotMetrics{}
+	nodeVer := hr.NodeVersion
+	if nodeVer != "" {
+		if !strings.HasPrefix(nodeVer, "v") {
+			nodeVer = "v" + nodeVer
+		}
+		if hr.NodeType == "go" {
+			if !strings.Contains(nodeVer, "Go") {
+				nodeVer = nodeVer + " (Go)"
+			}
+		} else {
+			if !strings.Contains(nodeVer, "TS") {
+				nodeVer = nodeVer + " (TS)"
+			}
+		}
 	}
-	if !alive {
-		metrics.XrayUptime = 0
-		metrics.OnlineUsers = 0
-		s.SetNodeMetrics(node.UUID, metrics)
-		if !node.IsDisabled && err == nil {
-			go s.StartNode(node, false)
-		}
-	} else {
-		nodeVer := hr.NodeVersion
-		if nodeVer != "" {
-			if !strings.HasPrefix(nodeVer, "v") {
-				nodeVer = "v" + nodeVer
-			}
-			if hr.NodeType == "go" {
-				if !strings.Contains(nodeVer, "Go") {
-					nodeVer = nodeVer + " (Go)"
-				}
-			} else {
-				if !strings.Contains(nodeVer, "TS") {
-					nodeVer = nodeVer + " (TS)"
-				}
-			}
-		}
-		xrayVer := hr.XrayVersion
-		if xrayVer != "" && !strings.HasPrefix(xrayVer, "v") {
-			xrayVer = "v" + xrayVer
-		}
-		metrics.Versions = &NodeVersionsResponse{
+	xrayVer := hr.XrayVersion
+	if xrayVer != "" && !strings.HasPrefix(xrayVer, "v") {
+		xrayVer = "v" + xrayVer
+	}
+
+	var versionsResp *NodeVersionsResponse
+	if nodeVer != "" || xrayVer != "" || hr.NodeType != "" {
+		versionsResp = &NodeVersionsResponse{
 			Xray:     xrayVer,
 			Node:     nodeVer,
 			IsCustom: hr.IsCustomCore,
 			NodeType: hr.NodeType,
 		}
-		s.SetNodeMetrics(node.UUID, metrics)
+	}
 
+	var toSave *NodeHotMetrics
+	s.UpdateNodeMetrics(node.UUID, func(m *NodeHotMetrics) {
+		if !alive {
+			m.XrayUptime = 0
+			m.OnlineUsers = 0
+		}
+		if versionsResp != nil {
+			m.Versions = versionsResp
+		}
+		toSave = m
+	})
+
+	if versionsResp != nil && node.ID > 0 && toSave != nil {
+		if data, err := json.Marshal(toSave); err == nil {
+			s.db.Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "node_id"}},
+				DoUpdates: clause.AssignmentColumns([]string{"metadata"}),
+			}).Create(&database.NodeMeta{
+				NodeID:   node.ID,
+				Metadata: string(data),
+			})
+		}
+	}
+
+	if !alive {
+		if !node.IsDisabled && err == nil {
+			go s.StartNode(node, false)
+		}
+	} else {
 		// If node reconnected or Xray freshly started, ensure all users are synced
-		if !wasConnected || (metrics.XrayUptime > 0 && metrics.XrayUptime < 35) {
+		m := s.GetNodeMetrics(node.UUID)
+		uptime := int64(0)
+		if m != nil {
+			uptime = m.XrayUptime
+		}
+		if !wasConnected || (uptime > 0 && uptime < 35) {
 			nodeCopy := *node
 			go s.SyncAllUsersToNode(&nodeCopy)
 		}
@@ -172,15 +280,57 @@ func (s *Service) CheckNodeHealth(node *database.Node) (bool, string) {
 }
 
 func (s *Service) StartNode(node *database.Node, force bool) (bool, error) {
-	if s.client == nil {
-		return false, nil
+	client := s.Client()
+	if client == nil {
+		return false, errors.New("node client not configured")
 	}
 
+	if node.IsDisabled {
+		return false, errors.New("node is disabled")
+	}
+
+	s.db.Model(&database.Node{}).Where("uuid = ?", node.UUID).Update("is_connecting", true)
+
 	configMap := map[string]interface{}{}
+	profileUUID := ""
 	if node.ActiveConfigProfileUUID != nil && *node.ActiveConfigProfileUUID != "" {
+		profileUUID = *node.ActiveConfigProfileUUID
+	} else {
+		s.db.Table("config_profile_inbounds_to_nodes").
+			Select("config_profile_inbounds.profile_uuid").
+			Joins("JOIN config_profile_inbounds ON config_profile_inbounds_to_nodes.config_profile_inbound_uuid = config_profile_inbounds.uuid").
+			Where("config_profile_inbounds_to_nodes.node_uuid = ?", node.UUID).
+			Limit(1).
+			Pluck("profile_uuid", &profileUUID)
+	}
+
+	if profileUUID != "" {
 		var cp database.ConfigProfile
-		if err := s.db.Where("uuid = ?", *node.ActiveConfigProfileUUID).First(&cp).Error; err == nil {
+		if err := s.db.Where("uuid = ?", profileUUID).First(&cp).Error; err == nil {
 			_ = json.Unmarshal([]byte(cp.Config), &configMap)
+		}
+	}
+
+	activeTags := s.GetNodeActiveInboundTags(node)
+	if len(activeTags) > 0 {
+		activeTagMap := make(map[string]bool, len(activeTags))
+		for _, t := range activeTags {
+			activeTagMap[t] = true
+		}
+		if rawInbounds, ok := configMap["inbounds"].([]interface{}); ok {
+			filtered := make([]interface{}, 0, len(rawInbounds))
+			for _, item := range rawInbounds {
+				if ib, ok := item.(map[string]interface{}); ok {
+					tag, _ := ib["tag"].(string)
+					protocol, _ := ib["protocol"].(string)
+					if activeTagMap[tag] || isSystemOrUnsecureProtocol(protocol) {
+						filtered = append(filtered, ib)
+					}
+				} else {
+					filtered = append(filtered, item)
+				}
+			}
+			configMap["inbounds"] = filtered
 		}
 	}
 
@@ -220,28 +370,37 @@ func (s *Service) StartNode(node *database.Node, force bool) (bool, error) {
 					"config": pluginCfg,
 				},
 			}
-			_, _ = s.client.SyncPlugin(node, syncPayload)
+			_, _ = client.SyncPlugin(node, syncPayload)
 		}
 	}
 
-	ok, err := s.client.StartXray(node, payload)
+	ok, err := client.StartXray(node, payload)
 	now := time.Now().UTC()
 	updates := map[string]interface{}{
-		"is_connected":       ok,
-		"last_status_change": &now,
+		"is_connected":        ok,
+		"is_connecting":       false,
+		"last_status_change":  &now,
+		"last_status_message": nil,
 	}
 	if err != nil {
 		msg := err.Error()
 		updates["last_status_message"] = &msg
-	} else if ok {
-		updates["last_status_message"] = nil
 	}
 	s.db.Model(&database.Node{}).Where("uuid = ?", node.UUID).Updates(updates)
+
+	if !ok || err != nil {
+		s.UpdateNodeMetrics(node.UUID, func(m *NodeHotMetrics) {
+			m.XrayUptime = 0
+			m.OnlineUsers = 0
+		})
+	}
 
 	if ok {
 		nodeCopy := *node
 		nodeCopy.IsConnected = true
+		nodeCopy.IsConnecting = false
 		go func(n database.Node) {
+			s.CheckNodeHealth(&n)
 			time.Sleep(1 * time.Second)
 			s.SyncAllUsersToNode(&n)
 		}(nodeCopy)
@@ -251,21 +410,34 @@ func (s *Service) StartNode(node *database.Node, force bool) (bool, error) {
 }
 
 func (s *Service) RestartNodesByProfile(profileUUID string) {
-	if s.client == nil || profileUUID == "" {
+	client := s.Client()
+	if client == nil || profileUUID == "" {
 		return
 	}
 	var nodesList []database.Node
-	if err := s.db.Where("active_config_profile_uuid = ? AND is_disabled = ?", profileUUID, false).Find(&nodesList).Error; err != nil {
+	err := s.db.Where(
+		"(is_disabled = ? OR is_disabled IS NULL) AND (active_config_profile_uuid = ? OR uuid IN ("+
+			"SELECT cpin.node_uuid FROM config_profile_inbounds_to_nodes cpin "+
+			"JOIN config_profile_inbounds cpi ON cpi.uuid = cpin.config_profile_inbound_uuid "+
+			"WHERE cpi.profile_uuid = ?))",
+		false, profileUUID, profileUUID,
+	).Find(&nodesList).Error
+	if err != nil {
+		log.Printf("[NODES] RestartNodesByProfile query error: %v", err)
 		return
 	}
 	for i := range nodesList {
 		node := nodesList[i]
+		if node.ActiveConfigProfileUUID == nil || *node.ActiveConfigProfileUUID == "" {
+			node.ActiveConfigProfileUUID = &profileUUID
+		}
 		go s.StartNode(&node, true)
 	}
 }
 
 func (s *Service) PollNodeStats(node *database.Node) {
-	if s.client == nil || !node.IsConnected {
+	client := s.Client()
+	if client == nil || !node.IsConnected {
 		return
 	}
 
@@ -279,7 +451,7 @@ func (s *Service) PollNodeStats(node *database.Node) {
 	}
 
 	// 1. Fetch system stats
-	sysStats, err := s.client.GetSystemStats(node)
+	sysStats, err := client.GetSystemStats(node)
 	if err == nil && sysStats != nil {
 		metrics.System = sysStats
 		if sysStats.XrayInfo != nil {
@@ -289,9 +461,9 @@ func (s *Service) PollNodeStats(node *database.Node) {
 
 	// 2. Fetch users stats (traffic delta)
 	now := time.Now().UTC()
-	usersTraffic, err := s.client.GetUsersStats(node, true)
+	usersTraffic, err := client.GetUsersStats(node, true)
+	activeCount := 0
 	if err == nil {
-		activeCount := 0
 
 		for _, ut := range usersTraffic {
 			delta := ut.Uplink + ut.Downlink
@@ -348,7 +520,7 @@ func (s *Service) PollNodeStats(node *database.Node) {
 	}
 
 	// 3. Fetch combined stats (outbounds / inbounds) for node usage history
-	combinedStats, err := s.client.GetCombinedStats(node, true)
+	combinedStats, err := client.GetCombinedStats(node, true)
 	var nodeDownlink, nodeUplink int64
 	if err == nil && combinedStats != nil {
 		for _, ob := range combinedStats.Outbounds {
@@ -405,10 +577,11 @@ func (s *Service) PollNodeStats(node *database.Node) {
 	}
 
 	// 4. If online users is still 0, check active IP sessions for accuracy
-	if metrics.OnlineUsers == 0 {
-		sessions, err := s.client.GetUsersIpList(node)
+	onlineUsers := activeCount
+	if onlineUsers == 0 {
+		sessions, err := client.GetUsersIpList(node)
 		if err == nil && len(sessions) > 0 {
-			metrics.OnlineUsers = len(sessions)
+			onlineUsers = len(sessions)
 			now := time.Now().UTC()
 			for _, sess := range sessions {
 				if len(sess.IPs) > 0 {
@@ -423,12 +596,22 @@ func (s *Service) PollNodeStats(node *database.Node) {
 		}
 	}
 
-	metrics.LastSeen = time.Now()
-	s.SetNodeMetrics(node.UUID, metrics)
+	s.UpdateNodeMetrics(node.UUID, func(m *NodeHotMetrics) {
+		if sysStats != nil {
+			m.System = sysStats
+			if sysStats.XrayInfo != nil {
+				m.XrayUptime = sysStats.XrayInfo.Uptime
+			}
+		}
+		if len(usersTraffic) > 0 || onlineUsers > 0 {
+			m.OnlineUsers = onlineUsers
+		}
+		m.LastSeen = time.Now()
+	})
 }
 
 func (s *Service) StartHealthCheckLoop(ctx context.Context) {
-	healthTicker := time.NewTicker(30 * time.Second)
+	healthTicker := time.NewTicker(15 * time.Second)
 	statsTicker := time.NewTicker(5 * time.Second)
 	defer healthTicker.Stop()
 	defer statsTicker.Stop()
@@ -437,8 +620,11 @@ func (s *Service) StartHealthCheckLoop(ctx context.Context) {
 	var nodes []database.Node
 	if err := s.db.Where("is_disabled = ?", false).Find(&nodes).Error; err == nil {
 		for _, n := range nodes {
-			s.CheckNodeHealth(&n)
-			s.PollNodeStats(&n)
+			nodeCopy := n
+			go func(nc database.Node) {
+				s.CheckNodeHealth(&nc)
+				s.PollNodeStats(&nc)
+			}(nodeCopy)
 		}
 	}
 
@@ -532,7 +718,7 @@ func (s *Service) Create(dto CreateNodeDTO) (*database.Node, error) {
 		return nil, err
 	}
 
-	if s.client != nil {
+	if s.Client() != nil {
 		go s.CheckNodeHealth(node)
 	}
 
@@ -728,26 +914,13 @@ func (s *Service) GetUserResolvedInbounds(userID uint64) ([]InboundInfo, error) 
 }
 
 func (s *Service) syncUserToSingleNode(node *database.Node, user *database.User, prevVlessUUID *string, inbounds []InboundInfo) {
-	if s.client == nil || user == nil || node == nil {
+	client := s.Client()
+	if client == nil || user == nil || node == nil {
 		return
 	}
 	isActive := strings.ToUpper(user.Status) == "ACTIVE"
 
-	var activeTags []string
-	s.db.Table("config_profile_inbounds_to_nodes").
-		Select("config_profile_inbounds.tag").
-		Joins("JOIN config_profile_inbounds ON config_profile_inbounds_to_nodes.config_profile_inbound_uuid = config_profile_inbounds.uuid").
-		Where("config_profile_inbounds_to_nodes.node_uuid = ?", node.UUID).
-		Pluck("tag", &activeTags)
-	// Older node records have no explicit per-node inbound links. The API response
-	// already treats this as "use the active profile", so user synchronization
-	// must resolve tags the same way.
-	if len(activeTags) == 0 && node.ActiveConfigProfileUUID != nil && *node.ActiveConfigProfileUUID != "" {
-		s.db.Table("config_profile_inbounds").
-			Where("profile_uuid = ?", *node.ActiveConfigProfileUUID).
-			Pluck("tag", &activeTags)
-	}
-
+	activeTags := s.GetNodeActiveInboundTags(node)
 	tagSet := make(map[string]bool)
 	for _, t := range activeTags {
 		tagSet[t] = true
@@ -808,7 +981,7 @@ func (s *Service) syncUserToSingleNode(node *database.Node, user *database.User,
 			Data: matchedData,
 		}
 		go func(n database.Node, r AddUserRequestPayload) {
-			if err := s.client.AddUser(&n, r); err != nil {
+			if err := client.AddUser(&n, r); err != nil {
 				log.Printf("[NODES] Failed to sync user id=%d to node %q: %v", user.ID, n.Name, err)
 			}
 		}(*node, req)
@@ -820,7 +993,7 @@ func (s *Service) syncUserToSingleNode(node *database.Node, user *database.User,
 			},
 		}
 		go func(n database.Node, r RemoveUserRequestPayload) {
-			if err := s.client.RemoveUser(&n, r); err != nil {
+			if err := client.RemoveUser(&n, r); err != nil {
 				log.Printf("[NODES] Failed to remove user id=%d from node %q: %v", user.ID, n.Name, err)
 			}
 		}(*node, req)
@@ -828,7 +1001,7 @@ func (s *Service) syncUserToSingleNode(node *database.Node, user *database.User,
 }
 
 func (s *Service) SyncAllUsersToNode(node *database.Node) {
-	if s.client == nil || node == nil {
+	if s.Client() == nil || node == nil {
 		return
 	}
 	var users []database.User
@@ -846,7 +1019,7 @@ func (s *Service) SyncAllUsersToNode(node *database.Node) {
 }
 
 func (s *Service) SyncUserToNodes(user *database.User, prevVlessUUID *string) {
-	if s.client == nil || user == nil {
+	if s.Client() == nil || user == nil {
 		return
 	}
 
@@ -867,7 +1040,8 @@ func (s *Service) SyncUserToNodes(user *database.User, prevVlessUUID *string) {
 }
 
 func (s *Service) RemoveUserFromNodes(user *database.User) {
-	if s.client == nil || user == nil {
+	client := s.Client()
+	if client == nil || user == nil {
 		return
 	}
 
@@ -884,7 +1058,7 @@ func (s *Service) RemoveUserFromNodes(user *database.User) {
 	}
 	for _, node := range connectedNodes {
 		go func(n database.Node, r RemoveUserRequestPayload) {
-			_ = s.client.RemoveUser(&n, r)
+			_ = client.RemoveUser(&n, r)
 		}(node, req)
 	}
 }
