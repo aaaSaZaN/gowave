@@ -7,12 +7,15 @@ import (
 	"fmt"
 	"log"
 	"math"
+	prom "remnawave-go/internal/metrics"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"remnawave-go/internal/configrender"
 	"remnawave-go/internal/database"
+	"remnawave-go/internal/jobs"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -21,7 +24,7 @@ import (
 
 func NanoToMultiplier(v int64) float64 {
 	if v == 0 {
-		return 1.0
+		return 0
 	}
 	if v < 1000000 {
 		return float64(v)
@@ -31,7 +34,7 @@ func NanoToMultiplier(v int64) float64 {
 
 func MultiplierToNano(v float64) int64 {
 	if v <= 0 {
-		return 1000000000
+		return 0
 	}
 	return int64(math.Round(v * 1e9))
 }
@@ -56,6 +59,9 @@ type Service struct {
 	client      *Client
 	metricsMu   sync.RWMutex
 	nodeMetrics map[string]*NodeHotMetrics
+	pollMu      sync.Mutex
+	polling     map[string]bool
+	usage       UsageOptions
 }
 
 func NewService(db *gorm.DB, client *Client) *Service {
@@ -63,6 +69,7 @@ func NewService(db *gorm.DB, client *Client) *Service {
 		db:          db,
 		client:      client,
 		nodeMetrics: make(map[string]*NodeHotMetrics),
+		polling:     make(map[string]bool),
 	}
 	s.initMetricsFromDB()
 	return s
@@ -122,6 +129,15 @@ func (s *Service) Client() *Client {
 	return nil
 }
 
+// ResetClient drops the cached mTLS client so the next call reloads keys from
+// the database, for example after a backup restore replaced the keygen row.
+func (s *Service) ResetClient() {
+	s.metricsMu.Lock()
+	s.client = nil
+	s.nodeMetrics = make(map[string]*NodeHotMetrics)
+	s.metricsMu.Unlock()
+}
+
 func isSystemOrUnsecureProtocol(proto string) bool {
 	switch strings.ToLower(proto) {
 	case "dokodemo-door", "http", "mixed", "tun", "tunnel", "wireguard", "dns", "api", "metrics":
@@ -150,13 +166,23 @@ func (s *Service) GetNodeActiveInboundTags(node *database.Node) []string {
 func (s *Service) GetNodeMetrics(nodeUUID string) *NodeHotMetrics {
 	s.metricsMu.RLock()
 	defer s.metricsMu.RUnlock()
-	return s.nodeMetrics[nodeUUID]
+	return cloneMetrics(s.nodeMetrics[nodeUUID])
+}
+
+func cloneMetrics(m *NodeHotMetrics) *NodeHotMetrics {
+	if m == nil {
+		return nil
+	}
+	data, _ := json.Marshal(m)
+	var snapshot NodeHotMetrics
+	_ = json.Unmarshal(data, &snapshot)
+	return &snapshot
 }
 
 func (s *Service) SetNodeMetrics(nodeUUID string, m *NodeHotMetrics) {
 	s.metricsMu.Lock()
 	defer s.metricsMu.Unlock()
-	s.nodeMetrics[nodeUUID] = m
+	s.nodeMetrics[nodeUUID] = cloneMetrics(m)
 }
 
 func (s *Service) DB() *gorm.DB {
@@ -175,6 +201,13 @@ type CreateNodeDTO struct {
 	ActivePluginUUID          *string  `json:"activePluginUuid"`
 	ProviderUUID              *string  `json:"providerUuid"`
 	Note                      *string  `json:"note"`
+	ProxyURL                  *string  `json:"proxyUrl"`
+	IsTrafficTrackingActive   bool     `json:"isTrafficTrackingActive"`
+	NotifyPercent             *int     `json:"notifyPercent"`
+	TrafficResetDay           *int     `json:"trafficResetDay"`
+	Tags                      []string `json:"tags"`
+	IntegrationUUIDs          []string `json:"integrationUuids"`
+	IPs                       []NodeIP `json:"ips"`
 	ConfigProfile             *struct {
 		ActiveConfigProfileUUID string   `json:"activeConfigProfileUuid"`
 		ActiveInbounds          []string `json:"activeInbounds"`
@@ -202,7 +235,31 @@ func (s *Service) CheckNodeHealth(node *database.Node) (bool, string) {
 	} else if !alive {
 		updates["last_status_message"] = &msg
 	}
-	s.db.Model(&database.Node{}).Where("uuid = ?", node.UUID).Updates(updates)
+	var stored database.Node
+	if err := s.db.Select("is_connected").Where("uuid = ?", node.UUID).First(&stored).Error; err == nil {
+		wasConnected = stored.IsConnected
+	}
+	// Only a state flip notifies, so repeated failed checks stay quiet.
+	changed := s.db.Model(&database.Node{}).Where("uuid = ? AND is_disabled = ? AND is_connected = ?", node.UUID, false, wasConnected).Updates(updates)
+	if changed.Error != nil {
+		return false, "node disabled or unavailable"
+	}
+	if changed.RowsAffected == 1 && wasConnected != alive {
+		event := "node.connection_restored"
+		if !alive {
+			event = "node.connection_lost"
+		}
+		if err := s.emitNodeByUUID(s.db, node.UUID, event); err != nil {
+			log.Printf("[NODES] %s notification: %v", event, err)
+		}
+	}
+	if changed.RowsAffected != 1 {
+		// Another check flipped the state first, or the node is disabled.
+		retry := s.db.Model(&database.Node{}).Where("uuid = ? AND is_disabled = ?", node.UUID, false).Updates(updates)
+		if retry.Error != nil || retry.RowsAffected != 1 {
+			return false, "node disabled or unavailable"
+		}
+	}
 	node.IsConnected = alive
 
 	nodeVer := hr.NodeVersion
@@ -244,7 +301,7 @@ func (s *Service) CheckNodeHealth(node *database.Node) (bool, string) {
 		if versionsResp != nil {
 			m.Versions = versionsResp
 		}
-		toSave = m
+		toSave = cloneMetrics(m)
 	})
 
 	if versionsResp != nil && node.ID > 0 && toSave != nil {
@@ -261,7 +318,10 @@ func (s *Service) CheckNodeHealth(node *database.Node) (bool, string) {
 
 	if !alive {
 		if !node.IsDisabled && err == nil {
-			go s.StartNode(node, false)
+			revision := uint64(time.Now().Unix() / 60)
+			if err := jobs.Enqueue(s.db, "node-start", node.UUID, node.UUID, revision, map[string]string{"uuid": node.UUID}); err != nil {
+				log.Printf("[NODES] enqueue start for %s: %v", node.UUID, err)
+			}
 		}
 	} else {
 		// If node reconnected or Xray freshly started, ensure all users are synced
@@ -290,6 +350,12 @@ func (s *Service) StartNode(node *database.Node, force bool) (bool, error) {
 	}
 
 	s.db.Model(&database.Node{}).Where("uuid = ?", node.UUID).Update("is_connecting", true)
+	startupSuccessful := false
+	defer func() {
+		if !startupSuccessful {
+			s.db.Model(&database.Node{}).Where("uuid = ?", node.UUID).Update("is_connecting", false)
+		}
+	}()
 
 	configMap := map[string]interface{}{}
 	profileUUID := ""
@@ -307,7 +373,11 @@ func (s *Service) StartNode(node *database.Node, force bool) (bool, error) {
 	if profileUUID != "" {
 		var cp database.ConfigProfile
 		if err := s.db.Where("uuid = ?", profileUUID).First(&cp).Error; err == nil {
-			_ = json.Unmarshal([]byte(cp.Config), &configMap)
+			expanded, err := configrender.Expand(s.db, cp.Config)
+			if err != nil {
+				return false, err
+			}
+			configMap = expanded
 		}
 	}
 
@@ -339,14 +409,16 @@ func (s *Service) StartNode(node *database.Node, force bool) (bool, error) {
 		tags = []string(node.Tags)
 	}
 
+	hashes, err := s.populateConfigUsers(configMap, profileUUID)
+	if err != nil {
+		return false, err
+	}
+
 	payload := map[string]interface{}{
 		"xrayConfig": configMap,
 		"internals": map[string]interface{}{
 			"forceRestart": force,
-			"hashes": map[string]interface{}{
-				"emptyConfig": "hash",
-				"inbounds":    []map[string]interface{}{},
-			},
+			"hashes":       hashes,
 			"metadata": map[string]interface{}{
 				"uuid":        node.UUID,
 				"name":        node.Name,
@@ -357,12 +429,30 @@ func (s *Service) StartNode(node *database.Node, force bool) (bool, error) {
 		},
 	}
 
+	integrations := map[string]interface{}{}
+	for _, id := range node.IntegrationUUIDs {
+		var record database.Integration
+		if err := s.db.Where("uuid=?", id).First(&record).Error; err != nil {
+			return false, err
+		}
+		var config map[string]interface{}
+		if err := json.Unmarshal([]byte(record.Config), &config); err != nil {
+			return false, err
+		}
+		for key, value := range config {
+			integrations[key] = value
+		}
+	}
+	payload["internals"].(map[string]interface{})["integrations"] = integrations
+
 	// Sync active plugin if configured
 	if node.ActivePluginUUID != nil && *node.ActivePluginUUID != "" {
 		var np database.NodePlugin
 		if err := s.db.Where("uuid = ?", *node.ActivePluginUUID).First(&np).Error; err == nil {
-			var pluginCfg map[string]interface{}
-			_ = json.Unmarshal([]byte(np.PluginConfig), &pluginCfg)
+			pluginCfg, err := configrender.Plugin(s.db, np.PluginConfig)
+			if err != nil {
+				return false, err
+			}
 			syncPayload := map[string]interface{}{
 				"plugin": map[string]interface{}{
 					"uuid":   np.UUID,
@@ -370,10 +460,16 @@ func (s *Service) StartNode(node *database.Node, force bool) (bool, error) {
 					"config": pluginCfg,
 				},
 			}
-			_, _ = client.SyncPlugin(node, syncPayload)
+			if ok, err := client.SyncPlugin(node, syncPayload); err != nil || !ok {
+				if err == nil {
+					err = fmt.Errorf("plugin synchronization rejected")
+				}
+				return false, err
+			}
 		}
 	}
 
+	startupSuccessful = true
 	ok, err := client.StartXray(node, payload)
 	now := time.Now().UTC()
 	updates := map[string]interface{}{
@@ -431,11 +527,21 @@ func (s *Service) RestartNodesByProfile(profileUUID string) {
 		if node.ActiveConfigProfileUUID == nil || *node.ActiveConfigProfileUUID == "" {
 			node.ActiveConfigProfileUUID = &profileUUID
 		}
-		go s.StartNode(&node, true)
+		if err := jobs.EnqueueNode(s.db, node.UUID, "node-start"); err != nil {
+			log.Printf("[NODES] enqueue restart: %v", err)
+		}
 	}
 }
 
 func (s *Service) PollNodeStats(node *database.Node) {
+	s.pollMu.Lock()
+	if s.polling[node.UUID] {
+		s.pollMu.Unlock()
+		return
+	}
+	s.polling[node.UUID] = true
+	s.pollMu.Unlock()
+	defer func() { s.pollMu.Lock(); delete(s.polling, node.UUID); s.pollMu.Unlock() }()
 	client := s.Client()
 	if client == nil || !node.IsConnected {
 		return
@@ -457,144 +563,65 @@ func (s *Service) PollNodeStats(node *database.Node) {
 		if sysStats.XrayInfo != nil {
 			metrics.XrayUptime = sysStats.XrayInfo.Uptime
 		}
+		if sysStats.Plugins != nil && sysStats.Plugins.TorrentBlocker != nil && sysStats.Plugins.TorrentBlocker.ReportsCount > 0 {
+			s.enqueueReportCollection(node, time.Now().UTC())
+		}
 	}
 
-	// 2. Fetch users stats (traffic delta)
+	// 2. Fetch users stats (traffic delta) and account it.
 	now := time.Now().UTC()
 	usersTraffic, err := client.GetUsersStats(node, true)
 	activeCount := 0
 	if err == nil {
-
-		for _, ut := range usersTraffic {
-			delta := ut.Uplink + ut.Downlink
-			if delta <= 0 {
-				continue
-			}
-			activeCount++
-
-			// Apply node consumption multiplier (stored as nano: 1.0 = 1,000,000,000)
-			mult := NanoToMultiplier(node.ConsumptionMultiplier)
-			if mult <= 0 {
-				mult = 1.0
-			}
-			incTraffic := uint64(float64(delta) * mult)
-
-			uid, err := strconv.ParseInt(ut.Username, 10, 64)
-			if err != nil || uid <= 0 {
-				continue
-			}
-
-			// Update user_traffic in database (ut.Username is the user ID string)
-			if err := s.db.Exec(`
-				UPDATE user_traffic
-				SET
-					used_traffic_bytes = used_traffic_bytes + ?,
-					lifetime_used_traffic_bytes = lifetime_used_traffic_bytes + ?,
-					online_at = ?,
-					first_connected_at = COALESCE(first_connected_at, ?),
-					last_connected_node_uuid = ?
-				WHERE id = ?
-			`, incTraffic, incTraffic, now, now, node.UUID, uid).Error; err != nil {
-				log.Printf("[NODE STATS] update user traffic node=%s user=%d: %v", node.UUID, uid, err)
-			}
-
-			// Record user traffic on this node in nodes_user_usage_history
-			day := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-			history := database.NodesUserUsageHistory{
-				NodeID: node.ID, UserID: uint64(uid), TotalBytes: uint64(delta), CreatedAt: day, UpdatedAt: now,
-			}
-			if err := s.db.Clauses(clause.OnConflict{
-				Columns: []clause.Column{{Name: "node_id"}, {Name: "created_at"}, {Name: "user_id"}},
-				DoUpdates: clause.Assignments(map[string]interface{}{
-					"total_bytes": gorm.Expr("total_bytes + excluded.total_bytes"),
-					"updated_at":  gorm.Expr("excluded.updated_at"),
-				}),
-			}).Create(&history).Error; err != nil {
-				log.Printf("[NODE STATS] upsert user usage history node=%s user=%d: %v", node.UUID, uid, err)
-			}
-		}
-
-		if len(usersTraffic) > 0 {
-			metrics.OnlineUsers = activeCount
-		}
+		activeCount = s.recordUserUsage(node, usersTraffic, now)
+		metrics.OnlineUsers = activeCount
 	}
 
-	// 3. Fetch combined stats (outbounds / inbounds) for node usage history
-	combinedStats, err := client.GetCombinedStats(node, true)
-	var nodeDownlink, nodeUplink int64
-	if err == nil && combinedStats != nil {
+	// 3. Node usage ports RecordNodeUsageQueueProcessor: outbound totals feed
+	// the hourly history and the node's traffic; nothing is recorded when
+	// they are zero. Inbound/outbound counters go to Prometheus.
+	if combinedStats, err := client.GetCombinedStats(node, true); err == nil && combinedStats != nil {
+		var nodeDownlink, nodeUplink int64
 		for _, ob := range combinedStats.Outbounds {
 			nodeDownlink += ob.Downlink
 			nodeUplink += ob.Uplink
 		}
-		// Fallback to inbounds if outbounds is 0
-		if nodeDownlink == 0 && nodeUplink == 0 {
+		if nodeTotal := nodeDownlink + nodeUplink; nodeTotal != 0 {
+			hour := now.Truncate(time.Hour)
+			history := database.NodesUsageHistory{
+				NodeUUID: node.UUID, DownloadBytes: uint64(nodeDownlink), UploadBytes: uint64(nodeUplink),
+				TotalBytes: uint64(nodeTotal), CreatedAt: hour, UpdatedAt: now,
+			}
+			if err := s.db.Clauses(clause.OnConflict{
+				Columns: []clause.Column{{Name: "node_uuid"}, {Name: "created_at"}},
+				DoUpdates: clause.Assignments(map[string]interface{}{
+					"download_bytes": gorm.Expr("download_bytes + excluded.download_bytes"),
+					"upload_bytes":   gorm.Expr("upload_bytes + excluded.upload_bytes"),
+					"total_bytes":    gorm.Expr("total_bytes + excluded.total_bytes"),
+					"updated_at":     gorm.Expr("excluded.updated_at"),
+				}),
+			}).Create(&history).Error; err != nil {
+				log.Printf("[NODE STATS] upsert node usage history node=%s: %v", node.UUID, err)
+			}
+
+			// Node traffic uses its own multiplier, independent of users'.
+			incNodeTraffic := multiplyConsumption(node.NodeConsumptionMultiplier, nodeTotal)
+			if err := s.db.Exec(`UPDATE nodes SET traffic_used_bytes = traffic_used_bytes + ? WHERE uuid = ?`, incNodeTraffic, node.UUID).Error; err != nil {
+				log.Printf("[NODE STATS] update node traffic node=%s: %v", node.UUID, err)
+			}
+
+			inbounds := make([]prom.NodeTraffic, 0, len(combinedStats.Inbounds))
 			for _, ib := range combinedStats.Inbounds {
-				nodeDownlink += ib.Downlink
-				nodeUplink += ib.Uplink
+				inbounds = append(inbounds, prom.NodeTraffic{Tag: ib.Inbound, Uplink: float64(ib.Uplink), Downlink: float64(ib.Downlink)})
 			}
-		}
-	}
-	// Fallback to sum of users traffic deltas if combinedStats returned 0 or failed
-	if nodeDownlink == 0 && nodeUplink == 0 && len(usersTraffic) > 0 {
-		for _, ut := range usersTraffic {
-			if ut.Downlink > 0 || ut.Uplink > 0 {
-				nodeDownlink += ut.Downlink
-				nodeUplink += ut.Uplink
+			outbounds := make([]prom.NodeTraffic, 0, len(combinedStats.Outbounds))
+			for _, ob := range combinedStats.Outbounds {
+				outbounds = append(outbounds, prom.NodeTraffic{Tag: ob.Outbound, Uplink: float64(ob.Uplink), Downlink: float64(ob.Downlink)})
 			}
+			prom.RecordNodeTraffic(node.UUID, inbounds, outbounds)
 		}
 	}
-
-	nodeTotal := nodeDownlink + nodeUplink
-	if nodeTotal > 0 {
-		// Record hourly node usage
-		hour := now.Truncate(time.Hour)
-		history := database.NodesUsageHistory{
-			NodeUUID: node.UUID, DownloadBytes: uint64(nodeDownlink), UploadBytes: uint64(nodeUplink),
-			TotalBytes: uint64(nodeTotal), CreatedAt: hour, UpdatedAt: now,
-		}
-		if err := s.db.Clauses(clause.OnConflict{
-			Columns: []clause.Column{{Name: "node_uuid"}, {Name: "created_at"}},
-			DoUpdates: clause.Assignments(map[string]interface{}{
-				"download_bytes": gorm.Expr("download_bytes + excluded.download_bytes"),
-				"upload_bytes":   gorm.Expr("upload_bytes + excluded.upload_bytes"),
-				"total_bytes":    gorm.Expr("total_bytes + excluded.total_bytes"),
-				"updated_at":     gorm.Expr("excluded.updated_at"),
-			}),
-		}).Create(&history).Error; err != nil {
-			log.Printf("[NODE STATS] upsert node usage history node=%s: %v", node.UUID, err)
-		}
-
-		// Increment node lifetime traffic with consumption multiplier
-		mult := NanoToMultiplier(node.ConsumptionMultiplier)
-		if mult <= 0 {
-			mult = 1.0
-		}
-		incNodeTraffic := int64(float64(nodeTotal) * mult)
-		if err := s.db.Exec(`UPDATE nodes SET traffic_used_bytes = traffic_used_bytes + ? WHERE uuid = ?`, incNodeTraffic, node.UUID).Error; err != nil {
-			log.Printf("[NODE STATS] update node traffic node=%s: %v", node.UUID, err)
-		}
-	}
-
-	// 4. If online users is still 0, check active IP sessions for accuracy
 	onlineUsers := activeCount
-	if onlineUsers == 0 {
-		sessions, err := client.GetUsersIpList(node)
-		if err == nil && len(sessions) > 0 {
-			onlineUsers = len(sessions)
-			now := time.Now().UTC()
-			for _, sess := range sessions {
-				if len(sess.IPs) > 0 {
-					s.db.Exec(`
-						UPDATE user_traffic
-						SET online_at = ?,
-						    last_connected_node_uuid = ?
-						WHERE id = ?
-					`, now, node.UUID, sess.UserID)
-				}
-			}
-		}
-	}
 
 	s.UpdateNodeMetrics(node.UUID, func(m *NodeHotMetrics) {
 		if sysStats != nil {
@@ -603,9 +630,7 @@ func (s *Service) PollNodeStats(node *database.Node) {
 				m.XrayUptime = sysStats.XrayInfo.Uptime
 			}
 		}
-		if len(usersTraffic) > 0 || onlineUsers > 0 {
-			m.OnlineUsers = onlineUsers
-		}
+		m.OnlineUsers = onlineUsers
 		m.LastSeen = time.Now()
 	})
 }
@@ -676,6 +701,32 @@ func (s *Service) Create(dto CreateNodeDTO) (*database.Node, error) {
 		ncm = *dto.NodeConsumptionMultiplier
 	}
 
+	notifyPercent, resetDay := 80, 1
+	if dto.NotifyPercent != nil {
+		if *dto.NotifyPercent < 0 || *dto.NotifyPercent > 100 {
+			return nil, fmt.Errorf("notifyPercent must be between 0 and 100")
+		}
+		notifyPercent = *dto.NotifyPercent
+	}
+	if dto.TrafficResetDay != nil {
+		if *dto.TrafficResetDay < 1 || *dto.TrafficResetDay > 31 {
+			return nil, fmt.Errorf("trafficResetDay must be between 1 and 31")
+		}
+		resetDay = *dto.TrafficResetDay
+	}
+	ips, err := encodeNodeIPs(dto.IPs)
+	if err != nil {
+		return nil, err
+	}
+	tags := database.StringArray(dto.Tags)
+	if tags == nil {
+		tags = database.StringArray{}
+	}
+	integrations := database.StringArray(dto.IntegrationUUIDs)
+	if integrations == nil {
+		integrations = database.StringArray{}
+	}
+
 	node := &database.Node{
 		UUID:                      uuid.NewString(),
 		Name:                      dto.Name,
@@ -692,11 +743,13 @@ func (s *Service) Create(dto CreateNodeDTO) (*database.Node, error) {
 		ViewPosition:              maxPos + 1,
 		ConsumptionMultiplier:     MultiplierToNano(cm),
 		NodeConsumptionMultiplier: MultiplierToNano(ncm),
-		TrafficResetDay:           1,
-		NotifyPercent:             80,
-		Tags:                      database.StringArray{},
-		IntegrationUUIDs:          database.StringArray{},
-		IPs:                       "[]",
+		ProxyURL:                  dto.ProxyURL,
+		IsTrafficTrackingActive:   dto.IsTrafficTrackingActive,
+		TrafficResetDay:           resetDay,
+		NotifyPercent:             notifyPercent,
+		Tags:                      tags,
+		IntegrationUUIDs:          integrations,
+		IPs:                       ips,
 		CreatedAt:                 time.Now().UTC(),
 		UpdatedAt:                 time.Now().UTC(),
 	}
@@ -713,7 +766,10 @@ func (s *Service) Create(dto CreateNodeDTO) (*database.Node, error) {
 		if profileUuid != nil {
 			profileID = *profileUuid
 		}
-		return createNodeInboundLinks(tx, node.UUID, profileID, activeInbounds)
+		if err := createNodeInboundLinks(tx, node.UUID, profileID, activeInbounds); err != nil {
+			return err
+		}
+		return s.emitNode(tx, node, "node.created")
 	}); err != nil {
 		return nil, err
 	}
@@ -742,7 +798,12 @@ func (s *Service) GetByUUID(uuid string) (*database.Node, error) {
 
 func (s *Service) Update(uuid string, updates map[string]interface{}) (*database.Node, error) {
 	updates["updated_at"] = time.Now().UTC()
-	err := s.db.Model(&database.Node{}).Where("uuid = ?", uuid).Updates(updates).Error
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&database.Node{}).Where("uuid = ?", uuid).Updates(updates).Error; err != nil {
+			return err
+		}
+		return s.emitNodeByUUID(tx, uuid, "node.modified")
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -755,7 +816,7 @@ func (s *Service) UpdateWithConfigProfile(uuid string, updates map[string]interf
 		if err := updateNodeWithProfile(tx, uuid, updates, changeProfile, profileUUID, inboundUUIDs); err != nil {
 			return err
 		}
-		return nil
+		return s.emitNodeByUUID(tx, uuid, "node.modified")
 	})
 	if err != nil {
 		return nil, err
@@ -857,8 +918,23 @@ func createNodeInboundLinks(tx *gorm.DB, nodeUUID, profileID string, inboundUUID
 	return tx.Create(&links).Error
 }
 
+// Delete removes a node, queues an Xray stop for the agent and notifies.
 func (s *Service) Delete(uuid string) error {
-	return s.db.Where("uuid = ?", uuid).Delete(&database.Node{}).Error
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		var node database.Node
+		if err := tx.Where("uuid = ?", uuid).First(&node).Error; err != nil {
+			return err
+		}
+		if err := s.emitNode(tx, &node, "node.deleted"); err != nil {
+			return err
+		}
+		// The tombstone carries the address so the agent is stopped even
+		// though the row is gone.
+		if err := jobs.Enqueue(tx, "node-retire", node.UUID, node.UUID, uint64(time.Now().UnixNano()), node); err != nil {
+			return err
+		}
+		return tx.Where("uuid = ?", uuid).Delete(&database.Node{}).Error
+	})
 }
 
 type InboundInfo struct {
@@ -913,10 +989,10 @@ func (s *Service) GetUserResolvedInbounds(userID uint64) ([]InboundInfo, error) 
 	return inbounds, err
 }
 
-func (s *Service) syncUserToSingleNode(node *database.Node, user *database.User, prevVlessUUID *string, inbounds []InboundInfo) {
+func (s *Service) syncUserToSingleNode(node *database.Node, user *database.User, prevVlessUUID *string, inbounds []InboundInfo) error {
 	client := s.Client()
 	if client == nil || user == nil || node == nil {
-		return
+		return errors.New("node client unavailable")
 	}
 	isActive := strings.ToUpper(user.Status) == "ACTIVE"
 
@@ -980,11 +1056,7 @@ func (s *Service) syncUserToSingleNode(node *database.Node, user *database.User,
 			},
 			Data: matchedData,
 		}
-		go func(n database.Node, r AddUserRequestPayload) {
-			if err := client.AddUser(&n, r); err != nil {
-				log.Printf("[NODES] Failed to sync user id=%d to node %q: %v", user.ID, n.Name, err)
-			}
-		}(*node, req)
+		return client.AddUser(node, req)
 	} else {
 		req := RemoveUserRequestPayload{
 			Username: strconv.FormatUint(user.ID, 10),
@@ -992,83 +1064,194 @@ func (s *Service) syncUserToSingleNode(node *database.Node, user *database.User,
 				VlessUUID: user.VlessUUID,
 			},
 		}
-		go func(n database.Node, r RemoveUserRequestPayload) {
-			if err := client.RemoveUser(&n, r); err != nil {
-				log.Printf("[NODES] Failed to remove user id=%d from node %q: %v", user.ID, n.Name, err)
-			}
-		}(*node, req)
+		return client.RemoveUser(node, req)
 	}
 }
 
+// SyncAllUsersToNode schedules a fresh reconciliation after a node restart.
 func (s *Service) SyncAllUsersToNode(node *database.Node) {
-	if s.Client() == nil || node == nil {
+	if node == nil {
 		return
 	}
 	var users []database.User
 	if err := s.db.Where("status = ?", "ACTIVE").Find(&users).Error; err != nil {
+		log.Printf("[NODES] reconcile: %v", err)
 		return
 	}
-	for i := range users {
-		inbounds, err := s.GetUserResolvedInbounds(users[i].ID)
-		if err != nil {
-			log.Printf("[NODES] Failed to resolve inbounds for user id=%d: %v", users[i].ID, err)
-			continue
+	revision := uint64(time.Now().UnixNano())
+	if err := s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&database.Job{}).Where("target = ? AND kind = ? AND state = ?", node.UUID, "user-sync", "failed").Updates(map[string]interface{}{"state": "pending", "attempts": 0, "available_at": time.Now().UTC()}).Error; err != nil {
+			return err
 		}
-		s.syncUserToSingleNode(node, &users[i], nil, inbounds)
+		for _, user := range users {
+			if err := jobs.Enqueue(tx, "user-sync", strconv.FormatUint(user.ID, 10), node.UUID, revision, jobs.UserSync{ID: user.ID, VlessUUID: user.VlessUUID}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		log.Printf("[NODES] schedule reconciliation: %v", err)
 	}
 }
 
-func (s *Service) SyncUserToNodes(user *database.User, prevVlessUUID *string) {
-	if s.Client() == nil || user == nil {
+func (s *Service) SyncUserToNodes(user *database.User, previous *string) {
+	if user == nil {
 		return
 	}
-
-	var connectedNodes []database.Node
-	if err := s.db.Where("is_connected = ? AND is_disabled = ?", true, false).Find(&connectedNodes).Error; err != nil || len(connectedNodes) == 0 {
+	if err := jobs.EnqueueUser(s.db, user, previous, false); err != nil {
+		log.Printf("[NODES] enqueue user: %v", err)
+	}
+}
+func (s *Service) RemoveUserFromNodes(user *database.User) {
+	if user == nil {
 		return
 	}
+	if err := jobs.EnqueueUser(s.db, user, nil, true); err != nil {
+		log.Printf("[NODES] enqueue removal: %v", err)
+	}
+}
+func (s *Service) SyncAllUsersToConnectedNodes() {
+	var targets []database.Node
+	if err := s.db.Where("is_disabled = ? AND is_connected = ?", false, true).Find(&targets).Error; err != nil {
+		return
+	}
+	for i := range targets {
+		s.SyncAllUsersToNode(&targets[i])
+	}
+}
 
+func (s *Service) ApplyUserJob(ctx context.Context, job *database.Job) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	var node database.Node
+	if err := s.db.Where("uuid = ?", job.Target).First(&node).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+		return err
+	}
+	if node.IsDisabled {
+		return nil
+	}
+	if !node.IsConnected {
+		return errors.New("node offline")
+	}
+	var payload jobs.UserSync
+	if err := json.Unmarshal([]byte(job.Payload), &payload); err != nil {
+		return err
+	}
+	var user database.User
+	err := s.db.Where("id = ?", payload.ID).First(&user).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		client := s.Client()
+		if client == nil {
+			return errors.New("node client unavailable")
+		}
+		return client.RemoveUser(&node, RemoveUserRequestPayload{Username: strconv.FormatUint(payload.ID, 10), HashData: NodeUserHashData{VlessUUID: payload.VlessUUID}})
+	}
+	if err != nil {
+		return err
+	}
 	inbounds, err := s.GetUserResolvedInbounds(user.ID)
 	if err != nil {
-		log.Printf("[NODES] Failed to resolve inbounds for user id=%d: %v", user.ID, err)
-		return
+		return err
 	}
-
-	for _, node := range connectedNodes {
-		s.syncUserToSingleNode(&node, user, prevVlessUUID, inbounds)
+	var previous *string
+	if payload.PreviousUUID != "" {
+		previous = &payload.PreviousUUID
 	}
+	return s.syncUserToSingleNode(&node, &user, previous, inbounds)
 }
 
-func (s *Service) RemoveUserFromNodes(user *database.User) {
+// ApplyRetireJob stops Xray on a deleted node using the job's snapshot.
+func (s *Service) ApplyRetireJob(ctx context.Context, job *database.Job) error {
+	var node database.Node
+	if err := json.Unmarshal([]byte(job.Payload), &node); err != nil {
+		return err
+	}
 	client := s.Client()
-	if client == nil || user == nil {
-		return
+	if client == nil {
+		return errors.New("node client unavailable")
 	}
-
-	var connectedNodes []database.Node
-	if err := s.db.Where("is_connected = ? AND is_disabled = ?", true, false).Find(&connectedNodes).Error; err != nil || len(connectedNodes) == 0 {
-		return
+	ok, err := client.StopXray(&node)
+	if err != nil {
+		return err
 	}
-
-	req := RemoveUserRequestPayload{
-		Username: strconv.FormatUint(user.ID, 10),
-		HashData: NodeUserHashData{
-			VlessUUID: user.VlessUUID,
-		},
+	if !ok {
+		return errors.New("node rejected stop")
 	}
-	for _, node := range connectedNodes {
-		go func(n database.Node, r RemoveUserRequestPayload) {
-			_ = client.RemoveUser(&n, r)
-		}(node, req)
-	}
+	return nil
 }
 
-func (s *Service) SyncAllUsersToConnectedNodes() {
-	var users []database.User
-	if err := s.db.Where("status = ?", "ACTIVE").Find(&users).Error; err != nil {
-		return
+func (s *Service) ApplyNodeJob(ctx context.Context, job *database.Job) error {
+	if err := ctx.Err(); err != nil {
+		return err
 	}
-	for i := range users {
-		s.SyncUserToNodes(&users[i], nil)
+	node, err := s.GetByUUID(job.Target)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil
 	}
+	if err != nil {
+		return err
+	}
+	if job.Kind == "node-stop" {
+		if !node.IsDisabled {
+			return nil
+		}
+		client := s.Client()
+		if client == nil {
+			return errors.New("node client unavailable")
+		}
+		ok, err := client.StopXray(node)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return errors.New("node rejected stop")
+		}
+		return nil
+	}
+	if node.IsDisabled {
+		return nil
+	}
+	ok, err := s.StartNode(node, true)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errors.New("node rejected start")
+	}
+	return nil
 }
+
+func (s *Service) SetDisabled(nodeUUID string, disabled bool) (*database.Node, error) {
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		var node database.Node
+		if err := tx.Where("uuid = ?", nodeUUID).First(&node).Error; err != nil {
+			return err
+		}
+		updates := map[string]interface{}{"is_disabled": disabled, "is_connecting": false, "updated_at": time.Now().UTC()}
+		if disabled {
+			updates["is_connected"] = false
+			updates["last_status_change"] = time.Now().UTC()
+		}
+		if err := tx.Model(&database.Node{}).Where("uuid = ?", nodeUUID).Updates(updates).Error; err != nil {
+			return err
+		}
+		kind, event := "node-start", "node.enabled"
+		if disabled {
+			kind, event = "node-stop", "node.disabled"
+		}
+		if err := s.emitNodeByUUID(tx, nodeUUID, event); err != nil {
+			return err
+		}
+		return jobs.EnqueueNode(tx, nodeUUID, kind)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return s.GetByUUID(nodeUUID)
+}
+
+func logf(format string, args ...interface{}) { log.Printf(format, args...) }

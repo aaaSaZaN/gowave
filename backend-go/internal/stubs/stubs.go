@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"sort"
@@ -13,16 +14,21 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
 	"sync"
 
+	"remnawave-go/config"
+	"remnawave-go/internal/auth"
 	"remnawave-go/internal/database"
 	"remnawave-go/internal/keygen"
 	"remnawave-go/internal/nodes"
+	"remnawave-go/internal/nodessh"
+	"remnawave-go/internal/subscription"
+	"remnawave-go/internal/tokens"
 )
 
 type JobResult struct {
@@ -34,12 +40,15 @@ type JobResult struct {
 }
 
 type StubHandler struct {
-	db          *gorm.DB
-	keygenSvc   *keygen.Service
-	appSecret   string
-	jwtLifetime int
-	nodeClient  *nodes.Client
-	jobs        sync.Map
+	db              *gorm.DB
+	keygenSvc       *keygen.Service
+	appSecret       string
+	jwtLifetime     int
+	nodeClient      *nodes.Client
+	jobs            sync.Map
+	subPublicDomain string
+	cfg             *config.Config
+	clientSource    func() *nodes.Client
 }
 
 func NewHandler(db *gorm.DB, appSecret string, jwtLifetime int, nodeClient ...*nodes.Client) *StubHandler {
@@ -56,7 +65,16 @@ func NewHandler(db *gorm.DB, appSecret string, jwtLifetime int, nodeClient ...*n
 	}
 }
 
+func (s *StubHandler) SetSubPublicDomain(domain string) { s.subPublicDomain = domain }
+
+// SetClientSource makes the handler use the node service's client, which is
+// rebuilt after a restore, instead of a private copy.
+func (s *StubHandler) SetClientSource(source func() *nodes.Client) { s.clientSource = source }
+
 func (s *StubHandler) getNodeClient() *nodes.Client {
+	if s.clientSource != nil {
+		return s.clientSource()
+	}
 	if s.nodeClient != nil {
 		return s.nodeClient
 	}
@@ -110,7 +128,6 @@ func formatLastSeen(v interface{}) string {
 func (s *StubHandler) RegisterRoutes(r chi.Router) {
 	r.Get("/api/node-plugins/torrent-blocker/stats", s.GetTorrentBlockerStats)
 	r.Get("/api/node-plugins/torrent-blocker", s.GetTorrentBlockerReports)
-	r.Post("/api/node-plugins/torrent-blocker/truncate", s.TruncateTorrentBlockerReports)
 	r.Delete("/api/node-plugins/torrent-blocker/truncate", s.TruncateTorrentBlockerReports)
 
 	r.Get("/api/node-plugins/shared-lists/by-name", s.GetSharedListByName)
@@ -313,18 +330,7 @@ func (s *StubHandler) DeleteNodePlugin(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (s *StubHandler) CloneNodePlugin(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"uuid":         uuid.New().String(),
-			"viewPosition": 1,
-			"name":         "Cloned Plugin",
-			"tags":         []string{},
-			"pluginConfig": nil,
-		},
-	})
-}
+func (s *StubHandler) CloneNodePlugin(w http.ResponseWriter, r *http.Request) { s.pluginClone(w, r) }
 
 func (s *StubHandler) ReorderNodePlugins(w http.ResponseWriter, r *http.Request) {
 	var body struct {
@@ -353,28 +359,9 @@ func (s *StubHandler) ReorderNodePlugins(w http.ResponseWriter, r *http.Request)
 	s.GetNodePlugins(w, r)
 }
 
-func (s *StubHandler) syncPluginToNodes(pluginUUID string) {
-	if s.nodeClient == nil || pluginUUID == "" {
-		return
-	}
-	var np database.NodePlugin
-	if err := s.db.Where("uuid = ?", pluginUUID).First(&np).Error; err != nil {
-		return
-	}
-	var pluginCfg map[string]interface{}
-	_ = json.Unmarshal([]byte(np.PluginConfig), &pluginCfg)
-	syncPayload := map[string]interface{}{
-		"plugin": map[string]interface{}{
-			"uuid":   np.UUID,
-			"name":   np.Name,
-			"config": pluginCfg,
-		},
-	}
-	var targetNodes []database.Node
-	s.db.Where("active_plugin_uuid = ? AND is_disabled = false", pluginUUID).Find(&targetNodes)
-	for _, n := range targetNodes {
-		nodeCopy := n
-		go s.nodeClient.SyncPlugin(&nodeCopy, syncPayload)
+func (s *StubHandler) syncPluginToNodes(id string) {
+	if err := enqueuePlugin(s.db, id); err != nil {
+		log.Printf("[PLUGINS] %v", err)
 	}
 }
 
@@ -396,181 +383,35 @@ func (s *StubHandler) SyncNodePlugin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *StubHandler) ExecuteNodePlugin(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"response": map[string]interface{}{"success": true}})
+	s.pluginExecute(w, r)
 }
 
-func (s *StubHandler) GetNodePluginsTags(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"tags": []string{},
-		},
-	})
-}
+func (s *StubHandler) GetNodePluginsTags(w http.ResponseWriter, r *http.Request) { s.pluginTags(w, r) }
 
 func (s *StubHandler) SetNodePluginsTags(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"tags": []string{},
-		},
-	})
+	s.pluginSetTags(w, r)
 }
 
-func (s *StubHandler) GetSharedLists(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var lists []database.SharedList
-	s.db.Find(&lists)
-	res := make([]map[string]interface{}, 0, len(lists))
-	for _, l := range lists {
-		var cfg interface{}
-		_ = json.Unmarshal([]byte(l.Config), &cfg)
-		res = append(res, map[string]interface{}{
-			"name":   l.Name,
-			"config": cfg,
-		})
-	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"total":       len(res),
-			"sharedLists": res,
-		},
-	})
-}
-
-func (s *StubHandler) GetSharedListByName(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	name := r.URL.Query().Get("name")
-	if name == "" {
-		name = "default"
-	}
-	var l database.SharedList
-	if err := s.db.Where("name = ?", name).First(&l).Error; err == nil {
-		var cfg interface{}
-		_ = json.Unmarshal([]byte(l.Config), &cfg)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"response": map[string]interface{}{
-				"name":   l.Name,
-				"config": cfg,
-			},
-		})
-		return
-	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"name":   name,
-			"config": map[string]interface{}{},
-		},
-	})
-}
-
-func (s *StubHandler) CreateSharedList(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var body struct {
-		Name   string      `json:"name"`
-		Config interface{} `json:"config"`
-	}
-	_ = json.NewDecoder(r.Body).Decode(&body)
-	cfgBytes, _ := json.Marshal(body.Config)
-	l := database.SharedList{
-		Name:      strings.TrimSpace(body.Name),
-		Config:    string(cfgBytes),
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
-	}
-	s.db.Save(&l)
-	w.WriteHeader(http.StatusCreated)
-	s.GetSharedLists(w, r)
-}
-
-func (s *StubHandler) UpdateSharedList(w http.ResponseWriter, r *http.Request) {
-	s.CreateSharedList(w, r)
-}
-
-func (s *StubHandler) DeleteSharedList(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Name string `json:"name"`
-	}
-	_ = json.NewDecoder(r.Body).Decode(&body)
-	s.db.Where("name = ?", body.Name).Delete(&database.SharedList{})
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (s *StubHandler) SyncSharedLists(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"response": map[string]interface{}{"success": true}})
-}
-
-func (s *StubHandler) GetTorrentBlockerStats(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"stats": map[string]interface{}{
-				"distinctNodes":      0,
-				"distinctUsers":      0,
-				"totalReports":       0,
-				"reportsLast24Hours": 0,
-			},
-			"topUsers": []interface{}{},
-			"topNodes": []interface{}{},
-		},
-	})
-}
-
-func (s *StubHandler) GetTorrentBlockerReports(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"records": []interface{}{},
-			"total":   0,
-		},
-	})
-}
-
-func (s *StubHandler) TruncateTorrentBlockerReports(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"success": true,
-		},
-	})
-}
+func (s *StubHandler) SyncSharedLists(w http.ResponseWriter, r *http.Request) { s.sharedListSync(w, r) }
 
 func (s *StubHandler) GetNodeIntegrations(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"total":            0,
-			"nodeIntegrations": []interface{}{},
-		},
-	})
+	s.integrationList(w, r)
 }
 
 func (s *StubHandler) GetNodeIntegration(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	uuidParam := chi.URLParam(r, "uuid")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"uuid": uuidParam,
-			"name": "Integration",
-		},
-	})
+	s.integrationGet(w, r)
 }
 
 func (s *StubHandler) CreateNodeIntegration(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	s.GetNodeIntegrations(w, r)
+	s.integrationWrite(w, r)
 }
 
 func (s *StubHandler) UpdateNodeIntegration(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	s.GetNodeIntegrations(w, r)
+	s.integrationWrite(w, r)
 }
 
 func (s *StubHandler) DeleteNodeIntegration(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNoContent)
+	s.integrationDelete(w, r)
 }
 
 func (s *StubHandler) GetKeygen(w http.ResponseWriter, r *http.Request) {
@@ -639,10 +480,7 @@ func (s *StubHandler) DeleteSnippet(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (s *StubHandler) SyncSnippets(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"response": map[string]interface{}{"success": true}})
-}
+func (s *StubHandler) SyncSnippets(w http.ResponseWriter, r *http.Request) { s.snippetSync(w, r) }
 
 func (s *StubHandler) GetApiTokens(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -723,16 +561,6 @@ func (s *StubHandler) DeleteApiToken(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (s *StubHandler) GetApiTokenScopes(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"wildcard":  "*",
-			"resources": []interface{}{},
-		},
-	})
-}
-
 func (s *StubHandler) GetPasskeys(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var passkeys []database.Passkey
@@ -784,185 +612,43 @@ func (s *StubHandler) DeletePasskey(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *StubHandler) GetPasskeyRegOptions(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var setting database.RemnawaveSetting
-	s.db.First(&setting)
-	rpId := "localhost"
-	if setting.PasskeySettings != "" && setting.PasskeySettings != "{}" {
-		var ps map[string]interface{}
-		if err := json.Unmarshal([]byte(setting.PasskeySettings), &ps); err == nil {
-			if id, ok := ps["rpId"].(string); ok && id != "" {
-				rpId = id
-			}
-		}
-	}
-	var admin database.Admin
-	s.db.First(&admin)
-	adminUuid := admin.UUID
-	if adminUuid == "" {
-		adminUuid = "00000000-0000-0000-0000-000000000000"
-	}
-	username := admin.Username
-	if username == "" {
-		username = "admin"
-	}
-	chalBytes := make([]byte, 32)
-	rand.Read(chalBytes)
-	challenge := base64.RawURLEncoding.EncodeToString(chalBytes)
-	userIdBytes := []byte(adminUuid)
-	userId := base64.RawURLEncoding.EncodeToString(userIdBytes)
-
-	var existing []database.Passkey
-	s.db.Where("admin_uuid = ?", adminUuid).Find(&existing)
-	exclude := make([]map[string]interface{}, 0, len(existing))
-	for _, pk := range existing {
-		exclude = append(exclude, map[string]interface{}{
-			"id":         pk.ID,
-			"type":       "public-key",
-			"transports": []string{"internal"},
-		})
-	}
-
-	options := map[string]interface{}{
-		"challenge": challenge,
-		"rp": map[string]interface{}{
-			"name": "Remnawave",
-			"id":   rpId,
-		},
-		"user": map[string]interface{}{
-			"id":          userId,
-			"name":        username,
-			"displayName": "Remnawave Administrator",
-		},
-		"pubKeyCredParams": []map[string]interface{}{
-			{"type": "public-key", "alg": -7},
-			{"type": "public-key", "alg": -257},
-		},
-		"timeout":            60000,
-		"attestation":        "none",
-		"excludeCredentials": exclude,
-		"authenticatorSelection": map[string]interface{}{
-			"residentKey":      "preferred",
-			"userVerification": "required",
-		},
-	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": options,
-	})
+	auth.NewPasskeyHandler(s.db, s.appSecret, s.jwtLifetime).RegistrationOptions(w, r)
 }
 
 func (s *StubHandler) VerifyPasskeyReg(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var body struct {
-		Response struct {
-			ID       string `json:"id"`
-			RawID    string `json:"rawId"`
-			Response struct {
-				ClientDataJSON    string `json:"clientDataJSON"`
-				AttestationObject string `json:"attestationObject"`
-			} `json:"response"`
-			Type string `json:"type"`
-		} `json:"response"`
-	}
-	_ = json.NewDecoder(r.Body).Decode(&body)
-	var admin database.Admin
-	s.db.First(&admin)
-	credId := body.Response.ID
-	if credId == "" {
-		credId = uuid.New().String()
-	}
-	pk := database.Passkey{
-		ID:              credId,
-		AdminUUID:       admin.UUID,
-		PasskeyProvider: "Touch ID / Apple",
-		DeviceType:      "multiDevice",
-		BackedUp:        true,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
-	}
-	s.db.Save(&pk)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"verified": true,
-			"message":  "Passkey registered successfully",
-		},
-	})
+	auth.NewPasskeyHandler(s.db, s.appSecret, s.jwtLifetime).VerifyRegistration(w, r)
 }
 
 func (s *StubHandler) GetPasskeyAuthOptions(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNotImplemented)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": "Passkey authentication is not supported",
-	})
+	auth.NewPasskeyHandler(s.db, s.appSecret, s.jwtLifetime).AuthenticationOptions(w, r)
 }
 
 func (s *StubHandler) VerifyPasskeyAuth(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNotImplemented)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": "Passkey authentication is not supported",
-	})
+	auth.NewPasskeyHandler(s.db, s.appSecret, s.jwtLifetime).VerifyAuthentication(w, r)
 }
 
 func (s *StubHandler) GetOtt(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	claims := jwt.MapClaims{
-		"scope": "ott",
-		"iss":   "backend-tools",
-		"exp":   time.Now().Add(30 * time.Second).Unix(),
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, _ := token.SignedString([]byte("remnawave"))
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"ott": tokenString,
-		},
-	})
+	tokens.NewHandler(s.db, s.appSecret).GetOtt(w, r)
 }
 
 func (s *StubHandler) CreateSshTicket(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	ticket := uuid.New().String()
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"ticket":           ticket,
-			"path":             "/api/node-ssh/ws",
-			"expiresInSeconds": 60,
-		},
-	})
+	nodessh.NewHandler(s.db, s.appSecret).Ticket(w, r)
 }
 
 func (s *StubHandler) EvaluateVault(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var body struct {
-		Blinded string `json:"blinded"`
-	}
-	_ = json.NewDecoder(r.Body).Decode(&body)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"evaluated": body.Blinded,
-		},
-	})
+	nodessh.NewHandler(s.db, s.appSecret).EvaluateVault(w, r)
 }
 
 func (s *StubHandler) OAuth2TelegramCallback(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"token": "",
-		},
-	})
+	auth.NewOAuthHandler(s.db, s.appSecret, s.jwtLifetime).Callback(w, r)
 }
 
 func (s *StubHandler) OAuth2Authorize(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"response": map[string]interface{}{"url": ""}})
+	auth.NewOAuthHandler(s.db, s.appSecret, s.jwtLifetime).Authorize(w, r)
 }
 
 func (s *StubHandler) OAuth2Callback(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"response": map[string]interface{}{"token": ""}})
+	auth.NewOAuthHandler(s.db, s.appSecret, s.jwtLifetime).Callback(w, r)
 }
 
 func (s *StubHandler) GetHwidStats(w http.ResponseWriter, r *http.Request) {
@@ -1162,105 +848,6 @@ func (s *StubHandler) GetUserHwidDevices(w http.ResponseWriter, r *http.Request)
 		"response": map[string]interface{}{
 			"total":   len(devices),
 			"devices": devices,
-		},
-	})
-}
-
-func (s *StubHandler) CreateHwidDevice(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var req struct {
-		HWID        string  `json:"hwid"`
-		UserID      uint64  `json:"userId"`
-		Platform    *string `json:"platform"`
-		OSVersion   *string `json:"osVersion"`
-		DeviceModel *string `json:"deviceModel"`
-		UserAgent   *string `json:"userAgent"`
-		RequestIP   *string `json:"requestIp"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]interface{}{"message": "Invalid body"})
-		return
-	}
-
-	now := time.Now().UTC()
-	dev := database.HwidDevice{
-		HWID:        req.HWID,
-		UserID:      req.UserID,
-		Platform:    req.Platform,
-		OSVersion:   req.OSVersion,
-		DeviceModel: req.DeviceModel,
-		UserAgent:   req.UserAgent,
-		RequestIP:   req.RequestIP,
-		CreatedAt:   now,
-		UpdatedAt:   now,
-	}
-
-	var existing database.HwidDevice
-	if err := s.db.Where("hwid = ? AND user_id = ?", req.HWID, req.UserID).First(&existing).Error; err != nil {
-		s.db.Create(&dev)
-	} else {
-		s.db.Model(&existing).Updates(map[string]interface{}{
-			"platform":     req.Platform,
-			"os_version":   req.OSVersion,
-			"device_model": req.DeviceModel,
-			"user_agent":   req.UserAgent,
-			"request_ip":   req.RequestIP,
-			"updated_at":   now,
-		})
-	}
-
-	var devices []database.HwidDevice
-	s.db.Where("user_id = ?", req.UserID).Order("created_at desc").Find(&devices)
-	if devices == nil {
-		devices = []database.HwidDevice{}
-	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"total":   len(devices),
-			"devices": devices,
-		},
-	})
-}
-
-func (s *StubHandler) DeleteHwidDevice(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var req struct {
-		HWID   string `json:"hwid"`
-		UserID uint64 `json:"userId"`
-	}
-	_ = json.NewDecoder(r.Body).Decode(&req)
-	if req.HWID != "" {
-		s.db.Where("hwid = ?", req.HWID).Delete(&database.HwidDevice{})
-	}
-	var remaining []database.HwidDevice
-	if req.UserID > 0 {
-		s.db.Where("user_id = ?", req.UserID).Find(&remaining)
-	}
-	if remaining == nil {
-		remaining = []database.HwidDevice{}
-	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"total":   len(remaining),
-			"devices": remaining,
-		},
-	})
-}
-
-func (s *StubHandler) DeleteAllHwidDevices(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var req struct {
-		UserID uint64 `json:"userId"`
-	}
-	_ = json.NewDecoder(r.Body).Decode(&req)
-	if req.UserID > 0 {
-		s.db.Where("user_id = ?", req.UserID).Delete(&database.HwidDevice{})
-	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"total":   0,
-			"devices": []interface{}{},
 		},
 	})
 }
@@ -1522,39 +1109,14 @@ func (s *StubHandler) ConnectionsByNodeResult(w http.ResponseWriter, r *http.Req
 	})
 }
 
-func (s *StubHandler) GeocheckByNode(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"jobId": uuid.New().String(),
-		},
-	})
-}
+func (s *StubHandler) GeocheckByNode(w http.ResponseWriter, r *http.Request) { s.geocheck(w, r) }
 
 func (s *StubHandler) GeocheckByNodeResult(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"isCompleted": true,
-			"isFailed":    false,
-			"result": map[string]interface{}{
-				"success":   true,
-				"nodeUuid":  chi.URLParam(r, "jobId"),
-				"image":     nil,
-				"rawReport": map[string]interface{}{},
-				"message":   "Geocheck completed",
-			},
-		},
-	})
+	s.geocheckResult(w, r)
 }
 
 func (s *StubHandler) DropConnections(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"success": true,
-		},
-	})
+	s.dropConnections(w, r)
 }
 
 func (s *StubHandler) GetNodeMetadata(w http.ResponseWriter, r *http.Request) {
@@ -1666,114 +1228,40 @@ func (s *StubHandler) UpsertUserMetadata(w http.ResponseWriter, r *http.Request)
 	})
 }
 
+func (s *StubHandler) subscriptions() *subscription.Handler {
+	h := subscription.NewHandler(s.db, s.subPublicDomain)
+	if s.cfg != nil {
+		h.SetDisableHistory(s.cfg.Service.DisableSrhRecords)
+	}
+	return h
+}
+
 func (s *StubHandler) GetAllSubscriptions(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"total":         0,
-			"subscriptions": []interface{}{},
-		},
-	})
+	s.subscriptions().ListProtected(w, r)
 }
 
 func (s *StubHandler) GetSubscriptionById(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"subscription": map[string]interface{}{},
-		},
-	})
+	s.subscriptions().InfoProtected(w, r)
 }
 
 func (s *StubHandler) GetSubscriptionByShortUuid(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"subscription": map[string]interface{}{},
-		},
-	})
+	s.subscriptions().InfoProtected(w, r)
 }
 
 func (s *StubHandler) GetRawSubscriptionByShortUuid(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"subscription": "",
-		},
-	})
+	s.subscriptions().RawProtected(w, r)
 }
 
 func (s *StubHandler) GetSubscriptionByUsername(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"subscription": map[string]interface{}{},
-		},
-	})
+	s.subscriptions().InfoProtected(w, r)
 }
 
 func (s *StubHandler) GetConnectionKeysByUserId(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"connectionKeys": []interface{}{},
-		},
-	})
+	s.subscriptions().ConnectionKeys(w, r)
 }
 
 func (s *StubHandler) GetSubpageConfigByShortUuid(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"config": map[string]interface{}{},
-		},
-	})
-}
-
-func (s *StubHandler) GetSystemConfiguration(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"env": map[string]interface{}{},
-		},
-	})
-}
-
-func (s *StubHandler) GetStatsDigest(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"users": map[string]interface{}{"total": 0},
-			"nodes": map[string]interface{}{"total": 0},
-		},
-	})
-}
-
-func (s *StubHandler) DebugSrrMatcher(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"matched":       false,
-			"responseType":  "ALLOW",
-			"matchedRule":   nil,
-			"inputHeaders":  map[string]string{},
-			"outputHeaders": map[string]string{},
-		},
-	})
-}
-
-func (s *StubHandler) GenerateX25519(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	priv := make([]byte, 32)
-	rand.Read(priv)
-	pub := make([]byte, 32)
-	rand.Read(pub)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"privateKey": base64.RawURLEncoding.EncodeToString(priv),
-			"publicKey":  base64.RawURLEncoding.EncodeToString(pub),
-		},
-	})
+	s.subscriptions().SubpageConfig(w, r)
 }
 
 func (s *StubHandler) GetSubHistory(w http.ResponseWriter, r *http.Request) {
@@ -2439,31 +1927,6 @@ func (s *StubHandler) GetBandwidthNodesUsage(w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"response": map[string]interface{}{
 			"nodes": result,
-		},
-	})
-}
-
-func (s *StubHandler) GetBandwidthSquadUsage(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	uuidParam := chi.URLParam(r, "uuid")
-	if uuidParam == "" {
-		uuidParam = "00000000-0000-0000-0000-000000000000"
-	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"squadUuid":  uuidParam,
-			"users":      []interface{}{},
-			"nextCursor": nil,
-			"hasMore":    false,
-		},
-	})
-}
-
-func (s *StubHandler) GetBandwidthSquadUserUsage(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"days": []interface{}{},
 		},
 	})
 }
