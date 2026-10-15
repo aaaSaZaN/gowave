@@ -1,0 +1,7308 @@
+{
+ "now": "2026-03-04T12:00:00.000Z",
+ "subPublicDomain": "sub.example.com",
+ "user": {
+  "id": 42,
+  "shortUuid": "abcdefghijklmnop",
+  "username": "matrix_user",
+  "status": "ACTIVE",
+  "trafficLimitBytes": 107374182400,
+  "trafficLimitStrategy": "MONTH",
+  "usedTrafficBytes": 1610612736,
+  "lifetimeUsedTrafficBytes": 9876543210,
+  "expireAt": "2026-04-15T10:00:00.000Z",
+  "createdAt": "2026-01-20T08:30:00.000Z",
+  "lastTrafficResetAt": "2026-03-01T00:20:00.000Z",
+  "email": "user@example.com",
+  "telegramId": 123456789,
+  "tag": "VIP",
+  "description": "matrix",
+  "hwidDeviceLimit": null,
+  "vlessUuid": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+  "trojanPassword": "trojan-password-0123456789abcdef",
+  "ssPassword": "ss-password-0123456789abcdefghij"
+ },
+ "settings": {
+  "isShowCustomRemarks": true,
+  "customRemarks": {
+   "expiredUsers": [
+    "⌛ Expired {{USERNAME}}",
+    "Renew at {{SUBSCRIPTION_URL}}"
+   ],
+   "limitedUsers": [
+    "🚧 Limited {{TRAFFIC_USED}}"
+   ],
+   "disabledUsers": [
+    "🚫 Disabled"
+   ],
+   "emptyHosts": [
+    "→ No hosts",
+    "{\"finalRemark\":\"json-fallback\",\"address\":\"1.2.3.4\",\"port\":8443,\"protocol\":\"trojan\",\"protocolOptions\":{\"password\":\"p\"},\"transport\":\"tcp\",\"transportOptions\":{\"header\":null},\"security\":\"tls\",\"securityOptions\":{\"serverName\":\"j.example.com\",\"fingerprint\":\"chrome\",\"alpn\":\"\"},\"streamOverrides\":{\"finalMask\":null,\"sockopt\":null},\"mux\":null,\"clientOverrides\":{\"mapper\":{}},\"metadata\":{\"uuid\":\"00000000-0000-4000-8000-ffffffffffff\",\"tags\":[],\"excludeFromSubscriptionTypes\":[],\"isHidden\":false}}"
+   ],
+   "HWIDMaxDevicesExceeded": [
+    "Too many devices ({{SS_HWID_LIMIT}})"
+   ],
+   "HWIDNotSupported": [
+    "Client not supported"
+   ]
+  },
+  "hwidSettings": {
+   "enabled": true,
+   "fallbackDeviceLimit": 3
+  }
+ },
+ "hosts": [
+  {
+   "uuid": "00000000-0000-4000-8000-000000000001",
+   "viewPosition": 1,
+   "remark": "vless-tcp-none",
+   "address": "h1.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_1",
+   "rawInbound": {
+    "tag": "IN_1",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000002",
+   "viewPosition": 2,
+   "remark": "vless-tcp-tls",
+   "address": "h2.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_2",
+   "rawInbound": {
+    "tag": "IN_2",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000003",
+   "viewPosition": 3,
+   "remark": "vless-tcp-reality",
+   "address": "h3.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_3",
+   "rawInbound": {
+    "tag": "IN_3",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000004",
+   "viewPosition": 4,
+   "remark": "vless-raw-none",
+   "address": "h4.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_4",
+   "rawInbound": {
+    "tag": "IN_4",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "raw",
+     "rawSettings": {},
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000005",
+   "viewPosition": 5,
+   "remark": "vless-raw-tls",
+   "address": "h5.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_5",
+   "rawInbound": {
+    "tag": "IN_5",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "raw",
+     "rawSettings": {},
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000006",
+   "viewPosition": 6,
+   "remark": "vless-raw-reality",
+   "address": "h6.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_6",
+   "rawInbound": {
+    "tag": "IN_6",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "raw",
+     "rawSettings": {},
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000007",
+   "viewPosition": 7,
+   "remark": "vless-tcpHttp-none",
+   "address": "h7.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_7",
+   "rawInbound": {
+    "tag": "IN_7",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "tcpSettings": {
+      "header": {
+       "type": "http",
+       "request": {
+        "version": "1.1",
+        "method": "GET",
+        "path": [
+         "/a",
+         "/b"
+        ],
+        "headers": {
+         "Host": [
+          "x.example.com"
+         ]
+        }
+       }
+      }
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000008",
+   "viewPosition": 8,
+   "remark": "vless-tcpHttp-tls",
+   "address": "h8.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_8",
+   "rawInbound": {
+    "tag": "IN_8",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "tcpSettings": {
+      "header": {
+       "type": "http",
+       "request": {
+        "version": "1.1",
+        "method": "GET",
+        "path": [
+         "/a",
+         "/b"
+        ],
+        "headers": {
+         "Host": [
+          "x.example.com"
+         ]
+        }
+       }
+      }
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000009",
+   "viewPosition": 9,
+   "remark": "vless-tcpHttp-reality",
+   "address": "h9.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_9",
+   "rawInbound": {
+    "tag": "IN_9",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "tcpSettings": {
+      "header": {
+       "type": "http",
+       "request": {
+        "version": "1.1",
+        "method": "GET",
+        "path": [
+         "/a",
+         "/b"
+        ],
+        "headers": {
+         "Host": [
+          "x.example.com"
+         ]
+        }
+       }
+      }
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000010",
+   "viewPosition": 10,
+   "remark": "vless-ws-none",
+   "address": "h10.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_10",
+   "rawInbound": {
+    "tag": "IN_10",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "ws",
+     "wsSettings": {
+      "path": "/ws?ed=2048",
+      "host": "ws.example.com",
+      "headers": {
+       "User-Agent": "probe",
+       "Host": "hdr.example.com"
+      },
+      "heartbeatPeriod": 30
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000011",
+   "viewPosition": 11,
+   "remark": "vless-ws-tls",
+   "address": "h11.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_11",
+   "rawInbound": {
+    "tag": "IN_11",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "ws",
+     "wsSettings": {
+      "path": "/ws?ed=2048",
+      "host": "ws.example.com",
+      "headers": {
+       "User-Agent": "probe",
+       "Host": "hdr.example.com"
+      },
+      "heartbeatPeriod": 30
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000012",
+   "viewPosition": 12,
+   "remark": "vless-ws-reality",
+   "address": "h12.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_12",
+   "rawInbound": {
+    "tag": "IN_12",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "ws",
+     "wsSettings": {
+      "path": "/ws?ed=2048",
+      "host": "ws.example.com",
+      "headers": {
+       "User-Agent": "probe",
+       "Host": "hdr.example.com"
+      },
+      "heartbeatPeriod": 30
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000013",
+   "viewPosition": 13,
+   "remark": "vless-httpupgrade-none",
+   "address": "h13.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_13",
+   "rawInbound": {
+    "tag": "IN_13",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "httpupgrade",
+     "httpupgradeSettings": {
+      "path": "/up",
+      "host": "up.example.com",
+      "headers": {
+       "X-Custom": "1"
+      }
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000014",
+   "viewPosition": 14,
+   "remark": "vless-httpupgrade-tls",
+   "address": "h14.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_14",
+   "rawInbound": {
+    "tag": "IN_14",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "httpupgrade",
+     "httpupgradeSettings": {
+      "path": "/up",
+      "host": "up.example.com",
+      "headers": {
+       "X-Custom": "1"
+      }
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000015",
+   "viewPosition": 15,
+   "remark": "vless-httpupgrade-reality",
+   "address": "h15.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_15",
+   "rawInbound": {
+    "tag": "IN_15",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "httpupgrade",
+     "httpupgradeSettings": {
+      "path": "/up",
+      "host": "up.example.com",
+      "headers": {
+       "X-Custom": "1"
+      }
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000016",
+   "viewPosition": 16,
+   "remark": "vless-grpc-none",
+   "address": "h16.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_16",
+   "rawInbound": {
+    "tag": "IN_16",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "grpc",
+     "grpcSettings": {
+      "serviceName": "svc",
+      "multiMode": true,
+      "authority": "auth.example.com"
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000017",
+   "viewPosition": 17,
+   "remark": "vless-grpc-tls",
+   "address": "h17.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_17",
+   "rawInbound": {
+    "tag": "IN_17",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "grpc",
+     "grpcSettings": {
+      "serviceName": "svc",
+      "multiMode": true,
+      "authority": "auth.example.com"
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000018",
+   "viewPosition": 18,
+   "remark": "vless-grpc-reality",
+   "address": "h18.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_18",
+   "rawInbound": {
+    "tag": "IN_18",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "grpc",
+     "grpcSettings": {
+      "serviceName": "svc",
+      "multiMode": true,
+      "authority": "auth.example.com"
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000019",
+   "viewPosition": 19,
+   "remark": "vless-xhttp-none",
+   "address": "h19.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_19",
+   "rawInbound": {
+    "tag": "IN_19",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "xhttp",
+     "xhttpSettings": {
+      "path": "/x",
+      "host": "x.example.com",
+      "mode": "packet-up",
+      "extra": {
+       "xPaddingBytes": "100-1000",
+       "noGRPCHeader": true,
+       "xmux": {
+        "maxConcurrency": "16-32",
+        "hMaxRequestTimes": 600
+       },
+       "headers": {
+        "X-Test": "y"
+       },
+       "downloadSettings": {
+        "address": "dl.example.com",
+        "port": 443,
+        "network": "xhttp",
+        "security": "reality",
+        "realitySettings": {
+         "publicKey": "pk",
+         "shortId": "ab"
+        },
+        "xhttpSettings": {
+         "path": "/dl",
+         "host": "dl.example.com",
+         "extra": {
+          "xmux": {
+           "maxConnections": 4
+          }
+         }
+        }
+       }
+      }
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000020",
+   "viewPosition": 20,
+   "remark": "vless-xhttp-tls",
+   "address": "h20.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_20",
+   "rawInbound": {
+    "tag": "IN_20",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "xhttp",
+     "xhttpSettings": {
+      "path": "/x",
+      "host": "x.example.com",
+      "mode": "packet-up",
+      "extra": {
+       "xPaddingBytes": "100-1000",
+       "noGRPCHeader": true,
+       "xmux": {
+        "maxConcurrency": "16-32",
+        "hMaxRequestTimes": 600
+       },
+       "headers": {
+        "X-Test": "y"
+       },
+       "downloadSettings": {
+        "address": "dl.example.com",
+        "port": 443,
+        "network": "xhttp",
+        "security": "reality",
+        "realitySettings": {
+         "publicKey": "pk",
+         "shortId": "ab"
+        },
+        "xhttpSettings": {
+         "path": "/dl",
+         "host": "dl.example.com",
+         "extra": {
+          "xmux": {
+           "maxConnections": 4
+          }
+         }
+        }
+       }
+      }
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000021",
+   "viewPosition": 21,
+   "remark": "vless-xhttp-reality",
+   "address": "h21.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_21",
+   "rawInbound": {
+    "tag": "IN_21",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "xhttp",
+     "xhttpSettings": {
+      "path": "/x",
+      "host": "x.example.com",
+      "mode": "packet-up",
+      "extra": {
+       "xPaddingBytes": "100-1000",
+       "noGRPCHeader": true,
+       "xmux": {
+        "maxConcurrency": "16-32",
+        "hMaxRequestTimes": 600
+       },
+       "headers": {
+        "X-Test": "y"
+       },
+       "downloadSettings": {
+        "address": "dl.example.com",
+        "port": 443,
+        "network": "xhttp",
+        "security": "reality",
+        "realitySettings": {
+         "publicKey": "pk",
+         "shortId": "ab"
+        },
+        "xhttpSettings": {
+         "path": "/dl",
+         "host": "dl.example.com",
+         "extra": {
+          "xmux": {
+           "maxConnections": 4
+          }
+         }
+        }
+       }
+      }
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000022",
+   "viewPosition": 22,
+   "remark": "vless-kcp-none",
+   "address": "h22.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_22",
+   "rawInbound": {
+    "tag": "IN_22",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "kcp",
+     "kcpSettings": {
+      "mtu": 1400,
+      "tti": 20,
+      "congestion": true
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000023",
+   "viewPosition": 23,
+   "remark": "vless-kcp-tls",
+   "address": "h23.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_23",
+   "rawInbound": {
+    "tag": "IN_23",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "kcp",
+     "kcpSettings": {
+      "mtu": 1400,
+      "tti": 20,
+      "congestion": true
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000024",
+   "viewPosition": 24,
+   "remark": "vless-kcp-reality",
+   "address": "h24.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_24",
+   "rawInbound": {
+    "tag": "IN_24",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "kcp",
+     "kcpSettings": {
+      "mtu": 1400,
+      "tti": 20,
+      "congestion": true
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000025",
+   "viewPosition": 25,
+   "remark": "trojan-tcp-none",
+   "address": "h25.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_25",
+   "rawInbound": {
+    "tag": "IN_25",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000026",
+   "viewPosition": 26,
+   "remark": "trojan-tcp-tls",
+   "address": "h26.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_26",
+   "rawInbound": {
+    "tag": "IN_26",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000027",
+   "viewPosition": 27,
+   "remark": "trojan-tcp-reality",
+   "address": "h27.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_27",
+   "rawInbound": {
+    "tag": "IN_27",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000028",
+   "viewPosition": 28,
+   "remark": "trojan-raw-none",
+   "address": "h28.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_28",
+   "rawInbound": {
+    "tag": "IN_28",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "raw",
+     "rawSettings": {},
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000029",
+   "viewPosition": 29,
+   "remark": "trojan-raw-tls",
+   "address": "h29.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_29",
+   "rawInbound": {
+    "tag": "IN_29",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "raw",
+     "rawSettings": {},
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000030",
+   "viewPosition": 30,
+   "remark": "trojan-raw-reality",
+   "address": "h30.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_30",
+   "rawInbound": {
+    "tag": "IN_30",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "raw",
+     "rawSettings": {},
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000031",
+   "viewPosition": 31,
+   "remark": "trojan-tcpHttp-none",
+   "address": "h31.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_31",
+   "rawInbound": {
+    "tag": "IN_31",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "tcpSettings": {
+      "header": {
+       "type": "http",
+       "request": {
+        "version": "1.1",
+        "method": "GET",
+        "path": [
+         "/a",
+         "/b"
+        ],
+        "headers": {
+         "Host": [
+          "x.example.com"
+         ]
+        }
+       }
+      }
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000032",
+   "viewPosition": 32,
+   "remark": "trojan-tcpHttp-tls",
+   "address": "h32.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_32",
+   "rawInbound": {
+    "tag": "IN_32",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "tcpSettings": {
+      "header": {
+       "type": "http",
+       "request": {
+        "version": "1.1",
+        "method": "GET",
+        "path": [
+         "/a",
+         "/b"
+        ],
+        "headers": {
+         "Host": [
+          "x.example.com"
+         ]
+        }
+       }
+      }
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000033",
+   "viewPosition": 33,
+   "remark": "trojan-tcpHttp-reality",
+   "address": "h33.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_33",
+   "rawInbound": {
+    "tag": "IN_33",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "tcpSettings": {
+      "header": {
+       "type": "http",
+       "request": {
+        "version": "1.1",
+        "method": "GET",
+        "path": [
+         "/a",
+         "/b"
+        ],
+        "headers": {
+         "Host": [
+          "x.example.com"
+         ]
+        }
+       }
+      }
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000034",
+   "viewPosition": 34,
+   "remark": "trojan-ws-none",
+   "address": "h34.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_34",
+   "rawInbound": {
+    "tag": "IN_34",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "ws",
+     "wsSettings": {
+      "path": "/ws?ed=2048",
+      "host": "ws.example.com",
+      "headers": {
+       "User-Agent": "probe",
+       "Host": "hdr.example.com"
+      },
+      "heartbeatPeriod": 30
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000035",
+   "viewPosition": 35,
+   "remark": "trojan-ws-tls",
+   "address": "h35.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_35",
+   "rawInbound": {
+    "tag": "IN_35",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "ws",
+     "wsSettings": {
+      "path": "/ws?ed=2048",
+      "host": "ws.example.com",
+      "headers": {
+       "User-Agent": "probe",
+       "Host": "hdr.example.com"
+      },
+      "heartbeatPeriod": 30
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000036",
+   "viewPosition": 36,
+   "remark": "trojan-ws-reality",
+   "address": "h36.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_36",
+   "rawInbound": {
+    "tag": "IN_36",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "ws",
+     "wsSettings": {
+      "path": "/ws?ed=2048",
+      "host": "ws.example.com",
+      "headers": {
+       "User-Agent": "probe",
+       "Host": "hdr.example.com"
+      },
+      "heartbeatPeriod": 30
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000037",
+   "viewPosition": 37,
+   "remark": "trojan-httpupgrade-none",
+   "address": "h37.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_37",
+   "rawInbound": {
+    "tag": "IN_37",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "httpupgrade",
+     "httpupgradeSettings": {
+      "path": "/up",
+      "host": "up.example.com",
+      "headers": {
+       "X-Custom": "1"
+      }
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000038",
+   "viewPosition": 38,
+   "remark": "trojan-httpupgrade-tls",
+   "address": "h38.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_38",
+   "rawInbound": {
+    "tag": "IN_38",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "httpupgrade",
+     "httpupgradeSettings": {
+      "path": "/up",
+      "host": "up.example.com",
+      "headers": {
+       "X-Custom": "1"
+      }
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000039",
+   "viewPosition": 39,
+   "remark": "trojan-httpupgrade-reality",
+   "address": "h39.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_39",
+   "rawInbound": {
+    "tag": "IN_39",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "httpupgrade",
+     "httpupgradeSettings": {
+      "path": "/up",
+      "host": "up.example.com",
+      "headers": {
+       "X-Custom": "1"
+      }
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000040",
+   "viewPosition": 40,
+   "remark": "trojan-grpc-none",
+   "address": "h40.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_40",
+   "rawInbound": {
+    "tag": "IN_40",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "grpc",
+     "grpcSettings": {
+      "serviceName": "svc",
+      "multiMode": true,
+      "authority": "auth.example.com"
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000041",
+   "viewPosition": 41,
+   "remark": "trojan-grpc-tls",
+   "address": "h41.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_41",
+   "rawInbound": {
+    "tag": "IN_41",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "grpc",
+     "grpcSettings": {
+      "serviceName": "svc",
+      "multiMode": true,
+      "authority": "auth.example.com"
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000042",
+   "viewPosition": 42,
+   "remark": "trojan-grpc-reality",
+   "address": "h42.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_42",
+   "rawInbound": {
+    "tag": "IN_42",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "grpc",
+     "grpcSettings": {
+      "serviceName": "svc",
+      "multiMode": true,
+      "authority": "auth.example.com"
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000043",
+   "viewPosition": 43,
+   "remark": "trojan-xhttp-none",
+   "address": "h43.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_43",
+   "rawInbound": {
+    "tag": "IN_43",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "xhttp",
+     "xhttpSettings": {
+      "path": "/x",
+      "host": "x.example.com",
+      "mode": "packet-up",
+      "extra": {
+       "xPaddingBytes": "100-1000",
+       "noGRPCHeader": true,
+       "xmux": {
+        "maxConcurrency": "16-32",
+        "hMaxRequestTimes": 600
+       },
+       "headers": {
+        "X-Test": "y"
+       },
+       "downloadSettings": {
+        "address": "dl.example.com",
+        "port": 443,
+        "network": "xhttp",
+        "security": "reality",
+        "realitySettings": {
+         "publicKey": "pk",
+         "shortId": "ab"
+        },
+        "xhttpSettings": {
+         "path": "/dl",
+         "host": "dl.example.com",
+         "extra": {
+          "xmux": {
+           "maxConnections": 4
+          }
+         }
+        }
+       }
+      }
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000044",
+   "viewPosition": 44,
+   "remark": "trojan-xhttp-tls",
+   "address": "h44.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_44",
+   "rawInbound": {
+    "tag": "IN_44",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "xhttp",
+     "xhttpSettings": {
+      "path": "/x",
+      "host": "x.example.com",
+      "mode": "packet-up",
+      "extra": {
+       "xPaddingBytes": "100-1000",
+       "noGRPCHeader": true,
+       "xmux": {
+        "maxConcurrency": "16-32",
+        "hMaxRequestTimes": 600
+       },
+       "headers": {
+        "X-Test": "y"
+       },
+       "downloadSettings": {
+        "address": "dl.example.com",
+        "port": 443,
+        "network": "xhttp",
+        "security": "reality",
+        "realitySettings": {
+         "publicKey": "pk",
+         "shortId": "ab"
+        },
+        "xhttpSettings": {
+         "path": "/dl",
+         "host": "dl.example.com",
+         "extra": {
+          "xmux": {
+           "maxConnections": 4
+          }
+         }
+        }
+       }
+      }
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000045",
+   "viewPosition": 45,
+   "remark": "trojan-xhttp-reality",
+   "address": "h45.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_45",
+   "rawInbound": {
+    "tag": "IN_45",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "xhttp",
+     "xhttpSettings": {
+      "path": "/x",
+      "host": "x.example.com",
+      "mode": "packet-up",
+      "extra": {
+       "xPaddingBytes": "100-1000",
+       "noGRPCHeader": true,
+       "xmux": {
+        "maxConcurrency": "16-32",
+        "hMaxRequestTimes": 600
+       },
+       "headers": {
+        "X-Test": "y"
+       },
+       "downloadSettings": {
+        "address": "dl.example.com",
+        "port": 443,
+        "network": "xhttp",
+        "security": "reality",
+        "realitySettings": {
+         "publicKey": "pk",
+         "shortId": "ab"
+        },
+        "xhttpSettings": {
+         "path": "/dl",
+         "host": "dl.example.com",
+         "extra": {
+          "xmux": {
+           "maxConnections": 4
+          }
+         }
+        }
+       }
+      }
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000046",
+   "viewPosition": 46,
+   "remark": "trojan-kcp-none",
+   "address": "h46.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_46",
+   "rawInbound": {
+    "tag": "IN_46",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "kcp",
+     "kcpSettings": {
+      "mtu": 1400,
+      "tti": 20,
+      "congestion": true
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000047",
+   "viewPosition": 47,
+   "remark": "trojan-kcp-tls",
+   "address": "h47.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_47",
+   "rawInbound": {
+    "tag": "IN_47",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "kcp",
+     "kcpSettings": {
+      "mtu": 1400,
+      "tti": 20,
+      "congestion": true
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000048",
+   "viewPosition": 48,
+   "remark": "trojan-kcp-reality",
+   "address": "h48.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_48",
+   "rawInbound": {
+    "tag": "IN_48",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "kcp",
+     "kcpSettings": {
+      "mtu": 1400,
+      "tti": 20,
+      "congestion": true
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000049",
+   "viewPosition": 49,
+   "remark": "shadowsocks-tcp-none",
+   "address": "h49.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_49",
+   "rawInbound": {
+    "tag": "IN_49",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000050",
+   "viewPosition": 50,
+   "remark": "shadowsocks-tcp-tls",
+   "address": "h50.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_50",
+   "rawInbound": {
+    "tag": "IN_50",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000051",
+   "viewPosition": 51,
+   "remark": "shadowsocks-tcp-reality",
+   "address": "h51.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_51",
+   "rawInbound": {
+    "tag": "IN_51",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000052",
+   "viewPosition": 52,
+   "remark": "shadowsocks-raw-none",
+   "address": "h52.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_52",
+   "rawInbound": {
+    "tag": "IN_52",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "raw",
+     "rawSettings": {},
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000053",
+   "viewPosition": 53,
+   "remark": "shadowsocks-raw-tls",
+   "address": "h53.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_53",
+   "rawInbound": {
+    "tag": "IN_53",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "raw",
+     "rawSettings": {},
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000054",
+   "viewPosition": 54,
+   "remark": "shadowsocks-raw-reality",
+   "address": "h54.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_54",
+   "rawInbound": {
+    "tag": "IN_54",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "raw",
+     "rawSettings": {},
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000055",
+   "viewPosition": 55,
+   "remark": "shadowsocks-tcpHttp-none",
+   "address": "h55.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_55",
+   "rawInbound": {
+    "tag": "IN_55",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "tcpSettings": {
+      "header": {
+       "type": "http",
+       "request": {
+        "version": "1.1",
+        "method": "GET",
+        "path": [
+         "/a",
+         "/b"
+        ],
+        "headers": {
+         "Host": [
+          "x.example.com"
+         ]
+        }
+       }
+      }
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000056",
+   "viewPosition": 56,
+   "remark": "shadowsocks-tcpHttp-tls",
+   "address": "h56.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_56",
+   "rawInbound": {
+    "tag": "IN_56",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "tcpSettings": {
+      "header": {
+       "type": "http",
+       "request": {
+        "version": "1.1",
+        "method": "GET",
+        "path": [
+         "/a",
+         "/b"
+        ],
+        "headers": {
+         "Host": [
+          "x.example.com"
+         ]
+        }
+       }
+      }
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000057",
+   "viewPosition": 57,
+   "remark": "shadowsocks-tcpHttp-reality",
+   "address": "h57.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_57",
+   "rawInbound": {
+    "tag": "IN_57",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "tcpSettings": {
+      "header": {
+       "type": "http",
+       "request": {
+        "version": "1.1",
+        "method": "GET",
+        "path": [
+         "/a",
+         "/b"
+        ],
+        "headers": {
+         "Host": [
+          "x.example.com"
+         ]
+        }
+       }
+      }
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000058",
+   "viewPosition": 58,
+   "remark": "shadowsocks-ws-none",
+   "address": "h58.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_58",
+   "rawInbound": {
+    "tag": "IN_58",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "ws",
+     "wsSettings": {
+      "path": "/ws?ed=2048",
+      "host": "ws.example.com",
+      "headers": {
+       "User-Agent": "probe",
+       "Host": "hdr.example.com"
+      },
+      "heartbeatPeriod": 30
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000059",
+   "viewPosition": 59,
+   "remark": "shadowsocks-ws-tls",
+   "address": "h59.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_59",
+   "rawInbound": {
+    "tag": "IN_59",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "ws",
+     "wsSettings": {
+      "path": "/ws?ed=2048",
+      "host": "ws.example.com",
+      "headers": {
+       "User-Agent": "probe",
+       "Host": "hdr.example.com"
+      },
+      "heartbeatPeriod": 30
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000060",
+   "viewPosition": 60,
+   "remark": "shadowsocks-ws-reality",
+   "address": "h60.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_60",
+   "rawInbound": {
+    "tag": "IN_60",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "ws",
+     "wsSettings": {
+      "path": "/ws?ed=2048",
+      "host": "ws.example.com",
+      "headers": {
+       "User-Agent": "probe",
+       "Host": "hdr.example.com"
+      },
+      "heartbeatPeriod": 30
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000061",
+   "viewPosition": 61,
+   "remark": "shadowsocks-httpupgrade-none",
+   "address": "h61.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_61",
+   "rawInbound": {
+    "tag": "IN_61",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "httpupgrade",
+     "httpupgradeSettings": {
+      "path": "/up",
+      "host": "up.example.com",
+      "headers": {
+       "X-Custom": "1"
+      }
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000062",
+   "viewPosition": 62,
+   "remark": "shadowsocks-httpupgrade-tls",
+   "address": "h62.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_62",
+   "rawInbound": {
+    "tag": "IN_62",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "httpupgrade",
+     "httpupgradeSettings": {
+      "path": "/up",
+      "host": "up.example.com",
+      "headers": {
+       "X-Custom": "1"
+      }
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000063",
+   "viewPosition": 63,
+   "remark": "shadowsocks-httpupgrade-reality",
+   "address": "h63.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_63",
+   "rawInbound": {
+    "tag": "IN_63",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "httpupgrade",
+     "httpupgradeSettings": {
+      "path": "/up",
+      "host": "up.example.com",
+      "headers": {
+       "X-Custom": "1"
+      }
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000064",
+   "viewPosition": 64,
+   "remark": "shadowsocks-grpc-none",
+   "address": "h64.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_64",
+   "rawInbound": {
+    "tag": "IN_64",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "grpc",
+     "grpcSettings": {
+      "serviceName": "svc",
+      "multiMode": true,
+      "authority": "auth.example.com"
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000065",
+   "viewPosition": 65,
+   "remark": "shadowsocks-grpc-tls",
+   "address": "h65.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_65",
+   "rawInbound": {
+    "tag": "IN_65",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "grpc",
+     "grpcSettings": {
+      "serviceName": "svc",
+      "multiMode": true,
+      "authority": "auth.example.com"
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000066",
+   "viewPosition": 66,
+   "remark": "shadowsocks-grpc-reality",
+   "address": "h66.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_66",
+   "rawInbound": {
+    "tag": "IN_66",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "grpc",
+     "grpcSettings": {
+      "serviceName": "svc",
+      "multiMode": true,
+      "authority": "auth.example.com"
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000067",
+   "viewPosition": 67,
+   "remark": "shadowsocks-xhttp-none",
+   "address": "h67.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_67",
+   "rawInbound": {
+    "tag": "IN_67",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "xhttp",
+     "xhttpSettings": {
+      "path": "/x",
+      "host": "x.example.com",
+      "mode": "packet-up",
+      "extra": {
+       "xPaddingBytes": "100-1000",
+       "noGRPCHeader": true,
+       "xmux": {
+        "maxConcurrency": "16-32",
+        "hMaxRequestTimes": 600
+       },
+       "headers": {
+        "X-Test": "y"
+       },
+       "downloadSettings": {
+        "address": "dl.example.com",
+        "port": 443,
+        "network": "xhttp",
+        "security": "reality",
+        "realitySettings": {
+         "publicKey": "pk",
+         "shortId": "ab"
+        },
+        "xhttpSettings": {
+         "path": "/dl",
+         "host": "dl.example.com",
+         "extra": {
+          "xmux": {
+           "maxConnections": 4
+          }
+         }
+        }
+       }
+      }
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000068",
+   "viewPosition": 68,
+   "remark": "shadowsocks-xhttp-tls",
+   "address": "h68.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_68",
+   "rawInbound": {
+    "tag": "IN_68",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "xhttp",
+     "xhttpSettings": {
+      "path": "/x",
+      "host": "x.example.com",
+      "mode": "packet-up",
+      "extra": {
+       "xPaddingBytes": "100-1000",
+       "noGRPCHeader": true,
+       "xmux": {
+        "maxConcurrency": "16-32",
+        "hMaxRequestTimes": 600
+       },
+       "headers": {
+        "X-Test": "y"
+       },
+       "downloadSettings": {
+        "address": "dl.example.com",
+        "port": 443,
+        "network": "xhttp",
+        "security": "reality",
+        "realitySettings": {
+         "publicKey": "pk",
+         "shortId": "ab"
+        },
+        "xhttpSettings": {
+         "path": "/dl",
+         "host": "dl.example.com",
+         "extra": {
+          "xmux": {
+           "maxConnections": 4
+          }
+         }
+        }
+       }
+      }
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000069",
+   "viewPosition": 69,
+   "remark": "shadowsocks-xhttp-reality",
+   "address": "h69.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_69",
+   "rawInbound": {
+    "tag": "IN_69",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "xhttp",
+     "xhttpSettings": {
+      "path": "/x",
+      "host": "x.example.com",
+      "mode": "packet-up",
+      "extra": {
+       "xPaddingBytes": "100-1000",
+       "noGRPCHeader": true,
+       "xmux": {
+        "maxConcurrency": "16-32",
+        "hMaxRequestTimes": 600
+       },
+       "headers": {
+        "X-Test": "y"
+       },
+       "downloadSettings": {
+        "address": "dl.example.com",
+        "port": 443,
+        "network": "xhttp",
+        "security": "reality",
+        "realitySettings": {
+         "publicKey": "pk",
+         "shortId": "ab"
+        },
+        "xhttpSettings": {
+         "path": "/dl",
+         "host": "dl.example.com",
+         "extra": {
+          "xmux": {
+           "maxConnections": 4
+          }
+         }
+        }
+       }
+      }
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000070",
+   "viewPosition": 70,
+   "remark": "shadowsocks-kcp-none",
+   "address": "h70.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_70",
+   "rawInbound": {
+    "tag": "IN_70",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "kcp",
+     "kcpSettings": {
+      "mtu": 1400,
+      "tti": 20,
+      "congestion": true
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000071",
+   "viewPosition": 71,
+   "remark": "shadowsocks-kcp-tls",
+   "address": "h71.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_71",
+   "rawInbound": {
+    "tag": "IN_71",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "kcp",
+     "kcpSettings": {
+      "mtu": 1400,
+      "tti": 20,
+      "congestion": true
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000072",
+   "viewPosition": 72,
+   "remark": "shadowsocks-kcp-reality",
+   "address": "h72.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_72",
+   "rawInbound": {
+    "tag": "IN_72",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "kcp",
+     "kcpSettings": {
+      "mtu": 1400,
+      "tti": 20,
+      "congestion": true
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000073",
+   "viewPosition": 73,
+   "remark": "ss2022-tcp-none",
+   "address": "h73.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_73",
+   "rawInbound": {
+    "tag": "IN_73",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "2022-blake3-aes-256-gcm",
+     "password": "c2VydmVyLXBhc3N3b3JkLTMyLWJ5dGVzLWxvbmchIQ==",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000074",
+   "viewPosition": 74,
+   "remark": "vlessEnc-xhttp-none",
+   "address": "h74.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_74",
+   "rawInbound": {
+    "tag": "IN_74",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "mlkem768x25519plus.native.600s.CQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQk.BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBw"
+    },
+    "streamSettings": {
+     "network": "xhttp",
+     "xhttpSettings": {
+      "path": "/x",
+      "host": "x.example.com",
+      "mode": "packet-up",
+      "extra": {
+       "xPaddingBytes": "100-1000",
+       "noGRPCHeader": true,
+       "xmux": {
+        "maxConcurrency": "16-32",
+        "hMaxRequestTimes": 600
+       },
+       "headers": {
+        "X-Test": "y"
+       },
+       "downloadSettings": {
+        "address": "dl.example.com",
+        "port": 443,
+        "network": "xhttp",
+        "security": "reality",
+        "realitySettings": {
+         "publicKey": "pk",
+         "shortId": "ab"
+        },
+        "xhttpSettings": {
+         "path": "/dl",
+         "host": "dl.example.com",
+         "extra": {
+          "xmux": {
+           "maxConnections": 4
+          }
+         }
+        }
+       }
+      }
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000075",
+   "viewPosition": 75,
+   "remark": "vlessEnc-tcp-tls",
+   "address": "h75.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_75",
+   "rawInbound": {
+    "tag": "IN_75",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "mlkem768x25519plus.native.600s.CQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQk.BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBw"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000076",
+   "viewPosition": 76,
+   "remark": "hysteria-tcp-tls",
+   "address": "h76.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_76",
+   "rawInbound": {
+    "tag": "IN_76",
+    "port": 443,
+    "protocol": "hysteria",
+    "settings": {
+     "clients": [],
+     "version": 2
+    },
+    "streamSettings": {
+     "network": "hysteria",
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "hy.example.com",
+      "alpn": [
+       "h3"
+      ]
+     },
+     "finalmask": {
+      "quicParams": {
+       "brutalUp": "100 mbps",
+       "brutalDown": 200,
+       "udpHop": {
+        "ports": "20000-30000,40000",
+        "interval": "30"
+       }
+      },
+      "udp": [
+       {
+        "type": "salamander",
+        "settings": {
+         "password": "obfs-pass",
+         "packetSize": "100-200"
+        }
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000077",
+   "viewPosition": 77,
+   "remark": "hysteria-tcp-none",
+   "address": "h77.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_77",
+   "rawInbound": {
+    "tag": "IN_77",
+    "port": 443,
+    "protocol": "hysteria",
+    "settings": {
+     "clients": [],
+     "version": 2
+    },
+    "streamSettings": {
+     "network": "hysteria",
+     "hysteriaSettings": {
+      "version": 2
+     },
+     "finalmask": {
+      "udp": [
+       {
+        "type": "salamander",
+        "settings": {
+         "password": "salt"
+        }
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000078",
+   "viewPosition": 78,
+   "remark": "vless-tcpHttpDefault-none",
+   "address": "h78.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_78",
+   "rawInbound": {
+    "tag": "IN_78",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "tcpSettings": {
+      "header": {
+       "type": "http"
+      }
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000079",
+   "viewPosition": 79,
+   "remark": "vless-tcp-tls",
+   "address": "h79.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_79",
+   "rawInbound": {
+    "tag": "IN_79",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none",
+     "flow": ""
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000080",
+   "viewPosition": 80,
+   "remark": "vless-ws-tls",
+   "address": "h80.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_80",
+   "rawInbound": {
+    "tag": "IN_80",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none",
+     "flow": "xtls-rprx-vision"
+    },
+    "streamSettings": {
+     "network": "ws",
+     "wsSettings": {
+      "path": "/ws?ed=2048",
+      "host": "ws.example.com",
+      "headers": {
+       "User-Agent": "probe",
+       "Host": "hdr.example.com"
+      },
+      "heartbeatPeriod": 30
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000081",
+   "viewPosition": 81,
+   "remark": "vless-ws-tls",
+   "address": "h81.example.com",
+   "port": 443,
+   "path": "/override?ed=4096",
+   "sni": "sni.example.com",
+   "host": "host.example.com",
+   "alpn": "h3",
+   "fingerprint": "chrome",
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": "abcdef",
+   "verifyPeerCertByName": "verify.example.com",
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_81",
+   "rawInbound": {
+    "tag": "IN_81",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "ws",
+     "wsSettings": {
+      "path": "/ws?ed=2048",
+      "host": "ws.example.com",
+      "headers": {
+       "User-Agent": "probe",
+       "Host": "hdr.example.com"
+      },
+      "heartbeatPeriod": 30
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000082",
+   "viewPosition": 82,
+   "remark": "vless-tcp-reality",
+   "address": "h82.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": "random",
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": true,
+   "vlessRouteId": 4660,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_82",
+   "rawInbound": {
+    "tag": "IN_82",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000083",
+   "viewPosition": 83,
+   "remark": "trojan-grpc-tls",
+   "address": "2001:db8::1",
+   "port": 443,
+   "path": "grpc-svc",
+   "sni": null,
+   "host": "grpc-auth.example.com",
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": true,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_83",
+   "rawInbound": {
+    "tag": "IN_83",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "grpc",
+     "grpcSettings": {
+      "serviceName": "svc",
+      "multiMode": true,
+      "authority": "auth.example.com"
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000084",
+   "viewPosition": 84,
+   "remark": "vless-xhttp-tls",
+   "address": "h84.example.com",
+   "port": 443,
+   "path": "/hx",
+   "sni": null,
+   "host": "hx.example.com",
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": {
+    "scMaxEachPostBytes": 1000000,
+    "xmux": {
+     "cMaxReuseTimes": "64-128"
+    }
+   },
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_84",
+   "rawInbound": {
+    "tag": "IN_84",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "xhttp",
+     "xhttpSettings": {
+      "path": "/x",
+      "host": "x.example.com",
+      "mode": "packet-up",
+      "extra": {
+       "xPaddingBytes": "100-1000",
+       "noGRPCHeader": true,
+       "xmux": {
+        "maxConcurrency": "16-32",
+        "hMaxRequestTimes": 600
+       },
+       "headers": {
+        "X-Test": "y"
+       },
+       "downloadSettings": {
+        "address": "dl.example.com",
+        "port": 443,
+        "network": "xhttp",
+        "security": "reality",
+        "realitySettings": {
+         "publicKey": "pk",
+         "shortId": "ab"
+        },
+        "xhttpSettings": {
+         "path": "/dl",
+         "host": "dl.example.com",
+         "extra": {
+          "xmux": {
+           "maxConnections": 4
+          }
+         }
+        }
+       }
+      }
+     },
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000085",
+   "viewPosition": 85,
+   "remark": "vless-tcp-tls",
+   "address": "h85.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "NONE",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_85",
+   "rawInbound": {
+    "tag": "IN_85",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000086",
+   "viewPosition": 86,
+   "remark": "trojan-ws-none",
+   "address": "h86.example.com",
+   "port": 443,
+   "path": null,
+   "sni": "forced.example.com",
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "TLS",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_86",
+   "rawInbound": {
+    "tag": "IN_86",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "ws",
+     "wsSettings": {
+      "path": "/ws?ed=2048",
+      "host": "ws.example.com",
+      "headers": {
+       "User-Agent": "probe",
+       "Host": "hdr.example.com"
+      },
+      "heartbeatPeriod": 30
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000087",
+   "viewPosition": 87,
+   "remark": "vless-ws-none",
+   "address": "h87.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": {
+    "enabled": true,
+    "concurrency": 8,
+    "smux": {
+     "enabled": true,
+     "protocol": "h2mux",
+     "max-connections": "4",
+     "min-streams": 2,
+     "padding": true,
+     "brutal-opts": {
+      "enabled": true,
+      "up": "50",
+      "down": 100
+     }
+    }
+   },
+   "sockoptParams": {
+    "tcpFastOpen": true,
+    "mark": 255
+   },
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_87",
+   "rawInbound": {
+    "tag": "IN_87",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "ws",
+     "wsSettings": {
+      "path": "/ws?ed=2048",
+      "host": "ws.example.com",
+      "headers": {
+       "User-Agent": "probe",
+       "Host": "hdr.example.com"
+      },
+      "heartbeatPeriod": 30
+     },
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000088",
+   "viewPosition": 88,
+   "remark": "vless-tcp-reality",
+   "address": "h88.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": {
+    "tcp": [
+     {
+      "type": "fragment",
+      "settings": {
+       "packets": "tlshello"
+      }
+     }
+    ]
+   },
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": "ipv4-prefer",
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": true,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_88",
+   "rawInbound": {
+    "tag": "IN_88",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000089",
+   "viewPosition": 89,
+   "remark": "shadowsocks-tcp-none",
+   "address": "h89.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": "Описание сервера 🇩🇪",
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_89",
+   "rawInbound": {
+    "tag": "IN_89",
+    "port": 443,
+    "protocol": "shadowsocks",
+    "settings": {
+     "clients": [],
+     "method": "chacha20-ietf-poly1305",
+     "network": "tcp,udp"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "none"
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000090",
+   "viewPosition": 90,
+   "remark": "{{USERNAME}} · {{DAYS_LEFT}}d · {{TRAFFIC_LEFT}} · {{STATUS:ACTIVE=On}} · {{NEXT_TRAFFIC_RESET_AT:format=YYYY-MM-DD HH:mm}}",
+   "address": "h90.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_90",
+   "rawInbound": {
+    "tag": "IN_90",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000091",
+   "viewPosition": 91,
+   "remark": "dup",
+   "address": "h91.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_91",
+   "rawInbound": {
+    "tag": "IN_91",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000092",
+   "viewPosition": 92,
+   "remark": "dup",
+   "address": "h92.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_92",
+   "rawInbound": {
+    "tag": "IN_92",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000093",
+   "viewPosition": 93,
+   "remark": "dup",
+   "address": "h93.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_93",
+   "rawInbound": {
+    "tag": "IN_93",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000094",
+   "viewPosition": 94,
+   "remark": "trojan-tcp-tls",
+   "address": "h94.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [
+    "XRAY_BASE64",
+    "SINGBOX"
+   ],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_94",
+   "rawInbound": {
+    "tag": "IN_94",
+    "port": 443,
+    "protocol": "trojan",
+    "settings": {
+     "clients": []
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "tls",
+     "tlsSettings": {
+      "serverName": "tls.example.com",
+      "alpn": [
+       "h2",
+       "http/1.1"
+      ],
+      "fingerprint": "firefox",
+      "enableSessionResumption": true,
+      "cipherSuites": "TLS_AES_128_GCM_SHA256",
+      "echConfigList": "AEn+DQBF",
+      "echForceQuery": "full"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000095",
+   "viewPosition": 95,
+   "remark": "vless-grpc-reality",
+   "address": "h95.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [
+    "HIDDEN",
+    "EU"
+   ],
+   "isHidden": true,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {},
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_95",
+   "rawInbound": {
+    "tag": "IN_95",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "grpc",
+     "grpcSettings": {
+      "serviceName": "svc",
+      "multiMode": true,
+      "authority": "auth.example.com"
+     },
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  },
+  {
+   "uuid": "00000000-0000-4000-8000-000000000096",
+   "viewPosition": 96,
+   "remark": "vless-tcp-reality",
+   "address": "h96.example.com",
+   "port": 443,
+   "path": null,
+   "sni": null,
+   "host": null,
+   "alpn": null,
+   "fingerprint": null,
+   "securityLayer": "DEFAULT",
+   "xhttpExtraParams": null,
+   "muxParams": null,
+   "sockoptParams": null,
+   "finalMask": null,
+   "isDisabled": false,
+   "serverDescription": null,
+   "pinnedPeerCertSha256": null,
+   "verifyPeerCertByName": null,
+   "mihomoIpVersion": null,
+   "tags": [
+    "EU"
+   ],
+   "isHidden": false,
+   "overrideSniFromAddress": false,
+   "keepSniBlank": false,
+   "vlessRouteId": null,
+   "shuffleHost": false,
+   "mihomoX25519": false,
+   "configProfileUuid": "11111111-1111-4111-8111-111111111111",
+   "configProfileInboundUuid": null,
+   "xrayJsonTemplateUuid": null,
+   "excludeFromSubscriptionTypes": [],
+   "nodes": [],
+   "mapper": {
+    "base64": [
+     {
+      "op": "set",
+      "to": "fp",
+      "value": "qq"
+     },
+     {
+      "op": "copy",
+      "from": "$host.metadata.inboundTag",
+      "to": "$link.remark"
+     },
+     {
+      "op": "unset",
+      "to": "sid"
+     }
+    ],
+    "xrayJson": [
+     {
+      "op": "set",
+      "to": "streamSettings.sockopt.mark",
+      "value": 7
+     },
+     {
+      "op": "copy",
+      "from": "port",
+      "to": "settings.vnext[0].port"
+     },
+     {
+      "op": "unset",
+      "to": "mux"
+     }
+    ],
+    "mihomo": [
+     {
+      "op": "set",
+      "to": "tfo",
+      "value": true
+     },
+     {
+      "op": "copy",
+      "from": "$host.securityOptions.publicKey",
+      "to": "reality-opts.public-key"
+     }
+    ],
+    "singbox": [
+     {
+      "op": "set",
+      "to": "tls.utls.fingerprint",
+      "value": "edge"
+     },
+     {
+      "op": "set",
+      "to": "tag.blocked",
+      "value": 1
+     }
+    ]
+   },
+   "internalSquadsMode": "EXCLUDE",
+   "internalSquads": [],
+   "xrayJsonTemplate": null,
+   "inboundTag": "IN_96",
+   "rawInbound": {
+    "tag": "IN_96",
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+     "clients": [],
+     "decryption": "none"
+    },
+    "streamSettings": {
+     "network": "tcp",
+     "security": "reality",
+     "realitySettings": {
+      "privateKey": "aOHwDZ7ofkXQsQ8VGm6TvUhw3yfh7dQvl7nyH4UBhUo",
+      "shortIds": [
+       "a1b2",
+       "c3"
+      ],
+      "serverNames": [
+       "reality.example.com",
+       "b.example.com"
+      ],
+      "spiderX": "/spider",
+      "fingerprint": "safari",
+      "mldsa65Seed": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+      "target": "reality.example.com:443"
+     }
+    }
+   }
+  }
+ ],
+ "templates": {
+  "XRAY_JSON": {
+   "dns": {
+    "servers": [
+     "1.1.1.1",
+     "1.0.0.1"
+    ],
+    "queryStrategy": "UseIP"
+   },
+   "routing": {
+    "rules": [
+     {
+      "type": "field",
+      "protocol": [
+       "bittorrent"
+      ],
+      "outboundTag": "direct"
+     }
+    ],
+    "domainMatcher": "hybrid",
+    "domainStrategy": "IPIfNonMatch"
+   },
+   "inbounds": [
+    {
+     "tag": "socks",
+     "port": 10808,
+     "listen": "127.0.0.1",
+     "protocol": "socks",
+     "settings": {
+      "udp": true,
+      "auth": "noauth"
+     },
+     "sniffing": {
+      "enabled": true,
+      "routeOnly": false,
+      "destOverride": [
+       "http",
+       "tls",
+       "quic"
+      ]
+     }
+    },
+    {
+     "tag": "http",
+     "port": 10809,
+     "listen": "127.0.0.1",
+     "protocol": "http",
+     "settings": {
+      "allowTransparent": false
+     },
+     "sniffing": {
+      "enabled": true,
+      "routeOnly": false,
+      "destOverride": [
+       "http",
+       "tls",
+       "quic"
+      ]
+     }
+    }
+   ],
+   "outbounds": [
+    {
+     "tag": "direct",
+     "protocol": "freedom"
+    },
+    {
+     "tag": "block",
+     "protocol": "blackhole"
+    }
+   ]
+  },
+  "SINGBOX": {
+   "dns": {
+    "rules": [
+     {
+      "server": "remote",
+      "query_type": [
+       "A",
+       "AAAA"
+      ]
+     }
+    ],
+    "servers": [
+     {
+      "tag": "cf-dns",
+      "type": "tls",
+      "server": "1.1.1.1"
+     },
+     {
+      "tag": "local",
+      "type": "udp",
+      "server": "1.1.1.1"
+     },
+     {
+      "tag": "remote",
+      "type": "fakeip",
+      "inet4_range": "198.18.0.0/15",
+      "inet6_range": "fc00::/18"
+     }
+    ],
+    "independent_cache": true
+   },
+   "log": {
+    "level": "debug",
+    "disabled": true,
+    "timestamp": true
+   },
+   "route": {
+    "rules": [
+     {
+      "action": "sniff"
+     },
+     {
+      "action": "hijack-dns",
+      "protocol": "dns"
+     },
+     {
+      "outbound": "direct",
+      "ip_is_private": true
+     }
+    ],
+    "auto_detect_interface": true,
+    "default_domain_resolver": "local"
+   },
+   "inbounds": [
+    {
+     "mtu": 9000,
+     "tag": "tun-in",
+     "type": "tun",
+     "stack": "mixed",
+     "address": [
+      "172.19.0.1/30",
+      "fdfe:dcba:9876::1/126"
+     ],
+     "platform": {
+      "http_proxy": {
+       "server": "127.0.0.1",
+       "enabled": true,
+       "server_port": 2412
+      }
+     },
+     "auto_route": true,
+     "strict_route": true,
+     "interface_name": "tun125",
+     "endpoint_independent_nat": true
+    },
+    {
+     "tag": "mixed-in",
+     "type": "mixed",
+     "users": [],
+     "listen": "127.0.0.1",
+     "listen_port": 2412,
+     "set_system_proxy": false
+    }
+   ],
+   "outbounds": [
+    {
+     "tag": "→ Remnawave",
+     "type": "selector",
+     "outbounds": null,
+     "interrupt_exist_connections": true
+    },
+    {
+     "tag": "direct",
+     "type": "direct"
+    }
+   ],
+   "experimental": {
+    "clash_api": {
+     "external_ui": "yacd",
+     "default_mode": "rule",
+     "external_controller": "127.0.0.1:9090",
+     "external_ui_download_url": "https://github.com/MetaCubeX/Yacd-meta/archive/gh-pages.zip",
+     "external_ui_download_detour": "direct"
+    },
+    "cache_file": {
+     "path": "remnawave.db",
+     "enabled": true,
+     "cache_id": "remnawave",
+     "store_fakeip": true
+    }
+   }
+  },
+  "MIHOMO": "mixed-port: 7890\nsocks-port: 7891\nredir-port: 7892\nallow-lan: true\nmode: global\nlog-level: info\nexternal-controller: 127.0.0.1:9090\ndns:\n  enable: true\n  use-hosts: true\n  enhanced-mode: fake-ip\n  fake-ip-range: 198.18.0.1/16\n  default-nameserver:\n    - 1.1.1.1\n    - 8.8.8.8\n  nameserver:\n    - 1.1.1.1\n    - 8.8.8.8\n  fake-ip-filter:\n    - '*.lan'\n    - stun.*.*.*\n    - stun.*.*\n    - time.windows.com\n    - time.nist.gov\n    - time.apple.com\n    - time.asia.apple.com\n    - '*.openwrt.pool.ntp.org'\n    - pool.ntp.org\n    - ntp.ubuntu.com\n    - time1.apple.com\n    - time2.apple.com\n    - time3.apple.com\n    - time4.apple.com\n    - time5.apple.com\n    - time6.apple.com\n    - time7.apple.com\n    - time1.google.com\n    - time2.google.com\n    - time3.google.com\n    - time4.google.com\n    - api.joox.com\n    - joox.com\n    - '*.xiami.com'\n    - '*.msftconnecttest.com'\n    - '*.msftncsi.com'\n    - '+.xboxlive.com'\n    - '*.*.stun.playstation.net'\n    - xbox.*.*.microsoft.com\n    - '*.ipv6.microsoft.com'\n    - speedtest.cros.wr.pvp.net\n\nproxies: # LEAVE THIS LINE!\n\nproxy-groups:\n  - name: '→ Remnawave'\n    type: 'select'\n    proxies: # LEAVE THIS LINE!\n\nrules:\n  - MATCH,→ Remnawave\n",
+  "STASH": "proxy-groups:\n  - name: → Remnawave\n    type: select\n    proxies: # LEAVE THIS LINE!\n\nproxies: # LEAVE THIS LINE!\n\nrules:\n  - SCRIPT,quic,REJECT\n  - DOMAIN-SUFFIX,iphone-ld.apple.com,DIRECT\n  - DOMAIN-SUFFIX,lcdn-locator.apple.com,DIRECT\n  - DOMAIN-SUFFIX,lcdn-registration.apple.com,DIRECT\n  - DOMAIN-SUFFIX,push.apple.com,DIRECT\n  - PROCESS-NAME,v2ray,DIRECT\n  - PROCESS-NAME,Surge,DIRECT\n  - PROCESS-NAME,ss-local,DIRECT\n  - PROCESS-NAME,privoxy,DIRECT\n  - PROCESS-NAME,trojan,DIRECT\n  - PROCESS-NAME,trojan-go,DIRECT\n  - PROCESS-NAME,naive,DIRECT\n  - PROCESS-NAME,CloudflareWARP,DIRECT\n  - PROCESS-NAME,Cloudflare WARP,DIRECT\n  - IP-CIDR,162.159.193.0/24,DIRECT,no-resolve\n  - PROCESS-NAME,p4pclient,DIRECT\n  - PROCESS-NAME,Thunder,DIRECT\n  - PROCESS-NAME,DownloadService,DIRECT\n  - PROCESS-NAME,qbittorrent,DIRECT\n  - PROCESS-NAME,Transmission,DIRECT\n  - PROCESS-NAME,fdm,DIRECT\n  - PROCESS-NAME,aria2c,DIRECT\n  - PROCESS-NAME,Folx,DIRECT\n  - PROCESS-NAME,NetTransport,DIRECT\n  - PROCESS-NAME,uTorrent,DIRECT\n  - PROCESS-NAME,WebTorrent,DIRECT\n  - GEOIP,LAN,DIRECT\n  - MATCH,→ Remnawave\nscript:\n  shortcuts:\n    quic: network == 'udp' and dst_port == 443\ndns:\n  default-nameserver:\n    - 1.1.1.1\n    - 1.0.0.1\n  nameserver:\n    - 1.1.1.1\n    - 1.0.0.1\nlog-level: warning\nmode: rule\n\n",
+  "CLASH": "mixed-port: 7890\nsocks-port: 7891\nredir-port: 7892\nallow-lan: true\nmode: global\nlog-level: info\nexternal-controller: 127.0.0.1:9090\ndns:\n  enable: true\n  use-hosts: true\n  enhanced-mode: fake-ip\n  fake-ip-range: 198.18.0.1/16\n  default-nameserver:\n    - 1.1.1.1\n    - 8.8.8.8\n  nameserver:\n    - 1.1.1.1\n    - 8.8.8.8\n  fake-ip-filter:\n    - '*.lan'\n    - stun.*.*.*\n    - stun.*.*\n    - time.windows.com\n    - time.nist.gov\n    - time.apple.com\n    - time.asia.apple.com\n    - '*.openwrt.pool.ntp.org'\n    - pool.ntp.org\n    - ntp.ubuntu.com\n    - time1.apple.com\n    - time2.apple.com\n    - time3.apple.com\n    - time4.apple.com\n    - time5.apple.com\n    - time6.apple.com\n    - time7.apple.com\n    - time1.google.com\n    - time2.google.com\n    - time3.google.com\n    - time4.google.com\n    - api.joox.com\n    - joox.com\n    - '*.xiami.com'\n    - '*.msftconnecttest.com'\n    - '*.msftncsi.com'\n    - '+.xboxlive.com'\n    - '*.*.stun.playstation.net'\n    - xbox.*.*.microsoft.com\n    - '*.ipv6.microsoft.com'\n    - speedtest.cros.wr.pvp.net\n\nproxies: # LEAVE THIS LINE!\n\nproxy-groups:\n  - name: '→ Remnawave'\n    type: 'select'\n    proxies: # LEAVE THIS LINE!\n\nrules:\n  - MATCH,→ Remnawave"
+ },
+ "cases": [
+  {
+   "name": "matrix",
+   "types": [
+    "XRAY_BASE64",
+    "XRAY_JSON",
+    "SINGBOX",
+    "MIHOMO",
+    "STASH",
+    "CLASH"
+   ],
+   "extended": [
+    false,
+    true
+   ]
+  },
+  {
+   "name": "expired",
+   "types": [
+    "XRAY_BASE64",
+    "XRAY_JSON",
+    "SINGBOX",
+    "MIHOMO",
+    "STASH",
+    "CLASH"
+   ],
+   "userPatch": {
+    "status": "EXPIRED"
+   }
+  },
+  {
+   "name": "limited",
+   "types": [
+    "XRAY_BASE64",
+    "MIHOMO"
+   ],
+   "userPatch": {
+    "status": "LIMITED"
+   }
+  },
+  {
+   "name": "disabled-no-remarks",
+   "types": [
+    "XRAY_BASE64"
+   ],
+   "userPatch": {
+    "status": "DISABLED"
+   },
+   "settingsPatch": {
+    "isShowCustomRemarks": false
+   }
+  },
+  {
+   "name": "empty-hosts",
+   "types": [
+    "XRAY_BASE64",
+    "XRAY_JSON",
+    "SINGBOX",
+    "MIHOMO",
+    "STASH",
+    "CLASH"
+   ],
+   "hostIndexes": []
+  },
+  {
+   "name": "hwid-max",
+   "types": [
+    "XRAY_BASE64",
+    "SINGBOX"
+   ],
+   "fallback": {
+    "showHwidMaxDeviceRemarks": true
+   }
+  },
+  {
+   "name": "respond-with",
+   "types": [
+    "XRAY_JSON"
+   ],
+   "fallback": {
+    "respondWithRemarks": [
+     "custom {{ID}}",
+     "rwEncodeBase64:{{EMAIL}}"
+    ]
+   }
+  },
+  {
+   "name": "external-squad",
+   "types": [
+    "XRAY_BASE64",
+    "XRAY_JSON"
+   ],
+   "hostOverrides": {
+    "vlessRouteId": 255,
+    "serverDescription": "squad description"
+   },
+   "extended": [
+    true
+   ]
+  },
+  {
+   "name": "exclude-tags",
+   "types": [
+    "XRAY_BASE64"
+   ],
+   "excludeHostsByTags": [
+    "EU"
+   ]
+  },
+  {
+   "name": "injector",
+   "types": [
+    "XRAY_JSON"
+   ],
+   "templates": {
+    "XRAY_JSON": {
+     "dns": {
+      "servers": [
+       "1.1.1.1",
+       "1.0.0.1"
+      ],
+      "queryStrategy": "UseIP"
+     },
+     "routing": {
+      "rules": [
+       {
+        "type": "field",
+        "protocol": [
+         "bittorrent"
+        ],
+        "outboundTag": "direct"
+       }
+      ],
+      "domainMatcher": "hybrid",
+      "domainStrategy": "IPIfNonMatch"
+     },
+     "inbounds": [
+      {
+       "tag": "socks",
+       "port": 10808,
+       "listen": "127.0.0.1",
+       "protocol": "socks",
+       "settings": {
+        "udp": true,
+        "auth": "noauth"
+       },
+       "sniffing": {
+        "enabled": true,
+        "routeOnly": false,
+        "destOverride": [
+         "http",
+         "tls",
+         "quic"
+        ]
+       }
+      },
+      {
+       "tag": "http",
+       "port": 10809,
+       "listen": "127.0.0.1",
+       "protocol": "http",
+       "settings": {
+        "allowTransparent": false
+       },
+       "sniffing": {
+        "enabled": true,
+        "routeOnly": false,
+        "destOverride": [
+         "http",
+         "tls",
+         "quic"
+        ]
+       }
+      }
+     ],
+     "outbounds": [
+      {
+       "tag": "direct",
+       "protocol": "freedom"
+      },
+      {
+       "tag": "block",
+       "protocol": "blackhole"
+      }
+     ],
+     "remnawave": {
+      "addVirtualHostAsOutbound": true,
+      "injectHosts": [
+       {
+        "selector": {
+         "type": "sameTagAsRecipient"
+        },
+        "selectFrom": "ALL",
+        "tagPrefix": "eu"
+       },
+       {
+        "selector": {
+         "type": "remarkRegex",
+         "pattern": "^vless-ws"
+        },
+        "selectFrom": "NOT_HIDDEN",
+        "useHostRemarkAsTag": true
+       },
+       {
+        "selector": {
+         "type": "uuids",
+         "values": [
+          "00000000-0000-4000-8000-000000000095"
+         ]
+        },
+        "useHostTagAsTag": true
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "host-template",
+   "types": [
+    "XRAY_JSON"
+   ],
+   "hostPatch": {
+    "0": {
+     "xrayJsonTemplate": {
+      "log": {
+       "loglevel": "debug"
+      },
+      "outbounds": [
+       {
+        "tag": "direct",
+        "protocol": "freedom"
+       }
+      ]
+     }
+    }
+   },
+   "ignoreHostXrayJsonTemplate": [
+    false,
+    true
+   ]
+  }
+ ]
+}

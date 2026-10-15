@@ -1,0 +1,2475 @@
+[
+ {
+  "input": {
+   "empty": ""
+  },
+  "output": "empty: ''\n"
+ },
+ {
+  "input": {
+   " ": " "
+  },
+  "output": "\" \": \" \"\n"
+ },
+ {
+  "input": {
+   "  ": "  "
+  },
+  "output": "\"  \": \"  \"\n"
+ },
+ {
+  "input": {
+   "\t": "\t"
+  },
+  "output": "\"\\t\": \"\\t\"\n"
+ },
+ {
+  "input": {
+   "plain": "plain"
+  },
+  "output": "plain: plain\n"
+ },
+ {
+  "input": {
+   "with space": "with space"
+  },
+  "output": "with space: with space\n"
+ },
+ {
+  "input": {
+   " leading": " leading"
+  },
+  "output": "' leading': ' leading'\n"
+ },
+ {
+  "input": {
+   "trailing ": "trailing "
+  },
+  "output": "'trailing ': 'trailing '\n"
+ },
+ {
+  "input": {
+   "a\tb": "a\tb"
+  },
+  "output": "\"a\\tb\": \"a\\tb\"\n"
+ },
+ {
+  "input": {
+   "yes": "yes"
+  },
+  "output": "'yes': 'yes'\n"
+ },
+ {
+  "input": {
+   "Yes": "Yes"
+  },
+  "output": "'Yes': 'Yes'\n"
+ },
+ {
+  "input": {
+   "YES": "YES"
+  },
+  "output": "'YES': 'YES'\n"
+ },
+ {
+  "input": {
+   "no": "no"
+  },
+  "output": "'no': 'no'\n"
+ },
+ {
+  "input": {
+   "No": "No"
+  },
+  "output": "'No': 'No'\n"
+ },
+ {
+  "input": {
+   "on": "on"
+  },
+  "output": "'on': 'on'\n"
+ },
+ {
+  "input": {
+   "Off": "Off"
+  },
+  "output": "'Off': 'Off'\n"
+ },
+ {
+  "input": {
+   "y": "y"
+  },
+  "output": "'y': 'y'\n"
+ },
+ {
+  "input": {
+   "n": "n"
+  },
+  "output": "'n': 'n'\n"
+ },
+ {
+  "input": {
+   "true": "true"
+  },
+  "output": "'true': 'true'\n"
+ },
+ {
+  "input": {
+   "False": "False"
+  },
+  "output": "'False': 'False'\n"
+ },
+ {
+  "input": {
+   "null": "null"
+  },
+  "output": "'null': 'null'\n"
+ },
+ {
+  "input": {
+   "Null": "Null"
+  },
+  "output": "'Null': 'Null'\n"
+ },
+ {
+  "input": {
+   "~": "~"
+  },
+  "output": "'~': '~'\n"
+ },
+ {
+  "input": {
+   "=": "="
+  },
+  "output": "'=': '='\n"
+ },
+ {
+  "input": {
+   "<<": "<<"
+  },
+  "output": "'<<': '<<'\n"
+ },
+ {
+  "input": {
+   "0": "0"
+  },
+  "output": "'0': '0'\n"
+ },
+ {
+  "input": {
+   "00": "00"
+  },
+  "output": "'00': '00'\n"
+ },
+ {
+  "input": {
+   "08": "08"
+  },
+  "output": "'08': '08'\n"
+ },
+ {
+  "input": {
+   "0o17": "0o17"
+  },
+  "output": "'0o17': '0o17'\n"
+ },
+ {
+  "input": {
+   "0x1F": "0x1F"
+  },
+  "output": "'0x1F': '0x1F'\n"
+ },
+ {
+  "input": {
+   "0x_": "0x_"
+  },
+  "output": "0x_: 0x_\n"
+ },
+ {
+  "input": {
+   "0b101": "0b101"
+  },
+  "output": "'0b101': '0b101'\n"
+ },
+ {
+  "input": {
+   "0b_": "0b_"
+  },
+  "output": "0b_: 0b_\n"
+ },
+ {
+  "input": {
+   "1_000": "1_000"
+  },
+  "output": "'1_000': '1_000'\n"
+ },
+ {
+  "input": {
+   "-1": "-1"
+  },
+  "output": "'-1': '-1'\n"
+ },
+ {
+  "input": {
+   "+1": "+1"
+  },
+  "output": "'+1': '+1'\n"
+ },
+ {
+  "input": {
+   "1:30": "1:30"
+  },
+  "output": "'1:30': '1:30'\n"
+ },
+ {
+  "input": {
+   "190:20:30": "190:20:30"
+  },
+  "output": "'190:20:30': '190:20:30'\n"
+ },
+ {
+  "input": {
+   "1.5": "1.5"
+  },
+  "output": "'1.5': '1.5'\n"
+ },
+ {
+  "input": {
+   ".5": ".5"
+  },
+  "output": "'.5': '.5'\n"
+ },
+ {
+  "input": {
+   "1.": "1."
+  },
+  "output": "'1.': '1.'\n"
+ },
+ {
+  "input": {
+   ".": "."
+  },
+  "output": ".: .\n"
+ },
+ {
+  "input": {
+   "-.inf": "-.inf"
+  },
+  "output": "'-.inf': '-.inf'\n"
+ },
+ {
+  "input": {
+   ".NaN": ".NaN"
+  },
+  "output": "'.NaN': '.NaN'\n"
+ },
+ {
+  "input": {
+   "1e10": "1e10"
+  },
+  "output": "'1e10': '1e10'\n"
+ },
+ {
+  "input": {
+   "1e+10": "1e+10"
+  },
+  "output": "'1e+10': '1e+10'\n"
+ },
+ {
+  "input": {
+   "1.0e+10": "1.0e+10"
+  },
+  "output": "'1.0e+10': '1.0e+10'\n"
+ },
+ {
+  "input": {
+   "6.8523015e+5": "6.8523015e+5"
+  },
+  "output": "'6.8523015e+5': '6.8523015e+5'\n"
+ },
+ {
+  "input": {
+   "2024-01-01": "2024-01-01"
+  },
+  "output": "'2024-01-01': '2024-01-01'\n"
+ },
+ {
+  "input": {
+   "2024-13-01": "2024-13-01"
+  },
+  "output": "2024-13-01: 2024-13-01\n"
+ },
+ {
+  "input": {
+   "2024-02-30": "2024-02-30"
+  },
+  "output": "2024-02-30: 2024-02-30\n"
+ },
+ {
+  "input": {
+   "2001-12-14t21:59:43.10-05:00": "2001-12-14t21:59:43.10-05:00"
+  },
+  "output": "'2001-12-14t21:59:43.10-05:00': '2001-12-14t21:59:43.10-05:00'\n"
+ },
+ {
+  "input": {
+   "2001-12-14 21:59:43.10": "2001-12-14 21:59:43.10"
+  },
+  "output": "'2001-12-14 21:59:43.10': '2001-12-14 21:59:43.10'\n"
+ },
+ {
+  "input": {
+   "2024-1-1 1:02:03": "2024-1-1 1:02:03"
+  },
+  "output": "'2024-1-1 1:02:03': '2024-1-1 1:02:03'\n"
+ },
+ {
+  "input": {
+   "12:30": "12:30"
+  },
+  "output": "'12:30': '12:30'\n"
+ },
+ {
+  "input": {
+   "-": "-"
+  },
+  "output": "'-': '-'\n"
+ },
+ {
+  "input": {
+   "- a": "- a"
+  },
+  "output": "'- a': '- a'\n"
+ },
+ {
+  "input": {
+   "-a": "-a"
+  },
+  "output": "-a: -a\n"
+ },
+ {
+  "input": {
+   "?": "?"
+  },
+  "output": "'?': '?'\n"
+ },
+ {
+  "input": {
+   "? a": "? a"
+  },
+  "output": "'? a': '? a'\n"
+ },
+ {
+  "input": {
+   "?a": "?a"
+  },
+  "output": "?a: ?a\n"
+ },
+ {
+  "input": {
+   ":": ":"
+  },
+  "output": "':': ':'\n"
+ },
+ {
+  "input": {
+   ":a": ":a"
+  },
+  "output": ":a: :a\n"
+ },
+ {
+  "input": {
+   "a:": "a:"
+  },
+  "output": "'a:': 'a:'\n"
+ },
+ {
+  "input": {
+   "a: b": "a: b"
+  },
+  "output": "'a: b': 'a: b'\n"
+ },
+ {
+  "input": {
+   "a:b": "a:b"
+  },
+  "output": "a:b: a:b\n"
+ },
+ {
+  "input": {
+   "http://x.example/a?b=c#d": "http://x.example/a?b=c#d"
+  },
+  "output": "http://x.example/a?b=c#d: http://x.example/a?b=c#d\n"
+ },
+ {
+  "input": {
+   "#comment": "#comment"
+  },
+  "output": "'#comment': '#comment'\n"
+ },
+ {
+  "input": {
+   "a #b": "a #b"
+  },
+  "output": "'a #b': 'a #b'\n"
+ },
+ {
+  "input": {
+   "a#b": "a#b"
+  },
+  "output": "a#b: a#b\n"
+ },
+ {
+  "input": {
+   "a #": "a #"
+  },
+  "output": "'a #': 'a #'\n"
+ },
+ {
+  "input": {
+   "[x]": "[x]"
+  },
+  "output": "'[x]': '[x]'\n"
+ },
+ {
+  "input": {
+   "{x}": "{x}"
+  },
+  "output": "'{x}': '{x}'\n"
+ },
+ {
+  "input": {
+   "a,b": "a,b"
+  },
+  "output": "a,b: a,b\n"
+ },
+ {
+  "input": {
+   "a, b": "a, b"
+  },
+  "output": "a, b: a, b\n"
+ },
+ {
+  "input": {
+   "&anchor": "&anchor"
+  },
+  "output": "'&anchor': '&anchor'\n"
+ },
+ {
+  "input": {
+   "*alias": "*alias"
+  },
+  "output": "'*alias': '*alias'\n"
+ },
+ {
+  "input": {
+   "!tag": "!tag"
+  },
+  "output": "'!tag': '!tag'\n"
+ },
+ {
+  "input": {
+   "|": "|"
+  },
+  "output": "'|': '|'\n"
+ },
+ {
+  "input": {
+   ">": ">"
+  },
+  "output": "'>': '>'\n"
+ },
+ {
+  "input": {
+   "'q'": "'q'"
+  },
+  "output": "'''q''': '''q'''\n"
+ },
+ {
+  "input": {
+   "\"q\"": "\"q\""
+  },
+  "output": "'\"q\"': '\"q\"'\n"
+ },
+ {
+  "input": {
+   "it's": "it's"
+  },
+  "output": "it's: it's\n"
+ },
+ {
+  "input": {
+   "say \"hi\"": "say \"hi\""
+  },
+  "output": "say \"hi\": say \"hi\"\n"
+ },
+ {
+  "input": {
+   "%x": "%x"
+  },
+  "output": "'%x': '%x'\n"
+ },
+ {
+  "input": {
+   "@x": "@x"
+  },
+  "output": "'@x': '@x'\n"
+ },
+ {
+  "input": {
+   "`x`": "`x`"
+  },
+  "output": "'`x`': '`x`'\n"
+ },
+ {
+  "input": {
+   "---": "---"
+  },
+  "output": "---: ---\n"
+ },
+ {
+  "input": {
+   "--- a": "--- a"
+  },
+  "output": "--- a: --- a\n"
+ },
+ {
+  "input": {
+   "...": "..."
+  },
+  "output": "...: ...\n"
+ },
+ {
+  "input": {
+   "a\nb": "a\nb"
+  },
+  "output": "? \"a\\nb\"\n: |-\n  a\n  b\n"
+ },
+ {
+  "input": {
+   "a\n\nb": "a\n\nb"
+  },
+  "output": "? \"a\\n\\nb\"\n: |-\n  a\n\n  b\n"
+ },
+ {
+  "input": {
+   "a\n": "a\n"
+  },
+  "output": "? \"a\\n\"\n: |\n  a\n"
+ },
+ {
+  "input": {
+   "a\n\n": "a\n\n"
+  },
+  "output": "? \"a\\n\\n\"\n: |+\n  a\n\n...\n"
+ },
+ {
+  "input": {
+   "\n": "\n"
+  },
+  "output": "? \"\\n\"\n: \"\\n\"\n"
+ },
+ {
+  "input": {
+   "\na": "\na"
+  },
+  "output": "? \"\\na\"\n: |-\n\n  a\n"
+ },
+ {
+  "input": {
+   " a\nb": " a\nb"
+  },
+  "output": "? \" a\\nb\"\n: |2-\n   a\n  b\n"
+ },
+ {
+  "input": {
+   "a \nb": "a \nb"
+  },
+  "output": "? \"a \\nb\"\n: |-\n  a \n  b\n"
+ },
+ {
+  "input": {
+   "a\n b": "a\n b"
+  },
+  "output": "? \"a\\n b\"\n: |-\n  a\n   b\n"
+ },
+ {
+  "input": {
+   "line\nwith trailing\n": "line\nwith trailing\n"
+  },
+  "output": "? \"line\\nwith trailing\\n\"\n: |\n  line\n  with trailing\n"
+ },
+ {
+  "input": {
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  },
+  "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
+ },
+ {
+  "input": {
+   "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word"
+  },
+  "output": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word: >-\n  word word word word word word word word word word word word word word word\n  word word word word word word word word word word word word word word word\n"
+ },
+ {
+  "input": {
+   " word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word ": " word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word "
+  },
+  "output": "' word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word ': ' word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word '\n"
+ },
+ {
+  "input": {
+   "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \nsecond line": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \nsecond line"
+  },
+  "output": "? \"word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \\nsecond line\"\n: >-\n  word word word word word word word word word word word word word word word\n  word word word word word word word word word word word word word word word \n\n  second line\n"
+ },
+ {
+  "input": {
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa b": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa b"
+  },
+  "output": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa b: >-\n  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n  b\n"
+ },
+ {
+  "input": {
+   "tab\there": "tab\there"
+  },
+  "output": "\"tab\\there\": \"tab\\there\"\n"
+ },
+ {
+  "input": {
+   "\u0007bell": "\u0007bell"
+  },
+  "output": "\"\\abell\": \"\\abell\"\n"
+ },
+ {
+  "input": {
+   "\u001bEsc": "\u001bEsc"
+  },
+  "output": "\"\\eEsc\": \"\\eEsc\"\n"
+ },
+ {
+  "input": {
+   "nel": "nel"
+  },
+  "output": "\"\\Nnel\": \"\\Nnel\"\n"
+ },
+ {
+  "input": {
+   " nbsp": " nbsp"
+  },
+  "output": "\"\\_nbsp\": \"\\_nbsp\"\n"
+ },
+ {
+  "input": {
+   " ls": " ls"
+  },
+  "output": "\"\\Lls\": \"\\Lls\"\n"
+ },
+ {
+  "input": {
+   "﻿bom": "﻿bom"
+  },
+  "output": "\"\\uFEFFbom\": \"\\uFEFFbom\"\n"
+ },
+ {
+  "input": {
+   "del": "del"
+  },
+  "output": "\"del\\x7F\": \"del\\x7F\"\n"
+ },
+ {
+  "input": {
+   "кириллица": "кириллица"
+  },
+  "output": "кириллица: кириллица\n"
+ },
+ {
+  "input": {
+   "emoji 🇩🇪 flag": "emoji 🇩🇪 flag"
+  },
+  "output": "emoji 🇩🇪 flag: emoji 🇩🇪 flag\n"
+ },
+ {
+  "input": {
+   "→ Remnawave": "→ Remnawave"
+  },
+  "output": "→ Remnawave: → Remnawave\n"
+ },
+ {
+  "input": {
+   "MATCH,→ Remnawave": "MATCH,→ Remnawave"
+  },
+  "output": "MATCH,→ Remnawave: MATCH,→ Remnawave\n"
+ },
+ {
+  "input": {
+   "DOMAIN-SUFFIX,example.com,DIRECT": "DOMAIN-SUFFIX,example.com,DIRECT"
+  },
+  "output": "DOMAIN-SUFFIX,example.com,DIRECT: DOMAIN-SUFFIX,example.com,DIRECT\n"
+ },
+ {
+  "input": {
+   "1.1.1.1": "1.1.1.1"
+  },
+  "output": "1.1.1.1: 1.1.1.1\n"
+ },
+ {
+  "input": {
+   "127.0.0.1:9090": "127.0.0.1:9090"
+  },
+  "output": "127.0.0.1:9090: 127.0.0.1:9090\n"
+ },
+ {
+  "input": {
+   "198.18.0.1/16": "198.18.0.1/16"
+  },
+  "output": "198.18.0.1/16: 198.18.0.1/16\n"
+ },
+ {
+  "input": {
+   "*.lan": "*.lan"
+  },
+  "output": "'*.lan': '*.lan'\n"
+ },
+ {
+  "input": {
+   "+.xboxlive.com": "+.xboxlive.com"
+  },
+  "output": "+.xboxlive.com: +.xboxlive.com\n"
+ },
+ {
+  "input": {
+   "stun.*.*": "stun.*.*"
+  },
+  "output": "stun.*.*: stun.*.*\n"
+ },
+ {
+  "input": {
+   "h2": "h2"
+  },
+  "output": "h2: h2\n"
+ },
+ {
+  "input": {
+   "http/1.1": "http/1.1"
+  },
+  "output": "http/1.1: http/1.1\n"
+ },
+ {
+  "input": {
+   "/path?ed=2048": "/path?ed=2048"
+  },
+  "output": "/path?ed=2048: /path?ed=2048\n"
+ },
+ {
+  "input": {
+   "chacha20-ietf-poly1305": "chacha20-ietf-poly1305"
+  },
+  "output": "chacha20-ietf-poly1305: chacha20-ietf-poly1305\n"
+ },
+ {
+  "input": {
+   "2022-blake3-aes-256-gcm": "2022-blake3-aes-256-gcm"
+  },
+  "output": "2022-blake3-aes-256-gcm: 2022-blake3-aes-256-gcm\n"
+ },
+ {
+  "input": {
+   "c2VydmVyLXBhc3N3b3Jk==": "c2VydmVyLXBhc3N3b3Jk=="
+  },
+  "output": "c2VydmVyLXBhc3N3b3Jk==: c2VydmVyLXBhc3N3b3Jk==\n"
+ },
+ {
+  "input": {
+   "100-1000": "100-1000"
+  },
+  "output": "100-1000: 100-1000\n"
+ },
+ {
+  "input": {
+   "16-32": "16-32"
+  },
+  "output": "16-32: 16-32\n"
+ },
+ {
+  "input": {
+   "600": "600"
+  },
+  "output": "'600': '600'\n"
+ },
+ {
+  "input": {
+   "-0": "-0"
+  },
+  "output": "'-0': '-0'\n"
+ },
+ {
+  "input": {
+   "+0": "+0"
+  },
+  "output": "'+0': '+0'\n"
+ },
+ {
+  "input": {
+   "1_": "1_"
+  },
+  "output": "'1_': '1_'\n"
+ },
+ {
+  "input": {
+   "_1": "_1"
+  },
+  "output": "_1: _1\n"
+ },
+ {
+  "input": {
+   "0.0.0.0": "0.0.0.0"
+  },
+  "output": "0.0.0.0: 0.0.0.0\n"
+ },
+ {
+  "input": {
+   "::1": "::1"
+  },
+  "output": "::1: ::1\n"
+ },
+ {
+  "input": {
+   "[::1]:443": "[::1]:443"
+  },
+  "output": "'[::1]:443': '[::1]:443'\n"
+ },
+ {
+  "input": {
+   "a: ": "a: "
+  },
+  "output": "'a: ': 'a: '\n"
+ },
+ {
+  "input": {
+   "key:": "key:"
+  },
+  "output": "'key:': 'key:'\n"
+ },
+ {
+  "input": {
+   " : ": " : "
+  },
+  "output": "' : ': ' : '\n"
+ },
+ {
+  "input": {
+   "x\r\ny": "x\r\ny"
+  },
+  "output": "? \"x\\r\\ny\"\n: \"x\\r\\ny\"\n"
+ },
+ {
+  "input": {
+   "é": "é"
+  },
+  "output": "é: é\n"
+ },
+ {
+  "input": {
+   "Ünïcödé": "Ünïcödé"
+  },
+  "output": "Ünïcödé: Ünïcödé\n"
+ },
+ {
+  "input": {
+   "\"": "\""
+  },
+  "output": "'\"': '\"'\n"
+ },
+ {
+  "input": {
+   "'": "'"
+  },
+  "output": "'''': ''''\n"
+ },
+ {
+  "input": {
+   "very long single-quoted-needed: word word word word word word word word word word word word word word word word word word word word ": "very long single-quoted-needed: word word word word word word word word word word word word word word word word word word word word "
+  },
+  "output": "'very long single-quoted-needed: word word word word word word word word word word word word word word word word word word word word ': >-\n  very long single-quoted-needed: word word word word word word word word word\n  word word word word word word word word word word word \n"
+ },
+ {
+  "input": {
+   "k0": "",
+   "k1": " ",
+   "k2": "  ",
+   "k3": "\t",
+   "k4": "plain",
+   "k5": "with space",
+   "k6": " leading",
+   "k7": "trailing ",
+   "k8": "a\tb",
+   "k9": "yes",
+   "k10": "Yes",
+   "k11": "YES",
+   "k12": "no",
+   "k13": "No",
+   "k14": "on",
+   "k15": "Off",
+   "k16": "y",
+   "k17": "n",
+   "k18": "true",
+   "k19": "False",
+   "k20": "null",
+   "k21": "Null",
+   "k22": "~",
+   "k23": "=",
+   "k24": "<<",
+   "k25": "0",
+   "k26": "00",
+   "k27": "08",
+   "k28": "0o17",
+   "k29": "0x1F",
+   "k30": "0x_",
+   "k31": "0b101",
+   "k32": "0b_",
+   "k33": "1_000",
+   "k34": "-1",
+   "k35": "+1",
+   "k36": "1:30",
+   "k37": "190:20:30",
+   "k38": "1.5",
+   "k39": ".5",
+   "k40": "1.",
+   "k41": ".",
+   "k42": "-.inf",
+   "k43": ".NaN",
+   "k44": "1e10",
+   "k45": "1e+10",
+   "k46": "1.0e+10",
+   "k47": "6.8523015e+5",
+   "k48": "2024-01-01",
+   "k49": "2024-13-01",
+   "k50": "2024-02-30",
+   "k51": "2001-12-14t21:59:43.10-05:00",
+   "k52": "2001-12-14 21:59:43.10",
+   "k53": "2024-1-1 1:02:03",
+   "k54": "12:30",
+   "k55": "-",
+   "k56": "- a",
+   "k57": "-a",
+   "k58": "?",
+   "k59": "? a",
+   "k60": "?a",
+   "k61": ":",
+   "k62": ":a",
+   "k63": "a:",
+   "k64": "a: b",
+   "k65": "a:b",
+   "k66": "http://x.example/a?b=c#d",
+   "k67": "#comment",
+   "k68": "a #b",
+   "k69": "a#b",
+   "k70": "a #",
+   "k71": "[x]",
+   "k72": "{x}",
+   "k73": "a,b",
+   "k74": "a, b",
+   "k75": "&anchor",
+   "k76": "*alias",
+   "k77": "!tag",
+   "k78": "|",
+   "k79": ">",
+   "k80": "'q'",
+   "k81": "\"q\"",
+   "k82": "it's",
+   "k83": "say \"hi\"",
+   "k84": "%x",
+   "k85": "@x",
+   "k86": "`x`",
+   "k87": "---",
+   "k88": "--- a",
+   "k89": "...",
+   "k90": "a\nb",
+   "k91": "a\n\nb",
+   "k92": "a\n",
+   "k93": "a\n\n",
+   "k94": "\n",
+   "k95": "\na",
+   "k96": " a\nb",
+   "k97": "a \nb",
+   "k98": "a\n b",
+   "k99": "line\nwith trailing\n",
+   "k100": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "k101": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word",
+   "k102": " word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word ",
+   "k103": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \nsecond line",
+   "k104": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa b",
+   "k105": "tab\there",
+   "k106": "\u0007bell",
+   "k107": "\u001bEsc",
+   "k108": "nel",
+   "k109": " nbsp",
+   "k110": " ls",
+   "k111": "﻿bom",
+   "k112": "del",
+   "k113": "кириллица",
+   "k114": "emoji 🇩🇪 flag",
+   "k115": "→ Remnawave",
+   "k116": "MATCH,→ Remnawave",
+   "k117": "DOMAIN-SUFFIX,example.com,DIRECT",
+   "k118": "1.1.1.1",
+   "k119": "127.0.0.1:9090",
+   "k120": "198.18.0.1/16",
+   "k121": "*.lan",
+   "k122": "+.xboxlive.com",
+   "k123": "stun.*.*",
+   "k124": "h2",
+   "k125": "http/1.1",
+   "k126": "/path?ed=2048",
+   "k127": "chacha20-ietf-poly1305",
+   "k128": "2022-blake3-aes-256-gcm",
+   "k129": "c2VydmVyLXBhc3N3b3Jk==",
+   "k130": "100-1000",
+   "k131": "16-32",
+   "k132": "600",
+   "k133": "-0",
+   "k134": "+0",
+   "k135": "1_",
+   "k136": "_1",
+   "k137": "0.0.0.0",
+   "k138": "::1",
+   "k139": "[::1]:443",
+   "k140": "a: ",
+   "k141": "key:",
+   "k142": " : ",
+   "k143": "x\r\ny",
+   "k144": "é",
+   "k145": "Ünïcödé",
+   "k146": "\"",
+   "k147": "'",
+   "k148": "very long single-quoted-needed: word word word word word word word word word word word word word word word word word word word word "
+  },
+  "output": "k0: ''\nk1: \" \"\nk2: \"  \"\nk3: \"\\t\"\nk4: plain\nk5: with space\nk6: ' leading'\nk7: 'trailing '\nk8: \"a\\tb\"\nk9: 'yes'\nk10: 'Yes'\nk11: 'YES'\nk12: 'no'\nk13: 'No'\nk14: 'on'\nk15: 'Off'\nk16: 'y'\nk17: 'n'\nk18: 'true'\nk19: 'False'\nk20: 'null'\nk21: 'Null'\nk22: '~'\nk23: '='\nk24: '<<'\nk25: '0'\nk26: '00'\nk27: '08'\nk28: '0o17'\nk29: '0x1F'\nk30: 0x_\nk31: '0b101'\nk32: 0b_\nk33: '1_000'\nk34: '-1'\nk35: '+1'\nk36: '1:30'\nk37: '190:20:30'\nk38: '1.5'\nk39: '.5'\nk40: '1.'\nk41: .\nk42: '-.inf'\nk43: '.NaN'\nk44: '1e10'\nk45: '1e+10'\nk46: '1.0e+10'\nk47: '6.8523015e+5'\nk48: '2024-01-01'\nk49: 2024-13-01\nk50: 2024-02-30\nk51: '2001-12-14t21:59:43.10-05:00'\nk52: '2001-12-14 21:59:43.10'\nk53: '2024-1-1 1:02:03'\nk54: '12:30'\nk55: '-'\nk56: '- a'\nk57: -a\nk58: '?'\nk59: '? a'\nk60: ?a\nk61: ':'\nk62: :a\nk63: 'a:'\nk64: 'a: b'\nk65: a:b\nk66: http://x.example/a?b=c#d\nk67: '#comment'\nk68: 'a #b'\nk69: a#b\nk70: 'a #'\nk71: '[x]'\nk72: '{x}'\nk73: a,b\nk74: a, b\nk75: '&anchor'\nk76: '*alias'\nk77: '!tag'\nk78: '|'\nk79: '>'\nk80: '''q'''\nk81: '\"q\"'\nk82: it's\nk83: say \"hi\"\nk84: '%x'\nk85: '@x'\nk86: '`x`'\nk87: ---\nk88: --- a\nk89: ...\nk90: |-\n  a\n  b\nk91: |-\n  a\n\n  b\nk92: |\n  a\nk93: |+\n  a\n\nk94: \"\\n\"\nk95: |-\n\n  a\nk96: |2-\n   a\n  b\nk97: |-\n  a \n  b\nk98: |-\n  a\n   b\nk99: |\n  line\n  with trailing\nk100: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\nk101: >-\n  word word word word word word word word word word word word word word word\n  word word word word word word word word word word word word word word word\nk102: ' word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word '\nk103: >-\n  word word word word word word word word word word word word word word word\n  word word word word word word word word word word word word word word word \n\n  second line\nk104: >-\n  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n  b\nk105: \"tab\\there\"\nk106: \"\\abell\"\nk107: \"\\eEsc\"\nk108: \"\\Nnel\"\nk109: \"\\_nbsp\"\nk110: \"\\Lls\"\nk111: \"\\uFEFFbom\"\nk112: \"del\\x7F\"\nk113: кириллица\nk114: emoji 🇩🇪 flag\nk115: → Remnawave\nk116: MATCH,→ Remnawave\nk117: DOMAIN-SUFFIX,example.com,DIRECT\nk118: 1.1.1.1\nk119: 127.0.0.1:9090\nk120: 198.18.0.1/16\nk121: '*.lan'\nk122: +.xboxlive.com\nk123: stun.*.*\nk124: h2\nk125: http/1.1\nk126: /path?ed=2048\nk127: chacha20-ietf-poly1305\nk128: 2022-blake3-aes-256-gcm\nk129: c2VydmVyLXBhc3N3b3Jk==\nk130: 100-1000\nk131: 16-32\nk132: '600'\nk133: '-0'\nk134: '+0'\nk135: '1_'\nk136: _1\nk137: 0.0.0.0\nk138: ::1\nk139: '[::1]:443'\nk140: 'a: '\nk141: 'key:'\nk142: ' : '\nk143: \"x\\r\\ny\"\nk144: é\nk145: Ünïcödé\nk146: '\"'\nk147: ''''\nk148: >-\n  very long single-quoted-needed: word word word word word word word word word\n  word word word word word word word word word word word \n"
+ },
+ {
+  "input": {
+   "deep": {
+    "deeper": {
+     "deepest": [
+      "",
+      " ",
+      "  ",
+      "\t",
+      "plain",
+      "with space",
+      " leading",
+      "trailing ",
+      "a\tb",
+      "yes",
+      "Yes",
+      "YES",
+      "no",
+      "No",
+      "on",
+      "Off",
+      "y",
+      "n",
+      "true",
+      "False",
+      "null",
+      "Null",
+      "~",
+      "=",
+      "<<",
+      "0",
+      "00",
+      "08",
+      "0o17",
+      "0x1F",
+      "0x_",
+      "0b101",
+      "0b_",
+      "1_000",
+      "-1",
+      "+1",
+      "1:30",
+      "190:20:30",
+      "1.5",
+      ".5",
+      "1.",
+      ".",
+      "-.inf",
+      ".NaN",
+      "1e10",
+      "1e+10",
+      "1.0e+10",
+      "6.8523015e+5",
+      "2024-01-01",
+      "2024-13-01",
+      "2024-02-30",
+      "2001-12-14t21:59:43.10-05:00",
+      "2001-12-14 21:59:43.10",
+      "2024-1-1 1:02:03",
+      "12:30",
+      "-",
+      "- a",
+      "-a",
+      "?",
+      "? a",
+      "?a",
+      ":",
+      ":a",
+      "a:",
+      "a: b",
+      "a:b",
+      "http://x.example/a?b=c#d",
+      "#comment",
+      "a #b",
+      "a#b",
+      "a #",
+      "[x]",
+      "{x}",
+      "a,b",
+      "a, b",
+      "&anchor",
+      "*alias",
+      "!tag",
+      "|",
+      ">",
+      "'q'",
+      "\"q\"",
+      "it's",
+      "say \"hi\"",
+      "%x",
+      "@x",
+      "`x`",
+      "---",
+      "--- a",
+      "...",
+      "a\nb",
+      "a\n\nb",
+      "a\n",
+      "a\n\n",
+      "\n",
+      "\na",
+      " a\nb",
+      "a \nb",
+      "a\n b",
+      "line\nwith trailing\n",
+      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word",
+      " word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word ",
+      "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \nsecond line",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa b",
+      "tab\there",
+      "\u0007bell",
+      "\u001bEsc",
+      "nel",
+      " nbsp",
+      " ls",
+      "﻿bom",
+      "del",
+      "кириллица",
+      "emoji 🇩🇪 flag",
+      "→ Remnawave",
+      "MATCH,→ Remnawave",
+      "DOMAIN-SUFFIX,example.com,DIRECT",
+      "1.1.1.1",
+      "127.0.0.1:9090",
+      "198.18.0.1/16",
+      "*.lan",
+      "+.xboxlive.com",
+      "stun.*.*",
+      "h2",
+      "http/1.1",
+      "/path?ed=2048",
+      "chacha20-ietf-poly1305",
+      "2022-blake3-aes-256-gcm",
+      "c2VydmVyLXBhc3N3b3Jk==",
+      "100-1000",
+      "16-32",
+      "600",
+      "-0",
+      "+0",
+      "1_",
+      "_1",
+      "0.0.0.0",
+      "::1",
+      "[::1]:443",
+      "a: ",
+      "key:",
+      " : ",
+      "x\r\ny",
+      "é",
+      "Ünïcödé",
+      "\"",
+      "'",
+      "very long single-quoted-needed: word word word word word word word word word word word word word word word word word word word word "
+     ]
+    }
+   }
+  },
+  "output": "deep:\n  deeper:\n    deepest:\n      - ''\n      - \" \"\n      - \"  \"\n      - \"\\t\"\n      - plain\n      - with space\n      - ' leading'\n      - 'trailing '\n      - \"a\\tb\"\n      - 'yes'\n      - 'Yes'\n      - 'YES'\n      - 'no'\n      - 'No'\n      - 'on'\n      - 'Off'\n      - 'y'\n      - 'n'\n      - 'true'\n      - 'False'\n      - 'null'\n      - 'Null'\n      - '~'\n      - '='\n      - '<<'\n      - '0'\n      - '00'\n      - '08'\n      - '0o17'\n      - '0x1F'\n      - 0x_\n      - '0b101'\n      - 0b_\n      - '1_000'\n      - '-1'\n      - '+1'\n      - '1:30'\n      - '190:20:30'\n      - '1.5'\n      - '.5'\n      - '1.'\n      - .\n      - '-.inf'\n      - '.NaN'\n      - '1e10'\n      - '1e+10'\n      - '1.0e+10'\n      - '6.8523015e+5'\n      - '2024-01-01'\n      - 2024-13-01\n      - 2024-02-30\n      - '2001-12-14t21:59:43.10-05:00'\n      - '2001-12-14 21:59:43.10'\n      - '2024-1-1 1:02:03'\n      - '12:30'\n      - '-'\n      - '- a'\n      - -a\n      - '?'\n      - '? a'\n      - ?a\n      - ':'\n      - :a\n      - 'a:'\n      - 'a: b'\n      - a:b\n      - http://x.example/a?b=c#d\n      - '#comment'\n      - 'a #b'\n      - a#b\n      - 'a #'\n      - '[x]'\n      - '{x}'\n      - a,b\n      - a, b\n      - '&anchor'\n      - '*alias'\n      - '!tag'\n      - '|'\n      - '>'\n      - '''q'''\n      - '\"q\"'\n      - it's\n      - say \"hi\"\n      - '%x'\n      - '@x'\n      - '`x`'\n      - ---\n      - --- a\n      - ...\n      - |-\n        a\n        b\n      - |-\n        a\n\n        b\n      - |\n        a\n      - |+\n        a\n\n      - \"\\n\"\n      - |-\n\n        a\n      - |2-\n         a\n        b\n      - |-\n        a \n        b\n      - |-\n        a\n         b\n      - |\n        line\n        with trailing\n      - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n      - >-\n        word word word word word word word word word word word word word word\n        word word word word word word word word word word word word word word\n        word word\n      - ' word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word '\n      - >-\n        word word word word word word word word word word word word word word\n        word word word word word word word word word word word word word word\n        word word \n\n        second line\n      - >-\n        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n        b\n      - \"tab\\there\"\n      - \"\\abell\"\n      - \"\\eEsc\"\n      - \"\\Nnel\"\n      - \"\\_nbsp\"\n      - \"\\Lls\"\n      - \"\\uFEFFbom\"\n      - \"del\\x7F\"\n      - кириллица\n      - emoji 🇩🇪 flag\n      - → Remnawave\n      - MATCH,→ Remnawave\n      - DOMAIN-SUFFIX,example.com,DIRECT\n      - 1.1.1.1\n      - 127.0.0.1:9090\n      - 198.18.0.1/16\n      - '*.lan'\n      - +.xboxlive.com\n      - stun.*.*\n      - h2\n      - http/1.1\n      - /path?ed=2048\n      - chacha20-ietf-poly1305\n      - 2022-blake3-aes-256-gcm\n      - c2VydmVyLXBhc3N3b3Jk==\n      - 100-1000\n      - 16-32\n      - '600'\n      - '-0'\n      - '+0'\n      - '1_'\n      - _1\n      - 0.0.0.0\n      - ::1\n      - '[::1]:443'\n      - 'a: '\n      - 'key:'\n      - ' : '\n      - \"x\\r\\ny\"\n      - é\n      - Ünïcödé\n      - '\"'\n      - ''''\n      - >-\n        very long single-quoted-needed: word word word word word word word word\n        word word word word word word word word word word word word \n"
+ },
+ {
+  "input": {
+   "list": [
+    {
+     "name": "",
+     "value": [
+      "",
+      ""
+     ]
+    },
+    {
+     "name": " ",
+     "value": [
+      " ",
+      " "
+     ]
+    },
+    {
+     "name": "  ",
+     "value": [
+      "  ",
+      "  "
+     ]
+    },
+    {
+     "name": "\t",
+     "value": [
+      "\t",
+      "\t"
+     ]
+    },
+    {
+     "name": "plain",
+     "value": [
+      "plain",
+      "plain"
+     ]
+    },
+    {
+     "name": "with space",
+     "value": [
+      "with space",
+      "with space"
+     ]
+    },
+    {
+     "name": " leading",
+     "value": [
+      " leading",
+      " leading"
+     ]
+    },
+    {
+     "name": "trailing ",
+     "value": [
+      "trailing ",
+      "trailing "
+     ]
+    },
+    {
+     "name": "a\tb",
+     "value": [
+      "a\tb",
+      "a\tb"
+     ]
+    },
+    {
+     "name": "yes",
+     "value": [
+      "yes",
+      "yes"
+     ]
+    },
+    {
+     "name": "Yes",
+     "value": [
+      "Yes",
+      "Yes"
+     ]
+    },
+    {
+     "name": "YES",
+     "value": [
+      "YES",
+      "YES"
+     ]
+    },
+    {
+     "name": "no",
+     "value": [
+      "no",
+      "no"
+     ]
+    },
+    {
+     "name": "No",
+     "value": [
+      "No",
+      "No"
+     ]
+    },
+    {
+     "name": "on",
+     "value": [
+      "on",
+      "on"
+     ]
+    },
+    {
+     "name": "Off",
+     "value": [
+      "Off",
+      "Off"
+     ]
+    },
+    {
+     "name": "y",
+     "value": [
+      "y",
+      "y"
+     ]
+    },
+    {
+     "name": "n",
+     "value": [
+      "n",
+      "n"
+     ]
+    },
+    {
+     "name": "true",
+     "value": [
+      "true",
+      "true"
+     ]
+    },
+    {
+     "name": "False",
+     "value": [
+      "False",
+      "False"
+     ]
+    },
+    {
+     "name": "null",
+     "value": [
+      "null",
+      "null"
+     ]
+    },
+    {
+     "name": "Null",
+     "value": [
+      "Null",
+      "Null"
+     ]
+    },
+    {
+     "name": "~",
+     "value": [
+      "~",
+      "~"
+     ]
+    },
+    {
+     "name": "=",
+     "value": [
+      "=",
+      "="
+     ]
+    },
+    {
+     "name": "<<",
+     "value": [
+      "<<",
+      "<<"
+     ]
+    },
+    {
+     "name": "0",
+     "value": [
+      "0",
+      "0"
+     ]
+    },
+    {
+     "name": "00",
+     "value": [
+      "00",
+      "00"
+     ]
+    },
+    {
+     "name": "08",
+     "value": [
+      "08",
+      "08"
+     ]
+    },
+    {
+     "name": "0o17",
+     "value": [
+      "0o17",
+      "0o17"
+     ]
+    },
+    {
+     "name": "0x1F",
+     "value": [
+      "0x1F",
+      "0x1F"
+     ]
+    },
+    {
+     "name": "0x_",
+     "value": [
+      "0x_",
+      "0x_"
+     ]
+    },
+    {
+     "name": "0b101",
+     "value": [
+      "0b101",
+      "0b101"
+     ]
+    },
+    {
+     "name": "0b_",
+     "value": [
+      "0b_",
+      "0b_"
+     ]
+    },
+    {
+     "name": "1_000",
+     "value": [
+      "1_000",
+      "1_000"
+     ]
+    },
+    {
+     "name": "-1",
+     "value": [
+      "-1",
+      "-1"
+     ]
+    },
+    {
+     "name": "+1",
+     "value": [
+      "+1",
+      "+1"
+     ]
+    },
+    {
+     "name": "1:30",
+     "value": [
+      "1:30",
+      "1:30"
+     ]
+    },
+    {
+     "name": "190:20:30",
+     "value": [
+      "190:20:30",
+      "190:20:30"
+     ]
+    },
+    {
+     "name": "1.5",
+     "value": [
+      "1.5",
+      "1.5"
+     ]
+    },
+    {
+     "name": ".5",
+     "value": [
+      ".5",
+      ".5"
+     ]
+    },
+    {
+     "name": "1.",
+     "value": [
+      "1.",
+      "1."
+     ]
+    },
+    {
+     "name": ".",
+     "value": [
+      ".",
+      "."
+     ]
+    },
+    {
+     "name": "-.inf",
+     "value": [
+      "-.inf",
+      "-.inf"
+     ]
+    },
+    {
+     "name": ".NaN",
+     "value": [
+      ".NaN",
+      ".NaN"
+     ]
+    },
+    {
+     "name": "1e10",
+     "value": [
+      "1e10",
+      "1e10"
+     ]
+    },
+    {
+     "name": "1e+10",
+     "value": [
+      "1e+10",
+      "1e+10"
+     ]
+    },
+    {
+     "name": "1.0e+10",
+     "value": [
+      "1.0e+10",
+      "1.0e+10"
+     ]
+    },
+    {
+     "name": "6.8523015e+5",
+     "value": [
+      "6.8523015e+5",
+      "6.8523015e+5"
+     ]
+    },
+    {
+     "name": "2024-01-01",
+     "value": [
+      "2024-01-01",
+      "2024-01-01"
+     ]
+    },
+    {
+     "name": "2024-13-01",
+     "value": [
+      "2024-13-01",
+      "2024-13-01"
+     ]
+    },
+    {
+     "name": "2024-02-30",
+     "value": [
+      "2024-02-30",
+      "2024-02-30"
+     ]
+    },
+    {
+     "name": "2001-12-14t21:59:43.10-05:00",
+     "value": [
+      "2001-12-14t21:59:43.10-05:00",
+      "2001-12-14t21:59:43.10-05:00"
+     ]
+    },
+    {
+     "name": "2001-12-14 21:59:43.10",
+     "value": [
+      "2001-12-14 21:59:43.10",
+      "2001-12-14 21:59:43.10"
+     ]
+    },
+    {
+     "name": "2024-1-1 1:02:03",
+     "value": [
+      "2024-1-1 1:02:03",
+      "2024-1-1 1:02:03"
+     ]
+    },
+    {
+     "name": "12:30",
+     "value": [
+      "12:30",
+      "12:30"
+     ]
+    },
+    {
+     "name": "-",
+     "value": [
+      "-",
+      "-"
+     ]
+    },
+    {
+     "name": "- a",
+     "value": [
+      "- a",
+      "- a"
+     ]
+    },
+    {
+     "name": "-a",
+     "value": [
+      "-a",
+      "-a"
+     ]
+    },
+    {
+     "name": "?",
+     "value": [
+      "?",
+      "?"
+     ]
+    },
+    {
+     "name": "? a",
+     "value": [
+      "? a",
+      "? a"
+     ]
+    },
+    {
+     "name": "?a",
+     "value": [
+      "?a",
+      "?a"
+     ]
+    },
+    {
+     "name": ":",
+     "value": [
+      ":",
+      ":"
+     ]
+    },
+    {
+     "name": ":a",
+     "value": [
+      ":a",
+      ":a"
+     ]
+    },
+    {
+     "name": "a:",
+     "value": [
+      "a:",
+      "a:"
+     ]
+    },
+    {
+     "name": "a: b",
+     "value": [
+      "a: b",
+      "a: b"
+     ]
+    },
+    {
+     "name": "a:b",
+     "value": [
+      "a:b",
+      "a:b"
+     ]
+    },
+    {
+     "name": "http://x.example/a?b=c#d",
+     "value": [
+      "http://x.example/a?b=c#d",
+      "http://x.example/a?b=c#d"
+     ]
+    },
+    {
+     "name": "#comment",
+     "value": [
+      "#comment",
+      "#comment"
+     ]
+    },
+    {
+     "name": "a #b",
+     "value": [
+      "a #b",
+      "a #b"
+     ]
+    },
+    {
+     "name": "a#b",
+     "value": [
+      "a#b",
+      "a#b"
+     ]
+    },
+    {
+     "name": "a #",
+     "value": [
+      "a #",
+      "a #"
+     ]
+    },
+    {
+     "name": "[x]",
+     "value": [
+      "[x]",
+      "[x]"
+     ]
+    },
+    {
+     "name": "{x}",
+     "value": [
+      "{x}",
+      "{x}"
+     ]
+    },
+    {
+     "name": "a,b",
+     "value": [
+      "a,b",
+      "a,b"
+     ]
+    },
+    {
+     "name": "a, b",
+     "value": [
+      "a, b",
+      "a, b"
+     ]
+    },
+    {
+     "name": "&anchor",
+     "value": [
+      "&anchor",
+      "&anchor"
+     ]
+    },
+    {
+     "name": "*alias",
+     "value": [
+      "*alias",
+      "*alias"
+     ]
+    },
+    {
+     "name": "!tag",
+     "value": [
+      "!tag",
+      "!tag"
+     ]
+    },
+    {
+     "name": "|",
+     "value": [
+      "|",
+      "|"
+     ]
+    },
+    {
+     "name": ">",
+     "value": [
+      ">",
+      ">"
+     ]
+    },
+    {
+     "name": "'q'",
+     "value": [
+      "'q'",
+      "'q'"
+     ]
+    },
+    {
+     "name": "\"q\"",
+     "value": [
+      "\"q\"",
+      "\"q\""
+     ]
+    },
+    {
+     "name": "it's",
+     "value": [
+      "it's",
+      "it's"
+     ]
+    },
+    {
+     "name": "say \"hi\"",
+     "value": [
+      "say \"hi\"",
+      "say \"hi\""
+     ]
+    },
+    {
+     "name": "%x",
+     "value": [
+      "%x",
+      "%x"
+     ]
+    },
+    {
+     "name": "@x",
+     "value": [
+      "@x",
+      "@x"
+     ]
+    },
+    {
+     "name": "`x`",
+     "value": [
+      "`x`",
+      "`x`"
+     ]
+    },
+    {
+     "name": "---",
+     "value": [
+      "---",
+      "---"
+     ]
+    },
+    {
+     "name": "--- a",
+     "value": [
+      "--- a",
+      "--- a"
+     ]
+    },
+    {
+     "name": "...",
+     "value": [
+      "...",
+      "..."
+     ]
+    },
+    {
+     "name": "a\nb",
+     "value": [
+      "a\nb",
+      "a\nb"
+     ]
+    },
+    {
+     "name": "a\n\nb",
+     "value": [
+      "a\n\nb",
+      "a\n\nb"
+     ]
+    },
+    {
+     "name": "a\n",
+     "value": [
+      "a\n",
+      "a\n"
+     ]
+    },
+    {
+     "name": "a\n\n",
+     "value": [
+      "a\n\n",
+      "a\n\n"
+     ]
+    },
+    {
+     "name": "\n",
+     "value": [
+      "\n",
+      "\n"
+     ]
+    },
+    {
+     "name": "\na",
+     "value": [
+      "\na",
+      "\na"
+     ]
+    },
+    {
+     "name": " a\nb",
+     "value": [
+      " a\nb",
+      " a\nb"
+     ]
+    },
+    {
+     "name": "a \nb",
+     "value": [
+      "a \nb",
+      "a \nb"
+     ]
+    },
+    {
+     "name": "a\n b",
+     "value": [
+      "a\n b",
+      "a\n b"
+     ]
+    },
+    {
+     "name": "line\nwith trailing\n",
+     "value": [
+      "line\nwith trailing\n",
+      "line\nwith trailing\n"
+     ]
+    },
+    {
+     "name": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "value": [
+      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+     ]
+    },
+    {
+     "name": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word",
+     "value": [
+      "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word",
+      "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word"
+     ]
+    },
+    {
+     "name": " word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word ",
+     "value": [
+      " word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word ",
+      " word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word "
+     ]
+    },
+    {
+     "name": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \nsecond line",
+     "value": [
+      "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \nsecond line",
+      "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \nsecond line"
+     ]
+    },
+    {
+     "name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa b",
+     "value": [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa b",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa b"
+     ]
+    },
+    {
+     "name": "tab\there",
+     "value": [
+      "tab\there",
+      "tab\there"
+     ]
+    },
+    {
+     "name": "\u0007bell",
+     "value": [
+      "\u0007bell",
+      "\u0007bell"
+     ]
+    },
+    {
+     "name": "\u001bEsc",
+     "value": [
+      "\u001bEsc",
+      "\u001bEsc"
+     ]
+    },
+    {
+     "name": "nel",
+     "value": [
+      "nel",
+      "nel"
+     ]
+    },
+    {
+     "name": " nbsp",
+     "value": [
+      " nbsp",
+      " nbsp"
+     ]
+    },
+    {
+     "name": " ls",
+     "value": [
+      " ls",
+      " ls"
+     ]
+    },
+    {
+     "name": "﻿bom",
+     "value": [
+      "﻿bom",
+      "﻿bom"
+     ]
+    },
+    {
+     "name": "del",
+     "value": [
+      "del",
+      "del"
+     ]
+    },
+    {
+     "name": "кириллица",
+     "value": [
+      "кириллица",
+      "кириллица"
+     ]
+    },
+    {
+     "name": "emoji 🇩🇪 flag",
+     "value": [
+      "emoji 🇩🇪 flag",
+      "emoji 🇩🇪 flag"
+     ]
+    },
+    {
+     "name": "→ Remnawave",
+     "value": [
+      "→ Remnawave",
+      "→ Remnawave"
+     ]
+    },
+    {
+     "name": "MATCH,→ Remnawave",
+     "value": [
+      "MATCH,→ Remnawave",
+      "MATCH,→ Remnawave"
+     ]
+    },
+    {
+     "name": "DOMAIN-SUFFIX,example.com,DIRECT",
+     "value": [
+      "DOMAIN-SUFFIX,example.com,DIRECT",
+      "DOMAIN-SUFFIX,example.com,DIRECT"
+     ]
+    },
+    {
+     "name": "1.1.1.1",
+     "value": [
+      "1.1.1.1",
+      "1.1.1.1"
+     ]
+    },
+    {
+     "name": "127.0.0.1:9090",
+     "value": [
+      "127.0.0.1:9090",
+      "127.0.0.1:9090"
+     ]
+    },
+    {
+     "name": "198.18.0.1/16",
+     "value": [
+      "198.18.0.1/16",
+      "198.18.0.1/16"
+     ]
+    },
+    {
+     "name": "*.lan",
+     "value": [
+      "*.lan",
+      "*.lan"
+     ]
+    },
+    {
+     "name": "+.xboxlive.com",
+     "value": [
+      "+.xboxlive.com",
+      "+.xboxlive.com"
+     ]
+    },
+    {
+     "name": "stun.*.*",
+     "value": [
+      "stun.*.*",
+      "stun.*.*"
+     ]
+    },
+    {
+     "name": "h2",
+     "value": [
+      "h2",
+      "h2"
+     ]
+    },
+    {
+     "name": "http/1.1",
+     "value": [
+      "http/1.1",
+      "http/1.1"
+     ]
+    },
+    {
+     "name": "/path?ed=2048",
+     "value": [
+      "/path?ed=2048",
+      "/path?ed=2048"
+     ]
+    },
+    {
+     "name": "chacha20-ietf-poly1305",
+     "value": [
+      "chacha20-ietf-poly1305",
+      "chacha20-ietf-poly1305"
+     ]
+    },
+    {
+     "name": "2022-blake3-aes-256-gcm",
+     "value": [
+      "2022-blake3-aes-256-gcm",
+      "2022-blake3-aes-256-gcm"
+     ]
+    },
+    {
+     "name": "c2VydmVyLXBhc3N3b3Jk==",
+     "value": [
+      "c2VydmVyLXBhc3N3b3Jk==",
+      "c2VydmVyLXBhc3N3b3Jk=="
+     ]
+    },
+    {
+     "name": "100-1000",
+     "value": [
+      "100-1000",
+      "100-1000"
+     ]
+    },
+    {
+     "name": "16-32",
+     "value": [
+      "16-32",
+      "16-32"
+     ]
+    },
+    {
+     "name": "600",
+     "value": [
+      "600",
+      "600"
+     ]
+    },
+    {
+     "name": "-0",
+     "value": [
+      "-0",
+      "-0"
+     ]
+    },
+    {
+     "name": "+0",
+     "value": [
+      "+0",
+      "+0"
+     ]
+    },
+    {
+     "name": "1_",
+     "value": [
+      "1_",
+      "1_"
+     ]
+    },
+    {
+     "name": "_1",
+     "value": [
+      "_1",
+      "_1"
+     ]
+    },
+    {
+     "name": "0.0.0.0",
+     "value": [
+      "0.0.0.0",
+      "0.0.0.0"
+     ]
+    },
+    {
+     "name": "::1",
+     "value": [
+      "::1",
+      "::1"
+     ]
+    },
+    {
+     "name": "[::1]:443",
+     "value": [
+      "[::1]:443",
+      "[::1]:443"
+     ]
+    },
+    {
+     "name": "a: ",
+     "value": [
+      "a: ",
+      "a: "
+     ]
+    },
+    {
+     "name": "key:",
+     "value": [
+      "key:",
+      "key:"
+     ]
+    },
+    {
+     "name": " : ",
+     "value": [
+      " : ",
+      " : "
+     ]
+    },
+    {
+     "name": "x\r\ny",
+     "value": [
+      "x\r\ny",
+      "x\r\ny"
+     ]
+    },
+    {
+     "name": "é",
+     "value": [
+      "é",
+      "é"
+     ]
+    },
+    {
+     "name": "Ünïcödé",
+     "value": [
+      "Ünïcödé",
+      "Ünïcödé"
+     ]
+    },
+    {
+     "name": "\"",
+     "value": [
+      "\"",
+      "\""
+     ]
+    },
+    {
+     "name": "'",
+     "value": [
+      "'",
+      "'"
+     ]
+    },
+    {
+     "name": "very long single-quoted-needed: word word word word word word word word word word word word word word word word word word word word ",
+     "value": [
+      "very long single-quoted-needed: word word word word word word word word word word word word word word word word word word word word ",
+      "very long single-quoted-needed: word word word word word word word word word word word word word word word word word word word word "
+     ]
+    }
+   ]
+  },
+  "output": "list:\n  - name: ''\n    value:\n      - ''\n      - ''\n  - name: \" \"\n    value:\n      - \" \"\n      - \" \"\n  - name: \"  \"\n    value:\n      - \"  \"\n      - \"  \"\n  - name: \"\\t\"\n    value:\n      - \"\\t\"\n      - \"\\t\"\n  - name: plain\n    value:\n      - plain\n      - plain\n  - name: with space\n    value:\n      - with space\n      - with space\n  - name: ' leading'\n    value:\n      - ' leading'\n      - ' leading'\n  - name: 'trailing '\n    value:\n      - 'trailing '\n      - 'trailing '\n  - name: \"a\\tb\"\n    value:\n      - \"a\\tb\"\n      - \"a\\tb\"\n  - name: 'yes'\n    value:\n      - 'yes'\n      - 'yes'\n  - name: 'Yes'\n    value:\n      - 'Yes'\n      - 'Yes'\n  - name: 'YES'\n    value:\n      - 'YES'\n      - 'YES'\n  - name: 'no'\n    value:\n      - 'no'\n      - 'no'\n  - name: 'No'\n    value:\n      - 'No'\n      - 'No'\n  - name: 'on'\n    value:\n      - 'on'\n      - 'on'\n  - name: 'Off'\n    value:\n      - 'Off'\n      - 'Off'\n  - name: 'y'\n    value:\n      - 'y'\n      - 'y'\n  - name: 'n'\n    value:\n      - 'n'\n      - 'n'\n  - name: 'true'\n    value:\n      - 'true'\n      - 'true'\n  - name: 'False'\n    value:\n      - 'False'\n      - 'False'\n  - name: 'null'\n    value:\n      - 'null'\n      - 'null'\n  - name: 'Null'\n    value:\n      - 'Null'\n      - 'Null'\n  - name: '~'\n    value:\n      - '~'\n      - '~'\n  - name: '='\n    value:\n      - '='\n      - '='\n  - name: '<<'\n    value:\n      - '<<'\n      - '<<'\n  - name: '0'\n    value:\n      - '0'\n      - '0'\n  - name: '00'\n    value:\n      - '00'\n      - '00'\n  - name: '08'\n    value:\n      - '08'\n      - '08'\n  - name: '0o17'\n    value:\n      - '0o17'\n      - '0o17'\n  - name: '0x1F'\n    value:\n      - '0x1F'\n      - '0x1F'\n  - name: 0x_\n    value:\n      - 0x_\n      - 0x_\n  - name: '0b101'\n    value:\n      - '0b101'\n      - '0b101'\n  - name: 0b_\n    value:\n      - 0b_\n      - 0b_\n  - name: '1_000'\n    value:\n      - '1_000'\n      - '1_000'\n  - name: '-1'\n    value:\n      - '-1'\n      - '-1'\n  - name: '+1'\n    value:\n      - '+1'\n      - '+1'\n  - name: '1:30'\n    value:\n      - '1:30'\n      - '1:30'\n  - name: '190:20:30'\n    value:\n      - '190:20:30'\n      - '190:20:30'\n  - name: '1.5'\n    value:\n      - '1.5'\n      - '1.5'\n  - name: '.5'\n    value:\n      - '.5'\n      - '.5'\n  - name: '1.'\n    value:\n      - '1.'\n      - '1.'\n  - name: .\n    value:\n      - .\n      - .\n  - name: '-.inf'\n    value:\n      - '-.inf'\n      - '-.inf'\n  - name: '.NaN'\n    value:\n      - '.NaN'\n      - '.NaN'\n  - name: '1e10'\n    value:\n      - '1e10'\n      - '1e10'\n  - name: '1e+10'\n    value:\n      - '1e+10'\n      - '1e+10'\n  - name: '1.0e+10'\n    value:\n      - '1.0e+10'\n      - '1.0e+10'\n  - name: '6.8523015e+5'\n    value:\n      - '6.8523015e+5'\n      - '6.8523015e+5'\n  - name: '2024-01-01'\n    value:\n      - '2024-01-01'\n      - '2024-01-01'\n  - name: 2024-13-01\n    value:\n      - 2024-13-01\n      - 2024-13-01\n  - name: 2024-02-30\n    value:\n      - 2024-02-30\n      - 2024-02-30\n  - name: '2001-12-14t21:59:43.10-05:00'\n    value:\n      - '2001-12-14t21:59:43.10-05:00'\n      - '2001-12-14t21:59:43.10-05:00'\n  - name: '2001-12-14 21:59:43.10'\n    value:\n      - '2001-12-14 21:59:43.10'\n      - '2001-12-14 21:59:43.10'\n  - name: '2024-1-1 1:02:03'\n    value:\n      - '2024-1-1 1:02:03'\n      - '2024-1-1 1:02:03'\n  - name: '12:30'\n    value:\n      - '12:30'\n      - '12:30'\n  - name: '-'\n    value:\n      - '-'\n      - '-'\n  - name: '- a'\n    value:\n      - '- a'\n      - '- a'\n  - name: -a\n    value:\n      - -a\n      - -a\n  - name: '?'\n    value:\n      - '?'\n      - '?'\n  - name: '? a'\n    value:\n      - '? a'\n      - '? a'\n  - name: ?a\n    value:\n      - ?a\n      - ?a\n  - name: ':'\n    value:\n      - ':'\n      - ':'\n  - name: :a\n    value:\n      - :a\n      - :a\n  - name: 'a:'\n    value:\n      - 'a:'\n      - 'a:'\n  - name: 'a: b'\n    value:\n      - 'a: b'\n      - 'a: b'\n  - name: a:b\n    value:\n      - a:b\n      - a:b\n  - name: http://x.example/a?b=c#d\n    value:\n      - http://x.example/a?b=c#d\n      - http://x.example/a?b=c#d\n  - name: '#comment'\n    value:\n      - '#comment'\n      - '#comment'\n  - name: 'a #b'\n    value:\n      - 'a #b'\n      - 'a #b'\n  - name: a#b\n    value:\n      - a#b\n      - a#b\n  - name: 'a #'\n    value:\n      - 'a #'\n      - 'a #'\n  - name: '[x]'\n    value:\n      - '[x]'\n      - '[x]'\n  - name: '{x}'\n    value:\n      - '{x}'\n      - '{x}'\n  - name: a,b\n    value:\n      - a,b\n      - a,b\n  - name: a, b\n    value:\n      - a, b\n      - a, b\n  - name: '&anchor'\n    value:\n      - '&anchor'\n      - '&anchor'\n  - name: '*alias'\n    value:\n      - '*alias'\n      - '*alias'\n  - name: '!tag'\n    value:\n      - '!tag'\n      - '!tag'\n  - name: '|'\n    value:\n      - '|'\n      - '|'\n  - name: '>'\n    value:\n      - '>'\n      - '>'\n  - name: '''q'''\n    value:\n      - '''q'''\n      - '''q'''\n  - name: '\"q\"'\n    value:\n      - '\"q\"'\n      - '\"q\"'\n  - name: it's\n    value:\n      - it's\n      - it's\n  - name: say \"hi\"\n    value:\n      - say \"hi\"\n      - say \"hi\"\n  - name: '%x'\n    value:\n      - '%x'\n      - '%x'\n  - name: '@x'\n    value:\n      - '@x'\n      - '@x'\n  - name: '`x`'\n    value:\n      - '`x`'\n      - '`x`'\n  - name: ---\n    value:\n      - ---\n      - ---\n  - name: --- a\n    value:\n      - --- a\n      - --- a\n  - name: ...\n    value:\n      - ...\n      - ...\n  - name: |-\n      a\n      b\n    value:\n      - |-\n        a\n        b\n      - |-\n        a\n        b\n  - name: |-\n      a\n\n      b\n    value:\n      - |-\n        a\n\n        b\n      - |-\n        a\n\n        b\n  - name: |\n      a\n    value:\n      - |\n        a\n      - |\n        a\n  - name: |+\n      a\n\n    value:\n      - |+\n        a\n\n      - |+\n        a\n\n  - name: \"\\n\"\n    value:\n      - \"\\n\"\n      - \"\\n\"\n  - name: |-\n\n      a\n    value:\n      - |-\n\n        a\n      - |-\n\n        a\n  - name: |2-\n       a\n      b\n    value:\n      - |2-\n         a\n        b\n      - |2-\n         a\n        b\n  - name: |-\n      a \n      b\n    value:\n      - |-\n        a \n        b\n      - |-\n        a \n        b\n  - name: |-\n      a\n       b\n    value:\n      - |-\n        a\n         b\n      - |-\n        a\n         b\n  - name: |\n      line\n      with trailing\n    value:\n      - |\n        line\n        with trailing\n      - |\n        line\n        with trailing\n  - name: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n    value:\n      - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n      - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n  - name: >-\n      word word word word word word word word word word word word word word word\n      word word word word word word word word word word word word word word word\n    value:\n      - >-\n        word word word word word word word word word word word word word word\n        word word word word word word word word word word word word word word\n        word word\n      - >-\n        word word word word word word word word word word word word word word\n        word word word word word word word word word word word word word word\n        word word\n  - name: ' word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word '\n    value:\n      - ' word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word '\n      - ' word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word '\n  - name: >-\n      word word word word word word word word word word word word word word word\n      word word word word word word word word word word word word word word\n      word \n\n      second line\n    value:\n      - >-\n        word word word word word word word word word word word word word word\n        word word word word word word word word word word word word word word\n        word word \n\n        second line\n      - >-\n        word word word word word word word word word word word word word word\n        word word word word word word word word word word word word word word\n        word word \n\n        second line\n  - name: >-\n      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n      b\n    value:\n      - >-\n        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n        b\n      - >-\n        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n        b\n  - name: \"tab\\there\"\n    value:\n      - \"tab\\there\"\n      - \"tab\\there\"\n  - name: \"\\abell\"\n    value:\n      - \"\\abell\"\n      - \"\\abell\"\n  - name: \"\\eEsc\"\n    value:\n      - \"\\eEsc\"\n      - \"\\eEsc\"\n  - name: \"\\Nnel\"\n    value:\n      - \"\\Nnel\"\n      - \"\\Nnel\"\n  - name: \"\\_nbsp\"\n    value:\n      - \"\\_nbsp\"\n      - \"\\_nbsp\"\n  - name: \"\\Lls\"\n    value:\n      - \"\\Lls\"\n      - \"\\Lls\"\n  - name: \"\\uFEFFbom\"\n    value:\n      - \"\\uFEFFbom\"\n      - \"\\uFEFFbom\"\n  - name: \"del\\x7F\"\n    value:\n      - \"del\\x7F\"\n      - \"del\\x7F\"\n  - name: кириллица\n    value:\n      - кириллица\n      - кириллица\n  - name: emoji 🇩🇪 flag\n    value:\n      - emoji 🇩🇪 flag\n      - emoji 🇩🇪 flag\n  - name: → Remnawave\n    value:\n      - → Remnawave\n      - → Remnawave\n  - name: MATCH,→ Remnawave\n    value:\n      - MATCH,→ Remnawave\n      - MATCH,→ Remnawave\n  - name: DOMAIN-SUFFIX,example.com,DIRECT\n    value:\n      - DOMAIN-SUFFIX,example.com,DIRECT\n      - DOMAIN-SUFFIX,example.com,DIRECT\n  - name: 1.1.1.1\n    value:\n      - 1.1.1.1\n      - 1.1.1.1\n  - name: 127.0.0.1:9090\n    value:\n      - 127.0.0.1:9090\n      - 127.0.0.1:9090\n  - name: 198.18.0.1/16\n    value:\n      - 198.18.0.1/16\n      - 198.18.0.1/16\n  - name: '*.lan'\n    value:\n      - '*.lan'\n      - '*.lan'\n  - name: +.xboxlive.com\n    value:\n      - +.xboxlive.com\n      - +.xboxlive.com\n  - name: stun.*.*\n    value:\n      - stun.*.*\n      - stun.*.*\n  - name: h2\n    value:\n      - h2\n      - h2\n  - name: http/1.1\n    value:\n      - http/1.1\n      - http/1.1\n  - name: /path?ed=2048\n    value:\n      - /path?ed=2048\n      - /path?ed=2048\n  - name: chacha20-ietf-poly1305\n    value:\n      - chacha20-ietf-poly1305\n      - chacha20-ietf-poly1305\n  - name: 2022-blake3-aes-256-gcm\n    value:\n      - 2022-blake3-aes-256-gcm\n      - 2022-blake3-aes-256-gcm\n  - name: c2VydmVyLXBhc3N3b3Jk==\n    value:\n      - c2VydmVyLXBhc3N3b3Jk==\n      - c2VydmVyLXBhc3N3b3Jk==\n  - name: 100-1000\n    value:\n      - 100-1000\n      - 100-1000\n  - name: 16-32\n    value:\n      - 16-32\n      - 16-32\n  - name: '600'\n    value:\n      - '600'\n      - '600'\n  - name: '-0'\n    value:\n      - '-0'\n      - '-0'\n  - name: '+0'\n    value:\n      - '+0'\n      - '+0'\n  - name: '1_'\n    value:\n      - '1_'\n      - '1_'\n  - name: _1\n    value:\n      - _1\n      - _1\n  - name: 0.0.0.0\n    value:\n      - 0.0.0.0\n      - 0.0.0.0\n  - name: ::1\n    value:\n      - ::1\n      - ::1\n  - name: '[::1]:443'\n    value:\n      - '[::1]:443'\n      - '[::1]:443'\n  - name: 'a: '\n    value:\n      - 'a: '\n      - 'a: '\n  - name: 'key:'\n    value:\n      - 'key:'\n      - 'key:'\n  - name: ' : '\n    value:\n      - ' : '\n      - ' : '\n  - name: \"x\\r\\ny\"\n    value:\n      - \"x\\r\\ny\"\n      - \"x\\r\\ny\"\n  - name: é\n    value:\n      - é\n      - é\n  - name: Ünïcödé\n    value:\n      - Ünïcödé\n      - Ünïcödé\n  - name: '\"'\n    value:\n      - '\"'\n      - '\"'\n  - name: ''''\n    value:\n      - ''''\n      - ''''\n  - name: >-\n      very long single-quoted-needed: word word word word word word word word\n      word word word word word word word word word word word word \n    value:\n      - >-\n        very long single-quoted-needed: word word word word word word word word\n        word word word word word word word word word word word word \n      - >-\n        very long single-quoted-needed: word word word word word word word word\n        word word word word word word word word word word word word \n"
+ },
+ {
+  "input": {
+   "numbers": [
+    0,
+    1,
+    -1,
+    1.5,
+    0.1,
+    1e+21,
+    1e-7,
+    123456789012,
+    9007199254740992,
+    1.5e+300,
+    -2.5e-10
+   ],
+   "bools": [
+    true,
+    false
+   ],
+   "nil": null,
+   "empty": [],
+   "obj": {}
+  },
+  "output": "numbers:\n  - 0\n  - 1\n  - -1\n  - 1.5\n  - 0.1\n  - 1.e+21\n  - 1.e-7\n  - 123456789012\n  - 9007199254740992\n  - 1.5e+300\n  - -2.5e-10\nbools:\n  - true\n  - false\nnil: null\nempty: []\nobj: {}\n"
+ },
+ {
+  "input": [
+   "",
+   " ",
+   "  ",
+   "\t",
+   "plain",
+   "with space",
+   " leading",
+   "trailing ",
+   "a\tb",
+   "yes",
+   "Yes",
+   "YES",
+   "no",
+   "No",
+   "on",
+   "Off",
+   "y",
+   "n",
+   "true",
+   "False",
+   "null",
+   "Null",
+   "~",
+   "=",
+   "<<",
+   "0",
+   "00",
+   "08",
+   "0o17",
+   "0x1F",
+   "0x_",
+   "0b101",
+   "0b_",
+   "1_000",
+   "-1",
+   "+1",
+   "1:30",
+   "190:20:30",
+   "1.5",
+   ".5",
+   "1.",
+   ".",
+   "-.inf",
+   ".NaN",
+   "1e10",
+   "1e+10",
+   "1.0e+10",
+   "6.8523015e+5",
+   "2024-01-01",
+   "2024-13-01",
+   "2024-02-30",
+   "2001-12-14t21:59:43.10-05:00",
+   "2001-12-14 21:59:43.10",
+   "2024-1-1 1:02:03",
+   "12:30",
+   "-",
+   "- a",
+   "-a",
+   "?",
+   "? a",
+   "?a",
+   ":",
+   ":a",
+   "a:",
+   "a: b",
+   "a:b",
+   "http://x.example/a?b=c#d",
+   "#comment",
+   "a #b",
+   "a#b",
+   "a #",
+   "[x]",
+   "{x}",
+   "a,b",
+   "a, b",
+   "&anchor",
+   "*alias",
+   "!tag",
+   "|",
+   ">",
+   "'q'",
+   "\"q\"",
+   "it's",
+   "say \"hi\"",
+   "%x",
+   "@x",
+   "`x`",
+   "---",
+   "--- a",
+   "...",
+   "a\nb",
+   "a\n\nb",
+   "a\n",
+   "a\n\n",
+   "\n",
+   "\na",
+   " a\nb",
+   "a \nb",
+   "a\n b",
+   "line\nwith trailing\n",
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word",
+   " word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word ",
+   "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \nsecond line",
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa b",
+   "tab\there",
+   "\u0007bell",
+   "\u001bEsc",
+   "nel",
+   " nbsp",
+   " ls",
+   "﻿bom",
+   "del",
+   "кириллица",
+   "emoji 🇩🇪 flag",
+   "→ Remnawave",
+   "MATCH,→ Remnawave",
+   "DOMAIN-SUFFIX,example.com,DIRECT",
+   "1.1.1.1",
+   "127.0.0.1:9090",
+   "198.18.0.1/16",
+   "*.lan",
+   "+.xboxlive.com",
+   "stun.*.*",
+   "h2",
+   "http/1.1",
+   "/path?ed=2048",
+   "chacha20-ietf-poly1305",
+   "2022-blake3-aes-256-gcm",
+   "c2VydmVyLXBhc3N3b3Jk==",
+   "100-1000",
+   "16-32",
+   "600",
+   "-0",
+   "+0",
+   "1_",
+   "_1",
+   "0.0.0.0",
+   "::1",
+   "[::1]:443",
+   "a: ",
+   "key:",
+   " : ",
+   "x\r\ny",
+   "é",
+   "Ünïcödé",
+   "\"",
+   "'",
+   "very long single-quoted-needed: word word word word word word word word word word word word word word word word word word word word "
+  ],
+  "output": "- ''\n- \" \"\n- \"  \"\n- \"\\t\"\n- plain\n- with space\n- ' leading'\n- 'trailing '\n- \"a\\tb\"\n- 'yes'\n- 'Yes'\n- 'YES'\n- 'no'\n- 'No'\n- 'on'\n- 'Off'\n- 'y'\n- 'n'\n- 'true'\n- 'False'\n- 'null'\n- 'Null'\n- '~'\n- '='\n- '<<'\n- '0'\n- '00'\n- '08'\n- '0o17'\n- '0x1F'\n- 0x_\n- '0b101'\n- 0b_\n- '1_000'\n- '-1'\n- '+1'\n- '1:30'\n- '190:20:30'\n- '1.5'\n- '.5'\n- '1.'\n- .\n- '-.inf'\n- '.NaN'\n- '1e10'\n- '1e+10'\n- '1.0e+10'\n- '6.8523015e+5'\n- '2024-01-01'\n- 2024-13-01\n- 2024-02-30\n- '2001-12-14t21:59:43.10-05:00'\n- '2001-12-14 21:59:43.10'\n- '2024-1-1 1:02:03'\n- '12:30'\n- '-'\n- '- a'\n- -a\n- '?'\n- '? a'\n- ?a\n- ':'\n- :a\n- 'a:'\n- 'a: b'\n- a:b\n- http://x.example/a?b=c#d\n- '#comment'\n- 'a #b'\n- a#b\n- 'a #'\n- '[x]'\n- '{x}'\n- a,b\n- a, b\n- '&anchor'\n- '*alias'\n- '!tag'\n- '|'\n- '>'\n- '''q'''\n- '\"q\"'\n- it's\n- say \"hi\"\n- '%x'\n- '@x'\n- '`x`'\n- ---\n- --- a\n- ...\n- |-\n  a\n  b\n- |-\n  a\n\n  b\n- |\n  a\n- |+\n  a\n\n- \"\\n\"\n- |-\n\n  a\n- |2-\n   a\n  b\n- |-\n  a \n  b\n- |-\n  a\n   b\n- |\n  line\n  with trailing\n- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n- >-\n  word word word word word word word word word word word word word word word\n  word word word word word word word word word word word word word word word\n- ' word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word '\n- >-\n  word word word word word word word word word word word word word word word\n  word word word word word word word word word word word word word word word \n\n  second line\n- >-\n  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n  b\n- \"tab\\there\"\n- \"\\abell\"\n- \"\\eEsc\"\n- \"\\Nnel\"\n- \"\\_nbsp\"\n- \"\\Lls\"\n- \"\\uFEFFbom\"\n- \"del\\x7F\"\n- кириллица\n- emoji 🇩🇪 flag\n- → Remnawave\n- MATCH,→ Remnawave\n- DOMAIN-SUFFIX,example.com,DIRECT\n- 1.1.1.1\n- 127.0.0.1:9090\n- 198.18.0.1/16\n- '*.lan'\n- +.xboxlive.com\n- stun.*.*\n- h2\n- http/1.1\n- /path?ed=2048\n- chacha20-ietf-poly1305\n- 2022-blake3-aes-256-gcm\n- c2VydmVyLXBhc3N3b3Jk==\n- 100-1000\n- 16-32\n- '600'\n- '-0'\n- '+0'\n- '1_'\n- _1\n- 0.0.0.0\n- ::1\n- '[::1]:443'\n- 'a: '\n- 'key:'\n- ' : '\n- \"x\\r\\ny\"\n- é\n- Ünïcödé\n- '\"'\n- ''''\n- >-\n  very long single-quoted-needed: word word word word word word word word word\n  word word word word word word word word word word word \n"
+ },
+ {
+  "input": {
+   "multi\nline key": 1,
+   "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk": 2
+  },
+  "output": "? \"multi\\nline key\"\n: 1\n? kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk\n: 2\n"
+ },
+ {
+  "input": {
+   "a": [
+    [
+     1,
+     2
+    ],
+    [],
+    [
+     {}
+    ],
+    [
+     [
+      3
+     ]
+    ]
+   ],
+   "b": [
+    {
+     "c": [
+      {
+       "d": "e"
+      }
+     ]
+    }
+   ]
+  },
+  "output": "a:\n  - - 1\n    - 2\n  - []\n  - - {}\n  - - - 3\nb:\n  - c:\n      - d: e\n"
+ }
+]
