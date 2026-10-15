@@ -229,6 +229,32 @@ func (c *Client) CheckHealth(node *database.Node) (NodeHealthCheckResult, error)
 	}, nil
 }
 
+// CollectTorrentReports drains the agent's torrent-blocker reports
+// (POST /node/plugin/torrent-blocker/collect). The agent forgets them once
+// returned.
+func (c *Client) CollectTorrentReports(node *database.Node) ([]json.RawMessage, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	url := fmt.Sprintf("https://%s:%d/node/plugin/torrent-blocker/collect", node.Address, getNodePort(node))
+	resp, err := c.doRequest(ctx, "POST", url, map[string]interface{}{})
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return nil, fmt.Errorf("node returned status %d", resp.StatusCode)
+	}
+	var res struct {
+		Response struct {
+			Reports []json.RawMessage `json:"reports"`
+		} `json:"response"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		return nil, err
+	}
+	return res.Response.Reports, nil
+}
+
 func (c *Client) SyncPlugin(node *database.Node, payload map[string]interface{}) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
@@ -473,6 +499,11 @@ type NodeUserTraffic struct {
 }
 
 type NodeSystemStatsResponse struct {
+	Plugins *struct {
+		TorrentBlocker *struct {
+			ReportsCount int `json:"reportsCount"`
+		} `json:"torrentBlocker"`
+	} `json:"plugins,omitempty"`
 	XrayInfo *struct {
 		Uptime       int64 `json:"uptime"`
 		NumGoroutine int   `json:"numGoroutine"`

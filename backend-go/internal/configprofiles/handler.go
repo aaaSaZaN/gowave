@@ -3,14 +3,15 @@ package configprofiles
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
 
+	"remnawave-go/internal/configrender"
 	"remnawave-go/internal/database"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -31,7 +32,7 @@ type InboundResponse struct {
 	Security     *string         `json:"security"`
 	Port         *int            `json:"port"`
 	RawInbound   json.RawMessage `json:"rawInbound"`
-	ActiveSquads []string        `json:"activeSquads,omitempty"`
+	ActiveSquads []string        `json:"activeSquads"`
 }
 
 type NodeSummary struct {
@@ -73,6 +74,31 @@ func formatInbound(ib *database.ConfigProfileInbound) InboundResponse {
 		ActiveSquads: []string{},
 	}
 }
+
+// formatInbounds formats inbounds with the internal squads that grant each one.
+func (h *Handler) formatInbounds(inbounds []database.ConfigProfileInbound) []InboundResponse {
+	result := make([]InboundResponse, 0, len(inbounds))
+	ids := make([]string, 0, len(inbounds))
+	for _, inbound := range inbounds {
+		ids = append(ids, inbound.UUID)
+	}
+	squads := map[string][]string{}
+	if len(ids) > 0 {
+		links, _ := h.service.InternalSquadInboundLinks(ids)
+		for _, link := range links {
+			squads[link.InboundUUID] = append(squads[link.InboundUUID], link.InternalSquadUUID)
+		}
+	}
+	for i := range inbounds {
+		formatted := formatInbound(&inbounds[i])
+		if active := squads[inbounds[i].UUID]; active != nil {
+			formatted.ActiveSquads = active
+		}
+		result = append(result, formatted)
+	}
+	return result
+}
+
 func (h *Handler) formatProfile(p *database.ConfigProfile) ProfileResponse {
 	cfg := json.RawMessage("{}")
 	if p.Config != "" {
@@ -89,10 +115,7 @@ func (h *Handler) formatProfile(p *database.ConfigProfile) ProfileResponse {
 	}
 
 	inboundsDB, _ := h.service.GetInboundsByProfileUUID(p.UUID)
-	inboundsResp := make([]InboundResponse, 0, len(inboundsDB))
-	for _, ib := range inboundsDB {
-		inboundsResp = append(inboundsResp, formatInbound(&ib))
-	}
+	inboundsResp := h.formatInbounds(inboundsDB)
 
 	var nodes []database.Node
 	h.service.DB().Where("active_config_profile_uuid = ?", p.UUID).Find(&nodes)
@@ -118,8 +141,8 @@ func (h *Handler) formatProfile(p *database.ConfigProfile) ProfileResponse {
 		Config:       cfg,
 		Inbounds:     inboundsResp,
 		Nodes:        nodesResp,
-		CreatedAt:    p.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:    p.UpdatedAt.Format(time.RFC3339),
+		CreatedAt:    p.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:    p.UpdatedAt.UTC().Format(time.RFC3339),
 	}
 }
 func (h *Handler) GetConfigProfilesTags(w http.ResponseWriter, r *http.Request) {
@@ -334,10 +357,7 @@ func (h *Handler) GetProfileInbounds(w http.ResponseWriter, r *http.Request) {
 		inbounds = []database.ConfigProfileInbound{}
 	}
 
-	resp := make([]InboundResponse, 0, len(inbounds))
-	for _, ib := range inbounds {
-		resp = append(resp, formatInbound(&ib))
-	}
+	resp := h.formatInbounds(inbounds)
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"response": map[string]interface{}{
@@ -355,10 +375,7 @@ func (h *Handler) GetAllInbounds(w http.ResponseWriter, r *http.Request) {
 		inbounds = []database.ConfigProfileInbound{}
 	}
 
-	resp := make([]InboundResponse, 0, len(inbounds))
-	for _, ib := range inbounds {
-		resp = append(resp, formatInbound(&ib))
-	}
+	resp := h.formatInbounds(inbounds)
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"response": map[string]interface{}{
@@ -379,6 +396,13 @@ func (h *Handler) GetComputedConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	computed, err := configrender.Expand(h.service.DB(), profile.Config)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	raw, _ := json.Marshal(computed)
+	profile.Config = string(raw)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"response": h.formatProfile(profile),
 	})
@@ -496,10 +520,6 @@ func formatHostResponse(db *gorm.DB, h *database.Host) (map[string]interface{}, 
 	}
 
 	fp := nullableString(h.Fingerprint)
-	if fp == nil {
-		defaultFp := "chrome"
-		fp = &defaultFp
-	}
 
 	return map[string]interface{}{
 		"uuid":             h.UUID,
@@ -611,210 +631,37 @@ func (h *Handler) GetHost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateHost(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var input struct {
-		UUID    string `json:"uuid"`
-		Inbound *struct {
-			ConfigProfileUUID        string `json:"configProfileUuid"`
-			ConfigProfileInboundUUID string `json:"configProfileInboundUuid"`
-		} `json:"inbound"`
-		ConfigProfileUUID            *string         `json:"configProfileUuid"`
-		ConfigProfileInboundUUID     *string         `json:"configProfileInboundUuid"`
-		Remark                       *string         `json:"remark"`
-		Address                      *string         `json:"address"`
-		Port                         *int            `json:"port"`
-		Path                         *string         `json:"path"`
-		Sni                          *string         `json:"sni"`
-		Host                         *string         `json:"host"`
-		Alpn                         *string         `json:"alpn"`
-		Fingerprint                  *string         `json:"fingerprint"`
-		IsDisabled                   *bool           `json:"isDisabled"`
-		SecurityLayer                *string         `json:"securityLayer"`
-		XhttpExtraParams             json.RawMessage `json:"xhttpExtraParams"`
-		MuxParams                    json.RawMessage `json:"muxParams"`
-		SockoptParams                json.RawMessage `json:"sockoptParams"`
-		FinalMask                    json.RawMessage `json:"finalMask"`
-		ServerDescription            *string         `json:"serverDescription"`
-		Tags                         *[]string       `json:"tags"`
-		IsHidden                     *bool           `json:"isHidden"`
-		OverrideSniFromAddress       *bool           `json:"overrideSniFromAddress"`
-		KeepSniBlank                 *bool           `json:"keepSniBlank"`
-		PinnedPeerCertSha256         *string         `json:"pinnedPeerCertSha256"`
-		VerifyPeerCertByName         *string         `json:"verifyPeerCertByName"`
-		VlessRouteId                 *int            `json:"vlessRouteId"`
-		ShuffleHost                  *bool           `json:"shuffleHost"`
-		MihomoX25519                 *bool           `json:"mihomoX25519"`
-		MihomoIpVersion              *string         `json:"mihomoIpVersion"`
-		Nodes                        *[]string       `json:"nodes"`
-		XrayJsonTemplateUUID         *string         `json:"xrayJsonTemplateUuid"`
-		ExcludeFromSubscriptionTypes *[]string       `json:"excludeFromSubscriptionTypes"`
-		Mapper                       json.RawMessage `json:"mapper"`
-		InternalSquads               *struct {
-			Mode   string   `json:"mode"`
-			Squads []string `json:"squads"`
-		} `json:"internalSquads"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		http.Error(w, `{"message":"Invalid request body"}`, http.StatusBadRequest)
+	var patch map[string]json.RawMessage
+	if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
+		http.Error(w, "invalid body", 400)
 		return
 	}
-	targetUUID := input.UUID
-	if targetUUID == "" {
-		targetUUID = chi.URLParam(r, "uuid")
+	var id string
+	if raw, ok := patch["uuid"]; ok {
+		if err := json.Unmarshal(raw, &id); err != nil {
+			http.Error(w, "invalid UUID", 400)
+			return
+		}
 	}
-
-	host, err := h.service.GetHostByUUID(targetUUID)
+	if id == "" {
+		id = chi.URLParam(r, "uuid")
+	}
+	host, err := h.service.PatchHost(id, patch)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(map[string]interface{}{"message": "Host not found"})
+		code := http.StatusBadRequest
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			code = 404
+		}
+		http.Error(w, err.Error(), code)
 		return
 	}
-
-	if input.Inbound != nil {
-		if input.Inbound.ConfigProfileUUID != "" {
-			host.ConfigProfileUUID = nullableString(input.Inbound.ConfigProfileUUID)
-		}
-		if input.Inbound.ConfigProfileInboundUUID != "" {
-			host.ConfigProfileInboundUUID = nullableString(input.Inbound.ConfigProfileInboundUUID)
-		}
-	}
-	if input.ConfigProfileUUID != nil {
-		host.ConfigProfileUUID = nullableStringPtr(input.ConfigProfileUUID)
-	}
-	if input.ConfigProfileInboundUUID != nil {
-		host.ConfigProfileInboundUUID = nullableStringPtr(input.ConfigProfileInboundUUID)
-	}
-	if input.Remark != nil {
-		host.Remark = *input.Remark
-	}
-	if input.Address != nil {
-		host.Address = strings.TrimSpace(*input.Address)
-	}
-	if input.Port != nil {
-		host.Port = *input.Port
-	}
-	if input.Path != nil {
-		host.Path = *input.Path
-	}
-	if input.Sni != nil {
-		host.Sni = *input.Sni
-	}
-	if input.Host != nil {
-		host.Host = *input.Host
-	}
-	if input.Alpn != nil {
-		host.Alpn = *input.Alpn
-	}
-	if input.Fingerprint != nil {
-		host.Fingerprint = *input.Fingerprint
-	}
-	if input.IsDisabled != nil {
-		host.IsDisabled = *input.IsDisabled
-	}
-	if input.SecurityLayer != nil {
-		host.SecurityLayer = *input.SecurityLayer
-	}
-	if len(input.XhttpExtraParams) > 0 {
-		host.XhttpExtraParams = string(input.XhttpExtraParams)
-	}
-	if len(input.MuxParams) > 0 {
-		host.MuxParams = string(input.MuxParams)
-	}
-	if len(input.SockoptParams) > 0 {
-		host.SockoptParams = string(input.SockoptParams)
-	}
-	if len(input.FinalMask) > 0 {
-		host.FinalMask = string(input.FinalMask)
-	}
-	if input.ServerDescription != nil {
-		host.ServerDescription = *input.ServerDescription
-	}
-	if input.Tags != nil {
-		host.Tags = database.StringArray(*input.Tags)
-	}
-	if input.IsHidden != nil {
-		host.IsHidden = *input.IsHidden
-	}
-	if input.OverrideSniFromAddress != nil {
-		host.OverrideSniFromAddress = *input.OverrideSniFromAddress
-	}
-	if input.KeepSniBlank != nil {
-		host.KeepSniBlank = *input.KeepSniBlank
-	}
-	if input.PinnedPeerCertSha256 != nil {
-		host.PinnedPeerCertSha256 = *input.PinnedPeerCertSha256
-	}
-	if input.VerifyPeerCertByName != nil {
-		host.VerifyPeerCertByName = *input.VerifyPeerCertByName
-	}
-	if input.VlessRouteId != nil {
-		host.VlessRouteId = input.VlessRouteId
-	}
-	if input.ShuffleHost != nil {
-		host.ShuffleHost = *input.ShuffleHost
-	}
-	if input.MihomoX25519 != nil {
-		host.MihomoX25519 = *input.MihomoX25519
-	}
-	if input.MihomoIpVersion != nil {
-		host.MihomoIpVersion = *input.MihomoIpVersion
-	}
-	if input.Nodes != nil {
-		nb, _ := json.Marshal(*input.Nodes)
-		host.Nodes = string(nb)
-	}
-	if input.XrayJsonTemplateUUID != nil {
-		host.XrayJsonTemplateUUID = nullableStringPtr(input.XrayJsonTemplateUUID)
-	}
-	if input.ExcludeFromSubscriptionTypes != nil {
-		host.ExcludeFromSubscriptionTypes = database.StringArray(*input.ExcludeFromSubscriptionTypes)
-	}
-	if len(input.Mapper) > 0 {
-		host.Mapper = string(input.Mapper)
-	}
-	if input.InternalSquads != nil {
-		if input.InternalSquads.Mode != "" {
-			host.InternalSquadsMode = input.InternalSquads.Mode
-		}
-		sb, _ := json.Marshal(input.InternalSquads.Squads)
-		host.InternalSquads = string(sb)
-	}
-	if err := h.service.DB().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Save(host).Error; err != nil {
-			return err
-		}
-		if input.Nodes == nil && input.InternalSquads == nil {
-			return nil
-		}
-
-		nodeUUIDs := []string{}
-		if input.Nodes != nil {
-			nodeUUIDs = *input.Nodes
-		} else if err := tx.Model(&database.HostsToNode{}).Where("host_uuid = ?", host.UUID).Pluck("node_uuid", &nodeUUIDs).Error; err != nil {
-			return err
-		}
-
-		squadUUIDs := []string{}
-		if input.InternalSquads != nil {
-			squadUUIDs = input.InternalSquads.Squads
-		} else if err := tx.Model(&database.InternalSquadHostLink{}).Where("host_uuid = ?", host.UUID).Pluck("squad_uuid", &squadUUIDs).Error; err != nil {
-			return err
-		}
-		return replaceHostRelations(tx, host.UUID, nodeUUIDs, squadUUIDs)
-	}); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]interface{}{"message": "Failed to update host"})
-		return
-	}
-
 	formatted, err := formatHostResponse(h.service.DB(), host)
 	if err != nil {
-		http.Error(w, `{"message":"Failed to load host relations"}`, http.StatusInternalServerError)
+		http.Error(w, err.Error(), 500)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": formatted,
-	})
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"response": formatted})
 }
 
 func (h *Handler) DeleteHost(w http.ResponseWriter, r *http.Request) {
@@ -836,21 +683,21 @@ func (h *Handler) CloneHost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var host database.Host
-	if err := h.service.DB().Where("uuid = ?", body.CloneFromUuid).First(&host).Error; err != nil {
-		http.Error(w, `{"message":"Host not found"}`, http.StatusNotFound)
+	host, err := h.service.CloneHost(body.CloneFromUuid)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, `{"message":"Host not found"}`, http.StatusNotFound)
+		} else {
+			http.Error(w, "failed to clone host", http.StatusInternalServerError)
+		}
 		return
 	}
 
-	host.UUID = uuid.NewString()
-	host.Remark = host.Remark + " (Clone)"
-
-	if err := h.service.DB().Create(&host).Error; err != nil {
-		http.Error(w, `{"message":"Failed to clone"}`, http.StatusInternalServerError)
+	formatted, err := formatHostResponse(h.service.DB(), host)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	formatted, _ := formatHostResponse(h.service.DB(), &host)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"response": formatted,
 	})

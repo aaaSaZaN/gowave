@@ -12,7 +12,7 @@ import {
     UpdateNodeCommand
 } from '@remnawave/backend-contract'
 import { NodeErrorMessageWidget } from '@widgets/dashboard/nodes/node-error-message'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { t } from 'i18next'
 import { ReactNode } from 'react'
 import { PiFloppyDiskDuotone } from 'react-icons/pi'

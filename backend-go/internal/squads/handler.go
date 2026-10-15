@@ -15,6 +15,7 @@ import (
 
 	"remnawave-go/internal/configprofiles"
 	"remnawave-go/internal/database"
+	"remnawave-go/internal/jobs"
 )
 
 type Handler struct {
@@ -267,10 +268,16 @@ func (h *Handler) UpdateInternalSquad(w http.ResponseWriter, r *http.Request) {
 				InboundUUID:       inboundUUID,
 			})
 		}
-		if len(links) == 0 {
-			return nil
+		if len(links) > 0 {
+			if err := tx.Create(&links).Error; err != nil {
+				return err
+			}
 		}
-		return tx.Create(&links).Error
+		var ids []uint64
+		if err := tx.Model(&database.InternalSquadMember{}).Where("internal_squad_uuid=?", s.UUID).Pluck("user_id", &ids).Error; err != nil {
+			return err
+		}
+		return enqueueAffected(tx, ids)
 	})
 	if err != nil {
 		log.Printf("[SQUADS] failed to update squad uuid=%s: %v", s.UUID, err)
@@ -288,6 +295,10 @@ func (h *Handler) UpdateInternalSquad(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) DeleteInternalSquad(w http.ResponseWriter, r *http.Request) {
 	uuidParam := chi.URLParam(r, "uuid")
 	if err := h.db.Transaction(func(tx *gorm.DB) error {
+		var ids []uint64
+		if err := tx.Model(&database.InternalSquadMember{}).Where("internal_squad_uuid=?", uuidParam).Pluck("user_id", &ids).Error; err != nil {
+			return err
+		}
 		if err := tx.Where("squad_uuid = ?", uuidParam).Delete(&database.InternalSquadHostLink{}).Error; err != nil {
 			return err
 		}
@@ -297,7 +308,10 @@ func (h *Handler) DeleteInternalSquad(w http.ResponseWriter, r *http.Request) {
 		if err := tx.Where("internal_squad_uuid = ?", uuidParam).Delete(&database.InternalSquadMember{}).Error; err != nil {
 			return err
 		}
-		return tx.Where("uuid = ?", uuidParam).Delete(&database.InternalSquad{}).Error
+		if err := tx.Where("uuid = ?", uuidParam).Delete(&database.InternalSquad{}).Error; err != nil {
+			return err
+		}
+		return enqueueAffected(tx, ids)
 	}); err != nil {
 		log.Printf("[SQUADS] failed to delete squad uuid=%s: %v", uuidParam, err)
 		http.Error(w, `{"message":"Failed to delete squad"}`, http.StatusInternalServerError)
@@ -464,119 +478,134 @@ func (h *Handler) GetInternalSquadAccessibleNodes(w http.ResponseWriter, r *http
 	})
 }
 
+func enqueueAffected(tx *gorm.DB, ids []uint64) error {
+	for _, id := range ids {
+		if err := tx.Model(&database.User{}).Where("id=?", id).Updates(map[string]interface{}{"revision": gorm.Expr("revision + 1"), "updated_at": time.Now().UTC()}).Error; err != nil {
+			return err
+		}
+		var user database.User
+		if err := tx.First(&user, id).Error; err != nil {
+			return err
+		}
+		if err := jobs.EnqueueUser(tx, &user, nil, false); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 func (h *Handler) SquadBulkAction(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	uuidParam := chi.URLParam(r, "uuid")
-	path := r.URL.Path
-	var err error
-
-	if strings.Contains(path, "/internal-squads/") {
-		if strings.HasSuffix(path, "/add-users") {
-			// Add all users. WHERE disambiguates INSERT ... SELECT ... ON CONFLICT
-			// for SQLite and the query error must reach the caller.
-			err = h.db.Exec(`
-				INSERT INTO internal_squad_members (internal_squad_uuid, user_id)
-				SELECT ?, id FROM users
-				WHERE 1 = 1
-				ON CONFLICT (internal_squad_uuid, user_id) DO NOTHING
-			`, uuidParam).Error
-		} else if strings.HasSuffix(path, "/add-many-users") {
-			var body struct {
-				UserIDs []uint64 `json:"userIds"`
+	id := chi.URLParam(r, "uuid")
+	internal := strings.Contains(r.URL.Path, "/internal-squads/")
+	action := r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]
+	if action != "add-users" && action != "remove-users" && action != "add-many-users" && action != "remove-many-users" {
+		http.Error(w, "unknown action", 400)
+		return
+	}
+	var ids []uint64
+	if strings.Contains(action, "many") {
+		var body struct {
+			IDs []uint64 `json:"userIds"`
+		}
+		if json.NewDecoder(r.Body).Decode(&body) != nil {
+			http.Error(w, "invalid body", 400)
+			return
+		}
+		ids = body.IDs
+	}
+	err := h.db.Transaction(func(tx *gorm.DB) error {
+		if internal {
+			var squad database.InternalSquad
+			if err := tx.Where("uuid=?", id).First(&squad).Error; err != nil {
+				return err
 			}
-			if decodeErr := json.NewDecoder(r.Body).Decode(&body); decodeErr != nil {
-				http.Error(w, `{"message":"Invalid request body"}`, http.StatusBadRequest)
-				return
+		} else {
+			var squad database.ExternalSquad
+			if err := tx.Where("uuid=?", id).First(&squad).Error; err != nil {
+				return err
 			}
-			err = h.db.Transaction(func(tx *gorm.DB) error {
-				for _, uid := range body.UserIDs {
-					if err := tx.Exec(`
-						INSERT INTO internal_squad_members (internal_squad_uuid, user_id)
-						VALUES (?, ?)
-						ON CONFLICT (internal_squad_uuid, user_id) DO NOTHING
-					`, uuidParam, uid).Error; err != nil {
+		}
+		if !strings.Contains(action, "many") {
+			query := tx.Model(&database.User{})
+			if strings.HasPrefix(action, "remove") {
+				if internal {
+					query = query.Where("id IN (SELECT user_id FROM internal_squad_members WHERE internal_squad_uuid=?)", id)
+				} else {
+					query = query.Where("external_squad_uuid=?", id)
+				}
+			}
+			if err := query.Pluck("id", &ids).Error; err != nil {
+				return err
+			}
+		}
+		for _, userID := range ids {
+			var user database.User
+			if err := tx.First(&user, userID).Error; err != nil {
+				return err
+			}
+			if internal {
+				if strings.HasPrefix(action, "add") {
+					if err := tx.Exec("INSERT INTO internal_squad_members (internal_squad_uuid,user_id) VALUES (?,?) ON CONFLICT DO NOTHING", id, userID).Error; err != nil {
+						return err
+					}
+				} else {
+					if err := tx.Where("internal_squad_uuid=? AND user_id=?", id, userID).Delete(&database.InternalSquadMember{}).Error; err != nil {
 						return err
 					}
 				}
-				return nil
-			})
-		} else if strings.HasSuffix(path, "/remove-users") {
-			err = h.db.Where("internal_squad_uuid = ?", uuidParam).Delete(&database.InternalSquadMember{}).Error
-		} else if strings.HasSuffix(path, "/remove-many-users") {
-			var body struct {
-				UserIDs []uint64 `json:"userIds"`
+			} else {
+				var target interface{} = id
+				query := tx.Model(&user)
+				if strings.HasPrefix(action, "remove") {
+					target = nil
+					query = query.Where("external_squad_uuid = ?", id)
+				}
+				if err := query.Update("external_squad_uuid", target).Error; err != nil {
+					return err
+				}
 			}
-			if decodeErr := json.NewDecoder(r.Body).Decode(&body); decodeErr != nil {
-				http.Error(w, `{"message":"Invalid request body"}`, http.StatusBadRequest)
-				return
-			}
-			if len(body.UserIDs) > 0 {
-				err = h.db.Where("internal_squad_uuid = ? AND user_id IN ?", uuidParam, body.UserIDs).Delete(&database.InternalSquadMember{}).Error
-			}
-		} else {
-			http.Error(w, `{"message":"Unknown squad action"}`, http.StatusBadRequest)
-			return
 		}
-	} else if strings.Contains(path, "/external-squads/") {
-		if strings.HasSuffix(path, "/add-users") {
-			// This intentionally replaces the external squad for every user.
-			err = h.db.Model(&database.User{}).Where("1 = 1").Update("external_squad_uuid", uuidParam).Error
-		} else if strings.HasSuffix(path, "/remove-users") {
-			err = h.db.Model(&database.User{}).Where("external_squad_uuid = ?", uuidParam).Update("external_squad_uuid", nil).Error
-		} else {
-			http.Error(w, `{"message":"Unknown squad action"}`, http.StatusBadRequest)
-			return
-		}
-	} else {
-		http.Error(w, `{"message":"Unknown squad action"}`, http.StatusBadRequest)
-		return
-	}
-
-	if err != nil {
-		log.Printf("[SQUADS] bulk action failed path=%s squad=%s: %v", path, uuidParam, err)
-		http.Error(w, `{"message":"Failed to update squad members"}`, http.StatusInternalServerError)
-		return
-	}
-
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"success": true,
-		},
+		return enqueueAffected(tx, ids)
 	})
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"response": map[string]bool{"success": true}})
+}
+
+// nullableJSON decodes an optional JSON column. Empty strings, null and the
+// column default "{}" all mean "not configured", which upstream reports as null.
+func nullableJSON(raw string) interface{} {
+	raw = strings.TrimSpace(raw)
+	if raw == "" || raw == "null" || raw == "{}" {
+		return nil
+	}
+	var value interface{}
+	if json.Unmarshal([]byte(raw), &value) != nil {
+		return nil
+	}
+	return value
 }
 
 func formatExternalSquad(db *gorm.DB, s *database.ExternalSquad) map[string]interface{} {
 	tags := []string(s.Tags)
 
-	var subSettings interface{}
-	if s.SubscriptionSettings != "" && s.SubscriptionSettings != "null" {
-		_ = json.Unmarshal([]byte(s.SubscriptionSettings), &subSettings)
-	}
-
-	var hostOverrides interface{}
-	if s.HostOverrides != "" && s.HostOverrides != "null" {
-		_ = json.Unmarshal([]byte(s.HostOverrides), &hostOverrides)
-	}
-
-	var respHeadersAdd interface{}
-	if s.ResponseHeadersAdd != "" && s.ResponseHeadersAdd != "null" {
-		_ = json.Unmarshal([]byte(s.ResponseHeadersAdd), &respHeadersAdd)
-	}
+	subSettings := nullableJSON(s.SubscriptionSettings)
+	hostOverrides := nullableJSON(s.HostOverrides)
+	respHeadersAdd := nullableJSON(s.ResponseHeadersAdd)
 	if respHeadersAdd == nil {
 		respHeadersAdd = map[string]interface{}{}
 	}
-
 	respHeadersRemove := []string(s.ResponseHeadersRemove)
-
-	var hwidSettings interface{}
-	if s.HwidSettings != "" && s.HwidSettings != "null" {
-		_ = json.Unmarshal([]byte(s.HwidSettings), &hwidSettings)
+	if respHeadersRemove == nil {
+		respHeadersRemove = []string{}
 	}
-
-	var customRemarks interface{}
-	if s.CustomRemarks != "" && s.CustomRemarks != "null" {
-		_ = json.Unmarshal([]byte(s.CustomRemarks), &customRemarks)
+	if tags == nil {
+		tags = []string{}
 	}
+	hwidSettings := nullableJSON(s.HwidSettings)
+	customRemarks := nullableJSON(s.CustomRemarks)
 
 	var membersCount int64
 	db.Model(&database.User{}).Where("external_squad_uuid = ?", s.UUID).Count(&membersCount)
@@ -907,12 +936,5 @@ func (h *Handler) SetExternalSquadsTags(w http.ResponseWriter, r *http.Request) 
 			"uuid": body.UUID,
 			"tags": body.Tags,
 		},
-	})
-}
-
-func (h *Handler) GetInternalSquadUsage(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": []interface{}{},
 	})
 }

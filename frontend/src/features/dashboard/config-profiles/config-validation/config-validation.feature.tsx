@@ -24,7 +24,7 @@ const replaceSnippetsInRoot = (
         const snippet = snippetsMap.get(name)
 
         if (!snippet) {
-            consola.error(`Snippet ${name} not found` | '')
+            consola.error(`Snippet ${name} not found`)
             continue
         }
 

@@ -2,28 +2,23 @@ package middleware
 
 import (
 	"fmt"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"net/http"
 	"time"
 )
 
-type responseWriter struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func (rw *responseWriter) WriteHeader(code int) {
-	rw.statusCode = code
-	rw.ResponseWriter.WriteHeader(code)
-}
-
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		wrapped := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+		wrapped := chimiddleware.NewWrapResponseWriter(w, r.ProtoMajor)
 
 		next.ServeHTTP(wrapped, r)
 
 		duration := time.Since(start)
-		fmt.Printf("[%s] %s %d (%v)\n", r.Method, r.URL.Path, wrapped.statusCode, duration)
+		status := wrapped.Status()
+		if status == 0 {
+			status = http.StatusOK
+		}
+		fmt.Printf("[%s] %s %d (%v)\n", r.Method, r.URL.Path, status, duration)
 	})
 }

@@ -179,11 +179,11 @@ func ImportFromPasarGuard(destDB *gorm.DB, source string) error {
 		}
 		trojanPassword := strings.TrimSpace(ps.Trojan.Password)
 		if trojanPassword == "" {
-			trojanPassword = users.GenerateRandomPassword(16)
+			trojanPassword = users.NewPassword()
 		}
 		ssPassword := strings.TrimSpace(ps.Shadowsocks.Password)
 		if ssPassword == "" {
-			ssPassword = users.GenerateRandomPassword(16)
+			ssPassword = users.NewPassword()
 		}
 
 		status := strings.ToUpper(strings.TrimSpace(u.Status))
@@ -231,7 +231,7 @@ func ImportFromPasarGuard(destDB *gorm.DB, source string) error {
 
 		gwUser := database.User{
 			ID:                   u.ID,
-			ShortUUID:            users.GenerateShortUUID(16),
+			ShortUUID:            users.NewShortUUID(),
 			Username:             u.Username,
 			Status:               status,
 			TrafficLimitBytes:    limitBytes,

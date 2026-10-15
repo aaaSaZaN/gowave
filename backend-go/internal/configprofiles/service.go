@@ -25,7 +25,7 @@ type Service struct {
 func NewService(db *gorm.DB, syncer ...NodeProfileSyncer) *Service {
 	var s NodeProfileSyncer
 	if len(syncer) > 0 {
-	s = syncer[0]
+		s = syncer[0]
 	}
 	return &Service{db: db, syncer: s}
 }
@@ -112,8 +112,10 @@ func (s *Service) CreateHostFromInput(input CreateHostInput) (*database.Host, er
 		port = 443
 	}
 
-	fp := "chrome"
-	if input.Fingerprint != nil && *input.Fingerprint != "" {
+	// Upstream stores a missing fingerprint as null; links then fall back to
+	// the inbound's own fingerprint.
+	fp := ""
+	if input.Fingerprint != nil {
 		fp = *input.Fingerprint
 	}
 
@@ -327,6 +329,51 @@ func (s *Service) GetAllHosts() ([]database.Host, error) {
 func (s *Service) GetHostByUUID(uuid string) (*database.Host, error) {
 	var host database.Host
 	err := s.db.Where("uuid = ?", uuid).First(&host).Error
+	if err != nil {
+		return nil, err
+	}
+	return &host, nil
+}
+
+func (s *Service) InternalSquadInboundLinks(inboundUUIDs []string) ([]database.InternalSquadInbound, error) {
+	var links []database.InternalSquadInbound
+	if len(inboundUUIDs) == 0 {
+		return links, nil
+	}
+	err := s.db.Where("inbound_uuid IN ?", inboundUUIDs).Order("internal_squad_uuid").Find(&links).Error
+	return links, err
+}
+
+func (s *Service) PatchHost(id string, patch map[string]json.RawMessage) (*database.Host, error) {
+	var host *database.Host
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		var err error
+		host, err = patchHost(tx, id, patch)
+		return err
+	})
+	return host, err
+}
+
+func (s *Service) CloneHost(sourceUUID string) (*database.Host, error) {
+	var host database.Host
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("uuid = ?", sourceUUID).First(&host).Error; err != nil {
+			return err
+		}
+		host.UUID = uuid.NewString()
+		host.Remark += " (Clone)"
+		if err := tx.Create(&host).Error; err != nil {
+			return err
+		}
+		var nodes, squads []string
+		if err := tx.Model(&database.HostsToNode{}).Where("host_uuid = ?", sourceUUID).Pluck("node_uuid", &nodes).Error; err != nil {
+			return err
+		}
+		if err := tx.Model(&database.InternalSquadHostLink{}).Where("host_uuid = ?", sourceUUID).Pluck("squad_uuid", &squads).Error; err != nil {
+			return err
+		}
+		return replaceHostRelations(tx, host.UUID, nodes, squads)
+	})
 	if err != nil {
 		return nil, err
 	}

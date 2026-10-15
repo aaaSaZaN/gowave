@@ -57,3 +57,4 @@ backend-ts/
 node-ts/
 node-go/
 openapi.json
+!backend-go/internal/contracts/openapi.json

@@ -59,7 +59,7 @@ instance.interceptors.response.use(
     (error) => {
         if (error.response?.status === 401) {
             consola.error('Received 401 Unauthorized from backend. Logging out.')
-            logoutEvents.emit('logout')
+            logoutEvents.emit()
         }
         return Promise.reject(error)
     }

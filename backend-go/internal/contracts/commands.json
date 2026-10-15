@@ -1,0 +1,2185 @@
+{
+  "version": "3.4.15",
+  "commands": [
+    {
+      "name": "LoginCommand",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "scope": "login",
+      "kind": "write",
+      "description": "Login as superadmin",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "OAuth2AuthorizeCommand",
+      "method": "POST",
+      "path": "/api/auth/oauth2/authorize",
+      "scope": "authorize",
+      "kind": "read",
+      "description": "Initiate OAuth2 authorization",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "OAuth2CallbackCommand",
+      "method": "POST",
+      "path": "/api/auth/oauth2/callback",
+      "scope": "callback",
+      "kind": "write",
+      "description": "Callback from OAuth2",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetPasskeyAuthenticationOptionsCommand",
+      "method": "GET",
+      "path": "/api/auth/passkey/authentication/options",
+      "scope": "get-authentication-options",
+      "kind": "read",
+      "description": "Get the authentication options for passkey",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "VerifyPasskeyAuthenticationCommand",
+      "method": "POST",
+      "path": "/api/auth/passkey/authentication/verify",
+      "scope": "verify-authentication",
+      "kind": "write",
+      "description": "Verify the authentication for passkey",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "RegisterCommand",
+      "method": "POST",
+      "path": "/api/auth/register",
+      "scope": "register",
+      "kind": "write",
+      "description": "Register as superadmin",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetStatusCommand",
+      "method": "GET",
+      "path": "/api/auth/status",
+      "scope": "get-status",
+      "kind": "read",
+      "description": "Get the status of the authentication",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetInternalSquadUserUsageCommand",
+      "method": "GET",
+      "path": "/api/bandwidth-stats/internal-squads/:squadUuid/users/:userId/usage",
+      "scope": "internal-squad-user-usage",
+      "kind": "read",
+      "description": "Get a single user daily traffic usage on the internal squad nodes for a period",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "GetInternalSquadUsageCommand",
+      "method": "GET",
+      "path": "/api/bandwidth-stats/internal-squads/:uuid/usage",
+      "scope": "internal-squad-usage",
+      "kind": "read",
+      "description": "Get internal squad users traffic usage for a period",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "GetStatsNodeUsersUsageCommand",
+      "method": "GET",
+      "path": "/api/bandwidth-stats/nodes/:uuid/users",
+      "scope": "node-users-usage",
+      "kind": "read",
+      "description": "Get Node Users Usage by Node UUID",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "GetNodeUsageCommand",
+      "method": "POST",
+      "path": "/api/bandwidth-stats/nodes/usage",
+      "scope": "node-usage",
+      "kind": "read",
+      "description": "Get users exceeding a traffic threshold on the given nodes for a period",
+      "hasBody": true,
+      "hasQuery": true
+    },
+    {
+      "name": "GetStatsNodesUsersUsageCommand",
+      "method": "POST",
+      "path": "/api/bandwidth-stats/nodes/users",
+      "scope": "nodes-users-usage",
+      "kind": "read",
+      "description": "Get Nodes Users Usage by Nodes UUIDs",
+      "hasBody": true,
+      "hasQuery": true
+    },
+    {
+      "name": "GetStatsNodesUsageCommand",
+      "method": "GET",
+      "path": "/api/bandwidth-stats/nodes",
+      "scope": "nodes-usage",
+      "kind": "read",
+      "description": "Get Nodes Usage by Range",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "GetStatsUserUsageCommand",
+      "method": "GET",
+      "path": "/api/bandwidth-stats/users/:userId",
+      "scope": "user-usage",
+      "kind": "read",
+      "description": "Get User Usage by Range",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "GetComputedConfigProfileByUuidCommand",
+      "method": "GET",
+      "path": "/api/config-profiles/:uuid/computed-config",
+      "scope": "get-computed",
+      "kind": "read",
+      "description": "Get computed config profile by uuid",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetInboundsByProfileUuidCommand",
+      "method": "GET",
+      "path": "/api/config-profiles/:uuid/inbounds",
+      "scope": "list-profile-inbounds",
+      "kind": "read",
+      "description": "Get inbounds by profile uuid",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteConfigProfileCommand",
+      "method": "DELETE",
+      "path": "/api/config-profiles/:uuid",
+      "scope": "delete",
+      "kind": "write",
+      "description": "Delete config profile",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetConfigProfileByUuidCommand",
+      "method": "GET",
+      "path": "/api/config-profiles/:uuid",
+      "scope": "get",
+      "kind": "read",
+      "description": "Get config profile by uuid",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "ReorderConfigProfileCommand",
+      "method": "POST",
+      "path": "/api/config-profiles/actions/reorder",
+      "scope": "reorder",
+      "kind": "write",
+      "description": "Reorder config profiles",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetAllInboundsCommand",
+      "method": "GET",
+      "path": "/api/config-profiles/inbounds",
+      "scope": "list-inbounds",
+      "kind": "read",
+      "description": "Get all inbounds from all config profiles",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetConfigProfilesTagsCommand",
+      "method": "GET",
+      "path": "/api/config-profiles/tags",
+      "scope": "list-tags",
+      "kind": "read",
+      "description": "Get tags of Config Profiles",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "SetConfigProfileTagsCommand",
+      "method": "PATCH",
+      "path": "/api/config-profiles/tags",
+      "scope": "set-tags",
+      "kind": "write",
+      "description": "Set tags of Config Profile",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetConfigProfilesCommand",
+      "method": "GET",
+      "path": "/api/config-profiles",
+      "scope": "list",
+      "kind": "read",
+      "description": "Get config profiles",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdateConfigProfileCommand",
+      "method": "PATCH",
+      "path": "/api/config-profiles",
+      "scope": "update",
+      "kind": "write",
+      "description": "Update Core Config in specific config profile",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "CreateConfigProfileCommand",
+      "method": "POST",
+      "path": "/api/config-profiles",
+      "scope": "create",
+      "kind": "write",
+      "description": "Create config profile",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "ConnectionsByNodeResultCommand",
+      "method": "GET",
+      "path": "/api/connections/by-node/:jobId",
+      "scope": "by-node-result",
+      "kind": "read",
+      "description": "Get Connections for Node by Job ID",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "ConnectionsByNodeCommand",
+      "method": "POST",
+      "path": "/api/connections/by-node/:nodeUuid",
+      "scope": "by-node",
+      "kind": "read",
+      "description": "Request Connections for Node",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "ConnectionsByUserResultCommand",
+      "method": "GET",
+      "path": "/api/connections/by-user/:jobId",
+      "scope": "by-user-result",
+      "kind": "read",
+      "description": "Get Connections for User by Job ID",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "ConnectionsByUserCommand",
+      "method": "POST",
+      "path": "/api/connections/by-user/:userId",
+      "scope": "by-user",
+      "kind": "read",
+      "description": "Request Connections for User",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "DropConnectionsCommand",
+      "method": "POST",
+      "path": "/api/connections/drop",
+      "scope": "drop",
+      "kind": "write",
+      "description": "Drop Connections for Users or IPs",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GeocheckByNodeResultCommand",
+      "method": "GET",
+      "path": "/api/connections/geocheck/:jobId",
+      "scope": "geocheck-result",
+      "kind": "read",
+      "description": "Get Geocheck for Node by Job ID",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GeocheckByNodeCommand",
+      "method": "POST",
+      "path": "/api/connections/geocheck/:nodeUuid",
+      "scope": "geocheck",
+      "kind": "read",
+      "description": "Request Geocheck for Node",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "AddUsersToExternalSquadCommand",
+      "method": "POST",
+      "path": "/api/external-squads/:uuid/bulk-actions/add-users",
+      "scope": "add-users",
+      "kind": "write",
+      "description": "Add all users to external squad",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteUsersFromExternalSquadCommand",
+      "method": "DELETE",
+      "path": "/api/external-squads/:uuid/bulk-actions/remove-users",
+      "scope": "remove-users",
+      "kind": "write",
+      "description": "Delete users from external squad",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteExternalSquadCommand",
+      "method": "DELETE",
+      "path": "/api/external-squads/:uuid",
+      "scope": "delete",
+      "kind": "write",
+      "description": "Delete external squad",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetExternalSquadByUuidCommand",
+      "method": "GET",
+      "path": "/api/external-squads/:uuid",
+      "scope": "get",
+      "kind": "read",
+      "description": "Get external squad by uuid",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "ReorderExternalSquadCommand",
+      "method": "POST",
+      "path": "/api/external-squads/actions/reorder",
+      "scope": "reorder",
+      "kind": "write",
+      "description": "Reorder external squads",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetExternalSquadsTagsCommand",
+      "method": "GET",
+      "path": "/api/external-squads/tags",
+      "scope": "list-tags",
+      "kind": "read",
+      "description": "Get tags of External Squads",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "SetExternalSquadTagsCommand",
+      "method": "PATCH",
+      "path": "/api/external-squads/tags",
+      "scope": "set-tags",
+      "kind": "write",
+      "description": "Set tags of External Squad",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetExternalSquadsCommand",
+      "method": "GET",
+      "path": "/api/external-squads",
+      "scope": "list",
+      "kind": "read",
+      "description": "Get all external squads",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdateExternalSquadCommand",
+      "method": "PATCH",
+      "path": "/api/external-squads",
+      "scope": "update",
+      "kind": "write",
+      "description": "Update external squad",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "CreateExternalSquadCommand",
+      "method": "POST",
+      "path": "/api/external-squads",
+      "scope": "create",
+      "kind": "write",
+      "description": "Create external squad",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteHostCommand",
+      "method": "DELETE",
+      "path": "/api/hosts/:uuid",
+      "scope": "delete",
+      "kind": "write",
+      "description": "Delete a host by UUID",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetHostCommand",
+      "method": "GET",
+      "path": "/api/hosts/:uuid",
+      "scope": "get",
+      "kind": "read",
+      "description": "Get a host by UUID",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "CloneHostCommand",
+      "method": "POST",
+      "path": "/api/hosts/actions/clone",
+      "scope": "clone",
+      "kind": "write",
+      "description": "Clone host",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "ReorderHostsCommand",
+      "method": "POST",
+      "path": "/api/hosts/actions/reorder",
+      "scope": "reorder",
+      "kind": "write",
+      "description": "Reorder hosts",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "BulkDeleteHostsCommand",
+      "method": "POST",
+      "path": "/api/hosts/bulk/delete",
+      "scope": "bulk-delete",
+      "kind": "write",
+      "description": "Delete hosts by UUIDs",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "BulkDisableHostsCommand",
+      "method": "POST",
+      "path": "/api/hosts/bulk/disable",
+      "scope": "bulk-disable",
+      "kind": "write",
+      "description": "Disable hosts by UUIDs",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "BulkEnableHostsCommand",
+      "method": "POST",
+      "path": "/api/hosts/bulk/enable",
+      "scope": "bulk-enable",
+      "kind": "write",
+      "description": "Enable hosts by UUIDs",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdateManyHostsCommand",
+      "method": "PATCH",
+      "path": "/api/hosts/bulk/update",
+      "scope": "bulk-update",
+      "kind": "write",
+      "description": "Update many hosts",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetHostsTagsCommand",
+      "method": "GET",
+      "path": "/api/hosts/tags",
+      "scope": "list-tags",
+      "kind": "read",
+      "description": "Get tags of hosts",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetHostsCommand",
+      "method": "GET",
+      "path": "/api/hosts",
+      "scope": "list",
+      "kind": "read",
+      "description": "Get hosts",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdateHostCommand",
+      "method": "PATCH",
+      "path": "/api/hosts",
+      "scope": "update",
+      "kind": "write",
+      "description": "Update a host",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "CreateHostCommand",
+      "method": "POST",
+      "path": "/api/hosts",
+      "scope": "create",
+      "kind": "write",
+      "description": "Create a new host",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetUserHwidDevicesCommand",
+      "method": "GET",
+      "path": "/api/hwid/devices/:userId",
+      "scope": "list-by-user",
+      "kind": "read",
+      "description": "Get user HWID devices",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteAllUserHwidDevicesCommand",
+      "method": "POST",
+      "path": "/api/hwid/devices/delete-all",
+      "scope": "delete-all",
+      "kind": "write",
+      "description": "Delete all user HWID devices",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteUserHwidDeviceCommand",
+      "method": "POST",
+      "path": "/api/hwid/devices/delete",
+      "scope": "delete",
+      "kind": "write",
+      "description": "Delete a user HWID device",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetHwidDevicesStatsCommand",
+      "method": "GET",
+      "path": "/api/hwid/devices/stats",
+      "scope": "stats",
+      "kind": "read",
+      "description": "Get HWID devices stats",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetTopUsersByHwidDevicesCommand",
+      "method": "GET",
+      "path": "/api/hwid/devices/top-users",
+      "scope": "top-users",
+      "kind": "read",
+      "description": "Get top users by HWID devices",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "GetHwidDevicesCommand",
+      "method": "GET",
+      "path": "/api/hwid/devices",
+      "scope": "list",
+      "kind": "read",
+      "description": "Get HWID devices",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "CreateUserHwidDeviceCommand",
+      "method": "POST",
+      "path": "/api/hwid/devices",
+      "scope": "create",
+      "kind": "write",
+      "description": "Create a user HWID device",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteInfraBillingRecordCommand",
+      "method": "DELETE",
+      "path": "/api/infra-billing/history/:uuid",
+      "scope": "delete-bill-record",
+      "kind": "write",
+      "description": "Delete infra billing history",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetInfraBillingRecordsCommand",
+      "method": "GET",
+      "path": "/api/infra-billing/history",
+      "scope": "list-bill-records",
+      "kind": "read",
+      "description": "Get infra billing history",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "CreateInfraBillingRecordCommand",
+      "method": "POST",
+      "path": "/api/infra-billing/history",
+      "scope": "create-bill-record",
+      "kind": "write",
+      "description": "Create infra billing history",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteInfraBillingNodeCommand",
+      "method": "DELETE",
+      "path": "/api/infra-billing/nodes/:uuid",
+      "scope": "delete-billing-node",
+      "kind": "write",
+      "description": "Delete infra billing node",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetInfraBillingNodesCommand",
+      "method": "GET",
+      "path": "/api/infra-billing/nodes",
+      "scope": "list-billing-nodes",
+      "kind": "read",
+      "description": "Get infra billing nodes",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdateInfraBillingNodeCommand",
+      "method": "PATCH",
+      "path": "/api/infra-billing/nodes",
+      "scope": "update-billing-node",
+      "kind": "write",
+      "description": "Update infra billing nodes",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "CreateInfraBillingNodeCommand",
+      "method": "POST",
+      "path": "/api/infra-billing/nodes",
+      "scope": "create-billing-node",
+      "kind": "write",
+      "description": "Create infra billing node",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteInfraProviderCommand",
+      "method": "DELETE",
+      "path": "/api/infra-billing/providers/:uuid",
+      "scope": "delete-provider",
+      "kind": "write",
+      "description": "Delete infra provider by uuid",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetInfraProviderCommand",
+      "method": "GET",
+      "path": "/api/infra-billing/providers/:uuid",
+      "scope": "get-provider",
+      "kind": "read",
+      "description": "Get infra provider by uuid",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetInfraProvidersCommand",
+      "method": "GET",
+      "path": "/api/infra-billing/providers",
+      "scope": "list-providers",
+      "kind": "read",
+      "description": "Get all infra providers",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdateInfraProviderCommand",
+      "method": "PATCH",
+      "path": "/api/infra-billing/providers",
+      "scope": "update-provider",
+      "kind": "write",
+      "description": "Update infra provider",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "CreateInfraProviderCommand",
+      "method": "POST",
+      "path": "/api/infra-billing/providers",
+      "scope": "create-provider",
+      "kind": "write",
+      "description": "Create infra provider",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetInternalSquadAccessibleNodesCommand",
+      "method": "GET",
+      "path": "/api/internal-squads/:uuid/accessible-nodes",
+      "scope": "accessible-nodes",
+      "kind": "read",
+      "description": "Get internal squad accessible nodes",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "AddManyUsersToInternalSquadCommand",
+      "method": "POST",
+      "path": "/api/internal-squads/:uuid/bulk-actions/add-many-users",
+      "scope": "add-many-users",
+      "kind": "write",
+      "description": "Add many users to internal squad",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "AddUsersToInternalSquadCommand",
+      "method": "POST",
+      "path": "/api/internal-squads/:uuid/bulk-actions/add-users",
+      "scope": "add-users",
+      "kind": "write",
+      "description": "Add all users to internal squad",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteManyUsersFromInternalSquadCommand",
+      "method": "DELETE",
+      "path": "/api/internal-squads/:uuid/bulk-actions/remove-many-users",
+      "scope": "remove-many-users",
+      "kind": "write",
+      "description": "Delete many users from internal squad",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteUsersFromInternalSquadCommand",
+      "method": "DELETE",
+      "path": "/api/internal-squads/:uuid/bulk-actions/remove-users",
+      "scope": "remove-users",
+      "kind": "write",
+      "description": "Delete users from internal squad",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteInternalSquadCommand",
+      "method": "DELETE",
+      "path": "/api/internal-squads/:uuid",
+      "scope": "delete",
+      "kind": "write",
+      "description": "Delete internal squad",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetInternalSquadCommand",
+      "method": "GET",
+      "path": "/api/internal-squads/:uuid",
+      "scope": "get",
+      "kind": "read",
+      "description": "Get internal squad by uuid",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "ReorderInternalSquadCommand",
+      "method": "POST",
+      "path": "/api/internal-squads/actions/reorder",
+      "scope": "reorder",
+      "kind": "write",
+      "description": "Reorder internal squads",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetInternalSquadsTagsCommand",
+      "method": "GET",
+      "path": "/api/internal-squads/tags",
+      "scope": "list-tags",
+      "kind": "read",
+      "description": "Get tags of Internal Squads",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "SetInternalSquadTagsCommand",
+      "method": "PATCH",
+      "path": "/api/internal-squads/tags",
+      "scope": "set-tags",
+      "kind": "write",
+      "description": "Set tags of Internal Squad",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetInternalSquadsCommand",
+      "method": "GET",
+      "path": "/api/internal-squads",
+      "scope": "list",
+      "kind": "read",
+      "description": "Get all internal squads",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdateInternalSquadCommand",
+      "method": "PATCH",
+      "path": "/api/internal-squads",
+      "scope": "update",
+      "kind": "write",
+      "description": "Update internal squad",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "CreateInternalSquadCommand",
+      "method": "POST",
+      "path": "/api/internal-squads",
+      "scope": "create",
+      "kind": "write",
+      "description": "Create internal squad",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetNodeSecretKeyCommand",
+      "method": "GET",
+      "path": "/api/keygen",
+      "scope": "get",
+      "kind": "read",
+      "description": "Get SECRET_KEY for Remnawave Node",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetNodeMetadataCommand",
+      "method": "GET",
+      "path": "/api/metadata/node/:uuid",
+      "scope": "get-node",
+      "kind": "read",
+      "description": "Get node metadata",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpsertNodeMetadataCommand",
+      "method": "PUT",
+      "path": "/api/metadata/node/:uuid",
+      "scope": "upsert-node",
+      "kind": "write",
+      "description": "Update or create Node Metadata",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetUserMetadataCommand",
+      "method": "GET",
+      "path": "/api/metadata/user/:userId",
+      "scope": "get-user",
+      "kind": "read",
+      "description": "Get user metadata",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpsertUserMetadataCommand",
+      "method": "PUT",
+      "path": "/api/metadata/user/:userId",
+      "scope": "upsert-user",
+      "kind": "write",
+      "description": "Update or create User Metadata",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteNodeIntegrationCommand",
+      "method": "DELETE",
+      "path": "/api/node-integrations/:uuid",
+      "scope": "delete",
+      "kind": "write",
+      "description": "Delete Node Integration",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetNodeIntegrationCommand",
+      "method": "GET",
+      "path": "/api/node-integrations/:uuid",
+      "scope": "get",
+      "kind": "read",
+      "description": "Get Node Integration by uuid",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetNodeIntegrationsCommand",
+      "method": "GET",
+      "path": "/api/node-integrations",
+      "scope": "list",
+      "kind": "read",
+      "description": "Get all Node Integrations",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdateNodeIntegrationCommand",
+      "method": "PATCH",
+      "path": "/api/node-integrations",
+      "scope": "update",
+      "kind": "write",
+      "description": "Update Node Integration",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "CreateNodeIntegrationCommand",
+      "method": "POST",
+      "path": "/api/node-integrations",
+      "scope": "create",
+      "kind": "write",
+      "description": "Create Node Integration",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteNodePluginCommand",
+      "method": "DELETE",
+      "path": "/api/node-plugins/:uuid",
+      "scope": "delete",
+      "kind": "write",
+      "description": "Delete Node Plugin",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetNodePluginCommand",
+      "method": "GET",
+      "path": "/api/node-plugins/:uuid",
+      "scope": "get",
+      "kind": "read",
+      "description": "Get Node Plugin by uuid",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "CloneNodePluginCommand",
+      "method": "POST",
+      "path": "/api/node-plugins/actions/clone",
+      "scope": "clone",
+      "kind": "write",
+      "description": "Clone Node Plugin",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "ReorderNodePluginCommand",
+      "method": "POST",
+      "path": "/api/node-plugins/actions/reorder",
+      "scope": "reorder",
+      "kind": "write",
+      "description": "Reorder Node Plugins",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "SyncNodePluginCommand",
+      "method": "POST",
+      "path": "/api/node-plugins/actions/sync",
+      "scope": "sync",
+      "kind": "write",
+      "description": "Sync Node Plugin to nodes",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "PluginExecutorCommand",
+      "method": "POST",
+      "path": "/api/node-plugins/executor",
+      "scope": "executor",
+      "kind": "write",
+      "description": "Execute command on node plugins",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "SyncSharedListCommand",
+      "method": "POST",
+      "path": "/api/node-plugins/shared-lists/actions/sync",
+      "scope": "shared-lists-sync",
+      "kind": "write",
+      "description": "Sync Shared List to nodes",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetSharedListCommand",
+      "method": "GET",
+      "path": "/api/node-plugins/shared-lists/by-name",
+      "scope": "shared-lists-get",
+      "kind": "read",
+      "description": "Get Shared List by name",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "DeleteSharedListCommand",
+      "method": "DELETE",
+      "path": "/api/node-plugins/shared-lists",
+      "scope": "shared-lists-delete",
+      "kind": "write",
+      "description": "Delete Shared List by name",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetSharedListsCommand",
+      "method": "GET",
+      "path": "/api/node-plugins/shared-lists",
+      "scope": "shared-lists-list",
+      "kind": "read",
+      "description": "Get Shared Lists (Preview)",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdateSharedListCommand",
+      "method": "PATCH",
+      "path": "/api/node-plugins/shared-lists",
+      "scope": "shared-lists-update",
+      "kind": "write",
+      "description": "Update Shared List",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "CreateSharedListCommand",
+      "method": "POST",
+      "path": "/api/node-plugins/shared-lists",
+      "scope": "shared-lists-create",
+      "kind": "write",
+      "description": "Create Shared List",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetNodePluginsTagsCommand",
+      "method": "GET",
+      "path": "/api/node-plugins/tags",
+      "scope": "list-tags",
+      "kind": "read",
+      "description": "Get tags of Node Plugins",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "SetNodePluginTagsCommand",
+      "method": "PATCH",
+      "path": "/api/node-plugins/tags",
+      "scope": "set-tags",
+      "kind": "write",
+      "description": "Set tags of Node Plugin",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetTorrentBlockerReportsStatsCommand",
+      "method": "GET",
+      "path": "/api/node-plugins/torrent-blocker/stats",
+      "scope": "torrent-blocker-stats",
+      "kind": "read",
+      "description": "Get Torrent Blocker Reports Stats",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "TruncateTorrentBlockerReportsCommand",
+      "method": "DELETE",
+      "path": "/api/node-plugins/torrent-blocker/truncate",
+      "scope": "truncate",
+      "kind": "write",
+      "description": "Truncate Torrent Blocker Reports",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetTorrentBlockerReportsCommand",
+      "method": "GET",
+      "path": "/api/node-plugins/torrent-blocker",
+      "scope": "torrent-blocker-reports",
+      "kind": "read",
+      "description": "Get Torrent Blocker Reports",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "GetNodePluginsCommand",
+      "method": "GET",
+      "path": "/api/node-plugins",
+      "scope": "list",
+      "kind": "read",
+      "description": "Get all Node Plugins",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdateNodePluginCommand",
+      "method": "PATCH",
+      "path": "/api/node-plugins",
+      "scope": "update",
+      "kind": "write",
+      "description": "Update Node Plugin",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "CreateNodePluginCommand",
+      "method": "POST",
+      "path": "/api/node-plugins",
+      "scope": "create",
+      "kind": "write",
+      "description": "Create Node Plugin",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "CreateSshTicketCommand",
+      "method": "POST",
+      "path": "/api/node-ssh/:uuid/ticket",
+      "scope": "node-ssh",
+      "kind": "write",
+      "description": "Create a single-use ticket for opening an SSH terminal session",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "EvaluateVaultCommand",
+      "method": "POST",
+      "path": "/api/node-ssh/vault/evaluate",
+      "scope": "node-ssh",
+      "kind": "write",
+      "description": "Oblivious evaluation step for unlocking the SSH key vault",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "DisableNodeCommand",
+      "method": "POST",
+      "path": "/api/nodes/:uuid/actions/disable",
+      "scope": "disable",
+      "kind": "write",
+      "description": "Disable a node",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "EnableNodeCommand",
+      "method": "POST",
+      "path": "/api/nodes/:uuid/actions/enable",
+      "scope": "enable",
+      "kind": "write",
+      "description": "Enable a node",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "ResetNodeTrafficCommand",
+      "method": "POST",
+      "path": "/api/nodes/:uuid/actions/reset-traffic",
+      "scope": "reset-traffic",
+      "kind": "write",
+      "description": "Reset Node Traffic",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "RestartNodeCommand",
+      "method": "POST",
+      "path": "/api/nodes/:uuid/actions/restart",
+      "scope": "restart",
+      "kind": "write",
+      "description": "Restart node",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteNodeCommand",
+      "method": "DELETE",
+      "path": "/api/nodes/:uuid",
+      "scope": "delete",
+      "kind": "write",
+      "description": "Delete a node",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetNodeCommand",
+      "method": "GET",
+      "path": "/api/nodes/:uuid",
+      "scope": "get",
+      "kind": "read",
+      "description": "Get node by UUID",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "ReorderNodesCommand",
+      "method": "POST",
+      "path": "/api/nodes/actions/reorder",
+      "scope": "reorder",
+      "kind": "write",
+      "description": "Reorder nodes",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "RestartAllNodesCommand",
+      "method": "POST",
+      "path": "/api/nodes/actions/restart-all",
+      "scope": "restart-all",
+      "kind": "write",
+      "description": "Restart all nodes",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "BulkNodesProfileModificationCommand",
+      "method": "POST",
+      "path": "/api/nodes/bulk-actions/profile-modification",
+      "scope": "bulk-profile-modification",
+      "kind": "write",
+      "description": "Modify Inbounds & Profile for many nodes",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "BulkNodesUpdateCommand",
+      "method": "POST",
+      "path": "/api/nodes/bulk-actions/update",
+      "scope": "bulk-update",
+      "kind": "write",
+      "description": "Update many nodes",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "BulkNodesActionsCommand",
+      "method": "POST",
+      "path": "/api/nodes/bulk-actions",
+      "scope": "bulk-actions",
+      "kind": "write",
+      "description": "Perform actions for many nodes",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetNodesTagsCommand",
+      "method": "GET",
+      "path": "/api/nodes/tags",
+      "scope": "list-tags",
+      "kind": "read",
+      "description": "Get nodes tags",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetNodesCommand",
+      "method": "GET",
+      "path": "/api/nodes",
+      "scope": "list",
+      "kind": "read",
+      "description": "Get nodes",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdateNodeCommand",
+      "method": "PATCH",
+      "path": "/api/nodes",
+      "scope": "update",
+      "kind": "write",
+      "description": "Update node",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "CreateNodeCommand",
+      "method": "POST",
+      "path": "/api/nodes",
+      "scope": "create",
+      "kind": "write",
+      "description": "Create a new node",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetPasskeyRegistrationOptionsCommand",
+      "method": "GET",
+      "path": "/api/passkeys/registration/options",
+      "scope": "registration-options",
+      "kind": "read",
+      "description": "Get registration options for passkey",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "VerifyPasskeyRegistrationCommand",
+      "method": "POST",
+      "path": "/api/passkeys/registration/verify",
+      "scope": "verify-registration",
+      "kind": "write",
+      "description": "Verify registration for passkey",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "DeletePasskeyCommand",
+      "method": "DELETE",
+      "path": "/api/passkeys",
+      "scope": "delete",
+      "kind": "write",
+      "description": "Delete a passkey by ID",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetPasskeysCommand",
+      "method": "GET",
+      "path": "/api/passkeys",
+      "scope": "list",
+      "kind": "read",
+      "description": "Get passkeys",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdatePasskeyCommand",
+      "method": "PATCH",
+      "path": "/api/passkeys",
+      "scope": "update",
+      "kind": "write",
+      "description": "Update passkey",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetRemnawaveSettingsCommand",
+      "method": "GET",
+      "path": "/api/remnawave-settings",
+      "scope": "get",
+      "kind": "read",
+      "description": "Get Remnawave settings",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdateRemnawaveSettingsCommand",
+      "method": "PATCH",
+      "path": "/api/remnawave-settings",
+      "scope": "update",
+      "kind": "write",
+      "description": "Update Remnawave settings",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "SyncSnippetCommand",
+      "method": "POST",
+      "path": "/api/snippets/actions/sync",
+      "scope": "sync",
+      "kind": "write",
+      "description": "Sync snippet to affected config profiles",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteSnippetCommand",
+      "method": "DELETE",
+      "path": "/api/snippets",
+      "scope": "delete",
+      "kind": "write",
+      "description": "Delete snippet",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetSnippetsCommand",
+      "method": "GET",
+      "path": "/api/snippets",
+      "scope": "list",
+      "kind": "read",
+      "description": "Get snippets",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdateSnippetCommand",
+      "method": "PATCH",
+      "path": "/api/snippets",
+      "scope": "update",
+      "kind": "write",
+      "description": "Update snippet",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "CreateSnippetCommand",
+      "method": "POST",
+      "path": "/api/snippets",
+      "scope": "create",
+      "kind": "write",
+      "description": "Create snippet",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetSubscriptionInfoByShortUuidCommand",
+      "method": "GET",
+      "path": "/api/sub/:shortUuid/info",
+      "scope": "get",
+      "kind": "read",
+      "description": "Get Subscription Info by Short UUID",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteSubpageConfigCommand",
+      "method": "DELETE",
+      "path": "/api/subscription-page-configs/:uuid",
+      "scope": "delete",
+      "kind": "write",
+      "description": "Delete subscription page config",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetSubpageConfigCommand",
+      "method": "GET",
+      "path": "/api/subscription-page-configs/:uuid",
+      "scope": "get",
+      "kind": "read",
+      "description": "Get subscription page config by uuid",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "CloneSubpageConfigCommand",
+      "method": "POST",
+      "path": "/api/subscription-page-configs/actions/clone",
+      "scope": "clone",
+      "kind": "write",
+      "description": "Clone subscription page config",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "ReorderSubpageConfigsCommand",
+      "method": "POST",
+      "path": "/api/subscription-page-configs/actions/reorder",
+      "scope": "reorder",
+      "kind": "write",
+      "description": "Reorder subscription page configs",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetSubpageConfigsTagsCommand",
+      "method": "GET",
+      "path": "/api/subscription-page-configs/tags",
+      "scope": "list-tags",
+      "kind": "read",
+      "description": "Get tags of Subpage Configs",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "SetSubpageConfigTagsCommand",
+      "method": "PATCH",
+      "path": "/api/subscription-page-configs/tags",
+      "scope": "set-tags",
+      "kind": "write",
+      "description": "Set tags of Subpage Config",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetSubpageConfigsCommand",
+      "method": "GET",
+      "path": "/api/subscription-page-configs",
+      "scope": "list",
+      "kind": "read",
+      "description": "Get all subscription page configs",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdateSubpageConfigCommand",
+      "method": "PATCH",
+      "path": "/api/subscription-page-configs",
+      "scope": "update",
+      "kind": "write",
+      "description": "Update subscription page config",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "CreateSubpageConfigCommand",
+      "method": "POST",
+      "path": "/api/subscription-page-configs",
+      "scope": "create",
+      "kind": "write",
+      "description": "Create subscription page config",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetSubscriptionRequestHistoryStatsCommand",
+      "method": "GET",
+      "path": "/api/subscription-request-history/stats",
+      "scope": "stats",
+      "kind": "read",
+      "description": "Get subscription request history stats",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetSubscriptionRequestHistoryCommand",
+      "method": "GET",
+      "path": "/api/subscription-request-history",
+      "scope": "list",
+      "kind": "read",
+      "description": "Get all subscription request history",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "GetSubscriptionSettingsCommand",
+      "method": "GET",
+      "path": "/api/subscription-settings",
+      "scope": "get",
+      "kind": "read",
+      "description": "Get subscription settings",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdateSubscriptionSettingsCommand",
+      "method": "PATCH",
+      "path": "/api/subscription-settings",
+      "scope": "update",
+      "kind": "write",
+      "description": "Update subscription settings",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteSubscriptionTemplateCommand",
+      "method": "DELETE",
+      "path": "/api/subscription-templates/:uuid",
+      "scope": "delete",
+      "kind": "write",
+      "description": "Delete subscription template",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetSubscriptionTemplateCommand",
+      "method": "GET",
+      "path": "/api/subscription-templates/:uuid",
+      "scope": "get",
+      "kind": "read",
+      "description": "Get subscription template by uuid",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "ReorderSubscriptionTemplateCommand",
+      "method": "POST",
+      "path": "/api/subscription-templates/actions/reorder",
+      "scope": "reorder",
+      "kind": "write",
+      "description": "Reorder subscription templates",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetSubscriptionTemplatesTagsCommand",
+      "method": "GET",
+      "path": "/api/subscription-templates/tags",
+      "scope": "list-tags",
+      "kind": "read",
+      "description": "Get tags of Subscription Templates",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "SetSubscriptionTemplateTagsCommand",
+      "method": "PATCH",
+      "path": "/api/subscription-templates/tags",
+      "scope": "set-tags",
+      "kind": "write",
+      "description": "Set tags of Subscription Template",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetSubscriptionTemplatesCommand",
+      "method": "GET",
+      "path": "/api/subscription-templates",
+      "scope": "list",
+      "kind": "read",
+      "description": "Get all subscription templates (wihout content)",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "UpdateSubscriptionTemplateCommand",
+      "method": "PATCH",
+      "path": "/api/subscription-templates",
+      "scope": "update",
+      "kind": "write",
+      "description": "Update subscription template",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "CreateSubscriptionTemplateCommand",
+      "method": "POST",
+      "path": "/api/subscription-templates",
+      "scope": "create",
+      "kind": "write",
+      "description": "Create subscription template",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetSubscriptionByIdCommand",
+      "method": "GET",
+      "path": "/api/subscriptions/by-id/:userId",
+      "scope": "by-id",
+      "kind": "read",
+      "description": "Get subscription by User ID",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetRawSubscriptionByShortUuidCommand",
+      "method": "GET",
+      "path": "/api/subscriptions/by-short-uuid/:shortUuid/raw",
+      "scope": "raw",
+      "kind": "read",
+      "description": "Get Raw Subscription by Short UUID",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "GetSubscriptionByShortUuidProtectedCommand",
+      "method": "GET",
+      "path": "/api/subscriptions/by-short-uuid/:shortUuid",
+      "scope": "by-short-uuid-protected",
+      "kind": "read",
+      "description": "Get subscription by short uuid (protected route)",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetSubscriptionByUsernameCommand",
+      "method": "GET",
+      "path": "/api/subscriptions/by-username/:username",
+      "scope": "by-username",
+      "kind": "read",
+      "description": "Get subscription by username",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetConnectionKeysByUserIdCommand",
+      "method": "GET",
+      "path": "/api/subscriptions/connection-keys/:userId",
+      "scope": "connection-keys",
+      "kind": "read",
+      "description": "Get connection keys (base64 format) by user id",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetSubpageConfigByShortUuidCommand",
+      "method": "GET",
+      "path": "/api/subscriptions/subpage-config/:shortUuid",
+      "scope": "subpage-config",
+      "kind": "read",
+      "description": "Get Subpage Config by Short UUID",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetSubscriptionsCommand",
+      "method": "GET",
+      "path": "/api/subscriptions",
+      "scope": "list",
+      "kind": "read",
+      "description": "Get all subscriptions",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "GetConfigurationCommand",
+      "method": "GET",
+      "path": "/api/system/configuration",
+      "scope": "configuration",
+      "kind": "read",
+      "description": "Get Remnawave Configuration",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetRemnawaveHealthCommand",
+      "method": "GET",
+      "path": "/api/system/health",
+      "scope": "remnawave-health",
+      "kind": "read",
+      "description": "Get Remnawave Health",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetMetadataCommand",
+      "method": "GET",
+      "path": "/api/system/metadata",
+      "scope": "metadata",
+      "kind": "read",
+      "description": "Get Remnawave Information",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetNodesMetricsCommand",
+      "method": "GET",
+      "path": "/api/system/nodes/metrics",
+      "scope": "nodes-metrics",
+      "kind": "read",
+      "description": "Get Nodes Metrics",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetBandwidthStatsCommand",
+      "method": "GET",
+      "path": "/api/system/stats/bandwidth",
+      "scope": "bandwidth-stats",
+      "kind": "read",
+      "description": "Get Bandwidth Stats",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "GetStatsDigestCommand",
+      "method": "GET",
+      "path": "/api/system/stats/digest",
+      "scope": "digest",
+      "kind": "read",
+      "description": "Get Stats Digest",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "GetHttpStatsCommand",
+      "method": "GET",
+      "path": "/api/system/stats/http",
+      "scope": "http",
+      "kind": "read",
+      "description": "Get HTTP Stats",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetNodesStatisticsCommand",
+      "method": "GET",
+      "path": "/api/system/stats/nodes",
+      "scope": "nodes-statistics",
+      "kind": "read",
+      "description": "Get Nodes Statistics",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "GetRecapCommand",
+      "method": "GET",
+      "path": "/api/system/stats/recap",
+      "scope": "recap",
+      "kind": "read",
+      "description": "Get Recap",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetStatsCommand",
+      "method": "GET",
+      "path": "/api/system/stats",
+      "scope": "stats",
+      "kind": "read",
+      "description": "Get Stats",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "TestSrrMatcherCommand",
+      "method": "POST",
+      "path": "/api/system/testers/srr-matcher",
+      "scope": "test-srr-matcher",
+      "kind": "write",
+      "description": "Test SRR Matcher",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GenerateX25519Command",
+      "method": "GET",
+      "path": "/api/system/tools/x25519/generate",
+      "scope": "generate-x25519",
+      "kind": "read",
+      "description": "Generate 30 X25519 keypairs",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteApiTokenCommand",
+      "method": "DELETE",
+      "path": "/api/tokens/:uuid",
+      "scope": "delete",
+      "kind": "write",
+      "description": "Delete API token",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetOttCommand",
+      "method": "POST",
+      "path": "/api/tokens/ott",
+      "scope": "ott",
+      "kind": "write",
+      "description": "Get short-lived token for accessing backend tools (Swagger, Scalar, Bull Board)",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetApiTokenScopesCommand",
+      "method": "GET",
+      "path": "/api/tokens/scopes",
+      "scope": "list-scopes",
+      "kind": "read",
+      "description": "Get available API token scopes",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetApiTokensCommand",
+      "method": "GET",
+      "path": "/api/tokens",
+      "scope": "list",
+      "kind": "read",
+      "description": "Get all API tokens",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "CreateApiTokenCommand",
+      "method": "POST",
+      "path": "/api/tokens",
+      "scope": "create",
+      "kind": "write",
+      "description": "Create a new API token",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetUserAccessibleNodesCommand",
+      "method": "GET",
+      "path": "/api/users/:userId/accessible-nodes",
+      "scope": "accessible-nodes",
+      "kind": "read",
+      "description": "Get user accessible nodes",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "DisableUserCommand",
+      "method": "POST",
+      "path": "/api/users/:userId/actions/disable",
+      "scope": "disable",
+      "kind": "write",
+      "description": "Disable user",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "EnableUserCommand",
+      "method": "POST",
+      "path": "/api/users/:userId/actions/enable",
+      "scope": "enable",
+      "kind": "write",
+      "description": "Enable user",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "ExtendUserCommand",
+      "method": "POST",
+      "path": "/api/users/:userId/actions/extend",
+      "scope": "extend",
+      "kind": "write",
+      "description": "Extend user expiration date",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "ResetUserTrafficCommand",
+      "method": "POST",
+      "path": "/api/users/:userId/actions/reset-traffic",
+      "scope": "reset-traffic",
+      "kind": "write",
+      "description": "Reset user traffic",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "RevokeUserSubscriptionCommand",
+      "method": "POST",
+      "path": "/api/users/:userId/actions/revoke",
+      "scope": "revoke-subscription",
+      "kind": "write",
+      "description": "Revoke user subscription",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetUserSubscriptionRequestHistoryCommand",
+      "method": "GET",
+      "path": "/api/users/:userId/subscription-request-history",
+      "scope": "subscription-request-history",
+      "kind": "read",
+      "description": "Get user subscription request history, recent 24 records",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "DeleteUserCommand",
+      "method": "DELETE",
+      "path": "/api/users/:userId",
+      "scope": "delete",
+      "kind": "write",
+      "description": "Delete user",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetUserByIdCommand",
+      "method": "GET",
+      "path": "/api/users/:userId",
+      "scope": "by-id",
+      "kind": "read",
+      "description": "Get user by ID",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "BulkAllExtendExpirationDateCommand",
+      "method": "POST",
+      "path": "/api/users/bulk/all/extend-expiration-date",
+      "scope": "bulk-all-extend-expiration-date",
+      "kind": "write",
+      "description": "Extend expiration date for all users by days",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "BulkAllResetTrafficUsersCommand",
+      "method": "POST",
+      "path": "/api/users/bulk/all/reset-traffic",
+      "scope": "bulk-all-reset-traffic",
+      "kind": "write",
+      "description": "Reset user used traffic for all users",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "BulkAllUpdateUsersCommand",
+      "method": "POST",
+      "path": "/api/users/bulk/all/update",
+      "scope": "bulk-all-update-users",
+      "kind": "write",
+      "description": "Bulk update all users",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "BulkDeleteUsersByStatusCommand",
+      "method": "POST",
+      "path": "/api/users/bulk/delete-by-status",
+      "scope": "bulk-delete-by-status",
+      "kind": "write",
+      "description": "Bulk delete users by status",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "BulkDeleteUsersCommand",
+      "method": "POST",
+      "path": "/api/users/bulk/delete",
+      "scope": "bulk-delete",
+      "kind": "write",
+      "description": "Bulk delete users by User IDs",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "BulkExtendExpirationDateCommand",
+      "method": "POST",
+      "path": "/api/users/bulk/extend-expiration-date",
+      "scope": "bulk-extend-expiration-date",
+      "kind": "write",
+      "description": "Extend expiration date for specified users by days",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "BulkResetTrafficUsersCommand",
+      "method": "POST",
+      "path": "/api/users/bulk/reset-traffic",
+      "scope": "bulk-reset-traffic",
+      "kind": "write",
+      "description": "Bulk reset traffic users by User IDs",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "BulkRevokeUsersSubscriptionCommand",
+      "method": "POST",
+      "path": "/api/users/bulk/revoke-subscription",
+      "scope": "bulk-revoke-subscription",
+      "kind": "write",
+      "description": "Revoke users subscription by User IDs",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "BulkUpdateUsersSquadsCommand",
+      "method": "POST",
+      "path": "/api/users/bulk/update-squads",
+      "scope": "bulk-update-squads",
+      "kind": "write",
+      "description": "Bulk update users internal squads by User IDs",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "BulkUpdateUsersCommand",
+      "method": "POST",
+      "path": "/api/users/bulk/update",
+      "scope": "bulk-update-users",
+      "kind": "write",
+      "description": "Bulk update users by User IDs",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetUserByShortUuidCommand",
+      "method": "GET",
+      "path": "/api/users/by-short-uuid/:shortUuid",
+      "scope": "by-short-uuid",
+      "kind": "read",
+      "description": "Get user by Short UUID",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetUserByUsernameCommand",
+      "method": "GET",
+      "path": "/api/users/by-username/:username",
+      "scope": "by-username",
+      "kind": "read",
+      "description": "Get user by username",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "ResolveUserCommand",
+      "method": "POST",
+      "path": "/api/users/resolve",
+      "scope": "resolve",
+      "kind": "read",
+      "description": "Resolve a user",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "GetUsersStreamCommand",
+      "method": "GET",
+      "path": "/api/users/stream",
+      "scope": "stream",
+      "kind": "read",
+      "description": "Get all users using cursor-based (keyset) pagination with filtering options",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "GetUsersTagsCommand",
+      "method": "GET",
+      "path": "/api/users/tags",
+      "scope": "list-tags",
+      "kind": "read",
+      "description": "Get users tags",
+      "hasBody": false,
+      "hasQuery": false
+    },
+    {
+      "name": "GetUsersCommand",
+      "method": "GET",
+      "path": "/api/users",
+      "scope": "list",
+      "kind": "read",
+      "description": "Get all users using offset-based pagination",
+      "hasBody": false,
+      "hasQuery": true
+    },
+    {
+      "name": "UpdateUserCommand",
+      "method": "PATCH",
+      "path": "/api/users",
+      "scope": "update",
+      "kind": "write",
+      "description": "Update a user",
+      "hasBody": true,
+      "hasQuery": false
+    },
+    {
+      "name": "CreateUserCommand",
+      "method": "POST",
+      "path": "/api/users",
+      "scope": "create",
+      "kind": "write",
+      "description": "Create a new user",
+      "hasBody": true,
+      "hasQuery": false
+    }
+  ]
+}

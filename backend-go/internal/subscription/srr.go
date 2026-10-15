@@ -45,6 +45,16 @@ type SRRResponseModifications struct {
 	IgnoreHostXrayJSONTemplate        bool           `json:"ignoreHostXrayJsonTemplate"`
 	IgnoreServeJSONAtBaseSubscription bool           `json:"ignoreServeJsonAtBaseSubscription"`
 	DisableHwidCheck                  bool           `json:"disableHwidCheck"`
+	AdditionalExtendedClientsRegex    []string       `json:"additionalExtendedClientsRegex,omitempty"`
+	Encryption                        *SRREncryption `json:"encryption,omitempty"`
+	ExcludeHostsByTags                []string       `json:"excludeHostsByTags,omitempty"`
+	RespondWithRemarks                []string       `json:"respondWithRemarks,omitempty"`
+}
+
+// SRREncryption is ResponseRuleEncryptionSchema.
+type SRREncryption struct {
+	Method string `json:"method"`
+	Key    string `json:"key"`
 }
 
 type SRRMatcherResult struct {
@@ -53,35 +63,36 @@ type SRRMatcherResult struct {
 	ResponseType string
 }
 
+// MatchSRRRules ports ResponseRulesMatcherService.matchRules. A client type
+// from the path bypasses the rules entirely.
 func MatchSRRRules(rawRulesJSON string, headers map[string]string, overrideClientType string) SRRMatcherResult {
-	if overrideClientType != "" {
-		return handleOverrideClientType(overrideClientType)
-	}
-
 	if rawRulesJSON == "" || rawRulesJSON == "{}" || rawRulesJSON == "null" {
 		return SRRMatcherResult{Matched: false}
 	}
-
 	var config SRRConfig
 	if err := json.Unmarshal([]byte(rawRulesJSON), &config); err != nil {
 		return SRRMatcherResult{Matched: false}
 	}
+	return config.Match(headers, overrideClientType)
+}
 
+// Match evaluates the rules against lower-cased request headers.
+func (config *SRRConfig) Match(headers map[string]string, overrideClientType string) SRRMatcherResult {
+	if overrideClientType != "" {
+		if config.Settings != nil && config.Settings.DisableSubscriptionAccessByPath {
+			return SRRMatcherResult{Matched: true, ResponseType: "BLOCK"}
+		}
+		return handleOverrideClientType(overrideClientType)
+	}
 	for i := range config.Rules {
 		rule := &config.Rules[i]
 		if !rule.Enabled {
 			continue
 		}
-
 		if matchRule(rule, headers) {
-			return SRRMatcherResult{
-				Matched:      true,
-				MatchedRule:  rule,
-				ResponseType: rule.ResponseType,
-			}
+			return SRRMatcherResult{Matched: true, MatchedRule: rule, ResponseType: rule.ResponseType}
 		}
 	}
-
 	return SRRMatcherResult{Matched: false}
 }
 
@@ -110,39 +121,36 @@ func matchRule(rule *SRRRule, headers map[string]string) bool {
 }
 
 func matchCondition(cond *SRRCondition, headers map[string]string) bool {
-	targetHeaderKey := strings.ToLower(cond.HeaderName)
-	headerVal, ok := headers[targetHeaderKey]
+	headerVal, ok := headers[strings.ToLower(cond.HeaderName)]
 	if !ok {
 		return false
 	}
-
 	compareVal := cond.Value
-	checkVal := headerVal
-
 	if !cond.CaseSensitive {
 		compareVal = strings.ToLower(compareVal)
-		checkVal = strings.ToLower(checkVal)
+		headerVal = strings.ToLower(headerVal)
 	}
-
-	switch strings.ToUpper(cond.Operator) {
+	switch cond.Operator {
 	case "EQUALS":
-		return checkVal == compareVal
+		return headerVal == compareVal
 	case "NOT_EQUALS":
-		return checkVal != compareVal
+		return headerVal != compareVal
 	case "CONTAINS":
-		return strings.Contains(checkVal, compareVal)
+		return strings.Contains(headerVal, compareVal)
 	case "NOT_CONTAINS":
-		return !strings.Contains(checkVal, compareVal)
+		return !strings.Contains(headerVal, compareVal)
 	case "STARTS_WITH":
-		return strings.HasPrefix(checkVal, compareVal)
+		return strings.HasPrefix(headerVal, compareVal)
 	case "NOT_STARTS_WITH":
-		return !strings.HasPrefix(checkVal, compareVal)
+		return !strings.HasPrefix(headerVal, compareVal)
 	case "ENDS_WITH":
-		return strings.HasSuffix(checkVal, compareVal)
+		return strings.HasSuffix(headerVal, compareVal)
 	case "NOT_ENDS_WITH":
-		return !strings.HasSuffix(checkVal, compareVal)
-	case "REGEX":
-		pattern := cond.Value
+		return !strings.HasSuffix(headerVal, compareVal)
+	case "REGEX", "NOT_REGEX":
+		// Upstream builds new RegExp(value, caseSensitive ? '' : 'i') from the
+		// already lower-cased value.
+		pattern := compareVal
 		if !cond.CaseSensitive {
 			pattern = "(?i)" + pattern
 		}
@@ -150,34 +158,24 @@ func matchCondition(cond *SRRCondition, headers map[string]string) bool {
 		if err != nil {
 			return false
 		}
-		return re.MatchString(headerVal)
-	case "NOT_REGEX":
-		pattern := cond.Value
-		if !cond.CaseSensitive {
-			pattern = "(?i)" + pattern
-		}
-		re, err := regexp.Compile(pattern)
-		if err != nil {
-			return false
-		}
-		return !re.MatchString(headerVal)
+		return re.MatchString(headerVal) == (cond.Operator == "REGEX")
 	default:
 		return false
 	}
 }
 
+// handleOverrideClientType maps REQUEST_TEMPLATE_TYPE path values.
 func handleOverrideClientType(clientType string) SRRMatcherResult {
-	ct := strings.ToUpper(clientType)
-	switch ct {
-	case "STASH":
+	switch clientType {
+	case "stash":
 		return SRRMatcherResult{Matched: true, ResponseType: "STASH"}
-	case "SINGBOX", "SING-BOX":
+	case "singbox":
 		return SRRMatcherResult{Matched: true, ResponseType: "SINGBOX"}
-	case "MIHOMO":
+	case "mihomo":
 		return SRRMatcherResult{Matched: true, ResponseType: "MIHOMO"}
-	case "XRAY_JSON", "V2RAY_JSON", "JSON":
+	case "json", "v2ray-json":
 		return SRRMatcherResult{Matched: true, ResponseType: "XRAY_JSON"}
-	case "CLASH":
+	case "clash":
 		return SRRMatcherResult{Matched: true, ResponseType: "CLASH"}
 	default:
 		return SRRMatcherResult{Matched: true, ResponseType: "BLOCK"}

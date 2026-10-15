@@ -71,7 +71,6 @@ export function BuildInfoModal({ remnawaveMetadata, isNewVersionAvailable }: Bui
                             ml="auto"
                             radius="md"
                             size="xs"
-                            target="_blank"
                             variant="light"
                             loading={isUpdating}
                             onClick={handleUpdate}

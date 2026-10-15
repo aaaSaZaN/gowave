@@ -1,6 +1,7 @@
 package system
 
 import (
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"sort"
 	"strings"
@@ -21,6 +22,9 @@ func (rc *RouteCounter) Inc(method, route string) {
 	rc.mu.Lock()
 	defer rc.mu.Unlock()
 	key := method + " " + route
+	if _, exists := rc.counts[key]; !exists && len(rc.counts) >= 2048 {
+		key = "OTHER unmatched"
+	}
 	rc.counts[key]++
 	rc.total++
 }
@@ -47,14 +51,20 @@ func (rc *RouteCounter) GetStats() (int, []map[string]interface{}) {
 
 func RouteCounterMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
-		if !strings.HasPrefix(path, "/assets") &&
-			!strings.HasPrefix(path, "/favicons") &&
-			!strings.HasPrefix(path, "/locales") &&
-			!strings.HasPrefix(path, "/lotties") &&
-			!strings.HasPrefix(path, "/splash_screens") {
+		next.ServeHTTP(w, r)
+		path := ""
+		if ctx := chi.RouteContext(r.Context()); ctx != nil {
+			path = ctx.RoutePattern()
+		}
+		if path == "" {
+			path = "unmatched"
+		}
+		if !strings.HasPrefix(r.URL.Path, "/assets") &&
+			!strings.HasPrefix(r.URL.Path, "/favicons") &&
+			!strings.HasPrefix(r.URL.Path, "/locales") &&
+			!strings.HasPrefix(r.URL.Path, "/lotties") &&
+			!strings.HasPrefix(r.URL.Path, "/splash_screens") {
 			GlobalRouteCounter.Inc(r.Method, path)
 		}
-		next.ServeHTTP(w, r)
 	})
 }

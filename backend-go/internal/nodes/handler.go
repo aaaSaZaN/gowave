@@ -10,8 +10,10 @@ import (
 
 	"remnawave-go/internal/configprofiles"
 	"remnawave-go/internal/database"
+	"remnawave-go/internal/httpx"
 
 	"github.com/go-chi/chi/v5"
+	"gorm.io/gorm"
 )
 
 type Handler struct {
@@ -44,11 +46,16 @@ type UpdateNodeDTO struct {
 	ActivePluginUUID *string   `json:"activePluginUuid"`
 	IntegrationUUIDs *[]string `json:"integrationUuids"`
 	Note             *string   `json:"note"`
-	IPs              *[]string `json:"ips"`
+	IPs              *[]NodeIP `json:"ips"`
 }
 
 func formatNodeResponse(service *Service, n *database.Node) map[string]interface{} {
-	db := service.DB()
+	return formatNodeWith(service.DB(), service, n)
+}
+
+// formatNodeWith formats a node reading related rows through db, which may be
+// an open transaction.
+func formatNodeWith(db *gorm.DB, service *Service, n *database.Node) map[string]interface{} {
 	tags := []string(n.Tags)
 	if tags == nil {
 		tags = []string{}
@@ -59,13 +66,7 @@ func formatNodeResponse(service *Service, n *database.Node) map[string]interface
 		integrationUuids = []string{}
 	}
 
-	ips := []string{}
-	if n.IPs != "" {
-		_ = json.Unmarshal([]byte(n.IPs), &ips)
-	}
-	if ips == nil {
-		ips = []string{}
-	}
+	ips := decodeNodeIPs(n.IPs)
 
 	var lastStatusChange *string
 	if n.LastStatusChange != nil {
@@ -417,8 +418,12 @@ func (h *Handler) handleUpdateNode(w http.ResponseWriter, r *http.Request, targe
 		updates["integration_uuids"] = database.StringArray(*dto.IntegrationUUIDs)
 	}
 	if dto.IPs != nil {
-		b, _ := json.Marshal(*dto.IPs)
-		updates["ips"] = string(b)
+		encoded, err := encodeNodeIPs(*dto.IPs)
+		if err != nil {
+			httpx.Error(w, r, http.StatusBadRequest, "E000", err.Error())
+			return
+		}
+		updates["ips"] = encoded
 	}
 
 	var profileUUID *string
@@ -468,7 +473,7 @@ func (h *Handler) DeleteNode(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) EnableNode(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	uuidParam := chi.URLParam(r, "uuid")
-	node, err := h.service.Update(uuidParam, map[string]interface{}{"is_disabled": false})
+	node, err := h.service.SetDisabled(uuidParam, false)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]interface{}{"message": "Node not found"})
@@ -482,7 +487,7 @@ func (h *Handler) EnableNode(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) DisableNode(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	uuidParam := chi.URLParam(r, "uuid")
-	node, err := h.service.Update(uuidParam, map[string]interface{}{"is_disabled": true})
+	node, err := h.service.SetDisabled(uuidParam, true)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]interface{}{"message": "Node not found"})
@@ -622,8 +627,9 @@ func (h *Handler) BulkActions(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, `{"message":"Invalid request body"}`, http.StatusBadRequest)
 			return
 		}
-		for _, nodeUuid := range body.UUIDs {
-			_, _ = h.service.Update(nodeUuid, body.Fields)
+		if err := h.service.BulkUpdate(body.UUIDs, body.Fields); err != nil {
+			http.Error(w, err.Error(), 400)
+			return
 		}
 		w.WriteHeader(http.StatusNoContent)
 		return
@@ -639,14 +645,14 @@ func (h *Handler) BulkActions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, nodeUuid := range body.UUIDs {
-		switch body.Action {
-		case "disable":
-			_, _ = h.service.Update(nodeUuid, map[string]interface{}{"is_disabled": true})
-		case "enable":
-			_, _ = h.service.Update(nodeUuid, map[string]interface{}{"is_disabled": false})
-		case "resetTraffic":
+		switch strings.ToUpper(body.Action) {
+		case "DISABLE":
+			_, _ = h.service.SetDisabled(nodeUuid, true)
+		case "ENABLE":
+			_, _ = h.service.SetDisabled(nodeUuid, false)
+		case "RESET_TRAFFIC":
 			_, _ = h.service.Update(nodeUuid, map[string]interface{}{"traffic_used_bytes": 0})
-		case "restart":
+		case "RESTART":
 			if node, err := h.service.GetByUUID(nodeUuid); err == nil {
 				go h.service.StartNode(node, true)
 			}

@@ -1,0 +1,134 @@
+{
+ "dayjs": [
+  {
+   "format": "DD.MM.YYYY",
+   "out": "04.03.2026"
+  },
+  {
+   "format": "YYYY-MM-DD HH:mm:ss",
+   "out": "2026-03-04 15:06:07"
+  },
+  {
+   "format": "D/M/YY h:mm A a",
+   "out": "4/3/26 3:06 PM pm"
+  },
+  {
+   "format": "MMM MMMM ddd dddd dd d",
+   "out": "Mar March Wed Wednesday We 3"
+  },
+  {
+   "format": "SSS Z ZZ",
+   "out": "089 +00:00 +0000"
+  },
+  {
+   "format": "[Day] DD [at] HH",
+   "out": "Day 04 at 15"
+  },
+  {
+   "format": "X x Y YYY",
+   "out": "X x Y 26Y"
+  },
+  {
+   "format": "Привет MM",
+   "out": "Привет 03"
+  },
+  {
+   "format": "",
+   "out": "2026-03-04T15:06:07+00:00"
+  }
+ ],
+ "uri": [
+  {
+   "in": "plain",
+   "out": "plain"
+  },
+  {
+   "in": "a b&c=d/é",
+   "out": "a%20b%26c%3Dd%2F%C3%A9"
+  },
+  {
+   "in": "-_.!~*'()",
+   "out": "-_.!~*'()"
+  },
+  {
+   "in": "😀 #?",
+   "out": "%F0%9F%98%80%20%23%3F"
+  },
+  {
+   "in": "Россия 🇷🇺",
+   "out": "%D0%A0%D0%BE%D1%81%D1%81%D0%B8%D1%8F%20%F0%9F%87%B7%F0%9F%87%BA"
+  }
+ ],
+ "base64": [
+  {
+   "in": "YWJj",
+   "out": "616263"
+  },
+  {
+   "in": "YWJj===",
+   "out": "616263"
+  },
+  {
+   "in": "YW Jj",
+   "out": "616263"
+  },
+  {
+   "in": "YWJjZA",
+   "out": "61626364"
+  },
+  {
+   "in": "-_8",
+   "out": "fbff"
+  },
+  {
+   "in": "YWJj$ZGVm",
+   "out": "616263646566"
+  },
+  {
+   "in": "Zm9v.YmFy",
+   "out": "666f6f626172"
+  }
+ ],
+ "bytes": [
+  {
+   "in": 1,
+   "out": "1.00 B",
+   "sticky": "0.00 GiB"
+  },
+  {
+   "in": 1023,
+   "out": "1023.00 B",
+   "sticky": "0.00 GiB"
+  },
+  {
+   "in": 1024,
+   "out": "1.00 KiB",
+   "sticky": "0.00 GiB"
+  },
+  {
+   "in": 1536,
+   "out": "1.50 KiB",
+   "sticky": "0.00 GiB"
+  },
+  {
+   "in": 1073741824,
+   "out": "1.00 GiB",
+   "sticky": "1.00 GiB"
+  },
+  {
+   "in": 5000000000000,
+   "out": "4.55 TiB",
+   "sticky": "4656.61 GiB"
+  },
+  {
+   "in": 123456789,
+   "out": "117.74 MiB",
+   "sticky": "0.11 GiB"
+  },
+  {
+   "in": -2048,
+   "out": "-2.00 KiB",
+   "sticky": "-0.00 GiB"
+  }
+ ]
+}

@@ -2,6 +2,7 @@ package users
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,8 +11,10 @@ import (
 	"time"
 
 	"remnawave-go/internal/database"
+	"remnawave-go/internal/httpx"
 
 	"github.com/go-chi/chi/v5"
+	"gorm.io/gorm"
 )
 
 type Handler struct {
@@ -299,92 +302,102 @@ func (h *Handler) ResetTraffic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, _ := h.service.GetByID(id)
+	user, err := h.service.GetByID(id)
+	if err != nil {
+		http.Error(w, `{"message":"User not found"}`, http.StatusNotFound)
+		return
+	}
 	json.NewEncoder(w).Encode(SingleUserResponse{Response: FormatUser(user, h.subPublicDomain)})
 }
 
 func (h *Handler) EnableUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	idStr := chi.URLParam(r, "id")
-	if idStr == "" {
-		idStr = chi.URLParam(r, "userId")
-	}
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		http.Error(w, `{"message":"Invalid user ID"}`, http.StatusBadRequest)
-		return
-	}
-
-	if err := h.service.SetStatus(id, "ACTIVE"); err != nil {
-		http.Error(w, `{"message":"Failed to enable user"}`, http.StatusInternalServerError)
-		return
-	}
-
-	user, _ := h.service.GetByID(id)
-	json.NewEncoder(w).Encode(SingleUserResponse{Response: FormatUser(user, h.subPublicDomain)})
+	h.setEnabled(w, r, true)
 }
 
 func (h *Handler) DisableUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+	h.setEnabled(w, r, false)
+}
 
-	idStr := chi.URLParam(r, "id")
-	if idStr == "" {
-		idStr = chi.URLParam(r, "userId")
-	}
-	id, err := strconv.ParseUint(idStr, 10, 64)
+func (h *Handler) setEnabled(w http.ResponseWriter, r *http.Request, enable bool) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "userId"), 10, 64)
 	if err != nil {
-		http.Error(w, `{"message":"Invalid user ID"}`, http.StatusBadRequest)
+		httpx.Error(w, r, http.StatusBadRequest, "E000", "Invalid user ID")
 		return
 	}
-
-	if err := h.service.SetStatus(id, "DISABLED"); err != nil {
-		http.Error(w, `{"message":"Failed to disable user"}`, http.StatusInternalServerError)
+	if enable {
+		err = h.service.Enable(id)
+	} else {
+		err = h.service.Disable(id)
+	}
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		httpx.Error(w, r, http.StatusNotFound, "A025", "User not found")
+		return
+	case errors.Is(err, ErrAlreadyEnabled):
+		httpx.Error(w, r, http.StatusBadRequest, "A030", "User already enabled")
+		return
+	case errors.Is(err, ErrAlreadyDisabled):
+		httpx.Error(w, r, http.StatusBadRequest, "A029", "User already disabled")
+		return
+	case err != nil && enable:
+		httpx.Error(w, r, http.StatusInternalServerError, "A031", "Enable user error")
+		return
+	case err != nil:
+		httpx.Error(w, r, http.StatusInternalServerError, "A028", "Disable user error")
 		return
 	}
-
-	user, _ := h.service.GetByID(id)
-	json.NewEncoder(w).Encode(SingleUserResponse{Response: FormatUser(user, h.subPublicDomain)})
+	user, err := h.service.GetByID(id)
+	if err != nil {
+		httpx.Error(w, r, http.StatusNotFound, "A025", "User not found")
+		return
+	}
+	httpx.Response(w, FormatUser(user, h.subPublicDomain))
 }
 
 func (h *Handler) ExtendUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	idStr := chi.URLParam(r, "id")
-	if idStr == "" {
-		idStr = chi.URLParam(r, "userId")
-	}
-	id, _ := strconv.ParseUint(idStr, 10, 64)
-	user, err := h.service.GetByID(id)
+	id, err := strconv.ParseUint(chi.URLParam(r, "userId"), 10, 64)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(map[string]interface{}{"message": "User not found"})
+		http.Error(w, `{"message":"Invalid user ID"}`, 400)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": FormatUser(user, h.subPublicDomain),
-	})
+	var body struct {
+		Days int `json:"days"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, `{"message":"Invalid body"}`, 400)
+		return
+	}
+	user, err := h.service.Extend(id, body.Days)
+	if err != nil {
+		http.Error(w, `{"message":"Cannot extend user"}`, 400)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(SingleUserResponse{Response: FormatUser(user, h.subPublicDomain)})
 }
-
 func (h *Handler) RevokeUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	idStr := chi.URLParam(r, "id")
-	if idStr == "" {
-		idStr = chi.URLParam(r, "userId")
-	}
-	id, _ := strconv.ParseUint(idStr, 10, 64)
-	now := time.Now().UTC()
-	user, err := h.service.Update(id, map[string]interface{}{
-		"subRevokedAt": now,
-		"status":       "DISABLED",
-	})
+	id, err := strconv.ParseUint(chi.URLParam(r, "userId"), 10, 64)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(map[string]interface{}{"message": "User not found"})
+		http.Error(w, `{"message":"Invalid user ID"}`, 400)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": FormatUser(user, h.subPublicDomain),
-	})
+	var body struct {
+		RevokeOnlyPasswords bool   `json:"revokeOnlyPasswords"`
+		ShortUUID           string `json:"shortUuid"`
+	}
+	if r.ContentLength != 0 {
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			http.Error(w, `{"message":"Invalid body"}`, 400)
+			return
+		}
+	}
+	user, err := h.service.Revoke(id, body.RevokeOnlyPasswords, body.ShortUUID)
+	if err != nil {
+		http.Error(w, `{"message":"Cannot revoke subscription"}`, 400)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(SingleUserResponse{Response: FormatUser(user, h.subPublicDomain)})
 }
 
 func (h *Handler) GetUserByShortUuid(w http.ResponseWriter, r *http.Request) {
@@ -415,31 +428,23 @@ func (h *Handler) GetUserByUsername(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// ResolveUser finds a user by any one unique field and returns its identifiers.
 func (h *Handler) ResolveUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 	var body struct {
-		ShortUUID string `json:"shortUuid"`
-		Username  string `json:"username"`
+		ID        *uint64 `json:"id"`
+		ShortUUID string  `json:"shortUuid"`
+		Username  string  `json:"username"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&body)
-
-	var user *database.User
-	var err error
-	if body.ShortUUID != "" {
-		user, err = h.service.GetByShortUUID(body.ShortUUID)
-	} else if body.Username != "" {
-		user, err = h.service.GetByUsername(body.Username)
-	}
-	if err != nil || user == nil {
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(map[string]interface{}{"message": "User not found"})
+	if err := httpx.Decode(r, 4096, &body); err != nil || (body.ID == nil && body.ShortUUID == "" && body.Username == "") {
+		httpx.Error(w, r, http.StatusBadRequest, "E000", "one of id, shortUuid or username is required")
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"id": user.ID,
-		},
-	})
+	user, err := h.service.Resolve(body.ID, body.ShortUUID, body.Username)
+	if err != nil {
+		httpx.Error(w, r, http.StatusNotFound, "A025", "User not found")
+		return
+	}
+	httpx.Response(w, map[string]interface{}{"id": user.ID, "shortUuid": user.ShortUUID, "username": user.Username})
 }
 
 func (h *Handler) GetUsersStream(w http.ResponseWriter, r *http.Request) {
@@ -490,11 +495,57 @@ func (h *Handler) GetUsersStream(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// GetUserAccessibleNodes lists nodes reachable through the user's internal
+// squads, grouped by squad with the inbound tags each squad grants.
 func (h *Handler) GetUserAccessibleNodes(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": []interface{}{},
-	})
+	userID, err := strconv.ParseUint(chi.URLParam(r, "userId"), 10, 64)
+	if err != nil {
+		httpx.Error(w, r, http.StatusBadRequest, "E000", "userId must be a number")
+		return
+	}
+	rows, err := h.service.AccessibleNodes(userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			httpx.Error(w, r, http.StatusNotFound, "A025", "User not found")
+		} else {
+			httpx.Error(w, r, http.StatusInternalServerError, "A125", "Get user accessible nodes error")
+		}
+		return
+	}
+	type squad struct {
+		SquadName      string   `json:"squadName"`
+		ActiveInbounds []string `json:"activeInbounds"`
+	}
+	type node struct {
+		UUID              string   `json:"uuid"`
+		NodeName          string   `json:"nodeName"`
+		CountryCode       string   `json:"countryCode"`
+		ConfigProfileUUID string   `json:"configProfileUuid"`
+		ConfigProfileName string   `json:"configProfileName"`
+		ActiveSquads      []*squad `json:"activeSquads"`
+		squads            map[string]*squad
+	}
+	var ordered []*node
+	byUUID := map[string]*node{}
+	for _, row := range rows {
+		entry := byUUID[row.NodeUUID]
+		if entry == nil {
+			entry = &node{UUID: row.NodeUUID, NodeName: row.NodeName, CountryCode: row.CountryCode, ConfigProfileUUID: row.ConfigProfileUUID, ConfigProfileName: row.ConfigProfileName, ActiveSquads: []*squad{}, squads: map[string]*squad{}}
+			byUUID[row.NodeUUID] = entry
+			ordered = append(ordered, entry)
+		}
+		group := entry.squads[row.SquadUUID]
+		if group == nil {
+			group = &squad{SquadName: row.SquadName, ActiveInbounds: []string{}}
+			entry.squads[row.SquadUUID] = group
+			entry.ActiveSquads = append(entry.ActiveSquads, group)
+		}
+		group.ActiveInbounds = append(group.ActiveInbounds, row.InboundTag)
+	}
+	if ordered == nil {
+		ordered = []*node{}
+	}
+	httpx.Response(w, map[string]interface{}{"userId": userID, "activeNodes": ordered})
 }
 
 func (h *Handler) GetUserSubscriptionRequestHistory(w http.ResponseWriter, r *http.Request) {

@@ -2,10 +2,13 @@ package auth
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
 	"remnawave-go/internal/database"
+	"remnawave-go/internal/httpx"
+	"remnawave-go/internal/notify"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -104,7 +107,16 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp.Response.Authentication.Password.Enabled = setting.PasswordAuthEnabled
-	resp.Response.Authentication.Passkey.Enabled = false // Disabled until secure WebAuthn is implemented
+	var isPasskeyEnabled bool
+	if setting.PasskeySettings != "" && setting.PasskeySettings != "{}" {
+		var ps map[string]interface{}
+		if err := json.Unmarshal([]byte(setting.PasskeySettings), &ps); err == nil {
+			if en, ok := ps["enabled"].(bool); ok {
+				isPasskeyEnabled = en
+			}
+		}
+	}
+	resp.Response.Authentication.Passkey.Enabled = isPasskeyEnabled
 	resp.Response.Authentication.OAuth2.Providers = map[string]bool{
 		"github":   false,
 		"pocketid": false,
@@ -195,35 +207,75 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
-func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+// loginAttempt emits service.login_attempt_* without submitted credentials.
+func loginAttempt(db *gorm.DB, success bool, username, password, ip, userAgent, description string) {
+	if description == "" {
+		description = "–"
+	}
+	attempt := map[string]string{"username": username, "ip": ip, "userAgent": userAgent, "description": description}
+	name := "service.login_attempt_success"
+	if !success {
+		name = "service.login_attempt_failed"
+	}
+	if err := notify.Emit(db, notify.Event{Name: name, Data: map[string]interface{}{"loginAttempt": attempt}}); err != nil {
+		log.Printf("[AUTH] %s notification: %v", name, err)
+	}
+}
 
+func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"message":"Bad request"}`, http.StatusBadRequest)
+	if err := httpx.Decode(r, 4096, &req); err != nil || req.Username == "" || req.Password == "" {
+		httpx.Error(w, r, http.StatusBadRequest, "E000", "username and password are required")
+		return
+	}
+	ip, agent := httpx.ClientIP(r), r.UserAgent()
+	fail := func(description string) {
+		loginAttempt(h.db, false, req.Username, req.Password, ip, agent, description)
+		httpx.Error(w, r, http.StatusForbidden, "A068", "Forbidden")
+	}
+
+	var setting database.RemnawaveSetting
+	if err := h.db.First(&setting, 1).Error; err != nil {
+		httpx.Error(w, r, http.StatusInternalServerError, "A067", "Get auth status error")
+		return
+	}
+	if !setting.IsLoginAllowed {
+		fail("Login is not allowed.")
+		return
+	}
+	enabled := setting.PasswordAuthEnabled
+	if setting.PasswordSettings != "" && setting.PasswordSettings != "{}" {
+		var password struct {
+			Enabled *bool `json:"enabled"`
+		}
+		if err := json.Unmarshal([]byte(setting.PasswordSettings), &password); err != nil {
+			httpx.Error(w, r, http.StatusInternalServerError, "A067", "Get auth status error")
+			return
+		}
+		if password.Enabled != nil {
+			enabled = *password.Enabled
+		}
+	}
+	if !enabled {
+		fail("Someone tried to login with password authentication, but it is disabled.")
 		return
 	}
 
 	var admin database.Admin
-	if err := h.db.Where("username = ?", req.Username).First(&admin).Error; err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(`{"message":"Invalid credentials"}`))
+	if err := h.db.Where("username = ? AND role = ?", req.Username, "ADMIN").First(&admin).Error; err != nil {
+		fail("Admin is not found in database.")
 		return
 	}
-
 	if !VerifyPassword(req.Password, admin.PasswordHash, h.appSecret) {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(`{"message":"Invalid credentials"}`))
+		fail("Invalid password.")
 		return
 	}
 
 	token, err := GenerateToken(admin.UUID, admin.Username, admin.Role, h.appSecret, h.jwtLifetime)
 	if err != nil {
-		http.Error(w, `{"message":"Internal server error"}`, http.StatusInternalServerError)
+		httpx.Error(w, r, http.StatusInternalServerError, "A002", "Login error")
 		return
 	}
-
-	var resp LoginResponse
-	resp.Response.AccessToken = token
-	json.NewEncoder(w).Encode(resp)
+	loginAttempt(h.db, true, admin.Username, "", ip, agent, "")
+	httpx.Response(w, map[string]string{"accessToken": token})
 }

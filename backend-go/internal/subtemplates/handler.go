@@ -3,6 +3,7 @@ package subtemplates
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -12,6 +13,8 @@ import (
 	"gorm.io/gorm"
 
 	"remnawave-go/internal/database"
+	"remnawave-go/internal/httpx"
+	"remnawave-go/internal/notify"
 )
 
 type Handler struct {
@@ -373,7 +376,12 @@ func (h *Handler) CreateConfig(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt:    now,
 	}
 
-	if err := h.db.Create(&c).Error; err != nil {
+	if err := h.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&c).Error; err != nil {
+			return err
+		}
+		return subpageChanged(tx, "CREATED", c.UUID)
+	}); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{"message": "Failed to create config"})
 		return
@@ -414,7 +422,12 @@ func (h *Handler) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 	}
 	c.UpdatedAt = time.Now().UTC()
 
-	if err := h.db.Save(&c).Error; err != nil {
+	if err := h.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(&c).Error; err != nil {
+			return err
+		}
+		return subpageChanged(tx, "UPDATED", c.UUID)
+	}); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{"message": "Failed to update config"})
 		return
@@ -425,9 +438,39 @@ func (h *Handler) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// subpageChanged emits service.subpage_config_changed like upstream.
+func subpageChanged(tx *gorm.DB, action, uuid string) error {
+	return notify.Emit(tx, notify.Event{Name: "service.subpage_config_changed", Data: map[string]interface{}{
+		"subpageConfig": map[string]string{"action": action, "uuid": uuid},
+	}})
+}
+
+const defaultSubpageConfigUUID = "00000000-0000-0000-0000-000000000000"
+
 func (h *Handler) DeleteConfig(w http.ResponseWriter, r *http.Request) {
 	uuidParam := chi.URLParam(r, "uuid")
-	h.db.Where("uuid = ?", uuidParam).Delete(&database.SubscriptionPageConfig{})
+	if uuidParam == defaultSubpageConfigUUID {
+		httpx.Error(w, r, http.StatusBadRequest, "A212", "Reserved subscription page config can't be deleted")
+		return
+	}
+	err := h.db.Transaction(func(tx *gorm.DB) error {
+		result := tx.Where("uuid = ?", uuidParam).Delete(&database.SubscriptionPageConfig{})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+		return subpageChanged(tx, "DELETED", uuidParam)
+	})
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		httpx.Error(w, r, http.StatusNotFound, "A206", "Subscription page config not found")
+		return
+	}
+	if err != nil {
+		httpx.Error(w, r, http.StatusInternalServerError, "A213", "Delete subscription page config error")
+		return
+	}
 	w.WriteHeader(http.StatusNoContent)
 }
 

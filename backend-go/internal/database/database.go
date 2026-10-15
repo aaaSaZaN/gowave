@@ -22,6 +22,9 @@ func Init(driver string, databaseURL string) (*gorm.DB, error) {
 
 	db, err := gorm.Open(dialector, &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
+		// Timestamps are stored in UTC so SQLite's text comparison orders them
+		// correctly and API output matches upstream's ISO "Z" strings.
+		NowFunc: func() time.Time { return time.Now().UTC() },
 	})
 	if err != nil {
 		return nil, err

@@ -24,29 +24,8 @@ func AutoMigrate(db *gorm.DB) error {
 // MigrateSchema creates or updates the GoWave schema without inserting app data.
 // Importers use this to prepare an empty destination before copying source rows.
 func MigrateSchema(db *gorm.DB) error {
-	models := schemaModels()
-
-	if db.Dialector.Name() == "postgres" {
-		missingModels := make([]interface{}, 0)
-		for _, m := range models {
-			if !db.Migrator().HasTable(m) {
-				missingModels = append(missingModels, m)
-			}
-		}
-		if len(missingModels) > 0 {
-			migrationDB := db
-			if len(missingModels) != len(models) {
-				migrationDB = db.Session(&gorm.Session{})
-				migrationDB.Config.IgnoreRelationshipsWhenMigrating = true
-			}
-			if err := migrationDB.AutoMigrate(missingModels...); err != nil {
-				return err
-			}
-		}
-	} else {
-		if err := db.AutoMigrate(models...); err != nil {
-			return err
-		}
+	if err := applyMigrations(db); err != nil {
+		return err
 	}
 	return migrateLegacyHostRelations(db)
 }
@@ -87,6 +66,9 @@ func schemaModels() []interface{} {
 		&EntityMeta{},
 		&Keygen{},
 		&Passkey{},
+		&AuthChallenge{},
+		&Job{},
+		&ScheduledExecution{},
 		&UserMeta{},
 		&NodeMeta{},
 		&TorrentBlockerReport{},
