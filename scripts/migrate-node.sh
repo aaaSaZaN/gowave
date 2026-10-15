@@ -126,7 +126,7 @@ DOWNLOAD_URL="${REMNANODE_DOWNLOAD_URL:-https://github.com/aaaSaZaN/remnanode-go
 
 if [ -f "./remnanode" ] && [ -x "./remnanode" ]; then
     log_info "Используем готовый локальный бинарник ./remnanode..."
-    cp -f "./remnanode" "$INSTALL_DIR/remnanode"
+    # Already in INSTALL_DIR; the existing binary is the destination.
 elif [ -f "/tmp/remnanode" ] && [ -x "/tmp/remnanode" ]; then
     log_info "Используем готовый бинарник из /tmp/remnanode..."
     cp -f "/tmp/remnanode" "$INSTALL_DIR/remnanode"
