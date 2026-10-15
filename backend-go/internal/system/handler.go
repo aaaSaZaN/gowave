@@ -6,13 +6,14 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
 	"time"
 
 	"remnawave-go/internal/database"
+	"remnawave-go/internal/httpx"
+	"remnawave-go/internal/prometheus"
 
 	"gorm.io/gorm"
 )
@@ -27,6 +28,9 @@ var startTime = time.Now()
 type Handler struct {
 	db      *gorm.DB
 	restore *BackupRestoreService
+	// OnRestored runs after a backup is published, to rebuild caches that
+	// depend on restored rows (node mTLS client, synced users).
+	OnRestored func()
 }
 
 func NewHandler(db *gorm.DB) *Handler {
@@ -34,29 +38,6 @@ func NewHandler(db *gorm.DB) *Handler {
 		db:      db,
 		restore: NewBackupRestoreService(db),
 	}
-}
-
-type RuntimeMetric struct {
-	Rss              uint64  `json:"rss"`
-	HeapUsed         uint64  `json:"heapUsed"`
-	HeapTotal        uint64  `json:"heapTotal"`
-	External         uint64  `json:"external"`
-	ArrayBuffers     uint64  `json:"arrayBuffers"`
-	EventLoopDelayMs float64 `json:"eventLoopDelayMs"`
-	EventLoopP99Ms   float64 `json:"eventLoopP99Ms"`
-	ActiveHandles    int     `json:"activeHandles"`
-	Uptime           int64   `json:"uptime"`
-	Pid              int     `json:"pid"`
-	Timestamp        int64   `json:"timestamp"`
-	InstanceID       string  `json:"instanceId"`
-	InstanceType     string  `json:"instanceType"`
-}
-
-type HealthResponse struct {
-	Response struct {
-		RuntimeMetrics []RuntimeMetric `json:"runtimeMetrics"`
-	} `json:"response"`
-	Status string `json:"status"`
 }
 
 type BaseStat struct {
@@ -114,27 +95,6 @@ type NodeDayStat struct {
 	NodeName   string `json:"nodeName" gorm:"column:node_name"`
 	Date       string `json:"date" gorm:"column:date"`
 	TotalBytes string `json:"totalBytes" gorm:"column:total_bytes"`
-}
-
-type NodesMetricsResponse struct {
-	Response struct {
-		Nodes []NodeMetricItem `json:"nodes"`
-	} `json:"response"`
-}
-
-type NodeMetricItem struct {
-	NodeUUID      string        `json:"nodeUuid"`
-	NodeName      string        `json:"nodeName"`
-	CountryEmoji  string        `json:"countryEmoji"`
-	ProviderName  string        `json:"providerName"`
-	UsersOnline   int           `json:"usersOnline"`
-	InboundsStats []InboundStat `json:"inboundsStats"`
-}
-
-type InboundStat struct {
-	Tag      string `json:"tag"`
-	Upload   string `json:"upload"`
-	Download string `json:"download"`
 }
 
 type RecapResponse struct {
@@ -337,31 +297,7 @@ func (h *Handler) GetHttpStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetHealth(w http.ResponseWriter, r *http.Request) {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-
-	metrics := RuntimeMetric{
-		Rss:              m.Sys,
-		HeapUsed:         m.Alloc,
-		HeapTotal:        m.TotalAlloc,
-		External:         0,
-		ArrayBuffers:     0,
-		EventLoopDelayMs: 0.1,
-		EventLoopP99Ms:   0.5,
-		ActiveHandles:    runtime.NumGoroutine(),
-		Uptime:           int64(time.Since(startTime).Seconds()),
-		Pid:              os.Getpid(),
-		Timestamp:        time.Now().UnixMilli(),
-		InstanceID:       "remnawave-go",
-		InstanceType:     "api",
-	}
-
-	var resp HealthResponse
-	resp.Response.RuntimeMetrics = []RuntimeMetric{metrics}
-	resp.Status = "ok"
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	httpx.Response(w, map[string]interface{}{"runtimeMetrics": []prometheus.RuntimeMetric{prometheus.CurrentRuntimeMetric()}})
 }
 
 func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
@@ -430,7 +366,12 @@ LEFT JOIN user_traffic ut ON ut.id = u.id`,
 	resp.Response.OnlineStats.NeverOnline = osr.NeverOnline
 	resp.Response.OnlineStats.OnlineNow = osr.OnlineNow
 
-	resp.Response.Nodes.TotalOnline = osr.OnlineNow
+	var onlineNodes int64
+	if err := h.db.Model(&database.Node{}).Where("is_connected = ? AND is_disabled = ?", true, false).Count(&onlineNodes).Error; err != nil {
+		http.Error(w, "failed to load node status", http.StatusInternalServerError)
+		return
+	}
+	resp.Response.Nodes.TotalOnline = int(onlineNodes)
 	resp.Response.Nodes.TotalBytesLifetime = fmt.Sprintf("%d", totalBytesLifetime)
 
 	json.NewEncoder(w).Encode(resp)
@@ -540,14 +481,6 @@ func (h *Handler) GetNodesStatistics(w http.ResponseWriter, r *http.Request) {
 
 	var resp NodesStatisticsResponse
 	resp.Response.LastSevenDays = rows
-	json.NewEncoder(w).Encode(resp)
-}
-
-func (h *Handler) GetNodesMetrics(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	var resp NodesMetricsResponse
-	resp.Response.Nodes = []NodeMetricItem{}
 	json.NewEncoder(w).Encode(resp)
 }
 
@@ -765,30 +698,33 @@ func (h *Handler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) RestoreBackup(w http.ResponseWriter, r *http.Request) {
 	file, _, err := r.FormFile("file")
 	if err != nil {
-		http.Error(w, `{"error":"No backup file uploaded"}`, http.StatusBadRequest)
+		httpx.Error(w, r, http.StatusBadRequest, "E000", "No backup file uploaded")
 		return
 	}
 	defer file.Close()
 
-	tempPath := filepath.Join(os.TempDir(), fmt.Sprintf("remnawave_restore_%d.tar.gz", time.Now().UnixNano()))
-	out, err := os.Create(tempPath)
+	out, err := os.CreateTemp("", "remnawave_restore_*.tar.gz")
 	if err != nil {
-		http.Error(w, `{"error":"Cannot create temporary file"}`, http.StatusInternalServerError)
+		httpx.Error(w, r, http.StatusInternalServerError, httpx.CodeInternal, "Cannot create temporary file")
 		return
 	}
+	tempPath := out.Name()
 	defer os.Remove(tempPath)
 	defer out.Close()
 
 	if _, err := io.Copy(out, file); err != nil {
-		http.Error(w, `{"error":"Failed saving backup"}`, http.StatusInternalServerError)
+		httpx.Error(w, r, http.StatusInternalServerError, httpx.CodeInternal, "Failed saving backup")
 		return
 	}
 
+	// Validation happens in a staging database; on failure the live data is
+	// untouched.
 	if err := h.restore.RestoreFromTarGz(tempPath); err != nil {
-		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
+		httpx.Error(w, r, http.StatusBadRequest, "E000", "Backup restore failed: "+err.Error())
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"response":{"message":"Backup successfully restored"}}`))
+	if h.OnRestored != nil {
+		h.OnRestored()
+	}
+	httpx.Response(w, map[string]string{"message": "Backup successfully restored"})
 }

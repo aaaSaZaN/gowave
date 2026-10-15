@@ -1,0 +1,187 @@
+{
+ "ops": [
+  [
+   "snapshot"
+  ],
+  [
+   "set",
+   "remnawave_users_status",
+   {
+    "status": "ACTIVE"
+   },
+   10
+  ],
+  [
+   "set",
+   "remnawave_users_status",
+   {
+    "status": "DISABLED"
+   },
+   0
+  ],
+  [
+   "set",
+   "remnawave_users_online_stats",
+   {
+    "metricType": "onlineNow"
+   },
+   3
+  ],
+  [
+   "set",
+   "remnawave_users_total",
+   {
+    "type": "all"
+   },
+   10
+  ],
+  [
+   "set",
+   "remnawave_node_basic_info",
+   {
+    "node_uuid": "11111111-1111-4111-8111-111111111111",
+    "node_name": "Node \"one\"\\path",
+    "node_country_emoji": "🇩🇪",
+    "provider_name": "unknown",
+    "tags": "A,B"
+   },
+   1
+  ],
+  [
+   "set",
+   "remnawave_node_status",
+   {
+    "node_uuid": "11111111-1111-4111-8111-111111111111"
+   },
+   1
+  ],
+  [
+   "set",
+   "remnawave_node_status",
+   {
+    "node_uuid": "22222222-2222-4222-8222-222222222222"
+   },
+   0
+  ],
+  [
+   "set",
+   "remnawave_node_cpu_load_avg_1m",
+   {
+    "node_uuid": "11111111-1111-4111-8111-111111111111"
+   },
+   0.25
+  ],
+  [
+   "set",
+   "remnawave_node_uptime_seconds",
+   {
+    "node_uuid": "11111111-1111-4111-8111-111111111111"
+   },
+   12345.67
+  ],
+  [
+   "set",
+   "remnawave_node_memory_total_bytes",
+   {
+    "node_uuid": "11111111-1111-4111-8111-111111111111"
+   },
+   17179869184
+  ],
+  [
+   "inc",
+   "remnawave_node_inbound_upload_bytes",
+   {
+    "node_uuid": "11111111-1111-4111-8111-111111111111",
+    "tag": "vless"
+   },
+   100
+  ],
+  [
+   "inc",
+   "remnawave_node_inbound_upload_bytes",
+   {
+    "node_uuid": "11111111-1111-4111-8111-111111111111",
+    "tag": "vless"
+   },
+   50
+  ],
+  [
+   "inc",
+   "remnawave_node_outbound_download_bytes",
+   {
+    "tag": "direct",
+    "node_uuid": "22222222-2222-4222-8222-222222222222"
+   },
+   1e+21
+  ],
+  [
+   "set",
+   "remnawave_process_rss_bytes",
+   {
+    "instance_id": "0",
+    "instance_name": "api"
+   },
+   52428800
+  ],
+  [
+   "set",
+   "remnawave_node_system_info",
+   {
+    "node_uuid": "11111111-1111-4111-8111-111111111111",
+    "arch": "x64",
+    "cpu_model": "AMD\nEPYC",
+    "hostname": "h",
+    "platform": "linux",
+    "release": "6.1",
+    "version": "#1"
+   },
+   1
+  ],
+  [
+   "snapshot"
+  ],
+  [
+   "set",
+   "remnawave_node_status",
+   {
+    "node_uuid": "11111111-1111-4111-8111-111111111111"
+   },
+   0
+  ],
+  [
+   "remove",
+   "remnawave_node_status",
+   {
+    "node_uuid": "11111111-1111-4111-8111-111111111111"
+   }
+  ],
+  [
+   "set",
+   "remnawave_node_status",
+   {
+    "node_uuid": "11111111-1111-4111-8111-111111111111"
+   },
+   1
+  ],
+  [
+   "reset",
+   "remnawave_node_basic_info"
+  ],
+  [
+   "remove",
+   "remnawave_node_cpu_load_avg_1m",
+   {
+    "node_uuid": "missing"
+   }
+  ],
+  [
+   "snapshot"
+  ]
+ ],
+ "snapshots": [
+  "# HELP remnawave_node_online_users Number of online users on a node\n# TYPE remnawave_node_online_users gauge\n\n# HELP remnawave_node_status Node connection status (1 - connected, 0 - disconnected)\n# TYPE remnawave_node_status gauge\n\n# HELP remnawave_users_status Counter for users statuses, updated every 1 minute\n# TYPE remnawave_users_status gauge\n\n# HELP remnawave_users_online_stats Counter for online stats of distinct users, updated every 1 minute\n# TYPE remnawave_users_online_stats gauge\n\n# HELP remnawave_users_total Total number of users, updated every 1 minute\n# TYPE remnawave_users_total gauge\n\n# HELP remnawave_node_inbound_upload_bytes Inbound upload bytes, updated every 30 seconds\n# TYPE remnawave_node_inbound_upload_bytes counter\n\n# HELP remnawave_node_inbound_download_bytes Inbound download bytes, updated every 30 seconds\n# TYPE remnawave_node_inbound_download_bytes counter\n\n# HELP remnawave_node_outbound_upload_bytes Outbound upload bytes, updated every 30 seconds\n# TYPE remnawave_node_outbound_upload_bytes counter\n\n# HELP remnawave_node_outbound_download_bytes Outbound download bytes, updated every 30 seconds\n# TYPE remnawave_node_outbound_download_bytes counter\n\n# HELP remnawave_process_rss_bytes Process resident set size in bytes.\n# TYPE remnawave_process_rss_bytes gauge\n\n# HELP remnawave_process_heap_used_bytes Process heap used in bytes.\n# TYPE remnawave_process_heap_used_bytes gauge\n\n# HELP remnawave_process_heap_total_bytes Process total heap size in bytes.\n# TYPE remnawave_process_heap_total_bytes gauge\n\n# HELP remnawave_process_external_bytes Process external memory in bytes (C++ objects bound to JS).\n# TYPE remnawave_process_external_bytes gauge\n\n# HELP remnawave_process_array_buffers_bytes Process ArrayBuffers memory in bytes.\n# TYPE remnawave_process_array_buffers_bytes gauge\n\n# HELP remnawave_process_event_loop_delay_ms Mean event loop delay in milliseconds.\n# TYPE remnawave_process_event_loop_delay_ms gauge\n\n# HELP remnawave_process_event_loop_p99_ms Event loop delay p99 in milliseconds.\n# TYPE remnawave_process_event_loop_p99_ms gauge\n\n# HELP remnawave_process_active_handles Number of active resource handles.\n# TYPE remnawave_process_active_handles gauge\n\n# HELP remnawave_process_uptime_seconds Process uptime in seconds.\n# TYPE remnawave_process_uptime_seconds gauge\n\n# HELP remnawave_node_network_rx_bytes_per_sec Node network receive speed in bytes per second\n# TYPE remnawave_node_network_rx_bytes_per_sec gauge\n\n# HELP remnawave_node_network_tx_bytes_per_sec Node network transmit speed in bytes per second\n# TYPE remnawave_node_network_tx_bytes_per_sec gauge\n\n# HELP remnawave_node_network_rx_bytes_total Node network total received bytes since boot from default interface\n# TYPE remnawave_node_network_rx_bytes_total gauge\n\n# HELP remnawave_node_network_tx_bytes_total Node network total transmitted bytes since boot from default interface\n# TYPE remnawave_node_network_tx_bytes_total gauge\n\n# HELP remnawave_node_memory_total_bytes Node total memory in bytes\n# TYPE remnawave_node_memory_total_bytes gauge\n\n# HELP remnawave_node_memory_free_bytes Node free memory in bytes\n# TYPE remnawave_node_memory_free_bytes gauge\n\n# HELP remnawave_node_uptime_seconds Node OS uptime in seconds\n# TYPE remnawave_node_uptime_seconds gauge\n\n# HELP remnawave_node_cpu_count Node CPU count\n# TYPE remnawave_node_cpu_count gauge\n\n# HELP remnawave_node_cpu_load_avg_1m Node CPU load average 1 minute\n# TYPE remnawave_node_cpu_load_avg_1m gauge\n\n# HELP remnawave_node_cpu_load_avg_5m Node CPU load average 5 minutes\n# TYPE remnawave_node_cpu_load_avg_5m gauge\n\n# HELP remnawave_node_cpu_load_avg_15m Node CPU load average 15 minutes\n# TYPE remnawave_node_cpu_load_avg_15m gauge\n\n# HELP remnawave_node_system_info Node system info\n# TYPE remnawave_node_system_info gauge\n\n# HELP remnawave_node_basic_info Node basic info\n# TYPE remnawave_node_basic_info gauge\n",
+  "# HELP remnawave_node_online_users Number of online users on a node\n# TYPE remnawave_node_online_users gauge\n\n# HELP remnawave_node_status Node connection status (1 - connected, 0 - disconnected)\n# TYPE remnawave_node_status gauge\nremnawave_node_status{node_uuid=\"11111111-1111-4111-8111-111111111111\",app=\"remnawave\"} 1\nremnawave_node_status{node_uuid=\"22222222-2222-4222-8222-222222222222\",app=\"remnawave\"} 0\n\n# HELP remnawave_users_status Counter for users statuses, updated every 1 minute\n# TYPE remnawave_users_status gauge\nremnawave_users_status{status=\"ACTIVE\",app=\"remnawave\"} 10\nremnawave_users_status{status=\"DISABLED\",app=\"remnawave\"} 0\n\n# HELP remnawave_users_online_stats Counter for online stats of distinct users, updated every 1 minute\n# TYPE remnawave_users_online_stats gauge\nremnawave_users_online_stats{metricType=\"onlineNow\",app=\"remnawave\"} 3\n\n# HELP remnawave_users_total Total number of users, updated every 1 minute\n# TYPE remnawave_users_total gauge\nremnawave_users_total{type=\"all\",app=\"remnawave\"} 10\n\n# HELP remnawave_node_inbound_upload_bytes Inbound upload bytes, updated every 30 seconds\n# TYPE remnawave_node_inbound_upload_bytes counter\nremnawave_node_inbound_upload_bytes{node_uuid=\"11111111-1111-4111-8111-111111111111\",tag=\"vless\",app=\"remnawave\"} 150\n\n# HELP remnawave_node_inbound_download_bytes Inbound download bytes, updated every 30 seconds\n# TYPE remnawave_node_inbound_download_bytes counter\n\n# HELP remnawave_node_outbound_upload_bytes Outbound upload bytes, updated every 30 seconds\n# TYPE remnawave_node_outbound_upload_bytes counter\n\n# HELP remnawave_node_outbound_download_bytes Outbound download bytes, updated every 30 seconds\n# TYPE remnawave_node_outbound_download_bytes counter\nremnawave_node_outbound_download_bytes{tag=\"direct\",node_uuid=\"22222222-2222-4222-8222-222222222222\",app=\"remnawave\"} 1e+21\n\n# HELP remnawave_process_rss_bytes Process resident set size in bytes.\n# TYPE remnawave_process_rss_bytes gauge\nremnawave_process_rss_bytes{instance_id=\"0\",instance_name=\"api\",app=\"remnawave\"} 52428800\n\n# HELP remnawave_process_heap_used_bytes Process heap used in bytes.\n# TYPE remnawave_process_heap_used_bytes gauge\n\n# HELP remnawave_process_heap_total_bytes Process total heap size in bytes.\n# TYPE remnawave_process_heap_total_bytes gauge\n\n# HELP remnawave_process_external_bytes Process external memory in bytes (C++ objects bound to JS).\n# TYPE remnawave_process_external_bytes gauge\n\n# HELP remnawave_process_array_buffers_bytes Process ArrayBuffers memory in bytes.\n# TYPE remnawave_process_array_buffers_bytes gauge\n\n# HELP remnawave_process_event_loop_delay_ms Mean event loop delay in milliseconds.\n# TYPE remnawave_process_event_loop_delay_ms gauge\n\n# HELP remnawave_process_event_loop_p99_ms Event loop delay p99 in milliseconds.\n# TYPE remnawave_process_event_loop_p99_ms gauge\n\n# HELP remnawave_process_active_handles Number of active resource handles.\n# TYPE remnawave_process_active_handles gauge\n\n# HELP remnawave_process_uptime_seconds Process uptime in seconds.\n# TYPE remnawave_process_uptime_seconds gauge\n\n# HELP remnawave_node_network_rx_bytes_per_sec Node network receive speed in bytes per second\n# TYPE remnawave_node_network_rx_bytes_per_sec gauge\n\n# HELP remnawave_node_network_tx_bytes_per_sec Node network transmit speed in bytes per second\n# TYPE remnawave_node_network_tx_bytes_per_sec gauge\n\n# HELP remnawave_node_network_rx_bytes_total Node network total received bytes since boot from default interface\n# TYPE remnawave_node_network_rx_bytes_total gauge\n\n# HELP remnawave_node_network_tx_bytes_total Node network total transmitted bytes since boot from default interface\n# TYPE remnawave_node_network_tx_bytes_total gauge\n\n# HELP remnawave_node_memory_total_bytes Node total memory in bytes\n# TYPE remnawave_node_memory_total_bytes gauge\nremnawave_node_memory_total_bytes{node_uuid=\"11111111-1111-4111-8111-111111111111\",app=\"remnawave\"} 17179869184\n\n# HELP remnawave_node_memory_free_bytes Node free memory in bytes\n# TYPE remnawave_node_memory_free_bytes gauge\n\n# HELP remnawave_node_uptime_seconds Node OS uptime in seconds\n# TYPE remnawave_node_uptime_seconds gauge\nremnawave_node_uptime_seconds{node_uuid=\"11111111-1111-4111-8111-111111111111\",app=\"remnawave\"} 12345.67\n\n# HELP remnawave_node_cpu_count Node CPU count\n# TYPE remnawave_node_cpu_count gauge\n\n# HELP remnawave_node_cpu_load_avg_1m Node CPU load average 1 minute\n# TYPE remnawave_node_cpu_load_avg_1m gauge\nremnawave_node_cpu_load_avg_1m{node_uuid=\"11111111-1111-4111-8111-111111111111\",app=\"remnawave\"} 0.25\n\n# HELP remnawave_node_cpu_load_avg_5m Node CPU load average 5 minutes\n# TYPE remnawave_node_cpu_load_avg_5m gauge\n\n# HELP remnawave_node_cpu_load_avg_15m Node CPU load average 15 minutes\n# TYPE remnawave_node_cpu_load_avg_15m gauge\n\n# HELP remnawave_node_system_info Node system info\n# TYPE remnawave_node_system_info gauge\nremnawave_node_system_info{node_uuid=\"11111111-1111-4111-8111-111111111111\",arch=\"x64\",cpu_model=\"AMD\\nEPYC\",hostname=\"h\",platform=\"linux\",release=\"6.1\",version=\"#1\",app=\"remnawave\"} 1\n\n# HELP remnawave_node_basic_info Node basic info\n# TYPE remnawave_node_basic_info gauge\nremnawave_node_basic_info{node_uuid=\"11111111-1111-4111-8111-111111111111\",node_name=\"Node \\\"one\\\"\\\\path\",node_country_emoji=\"🇩🇪\",provider_name=\"unknown\",tags=\"A,B\",app=\"remnawave\"} 1\n",
+  "# HELP remnawave_node_online_users Number of online users on a node\n# TYPE remnawave_node_online_users gauge\n\n# HELP remnawave_node_status Node connection status (1 - connected, 0 - disconnected)\n# TYPE remnawave_node_status gauge\nremnawave_node_status{node_uuid=\"22222222-2222-4222-8222-222222222222\",app=\"remnawave\"} 0\nremnawave_node_status{node_uuid=\"11111111-1111-4111-8111-111111111111\",app=\"remnawave\"} 1\n\n# HELP remnawave_users_status Counter for users statuses, updated every 1 minute\n# TYPE remnawave_users_status gauge\nremnawave_users_status{status=\"ACTIVE\",app=\"remnawave\"} 10\nremnawave_users_status{status=\"DISABLED\",app=\"remnawave\"} 0\n\n# HELP remnawave_users_online_stats Counter for online stats of distinct users, updated every 1 minute\n# TYPE remnawave_users_online_stats gauge\nremnawave_users_online_stats{metricType=\"onlineNow\",app=\"remnawave\"} 3\n\n# HELP remnawave_users_total Total number of users, updated every 1 minute\n# TYPE remnawave_users_total gauge\nremnawave_users_total{type=\"all\",app=\"remnawave\"} 10\n\n# HELP remnawave_node_inbound_upload_bytes Inbound upload bytes, updated every 30 seconds\n# TYPE remnawave_node_inbound_upload_bytes counter\nremnawave_node_inbound_upload_bytes{node_uuid=\"11111111-1111-4111-8111-111111111111\",tag=\"vless\",app=\"remnawave\"} 150\n\n# HELP remnawave_node_inbound_download_bytes Inbound download bytes, updated every 30 seconds\n# TYPE remnawave_node_inbound_download_bytes counter\n\n# HELP remnawave_node_outbound_upload_bytes Outbound upload bytes, updated every 30 seconds\n# TYPE remnawave_node_outbound_upload_bytes counter\n\n# HELP remnawave_node_outbound_download_bytes Outbound download bytes, updated every 30 seconds\n# TYPE remnawave_node_outbound_download_bytes counter\nremnawave_node_outbound_download_bytes{tag=\"direct\",node_uuid=\"22222222-2222-4222-8222-222222222222\",app=\"remnawave\"} 1e+21\n\n# HELP remnawave_process_rss_bytes Process resident set size in bytes.\n# TYPE remnawave_process_rss_bytes gauge\nremnawave_process_rss_bytes{instance_id=\"0\",instance_name=\"api\",app=\"remnawave\"} 52428800\n\n# HELP remnawave_process_heap_used_bytes Process heap used in bytes.\n# TYPE remnawave_process_heap_used_bytes gauge\n\n# HELP remnawave_process_heap_total_bytes Process total heap size in bytes.\n# TYPE remnawave_process_heap_total_bytes gauge\n\n# HELP remnawave_process_external_bytes Process external memory in bytes (C++ objects bound to JS).\n# TYPE remnawave_process_external_bytes gauge\n\n# HELP remnawave_process_array_buffers_bytes Process ArrayBuffers memory in bytes.\n# TYPE remnawave_process_array_buffers_bytes gauge\n\n# HELP remnawave_process_event_loop_delay_ms Mean event loop delay in milliseconds.\n# TYPE remnawave_process_event_loop_delay_ms gauge\n\n# HELP remnawave_process_event_loop_p99_ms Event loop delay p99 in milliseconds.\n# TYPE remnawave_process_event_loop_p99_ms gauge\n\n# HELP remnawave_process_active_handles Number of active resource handles.\n# TYPE remnawave_process_active_handles gauge\n\n# HELP remnawave_process_uptime_seconds Process uptime in seconds.\n# TYPE remnawave_process_uptime_seconds gauge\n\n# HELP remnawave_node_network_rx_bytes_per_sec Node network receive speed in bytes per second\n# TYPE remnawave_node_network_rx_bytes_per_sec gauge\n\n# HELP remnawave_node_network_tx_bytes_per_sec Node network transmit speed in bytes per second\n# TYPE remnawave_node_network_tx_bytes_per_sec gauge\n\n# HELP remnawave_node_network_rx_bytes_total Node network total received bytes since boot from default interface\n# TYPE remnawave_node_network_rx_bytes_total gauge\n\n# HELP remnawave_node_network_tx_bytes_total Node network total transmitted bytes since boot from default interface\n# TYPE remnawave_node_network_tx_bytes_total gauge\n\n# HELP remnawave_node_memory_total_bytes Node total memory in bytes\n# TYPE remnawave_node_memory_total_bytes gauge\nremnawave_node_memory_total_bytes{node_uuid=\"11111111-1111-4111-8111-111111111111\",app=\"remnawave\"} 17179869184\n\n# HELP remnawave_node_memory_free_bytes Node free memory in bytes\n# TYPE remnawave_node_memory_free_bytes gauge\n\n# HELP remnawave_node_uptime_seconds Node OS uptime in seconds\n# TYPE remnawave_node_uptime_seconds gauge\nremnawave_node_uptime_seconds{node_uuid=\"11111111-1111-4111-8111-111111111111\",app=\"remnawave\"} 12345.67\n\n# HELP remnawave_node_cpu_count Node CPU count\n# TYPE remnawave_node_cpu_count gauge\n\n# HELP remnawave_node_cpu_load_avg_1m Node CPU load average 1 minute\n# TYPE remnawave_node_cpu_load_avg_1m gauge\nremnawave_node_cpu_load_avg_1m{node_uuid=\"11111111-1111-4111-8111-111111111111\",app=\"remnawave\"} 0.25\n\n# HELP remnawave_node_cpu_load_avg_5m Node CPU load average 5 minutes\n# TYPE remnawave_node_cpu_load_avg_5m gauge\n\n# HELP remnawave_node_cpu_load_avg_15m Node CPU load average 15 minutes\n# TYPE remnawave_node_cpu_load_avg_15m gauge\n\n# HELP remnawave_node_system_info Node system info\n# TYPE remnawave_node_system_info gauge\nremnawave_node_system_info{node_uuid=\"11111111-1111-4111-8111-111111111111\",arch=\"x64\",cpu_model=\"AMD\\nEPYC\",hostname=\"h\",platform=\"linux\",release=\"6.1\",version=\"#1\",app=\"remnawave\"} 1\n\n# HELP remnawave_node_basic_info Node basic info\n# TYPE remnawave_node_basic_info gauge\n"
+ ],
+ "contentType": "text/plain; version=0.0.4; charset=utf-8"
+}

@@ -10,8 +10,10 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"remnawave-go/internal/database"
 	"strconv"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -66,9 +68,149 @@ func (s *BackupRestoreService) restoreSqlGz(r io.Reader) error {
 	}
 	defer gzr.Close()
 
-	return s.db.Transaction(func(tx *gorm.DB) error {
+	// Validate in an isolated database before replacing any live rows. The
+	// archive is read-only and both replacement and sequence repair are atomic.
+	file, err := os.CreateTemp("", "gowave-restore-*.sqlite")
+	if err != nil {
+		return err
+	}
+	path := file.Name()
+	file.Close()
+	defer os.Remove(path)
+	staged, err := database.Init("sqlite", path)
+	if err != nil {
+		return err
+	}
+	conn, err := staged.DB()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	if err := database.MigrateSchema(staged); err != nil {
+		return err
+	}
+	if err := staged.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec("PRAGMA defer_foreign_keys = ON").Error; err != nil {
+			return err
+		}
 		return consumePostgresCopyDump(tx, gzr)
+	}); err != nil {
+		return err
+	}
+	tables, err := staged.Migrator().GetTables()
+	if err != nil {
+		return err
+	}
+	var appTables []string
+	for _, table := range tables {
+		if table == "sqlite_sequence" || table == "gowave_migrations" {
+			continue
+		}
+		appTables = append(appTables, table)
+	}
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		if tx.Dialector.Name() == "sqlite" {
+			if err := tx.Exec("PRAGMA defer_foreign_keys = ON").Error; err != nil {
+				return err
+			}
+			for _, table := range appTables {
+				if err := tx.Exec(`DELETE FROM "` + table + `"`).Error; err != nil {
+					return err
+				}
+			}
+		} else {
+			quoted := make([]string, len(appTables))
+			for i, table := range appTables {
+				quoted[i] = `"` + table + `"`
+			}
+			if err := tx.Exec("TRUNCATE " + strings.Join(quoted, ",") + " RESTART IDENTITY CASCADE").Error; err != nil {
+				return err
+			}
+		}
+		// FK parents precede children in the embedded CREATE TABLE baseline.
+		ordered := database.SchemaTableOrder()
+		for _, table := range ordered {
+			rows, err := staged.Table(table).Rows()
+			if err != nil {
+				return err
+			}
+			columns, err := rows.Columns()
+			if err != nil {
+				rows.Close()
+				return err
+			}
+			quoted, params := make([]string, len(columns)), make([]string, len(columns))
+			for i, column := range columns {
+				quoted[i] = `"` + column + `"`
+				params[i] = "?"
+			}
+			query := `INSERT INTO "` + table + `" (` + strings.Join(quoted, ",") + `) VALUES (` + strings.Join(params, ",") + `)`
+			for rows.Next() {
+				values := make([]interface{}, len(columns))
+				dest := make([]interface{}, len(columns))
+				for i := range values {
+					dest[i] = &values[i]
+				}
+				if err := rows.Scan(dest...); err != nil {
+					rows.Close()
+					return err
+				}
+				for i, v := range values {
+					if zero, ok := database.ImportedZeroValue(table, columns[i]); ok {
+						switch zero.(type) {
+						case bool:
+							if n, ok := v.(int64); ok {
+								values[i] = n != 0
+							}
+						case time.Time:
+							if raw, ok := v.(string); ok {
+								values[i], err = parseDumpTime(raw)
+								if err != nil {
+									rows.Close()
+									return err
+								}
+							}
+						}
+					}
+				}
+				if err := tx.Exec(query, values...).Error; err != nil {
+					rows.Close()
+					return fmt.Errorf("restore %s: %w", table, err)
+				}
+			}
+			err = rows.Err()
+			rows.Close()
+			if err != nil {
+				return err
+			}
+		}
+		if tx.Dialector.Name() == "postgres" {
+			for _, table := range ordered {
+				if !tx.Migrator().HasColumn(table, "id") {
+					continue
+				}
+				var seq *string
+				if err := tx.Raw("SELECT pg_get_serial_sequence(?, 'id')", table).Row().Scan(&seq); err != nil {
+					return err
+				}
+				if seq != nil && *seq != "" {
+					if err := tx.Exec(`SELECT setval(?, COALESCE((SELECT MAX(id) FROM "`+table+`"),1), EXISTS(SELECT 1 FROM "`+table+`"))`, *seq).Error; err != nil {
+						return err
+					}
+				}
+			}
+		}
+		return nil
 	})
+}
+
+func parseDumpTime(raw string) (time.Time, error) {
+	for _, layout := range []string{time.RFC3339Nano, "2006-01-02 15:04:05.999999999Z07:00", "2006-01-02 15:04:05.999999999-07", "2006-01-02 15:04:05.999999999-0700", "2006-01-02 15:04:05.999999999"} {
+		if value, err := time.Parse(layout, raw); err == nil {
+			return value.UTC(), nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("invalid dump timestamp %q", raw)
 }
 
 func consumePostgresCopyDump(tx *gorm.DB, r io.Reader) error {
@@ -138,6 +280,26 @@ func consumePostgresCopyDump(tx *gorm.DB, r io.Reader) error {
 				}
 			}
 			args[i] = decoded
+			if zero, ok := database.ImportedZeroValue(currentTable, columns[i]); ok {
+				switch zero.(type) {
+				case bool:
+					if value, ok := decoded.(string); ok {
+						parsed, err := strconv.ParseBool(value)
+						if err != nil {
+							return err
+						}
+						args[i] = parsed
+					}
+				case time.Time:
+					if raw, ok := decoded.(string); ok {
+						parsed, err := parseDumpTime(raw)
+						if err != nil {
+							return err
+						}
+						args[i] = parsed
+					}
+				}
+			}
 		}
 
 		quotedColumns := make([]string, len(columns))
