@@ -70,7 +70,7 @@ func TestPasswordAuthenticationPolicy(t *testing.T) {
 				t.Fatal(err)
 			}
 			w := httptest.NewRecorder()
-			NewHandler(db, "private-secret-at-least-32-characters", 12).Login(w, httptest.NewRequest("POST", "/", bytes.NewBufferString(`{"username":"admin","password":"password-for-tests"}`)))
+			NewHandler(db, "private-secret-at-least-32-characters", 12).Login(w, httptest.NewRequestWithContext(context.Background(), "POST", "/", bytes.NewBufferString(`{"username":"admin","password":"password-for-tests"}`)))
 			if w.Code != tc.status {
 				t.Fatalf("login returned %d: %s", w.Code, w.Body.String())
 			}
