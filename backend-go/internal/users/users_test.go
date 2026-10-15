@@ -10,21 +10,17 @@ import (
 
 	"remnawave-go/internal/database"
 
-	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 
 func setupTestDB(t *testing.T) *gorm.DB {
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	db, err := database.Init("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("failed to open sqlite in-memory db: %v", err)
 	}
-	err = db.AutoMigrate(
-		&database.User{},
-		&database.UserTraffic{},
-		&database.InternalSquad{},
-		&database.InternalSquadMember{},
-	)
+	sql, _ := db.DB()
+	t.Cleanup(func() { sql.Close() })
+	err = database.AutoMigrate(db)
 	if err != nil {
 		t.Fatalf("failed to auto-migrate: %v", err)
 	}

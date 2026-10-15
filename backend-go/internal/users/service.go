@@ -636,3 +636,50 @@ func (s *Service) Update(id uint64, updates map[string]interface{}) (*database.U
 	}
 	return updatedUser, err
 }
+
+func (s *Service) Resolve(id *uint64, shortUUID, username string) (*database.User, error) {
+	query := s.db.Select("id", "short_uuid", "username")
+	if id != nil {
+		query = query.Where("id = ?", *id)
+	}
+	if shortUUID != "" {
+		query = query.Where("short_uuid = ?", shortUUID)
+	}
+	if username != "" {
+		query = query.Where("username = ?", username)
+	}
+	var user database.User
+	if err := query.First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+type AccessibleNodeRow struct {
+	NodeUUID          string
+	NodeName          string
+	CountryCode       string
+	ConfigProfileUUID string
+	ConfigProfileName string
+	SquadUUID         string
+	SquadName         string
+	InboundTag        string
+}
+
+func (s *Service) AccessibleNodes(userID uint64) ([]AccessibleNodeRow, error) {
+	var user database.User
+	if err := s.db.Select("id").Where("id = ?", userID).First(&user).Error; err != nil {
+		return nil, err
+	}
+	var rows []AccessibleNodeRow
+	err := s.db.Table("nodes AS n").
+		Joins("JOIN config_profiles AS cp ON n.active_config_profile_uuid = cp.uuid").
+		Joins("JOIN config_profile_inbounds AS cpi ON cpi.profile_uuid = cp.uuid").
+		Joins("JOIN config_profile_inbounds_to_nodes AS cpin ON cpin.config_profile_inbound_uuid = cpi.uuid AND cpin.node_uuid = n.uuid").
+		Joins("JOIN internal_squad_inbounds AS isi ON isi.inbound_uuid = cpi.uuid").
+		Joins("JOIN internal_squads AS sq ON sq.uuid = isi.internal_squad_uuid").
+		Joins("JOIN internal_squad_members AS ism ON ism.internal_squad_uuid = sq.uuid AND ism.user_id = ?", userID).
+		Select("n.uuid AS node_uuid, n.name AS node_name, n.country_code, cp.uuid AS config_profile_uuid, cp.name AS config_profile_name, sq.uuid AS squad_uuid, sq.name AS squad_name, cpi.tag AS inbound_tag").
+		Order("n.view_position ASC").Scan(&rows).Error
+	return rows, err
+}
