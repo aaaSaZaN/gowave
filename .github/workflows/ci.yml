@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (vet, race, SQLite + PostgreSQL)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: gowave
+          POSTGRES_PASSWORD: gowave
+          POSTGRES_DB: gowave_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gowave"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: backend-go
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend-go/go.mod
+          cache-dependency-path: backend-go/go.sum
+
+      - name: Formatting
+        run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Tests on SQLite with race detector
+        env:
+          GOWAVE_PROBE_OUT: ${{ runner.temp }}/probe.json
+        run: go test -race -count=1 ./...
+
+      - name: Tests on PostgreSQL
+        env:
+          GOWAVE_TEST_POSTGRES: postgres://gowave:gowave@localhost:5432/gowave_test?sslmode=disable
+          GOWAVE_PROBE_OUT: ${{ runner.temp }}/probe-pg.json
+        run: go test -count=1 ./...
+
+      - name: Build
+        run: CGO_ENABLED=0 go build -o /dev/null ./cmd/server
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: contract-probe
+          path: ${{ runner.temp }}/probe*.json
+
+  frontend:
+    name: Frontend (typecheck, build, contract)
+    runs-on: ubuntu-latest
+    needs: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install (locked)
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        working-directory: frontend
+        run: pnpm run typecheck
+
+      - name: Build
+        working-directory: frontend
+        run: pnpm run build
+
+      - name: Contract fixture is current
+        run: |
+          node scripts/export-contract.cjs > /tmp/commands.json
+          diff -u backend-go/internal/contracts/commands.json /tmp/commands.json
+          node scripts/export-contract.cjs --openapi > /tmp/openapi.json
+          cmp backend-go/internal/contracts/openapi.json /tmp/openapi.json
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: contract-probe
+          path: ${{ runner.temp }}
+
+      - name: Responses match contract schemas
+        run: |
+          for file in probe probe-mutations probe-pg probe-pg-mutations; do
+            node scripts/validate-contract.cjs ${{ runner.temp }}/$file.json
+          done

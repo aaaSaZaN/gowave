@@ -109,6 +109,7 @@ func (Admin) TableName() string {
 }
 
 type User struct {
+	Revision               uint64     `gorm:"default:1" json:"-"`
 	ID                     uint64     `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
 	ShortUUID              string     `gorm:"uniqueIndex;type:varchar(64);column:short_uuid" json:"shortUuid"`
 	Username               string     `gorm:"uniqueIndex;type:varchar(64);column:username" json:"username"`
@@ -164,7 +165,7 @@ type Node struct {
 	IsConnected               bool           `gorm:"default:false" json:"isConnected"`
 	IsConnecting              bool           `gorm:"default:false" json:"isConnecting"`
 	IsDisabled                bool           `gorm:"default:false" json:"isDisabled"`
-	CountryCode               string         `gorm:"type:varchar(8);default:'XX'"`
+	CountryCode               string         `gorm:"type:varchar(8);default:'XX'" json:"countryCode"`
 	TrafficLimitBytes         uint64         `gorm:"default:0" json:"trafficLimitBytes"`
 	TrafficUsedBytes          uint64         `gorm:"default:0" json:"trafficUsedBytes"`
 	IsTrafficTrackingActive   bool           `gorm:"default:false" json:"isTrafficTrackingActive"`
@@ -173,8 +174,8 @@ type Node struct {
 	ViewPosition              int            `gorm:"default:1" json:"viewPosition"`
 	ConsumptionMultiplier     int64          `gorm:"default:1000000000" json:"consumptionMultiplier"`
 	NodeConsumptionMultiplier int64          `gorm:"default:1000000000" json:"nodeConsumptionMultiplier"`
-	Tags                      StringArray    `gorm:"type:text[];default:'{}'"`
-	IntegrationUUIDs          StringArray    `gorm:"type:uuid[];default:'{}'"`
+	Tags                      StringArray    `gorm:"type:text[];default:'{}'" json:"tags"`
+	IntegrationUUIDs          StringArray    `gorm:"type:uuid[];default:'{}'" json:"integrationUuids"`
 	IPs                       string         `gorm:"type:text;default:'[]'"`
 	ActiveConfigProfileUUID   *string        `gorm:"type:varchar(64)" json:"activeConfigProfileUuid"`
 	ProviderUUID              *string        `gorm:"type:varchar(64)" json:"providerUuid"`
@@ -238,7 +239,7 @@ type Host struct {
 	Sni                          string                `gorm:"type:varchar(255)" json:"sni"`
 	Host                         string                `gorm:"type:varchar(255)" json:"host"`
 	Alpn                         string                `gorm:"type:varchar(64)" json:"alpn"`
-	Fingerprint                  string                `gorm:"type:varchar(64);default:'chrome'" json:"fingerprint"`
+	Fingerprint                  string                `gorm:"type:varchar(64)" json:"fingerprint"`
 	SecurityLayer                string                `gorm:"type:varchar(32);default:'DEFAULT'" json:"securityLayer"`
 	XhttpExtraParams             string                `gorm:"type:text" json:"xhttpExtraParams"`
 	MuxParams                    string                `gorm:"type:text" json:"muxParams"`
@@ -611,7 +612,8 @@ func (Keygen) TableName() string {
 type Passkey struct {
 	ID              string    `gorm:"primaryKey;type:varchar(255)" json:"id"`
 	AdminUUID       string    `gorm:"type:varchar(64);index" json:"adminUuid"`
-	PublicKey       []byte    `gorm:"type:blob" json:"-"`
+	PublicKey       []byte    `json:"-"`
+	CredentialData  string    `gorm:"type:text" json:"-"`
 	Counter         int64     `gorm:"default:0" json:"counter"`
 	DeviceType      string    `gorm:"type:varchar(32);default:'singleDevice'"`
 	BackedUp        bool      `gorm:"default:false" json:"backedUp"`
@@ -620,6 +622,38 @@ type Passkey struct {
 	CreatedAt       time.Time `json:"createdAt"`
 	UpdatedAt       time.Time `json:"updatedAt"`
 	Admin           Admin     `gorm:"foreignKey:AdminUUID;references:UUID;constraint:OnDelete:CASCADE" json:"-"`
+}
+
+// AuthChallenge also stores single-use OAuth state and backend-tool tickets.
+type AuthChallenge struct {
+	ID        string    `gorm:"primaryKey;type:varchar(255)"`
+	Purpose   string    `gorm:"index;type:varchar(64)"`
+	AdminUUID string    `gorm:"type:varchar(64)"`
+	Data      string    `gorm:"type:text"`
+	ExpiresAt time.Time `gorm:"index"`
+	CreatedAt time.Time
+}
+
+type Job struct {
+	ID          string     `gorm:"primaryKey;type:varchar(64)" json:"id"`
+	Kind        string     `gorm:"index;type:varchar(64)" json:"kind"`
+	EntityID    string     `gorm:"index;type:varchar(64)" json:"entityId"`
+	Target      string     `gorm:"index;type:varchar(255)" json:"target"`
+	Revision    uint64     `json:"revision"`
+	Payload     string     `gorm:"type:text" json:"-"`
+	Result      string     `gorm:"type:text" json:"-"`
+	State       string     `gorm:"index;type:varchar(16);default:'pending'" json:"state"`
+	Attempts    int        `json:"attempts"`
+	AvailableAt time.Time  `gorm:"index" json:"availableAt"`
+	LeaseUntil  *time.Time `gorm:"index" json:"leaseUntil"`
+	LastError   string     `gorm:"type:text" json:"lastError"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	UpdatedAt   time.Time  `json:"updatedAt"`
+}
+
+type ScheduledExecution struct {
+	ID         string `gorm:"primaryKey;type:varchar(128)"`
+	ExecutedAt time.Time
 }
 
 func (Passkey) TableName() string {

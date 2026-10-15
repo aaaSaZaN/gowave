@@ -20,8 +20,13 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version-file: backend-go/go.mod
           cache-dependency-path: backend-go/go.sum
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -31,8 +36,8 @@ jobs:
       - name: Build Frontend
         working-directory: ./frontend
         run: |
-          npm install
-          npm run build
+          pnpm install --frozen-lockfile
+          pnpm run build
           tar -czf ../gowave-frontend.tar.gz -C dist .
 
       - name: Build Backend Binaries
