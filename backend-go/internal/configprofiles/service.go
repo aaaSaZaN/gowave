@@ -25,7 +25,7 @@ type Service struct {
 func NewService(db *gorm.DB, syncer ...NodeProfileSyncer) *Service {
 	var s NodeProfileSyncer
 	if len(syncer) > 0 {
-	s = syncer[0]
+		s = syncer[0]
 	}
 	return &Service{db: db, syncer: s}
 }
@@ -112,8 +112,10 @@ func (s *Service) CreateHostFromInput(input CreateHostInput) (*database.Host, er
 		port = 443
 	}
 
-	fp := "chrome"
-	if input.Fingerprint != nil && *input.Fingerprint != "" {
+	// Upstream stores a missing fingerprint as null; links then fall back to
+	// the inbound's own fingerprint.
+	fp := ""
+	if input.Fingerprint != nil {
 		fp = *input.Fingerprint
 	}
 

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"remnawave-go/internal/database"
+	"remnawave-go/internal/jobs"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -50,15 +51,27 @@ func GenerateShortUUID(length int) string {
 	return string(bytes)
 }
 
+// GenerateRandomPassword draws from upstream's nanoid alphabet.
 func GenerateRandomPassword(length int) string {
-	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	bytes := make([]byte, length)
-	for i := 0; i < length; i++ {
-		num, _ := rand.Int(rand.Reader, big.NewInt(int64(len(chars))))
-		bytes[i] = chars[num.Int64()]
-	}
-	return string(bytes)
+	return GenerateShortUUID(length)
 }
+
+// shortUUIDLength is SHORT_UUID_LENGTH; set once at startup.
+var shortUUIDLength = 16
+
+// SetShortUUIDLength applies SHORT_UUID_LENGTH (16-64) to generated ids.
+func SetShortUUIDLength(length int) {
+	if length >= 16 && length <= 64 {
+		shortUUIDLength = length
+	}
+}
+
+// NewShortUUID generates a subscription identifier like upstream's nanoid
+// method with the configured length.
+func NewShortUUID() string { return GenerateShortUUID(shortUUIDLength) }
+
+// NewPassword generates a 32-character protocol password like upstream.
+func NewPassword() string { return GenerateRandomPassword(32) }
 
 type CreateUserDTO struct {
 	Username             string    `json:"username"`
@@ -86,6 +99,10 @@ type squadMemberRow struct {
 }
 
 func (s *Service) loadSquadsForUsers(users []*database.User) error {
+	return loadSquads(s.db, users)
+}
+
+func loadSquads(db *gorm.DB, users []*database.User) error {
 	if len(users) == 0 {
 		return nil
 	}
@@ -96,7 +113,7 @@ func (s *Service) loadSquadsForUsers(users []*database.User) error {
 	}
 
 	var rows []squadMemberRow
-	err := s.db.Table("internal_squad_members").
+	err := db.Table("internal_squad_members").
 		Select("internal_squad_members.user_id, internal_squads.uuid, internal_squads.name").
 		Joins("JOIN internal_squads ON internal_squads.uuid = internal_squad_members.internal_squad_uuid").
 		Where("internal_squad_members.user_id IN ?", userIDs).
@@ -129,16 +146,16 @@ func (s *Service) Create(dto CreateUserDTO) (*database.User, error) {
 		dto.Status = "ACTIVE"
 	}
 	if dto.ShortUUID == "" {
-		dto.ShortUUID = GenerateShortUUID(16)
+		dto.ShortUUID = NewShortUUID()
 	}
 	if dto.TrojanPassword == "" {
-		dto.TrojanPassword = GenerateRandomPassword(16)
+		dto.TrojanPassword = NewPassword()
 	}
 	if dto.VlessUUID == "" {
 		dto.VlessUUID = uuid.NewString()
 	}
 	if dto.SsPassword == "" {
-		dto.SsPassword = GenerateRandomPassword(16)
+		dto.SsPassword = NewPassword()
 	}
 
 	var emailStr string
@@ -197,7 +214,10 @@ func (s *Service) Create(dto CreateUserDTO) (*database.User, error) {
 				}
 			}
 		}
-		return nil
+		if err := emitUser(tx, user, "user.created"); err != nil {
+			return err
+		}
+		return jobs.EnqueueUser(tx, user, nil, false)
 	})
 
 	if err != nil {
@@ -557,7 +577,10 @@ func normalizeUserFields(raw map[string]interface{}) (map[string]interface{}, []
 }
 
 func (s *Service) Update(id uint64, updates map[string]interface{}) (*database.User, error) {
-	prevUser, _ := s.GetByID(id)
+	prevUser, previousErr := s.GetByID(id)
+	if previousErr != nil {
+		return nil, previousErr
+	}
 	var prevVlessUUID *string
 	if prevUser != nil {
 		prevVlessUUID = &prevUser.VlessUUID
@@ -565,6 +588,7 @@ func (s *Service) Update(id uint64, updates map[string]interface{}) (*database.U
 
 	dbFields, activeSquads, hasSquads := normalizeUserFields(updates)
 	dbFields["updated_at"] = time.Now().UTC()
+	dbFields["revision"] = gorm.Expr("revision + 1")
 
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		if len(dbFields) > 0 {
@@ -589,7 +613,14 @@ func (s *Service) Update(id uint64, updates map[string]interface{}) (*database.U
 				}
 			}
 		}
-		return nil
+		var current database.User
+		if err := tx.Where("id = ?", id).First(&current).Error; err != nil {
+			return err
+		}
+		if err := emitUser(tx, &current, "user.modified"); err != nil {
+			return err
+		}
+		return jobs.EnqueueUser(tx, &current, prevVlessUUID, false)
 	})
 
 	if err != nil {
@@ -604,216 +635,4 @@ func (s *Service) Update(id uint64, updates map[string]interface{}) (*database.U
 		}
 	}
 	return updatedUser, err
-}
-
-func (s *Service) Delete(id uint64) error {
-	user, _ := s.GetByID(id)
-	err := s.db.Transaction(func(tx *gorm.DB) error {
-		_ = tx.Where("user_id = ?", id).Delete(&database.InternalSquadMember{}).Error
-		if err := tx.Where("id = ?", id).Delete(&database.UserTraffic{}).Error; err != nil {
-			return err
-		}
-		return tx.Where("id = ?", id).Delete(&database.User{}).Error
-	})
-	if err == nil && user != nil && s.syncer != nil {
-		s.syncer.RemoveUserFromNodes(user)
-	}
-	return err
-}
-
-func (s *Service) ResetTraffic(id uint64) error {
-	now := time.Now().UTC()
-	err := s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&database.UserTraffic{}).Where("id = ?", id).Update("used_traffic_bytes", 0).Error; err != nil {
-			return err
-		}
-		return tx.Model(&database.User{}).Where("id = ?", id).Update("last_traffic_reset_at", &now).Error
-	})
-	if err == nil && s.syncer != nil {
-		if user, _ := s.GetByID(id); user != nil && strings.ToUpper(user.Status) == "ACTIVE" {
-			s.syncer.SyncUserToNodes(user, nil)
-		}
-	}
-	return err
-}
-
-func (s *Service) SetStatus(id uint64, status string) error {
-	err := s.db.Model(&database.User{}).Where("id = ?", id).Update("status", status).Error
-	if err == nil && s.syncer != nil {
-		if user, _ := s.GetByID(id); user != nil {
-			if strings.ToUpper(status) == "ACTIVE" {
-				s.syncer.SyncUserToNodes(user, nil)
-			} else {
-				s.syncer.RemoveUserFromNodes(user)
-			}
-		}
-	}
-	return err
-}
-
-func (s *Service) BulkExtendExpirationDate(userIds []uint64, extendDays int) error {
-	if len(userIds) == 0 || extendDays <= 0 {
-		return nil
-	}
-	now := time.Now().UTC()
-	return s.db.Transaction(func(tx *gorm.DB) error {
-		var users []database.User
-		if err := tx.Where("id IN ?", userIds).Find(&users).Error; err != nil {
-			return err
-		}
-		for _, u := range users {
-			newExpire := u.ExpireAt.Add(time.Duration(extendDays) * 24 * time.Hour)
-			updates := map[string]interface{}{
-				"expire_at":  newExpire,
-				"updated_at": now,
-			}
-			if u.Status == "EXPIRED" && newExpire.After(now) {
-				updates["status"] = "ACTIVE"
-			}
-			if err := tx.Model(&database.User{}).Where("id = ?", u.ID).Updates(updates).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-}
-
-func (s *Service) BulkAllExtendExpirationDate(extendDays int) error {
-	if extendDays <= 0 {
-		return nil
-	}
-	now := time.Now().UTC()
-	return s.db.Transaction(func(tx *gorm.DB) error {
-		var users []database.User
-		if err := tx.Find(&users).Error; err != nil {
-			return err
-		}
-		for _, u := range users {
-			newExpire := u.ExpireAt.Add(time.Duration(extendDays) * 24 * time.Hour)
-			updates := map[string]interface{}{
-				"expire_at":  newExpire,
-				"updated_at": now,
-			}
-			if u.Status == "EXPIRED" && newExpire.After(now) {
-				updates["status"] = "ACTIVE"
-			}
-			if err := tx.Model(&database.User{}).Where("id = ?", u.ID).Updates(updates).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-}
-
-func (s *Service) BulkUpdate(userIds []uint64, rawFields map[string]interface{}) error {
-	if len(userIds) == 0 || len(rawFields) == 0 {
-		return nil
-	}
-	dbFields, _, _ := normalizeUserFields(rawFields)
-	dbFields["updated_at"] = time.Now().UTC()
-	return s.db.Model(&database.User{}).Where("id IN ?", userIds).Updates(dbFields).Error
-}
-
-func (s *Service) BulkAllUpdate(rawFields map[string]interface{}) error {
-	if len(rawFields) == 0 {
-		return nil
-	}
-	dbFields, _, _ := normalizeUserFields(rawFields)
-	dbFields["updated_at"] = time.Now().UTC()
-	return s.db.Model(&database.User{}).Where("1 = 1").Updates(dbFields).Error
-}
-
-func (s *Service) BulkResetTraffic(userIds []uint64) error {
-	if len(userIds) == 0 {
-		return nil
-	}
-	now := time.Now().UTC()
-	return s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&database.UserTraffic{}).Where("id IN ?", userIds).Update("used_traffic_bytes", 0).Error; err != nil {
-			return err
-		}
-		return tx.Model(&database.User{}).Where("id IN ?", userIds).Update("last_traffic_reset_at", &now).Error
-	})
-}
-
-func (s *Service) BulkAllResetTraffic() error {
-	now := time.Now().UTC()
-	return s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&database.UserTraffic{}).Where("1 = 1").Update("used_traffic_bytes", 0).Error; err != nil {
-			return err
-		}
-		return tx.Model(&database.User{}).Where("1 = 1").Update("last_traffic_reset_at", &now).Error
-	})
-}
-
-func (s *Service) BulkRevokeSubscription(userIds []uint64) error {
-	if len(userIds) == 0 {
-		return nil
-	}
-	now := time.Now().UTC()
-	updates := map[string]interface{}{
-		"sub_revoked_at": now,
-		"status":         "DISABLED",
-		"updated_at":     now,
-	}
-	return s.db.Model(&database.User{}).Where("id IN ?", userIds).Updates(updates).Error
-}
-
-func (s *Service) BulkDelete(userIds []uint64) error {
-	if len(userIds) == 0 {
-		return nil
-	}
-	return s.db.Transaction(func(tx *gorm.DB) error {
-		_ = tx.Where("user_id IN ?", userIds).Delete(&database.InternalSquadMember{}).Error
-		if err := tx.Where("id IN ?", userIds).Delete(&database.UserTraffic{}).Error; err != nil {
-			return err
-		}
-		return tx.Where("id IN ?", userIds).Delete(&database.User{}).Error
-	})
-}
-
-func (s *Service) BulkDeleteByStatus(status string) error {
-	if status == "" {
-		return nil
-	}
-	return s.db.Transaction(func(tx *gorm.DB) error {
-		var userIDs []uint64
-		if err := tx.Model(&database.User{}).Where("status = ?", status).Pluck("id", &userIDs).Error; err != nil {
-			return err
-		}
-		if len(userIDs) == 0 {
-			return nil
-		}
-		_ = tx.Where("user_id IN ?", userIDs).Delete(&database.InternalSquadMember{}).Error
-		if err := tx.Where("id IN ?", userIDs).Delete(&database.UserTraffic{}).Error; err != nil {
-			return err
-		}
-		return tx.Where("id IN ?", userIDs).Delete(&database.User{}).Error
-	})
-}
-
-func (s *Service) BulkUpdateSquads(userIds []uint64, squadUUIDs []string) error {
-	if len(userIds) == 0 {
-		return nil
-	}
-	return s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("user_id IN ?", userIds).Delete(&database.InternalSquadMember{}).Error; err != nil {
-			return err
-		}
-		for _, uid := range userIds {
-			for _, squadUUID := range squadUUIDs {
-				squadUUID = strings.TrimSpace(squadUUID)
-				if squadUUID != "" {
-					member := database.InternalSquadMember{
-						InternalSquadUUID: squadUUID,
-						UserID:            uid,
-					}
-					if err := tx.Create(&member).Error; err != nil {
-						return err
-					}
-				}
-			}
-		}
-		return nil
-	})
 }

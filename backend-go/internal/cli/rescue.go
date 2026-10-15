@@ -217,7 +217,10 @@ func ListAdmins(db *gorm.DB) {
 }
 
 func EnablePasswordAuth(db *gorm.DB) {
-	res := db.Model(&database.RemnawaveSetting{}).Where("id = 1").Update("password_auth_enabled", true)
+	res := db.Model(&database.RemnawaveSetting{}).Where("id = 1").Updates(map[string]interface{}{
+		"password_auth_enabled": true,
+		"password_settings":     `{"enabled":true}`,
+	})
 	if res.Error != nil {
 		fmt.Printf("[-] Failed to update settings: %v\n", res.Error)
 		return
