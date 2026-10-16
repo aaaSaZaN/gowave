@@ -10,12 +10,14 @@ services:
     restart: unless-stopped
     env_file: .env
     ports:
-      - "${APP_PORT:-3000}:3000"
+      # Loopback only: put Caddy/Nginx with HTTPS in front of the panel
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
       # Metrics stay on loopback; set METRICS_USER/METRICS_PASS to scrape them
       - "127.0.0.1:${METRICS_PORT:-3001}:3001"
     environment:
       # These override .env: inside the container the panel always uses the
       # bundled PostgreSQL and fixed ports.
+      - APP_HOST=0.0.0.0
       - APP_PORT=3000
       - METRICS_PORT=3001
       - APP_SECRET=${APP_SECRET:?Set APP_SECRET in .env (openssl rand -hex 32)}

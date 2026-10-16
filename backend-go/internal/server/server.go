@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"mime"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -112,7 +113,10 @@ func Run() {
 	app := NewApp(cfg, db)
 	app.Start(ctx)
 
-	serverAddr := ":" + cfg.AppPort
+	serverAddr := net.JoinHostPort(cfg.AppHost, cfg.AppPort)
+	if !cfg.IsLoopbackHost() {
+		fmt.Printf("WARNING: APP_HOST=%s exposes the panel without HTTPS. Keep APP_HOST=127.0.0.1 and serve the panel through a reverse proxy (Caddy/Nginx).\n", cfg.AppHost)
+	}
 	srv := &http.Server{
 		Addr:              serverAddr,
 		Handler:           app.Router,
@@ -471,7 +475,7 @@ func NewApp(cfg *config.Config, db *gorm.DB) *App {
 		go nodeService.SyncAllUsersToConnectedNodes()
 		go metricsExporter.Run(ctx)
 		if cfg.MetricsPort != "" {
-			go prometheus.Serve(ctx, ":"+cfg.MetricsPort, prometheus.Handler(db, cfg.MetricsUser, cfg.MetricsPass))
+			go prometheus.Serve(ctx, net.JoinHostPort(cfg.AppHost, cfg.MetricsPort), prometheus.Handler(db, cfg.MetricsUser, cfg.MetricsPass))
 		}
 	}}
 }

@@ -15,113 +15,74 @@ Gowave — это оптимизированное решение тяжелых
 
 ---
 
-## Быстрый запуск
+## Установка
 
-### Способ 1: Запуск через Docker Compose (GoWave + PostgreSQL)
+Нужны сервер на Debian/Ubuntu или RHEL-семействе (`amd64`/`arm64`) и домен, A-запись которого указывает на IP сервера. Панель открывается только по домену через HTTPS, без домена установщик не продолжит.
 
-Рекомендуемый способ запуска с базой PostgreSQL. Образ панели берётся из `ghcr.io/aaasazan/gowave`.
-
-#### Установка Docker
-Если Docker ещё не установлен, поставьте его официальным скриптом (Docker Engine + плагин `docker compose`):
 ```bash
-curl -fsSL https://get.docker.com | sudo sh
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/aaaSaZaN/gowave/main/install.sh)"
 ```
-> Docker называет этот скрипт «convenience script» и не рекомендует его для production: он ставит последнюю версию без выбора, не спрашивает подтверждения и не предназначен для обновления уже установленного Docker. Для одного VPS с панелью это нормальный способ: скрипт подключает официальный apt/dnf-репозиторий Docker, и дальше Docker обновляется вместе с системой (`apt upgrade`). Запускайте его **один раз** на чистом сервере; повторно для обновления — не нужно. Если нужна фиксированная версия или вы ставите на много серверов, используйте [установку из репозитория](https://docs.docker.com/engine/install/).
 
-#### Запуск панели
+Установщик задаст три вопроса:
+1. **База данных**: SQLite (один файл, без Docker, обновление из панели) или PostgreSQL в Docker.
+2. **Домен панели**: проверит, что он указывает на этот сервер.
+3. **Reverse proxy**: Caddy (сертификат выпускается и продлевается сам) или Nginx + Certbot.
+
+Дальше он сам скачает релиз и сверит `SHA256SUMS`, сгенерирует `APP_SECRET`, создаст службу `gowave`, настроит прокси с HTTPS и откроет 80/443 в `ufw`/`firewalld`. Панель слушает только `127.0.0.1` и доступна по `https://<домен>`. Первый, кто откроет панель, создаёт администратора, поэтому откройте её сразу после установки.
+
+**Переезд с другой панели.** Если на сервере найдена Remnawave (`/opt/remnawave`) или PasarGuard (`/opt/pasarguard`, SQLite или PostgreSQL/TimescaleDB), установщик предложит перенести данные в GoWave на SQLite или на PostgreSQL в Docker. Старая панель останавливается и больше не запускается при загрузке, но её контейнеры и данные не удаляются. Если перенос не удался, она запускается обратно.
+
+**Повторный запуск** той же команды на сервере с GoWave открывает меню: обновить, сменить домен и прокси, удалить (с резервной копией базы по желанию). Конкретную версию можно поставить, указав `GOWAVE_VERSION=v1.2.3` перед `bash`.
+
+Лог установки: `/var/log/gowave-install.log`.
+
+<details>
+<summary><b>Ручная установка</b></summary>
+
+### Docker Compose (GoWave + PostgreSQL)
+
+Образ панели берётся из `ghcr.io/aaasazan/gowave`. Docker ставится официальным скриптом: `curl -fsSL https://get.docker.com | sudo sh`.
+
 ```bash
-# 1. Файлы compose
 mkdir -p /opt/gowave-docker && cd /opt/gowave-docker
 curl -fsSLO https://raw.githubusercontent.com/aaaSaZaN/gowave/main/docker-compose.yml
 curl -fsSL https://raw.githubusercontent.com/aaaSaZaN/gowave/main/.env.docker.example -o .env
-
-# 2. Секреты генерируются автоматически, домены укажите в .env
 sed -i "s/^APP_SECRET=.*/APP_SECRET=$(openssl rand -hex 32)/; s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 24)/" .env
-nano .env
-
-# 3. Запуск панели и PostgreSQL
+nano .env   # PANEL_DOMAIN и SUB_PUBLIC_DOMAIN
 docker compose up -d
 ```
-Панель сразу доступна в браузере по адресу `http://<IP_сервера>:3000`.
+Панель публикуется на `127.0.0.1:3000`, дальше настройте [reverse proxy](#reverse-proxy).
 
-**Обновление** выполняется на сервере (из панели в Docker обновиться нельзя: контейнер не может заменить сам себя, а доступ к Docker-сокету из панели дал бы ей root на хосте). Когда выйдет новая версия, панель покажет эту команду:
-```bash
-cd /opt/gowave-docker && docker compose pull && docker compose up -d
-```
-CLI-команды панели в Docker запускаются внутри контейнера: `docker compose exec gowave /app/gowave rescue --list-admins`.
+Обновление выполняется на сервере (контейнер не может заменить сам себя): `cd /opt/gowave-docker && docker compose pull && docker compose up -d`. CLI-команды запускаются в контейнере: `docker compose exec gowave /app/gowave rescue --list-admins`.
 
----
-
-### Способ 2: Нативный Standalone запуск (Systemd + SQLite)
-
-Вам **не требуется** устанавливать Go, Node.js или собирать проект вручную на сервере - используйте готовые бинарники для архитектур `x86_64` (AMD/Intel) или `arm64` (ARMv8).
-
-### 1. Скачивание файлов релиза
-
-Создайте рабочую директорию на вашем сервере:
+### Systemd + SQLite
 
 ```bash
-mkdir -p /opt/gowave && cd /opt/gowave
-```
+mkdir -p /opt/gowave/frontend/dist && cd /opt/gowave
+ARCH=$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/')
+curl -fL -o gowave-server https://github.com/aaaSaZaN/gowave/releases/latest/download/gowave-linux-$ARCH
+curl -fLO https://github.com/aaaSaZaN/gowave/releases/latest/download/gowave-frontend.tar.gz
+chmod +x gowave-server && tar -xzf gowave-frontend.tar.gz -C frontend/dist
 
-#### Для серверов x86_64 (Intel / AMD):
-```bash
-curl -L -o gowave-server https://github.com/aaaSaZaN/gowave/releases/latest/download/gowave-linux-amd64
-chmod +x gowave-server
-```
-
-#### Для серверов arm64 / ARMv8:
-```bash
-curl -L -o gowave-server https://github.com/aaaSaZaN/gowave/releases/latest/download/gowave-linux-arm64
-chmod +x gowave-server
-```
-
-#### Скачивание готового веб-интерфейса:
-```bash
-curl -LO https://github.com/aaaSaZaN/gowave/releases/latest/download/gowave-frontend.tar.gz
-mkdir -p frontend/dist && tar -xzf gowave-frontend.tar.gz -C frontend/dist
-```
-
----
-
-### 2. Настройка окружения (`.env`)
-
-Сгенерируйте случайный 32-байтный ключ безопасности в терминале:
-```bash
-openssl rand -hex 32
-```
-*(Скопируйте выведенную команду строку)*
-
-Затем создайте и откройте файл окружения:
-```bash
-nano /opt/gowave/.env
-```
-
-Вставьте настройки и замените `APP_SECRET` на скопированный ключ:
-
-> [!NOTE]
-> Ниже приведены **минимально необходимые параметры** для первого запуска Gowave. Все доступные параметры см. в таблице [Переменные окружения](#переменные-окружения).
-
-```env
+cat > .env <<ENV
+APP_HOST=127.0.0.1
 APP_PORT=3000
-APP_SECRET=вставьте_сюда_ключ_полученный_из_openssl
+APP_SECRET=$(openssl rand -hex 32)
 DB_DRIVER=sqlite
 DATABASE_URL=gowave.db
-PANEL_DOMAIN=panel.yourdomain.com ## change to your domain panel!
-SUB_PUBLIC_DOMAIN=panel.yourdomain.com/api/sub ## change to your domain for ur subcruption!
+PANEL_DOMAIN=panel.yourdomain.com
+SUB_PUBLIC_DOMAIN=panel.yourdomain.com/api/sub
+ENV
+chmod 600 .env
 ```
-*(Чтобы сохранить файл в nano: нажмите `Ctrl+O` ➔ `Enter`, затем для выхода `Ctrl+X`)*.
 
----
-
-### 3. Автозапуск через Systemd
-
-Создайте файл службы `/etc/systemd/system/gowave.service`:
+Служба `/etc/systemd/system/gowave.service`:
 
 ```ini
 [Unit]
-Description=Gowave Panel Service
-After=network.target
+Description=GoWave Panel
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
@@ -136,49 +97,22 @@ LimitNOFILE=65535
 WantedBy=multi-user.target
 ```
 
-Активируйте и запустите службу:
-
 ```bash
-systemctl daemon-reload
-systemctl enable --now gowave
-systemctl status gowave
+systemctl daemon-reload && systemctl enable --now gowave
 ```
 
----
+### Reverse proxy
 
-## Настройка Reverse Proxy
-
-### Вариант 1: Caddy ( автоматическое SSL и сжатие)
-
-Отредактируйте `/etc/caddy/Caddyfile`:
+**Caddy** (`/etc/caddy/Caddyfile`, затем `systemctl reload caddy`):
 
 ```caddy
 panel.yourdomain.com {
-    # энкодинг Zstandard + Gzip
     encode zstd gzip
-
     reverse_proxy 127.0.0.1:3000
 }
 ```
 
-Примените изменения:
-```bash
-systemctl reload caddy
-```
-
----
-
-### Вариант 2: Nginx
-
-#### 1. Выпуск бесплатного SSL-сертификата (через Certbot или acme.sh)
-Самый простой способ - выпуск сертификата через Certbot:
-```bash
-apt install -y certbot python3-certbot-nginx
-certbot certonly --standalone -d panel.yourdomain.com
-```
-
-#### 2. Конфигурация Nginx
-Создайте конфиг `/etc/nginx/sites-available/gowave.conf` (замените `panel.yourdomain.com` на ваш домен):
+**Nginx.** Сертификат: `certbot certonly --standalone -d panel.yourdomain.com` (порт 80 должен быть свободен). Конфиг `/etc/nginx/conf.d/gowave.conf`:
 
 ```nginx
 map $http_upgrade $connection_upgrade {
@@ -200,8 +134,8 @@ server {
 
 server {
     server_name panel.yourdomain.com;
-    listen 443 ssl reuseport;
-    listen [::]:443 ssl reuseport;
+    listen 443 ssl;
+    listen [::]:443 ssl;
     http2 on;
 
     client_max_body_size 50M;
@@ -226,11 +160,6 @@ server {
 
     ssl_certificate /etc/letsencrypt/live/panel.yourdomain.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/panel.yourdomain.com/privkey.pem;
-
-    ssl_stapling on;
-    ssl_stapling_verify on;
-    resolver 1.1.1.1 1.0.0.1 8.8.8.8 8.8.4.4 valid=60s;
-    resolver_timeout 2s;
 
     # Gzip Compression
     gzip on;
@@ -272,13 +201,9 @@ server {
 }
 ```
 
-#### 3. Активация и перезапуск Nginx
-```bash
-ln -s /etc/nginx/sites-available/gowave.conf /etc/nginx/sites-enabled/
-nginx -t && systemctl reload nginx
-```
+`ssl_reject_handshake` требует Nginx 1.19.4+, `http2 on` требует 1.25.1+ (на старых версиях пишите `listen 443 ssl http2;`). Проверка и применение: `nginx -t && systemctl reload nginx`.
 
----
+</details>
 
 ---
 
@@ -335,6 +260,7 @@ curl -sSL https://raw.githubusercontent.com/aaaSaZaN/gowave/main/scripts/migrate
    SUB_PUBLIC_DOMAIN=sub.yourdomain.com
    ```
    И перезапустите Gowave: `systemctl restart gowave`.
+   Страница подписки обращается к панели по её домену: внутри контейнера `127.0.0.1` указывает на сам контейнер, а панель слушает только loopback хоста.
 
 2. Создайте каталог для страницы подписки:
    ```bash
@@ -352,7 +278,7 @@ curl -sSL https://raw.githubusercontent.com/aaaSaZaN/gowave/main/scripts/migrate
          - "127.0.0.1:3010:3010"
        environment:
          - APP_PORT=3010
-         - REMNAWAVE_PANEL_URL=http://127.0.0.1:3000
+         - REMNAWAVE_PANEL_URL=https://panel.yourdomain.com
          - REMNAWAVE_API_TOKEN=ВАШ_API_ТОКЕН_ИЗ_ПАНЕЛИ
          - TRUST_PROXY=1
    ```
@@ -453,6 +379,8 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 
 ## Миграция базы данных (PasarGuard и Remnawave)
 
+Установщик (`install.sh`) сам находит Remnawave и PasarGuard и предлагает перенос. Команды ниже нужны для ручного запуска.
+
 Gowave поддерживает быстрый перенос данных в один клик без запуска панели:
 
 ### 1. Переезд с PasarGuard (в SQLite или PostgreSQL)
@@ -465,9 +393,10 @@ gowave import pasarguard /opt/pasarguard/data/db.sqlite3
 ```
 * Переносит всех пользователей, VLESS UUID, пароли Trojan / Shadowsocks / Hysteria, лимиты трафика, стратегии сброса, заметки и привязки устройств по HWID.
 * Автоматически привязывает пользователей к дефолтному скваду нод.
+* База находится сама по `SQLALCHEMY_DATABASE_URL` из `/opt/pasarguard/.env` (SQLite, PostgreSQL или TimescaleDB, в том числе через pgbouncer) или по файлу `/var/lib/pasarguard/db.sqlite3`. MySQL/MariaDB не поддерживаются.
 
 ### 3. Переезд с GoWave SQLite (Systemd) ➔ GoWave в Docker (PostgreSQL)
-Если панель установлена бинарником с SQLite, а вы хотите перейти на Docker Compose с PostgreSQL. Нужен установленный Docker с плагином compose (см. [Установка Docker](#установка-docker)), запускать от root на сервере панели:
+Если панель установлена бинарником с SQLite, а вы хотите перейти на Docker Compose с PostgreSQL. Нужен установленный Docker с плагином compose (`curl -fsSL https://get.docker.com | sudo sh`), запускать от root на сервере панели:
 ```bash
 gowave migrate to-docker
 
@@ -499,7 +428,7 @@ gowave migrate pg-to-sqlite
 ```
 * Автоматически находит настройки подключения к PostgreSQL старой Remnawave (`/opt/remnawave/.env`).
 * Переносит все таблицы без потерь (пользователей, трафик, ноды, хосты, reality-шаблоны, сквады).
-* Сам переключает `.env` на `DB_DRIVER=sqlite` (сохраняя бэкап `.env.bak`).
+* Исходную базу и `.env` не меняет: укажите полученный файл в `DATABASE_URL` с `DB_DRIVER=sqlite` и перезапустите GoWave. Установщик (`install.sh`) делает это сам.
 * При использовании интерактивного меню (`gowave rescue`) вежливо предложит остановить и удалить старые Docker-контейнеры (`remnawave`, `remnawave-db`, `remnawave-redis`), освободив оперативку и диск (строго по подтверждению `y`).
 
 ---
@@ -535,6 +464,7 @@ gowave rescue
 
 | Переменная | По умолчанию | Описание |
 | :--- | :--- | :--- |
+| `APP_HOST` | `127.0.0.1` | Адрес, на котором слушают панель и метрики. Наружу панель отдаётся только через reverse proxy с HTTPS; `0.0.0.0` нужен лишь внутри контейнера |
 | `APP_PORT` | `3000` | HTTP-порт веб-панели и API |
 | `METRICS_PORT` | `3001` | Порт внутренней телеметрии и метрик |
 | `APP_SECRET` | *(обязательно)* | Секретный ключ (минимум 32 символа) для подписи JWT и хешей |

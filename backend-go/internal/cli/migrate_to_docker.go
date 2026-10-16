@@ -41,7 +41,7 @@ const (
 var dockerContainerNames = []string{"gowave", "gowave-postgres"}
 
 // envKeysReplacedInDocker are host-install settings the compose file sets itself.
-var envKeysReplacedInDocker = map[string]bool{"DB_DRIVER": true, "DATABASE_URL": true}
+var envKeysReplacedInDocker = map[string]bool{"DB_DRIVER": true, "DATABASE_URL": true, "APP_HOST": true}
 
 type toDockerOptions struct {
 	FromDir   string

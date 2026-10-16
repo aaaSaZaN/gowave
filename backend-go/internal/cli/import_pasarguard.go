@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -58,71 +59,149 @@ type PasarGuardRawHWID struct {
 	CreatedAt   time.Time `gorm:"column:created_at"`
 }
 
+// pasarGuardEnvFiles hold SQLALCHEMY_DATABASE_URL; the PasarGuard installer
+// writes /opt/pasarguard/.env.
+var pasarGuardEnvFiles = []string{
+	"/opt/pasarguard/.env",
+	"/opt/pasarguard/data/.env",
+	"./.env.pasarguard",
+}
+
+// pasarGuardSQLitePaths are tried when no .env names the database. The
+// installer keeps SQLite in /var/lib/pasarguard, mounted at the same path in
+// its container.
+var pasarGuardSQLitePaths = []string{
+	"/var/lib/pasarguard/db.sqlite3",
+	"/opt/pasarguard/data/db.sqlite3",
+	"/opt/pasarguard/db.sqlite3",
+	"/etc/pasarguard/db.sqlite3",
+	"./pasarguard.db",
+	"./db.sqlite3",
+}
+
 func DetectPasarGuardSource(source string) (driver string, dsn string, err error) {
 	if source != "" {
-		if strings.HasPrefix(source, "postgres://") || strings.HasPrefix(source, "postgresql://") {
-			return "postgres", source, nil
+		if driver, dsn, ok, err := parsePasarGuardDatabaseURL(source, ""); err != nil || ok {
+			return driver, dsn, err
 		}
 		if _, err := os.Stat(source); err == nil {
 			return "sqlite", source, nil
 		}
 		return "", "", fmt.Errorf("specified source '%s' not found or invalid", source)
 	}
+	return detectPasarGuardSourceIn(pasarGuardEnvFiles, pasarGuardSQLitePaths)
+}
 
-	// 1. Common SQLite paths
-	candidates := []string{
-		"/opt/pasarguard/data/db.sqlite3",
-		"/opt/pasarguard/db.sqlite3",
-		"/var/lib/pasarguard/db.sqlite3",
-		"/etc/pasarguard/db.sqlite3",
-		"./pasarguard.db",
-		"./db.sqlite3",
-	}
-	for _, p := range candidates {
-		if _, err := os.Stat(p); err == nil {
-			return "sqlite", p, nil
+func detectPasarGuardSourceIn(envFiles, sqlitePaths []string) (string, string, error) {
+	// The .env names the database the panel actually uses; a SQLite file left
+	// over from before a switch to PostgreSQL must not win over it.
+	for _, envFile := range envFiles {
+		data, err := os.ReadFile(envFile)
+		if err != nil {
+			continue
 		}
+		value, found := pasarGuardEnvValue(string(data), "SQLALCHEMY_DATABASE_URL")
+		if !found {
+			value, found = pasarGuardEnvValue(string(data), "DATABASE_URL")
+		}
+		if !found {
+			continue
+		}
+		driver, dsn, ok, err := parsePasarGuardDatabaseURL(value, filepath.Dir(envFile))
+		if err != nil {
+			return "", "", err
+		}
+		if !ok {
+			continue
+		}
+		if driver == "sqlite" {
+			if _, err := os.Stat(dsn); err != nil {
+				// Relative paths resolve inside the PasarGuard container.
+				continue
+			}
+		}
+		return driver, dsn, nil
 	}
 
-	// 2. Check /opt/pasarguard/.env for database URL
-	envFiles := []string{
-		"/opt/pasarguard/.env",
-		"/opt/pasarguard/data/.env",
-		"./.env.pasarguard",
-	}
-	for _, ef := range envFiles {
-		if data, err := os.ReadFile(ef); err == nil {
-			lines := strings.Split(string(data), "\n")
-			for _, line := range lines {
-				line = strings.TrimSpace(line)
-				if strings.HasPrefix(line, "SQLALCHEMY_DATABASE_URL=") || strings.HasPrefix(line, "DATABASE_URL=") {
-					parts := strings.SplitN(line, "=", 2)
-					if len(parts) == 2 {
-						val := strings.Trim(strings.TrimSpace(parts[1]), `"'`)
-						if strings.HasPrefix(val, "sqlite:////") {
-							p := strings.TrimPrefix(val, "sqlite:////")
-							p = "/" + strings.TrimLeft(p, "/")
-							if _, err := os.Stat(p); err == nil {
-								return "sqlite", p, nil
-							}
-						} else if strings.HasPrefix(val, "sqlite:///") {
-							p := strings.TrimPrefix(val, "sqlite:///")
-							if !filepath.IsAbs(p) {
-								p = filepath.Join(filepath.Dir(ef), p)
-							}
-							if _, err := os.Stat(p); err == nil {
-								return "sqlite", p, nil
-							}
-						} else if strings.HasPrefix(val, "postgres://") || strings.HasPrefix(val, "postgresql://") {
-							return "postgres", val, nil
-						}
-					}
-				}
-			}
+	for _, path := range sqlitePaths {
+		if _, err := os.Stat(path); err == nil {
+			return "sqlite", path, nil
 		}
 	}
 
 	return "", "", fmt.Errorf("no PasarGuard database automatically detected. Please specify path or connection string manually")
+}
+
+// pasarGuardEnvValue returns the last uncommented assignment of key. The
+// PasarGuard .env uses python-dotenv style `KEY = "value"` with spaces.
+func pasarGuardEnvValue(data, key string) (string, bool) {
+	value, found := "", false
+	for _, line := range strings.Split(data, "\n") {
+		line = strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(line), "export "))
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		name, raw, ok := strings.Cut(line, "=")
+		if !ok || strings.TrimSpace(name) != key {
+			continue
+		}
+		raw = strings.TrimSpace(raw)
+		if len(raw) >= 2 && (raw[0] == '"' || raw[0] == '\'') && raw[len(raw)-1] == raw[0] {
+			raw = raw[1 : len(raw)-1]
+		}
+		value, found = raw, true
+	}
+	return value, found
+}
+
+// parsePasarGuardDatabaseURL converts an SQLAlchemy URL such as
+// sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3 or
+// postgresql+asyncpg://user:pass@127.0.0.1:6432/pasarguard into a GoWave
+// driver and DSN. ok is false when raw is not a database URL.
+func parsePasarGuardDatabaseURL(raw, baseDir string) (driver, dsn string, ok bool, err error) {
+	scheme, rest, found := strings.Cut(strings.TrimSpace(raw), "://")
+	if !found {
+		return "", "", false, nil
+	}
+	dialect, _, _ := strings.Cut(strings.ToLower(scheme), "+")
+	switch dialect {
+	case "sqlite":
+		// SQLAlchemy: sqlite:///relative.db and sqlite:////absolute.db
+		path, _, _ := strings.Cut(strings.TrimPrefix(rest, "/"), "?")
+		if path == "" {
+			return "", "", false, fmt.Errorf("PasarGuard SQLite URL %q has no file path", raw)
+		}
+		if !filepath.IsAbs(path) && baseDir != "" {
+			path = filepath.Join(baseDir, path)
+		}
+		return "sqlite", path, true, nil
+	case "postgres", "postgresql", "timescaledb":
+		parsed, err := url.Parse("postgresql://" + rest)
+		if err != nil {
+			return "", "", false, fmt.Errorf("invalid PasarGuard PostgreSQL URL: %w", err)
+		}
+		query := parsed.Query()
+		// asyncpg's ssl option is not a libpq parameter; pgx would send it
+		// to the server as a runtime setting.
+		if ssl := strings.ToLower(query.Get("ssl")); ssl != "" {
+			query.Del("ssl")
+			modes := map[string]string{"true": "require", "false": "disable", "disable": "disable", "allow": "allow", "prefer": "prefer", "require": "require", "verify-ca": "verify-ca", "verify-full": "verify-full"}
+			if mode, known := modes[ssl]; known && query.Get("sslmode") == "" {
+				query.Set("sslmode", mode)
+			}
+		}
+		// The installer connects through pgbouncer in transaction mode, where
+		// prepared statements do not survive between queries.
+		if query.Get("default_query_exec_mode") == "" {
+			query.Set("default_query_exec_mode", "simple_protocol")
+		}
+		parsed.RawQuery = query.Encode()
+		return "postgres", parsed.String(), true, nil
+	case "mysql", "mariadb":
+		return "", "", false, fmt.Errorf("PasarGuard uses %s; GoWave can import only from SQLite or PostgreSQL", dialect)
+	default:
+		return "", "", false, nil
+	}
 }
 
 func ImportFromPasarGuard(destDB *gorm.DB, source string) error {
@@ -138,7 +217,8 @@ func ImportFromPasarGuard(destDB *gorm.DB, source string) error {
 	}
 	var srcDB *gorm.DB
 	if driver == "sqlite" {
-		srcDB, err = gorm.Open(sqlite.Open(dsn), gormCfg)
+		// Read-only: PasarGuard may still be running on this file.
+		srcDB, err = gorm.Open(sqlite.Open("file:"+dsn+"?mode=ro"), gormCfg)
 	} else {
 		srcDB, err = gorm.Open(postgres.Open(dsn), gormCfg)
 	}

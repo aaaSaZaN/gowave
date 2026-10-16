@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	"regexp"
 	"strconv"
@@ -12,6 +13,10 @@ import (
 )
 
 type Config struct {
+	// AppHost is the address the panel and metrics listeners bind to. It
+	// defaults to loopback so the panel is only reachable through a reverse
+	// proxy with HTTPS; Docker sets 0.0.0.0 inside the container.
+	AppHost         string
 	AppPort         string
 	MetricsPort     string
 	AppSecret       string
@@ -67,6 +72,11 @@ type ServiceConfig struct {
 func Load() *Config {
 	_ = godotenv.Load(".env", "../.env")
 
+	host := strings.TrimSpace(os.Getenv("APP_HOST"))
+	if host == "" {
+		host = "127.0.0.1"
+	}
+
 	port := os.Getenv("APP_PORT")
 	if port == "" {
 		port = "3000"
@@ -121,6 +131,7 @@ func Load() *Config {
 	}
 
 	cfg := &Config{
+		AppHost:         host,
 		AppPort:         port,
 		MetricsPort:     metricsPort,
 		AppSecret:       secret,
@@ -219,6 +230,16 @@ func (c *Config) loadOptional() {
 			c.UserUsageIgnoreBelowBytes = value
 		}
 	}
+}
+
+// IsLoopbackHost reports whether AppHost only accepts local connections.
+func (c *Config) IsLoopbackHost() bool {
+	host := strings.Trim(c.AppHost, "[]")
+	if strings.EqualFold(host, "localhost") {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 // Validate prevents accidentally deploying with a public or weak signing key.

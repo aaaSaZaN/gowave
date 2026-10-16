@@ -36,7 +36,8 @@ WORKDIR /app
 COPY --from=backend /out/gowave /app/gowave
 COPY --from=frontend /src/frontend/dist /app/frontend/dist
 
-ENV APP_PORT=3000 \
+ENV APP_HOST=0.0.0.0 \
+    APP_PORT=3000 \
     METRICS_PORT=3001 \
     IN_DOCKER=true \
     TZ=UTC
