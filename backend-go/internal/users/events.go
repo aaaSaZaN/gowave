@@ -2,8 +2,8 @@ package users
 
 import (
 	"errors"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/notify"
+	"gowave/internal/database"
+	"gowave/internal/notify"
 
 	"gorm.io/gorm"
 )

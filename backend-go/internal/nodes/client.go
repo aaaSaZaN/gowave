@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"remnawave-go/internal/database"
+	"gowave/internal/database"
 
 	"github.com/golang-jwt/jwt/v5"
 )

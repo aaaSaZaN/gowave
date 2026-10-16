@@ -15,10 +15,10 @@ import (
 	"strings"
 	"testing"
 
-	"remnawave-go/config"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/jobs"
-	"remnawave-go/internal/testdb"
+	"gowave/config"
+	"gowave/internal/database"
+	"gowave/internal/jobs"
+	"gowave/internal/testdb"
 
 	"gorm.io/gorm"
 )

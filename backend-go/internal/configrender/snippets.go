@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"gorm.io/gorm"
-	"remnawave-go/internal/database"
+	"gowave/internal/database"
 )
 
 // Expand matches upstream root and array snippet precedence. Missing array

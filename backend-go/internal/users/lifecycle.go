@@ -3,9 +3,9 @@ package users
 import (
 	"errors"
 	"fmt"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/jobs"
-	"remnawave-go/internal/notify"
+	"gowave/internal/database"
+	"gowave/internal/jobs"
+	"gowave/internal/notify"
 	"time"
 
 	"github.com/google/uuid"

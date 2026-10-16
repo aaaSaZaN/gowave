@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/users"
+	"gowave/internal/database"
+	"gowave/internal/users"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

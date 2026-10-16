@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gowave/internal/database"
 	"reflect"
-	"remnawave-go/internal/database"
 	"strings"
 )
 

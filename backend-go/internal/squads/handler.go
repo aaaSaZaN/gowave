@@ -13,9 +13,9 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"remnawave-go/internal/configprofiles"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/jobs"
+	"gowave/internal/configprofiles"
+	"gowave/internal/database"
+	"gowave/internal/jobs"
 )
 
 type Handler struct {

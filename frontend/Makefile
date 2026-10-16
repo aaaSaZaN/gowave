@@ -39,6 +39,6 @@ bump-major:
 tag-release:
 	@VERSION=$$(node -p "require('./package.json').version") && \
 	echo "Creating signed tag for version $$VERSION..." && \
-	git tag -s "$$VERSION" -m "Release $$VERSION" && \
+	git tag -s "v$$VERSION" -m "Release v$$VERSION" && \
 	git push origin --follow-tags && \
-	echo "Signed tag $$VERSION created and pushed"
+	echo "Signed tag v$$VERSION created and pushed"

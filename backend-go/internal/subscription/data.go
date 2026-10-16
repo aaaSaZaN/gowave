@@ -6,9 +6,9 @@ import (
 
 	"gorm.io/gorm"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/subtpl"
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/database"
+	"gowave/internal/subtpl"
+	"gowave/internal/subtpl/ojson"
 )
 
 // hwidSettings is THwidSettings.

@@ -10,8 +10,8 @@ import (
 
 	"gorm.io/gorm"
 
-	"remnawave-go/internal/metrics"
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/metrics"
+	"gowave/internal/subtpl/ojson"
 )
 
 // Handler serves what upstream's scheduler exposes on METRICS_PORT: /metrics

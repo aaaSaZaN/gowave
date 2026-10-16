@@ -4,10 +4,10 @@
 
 Gowave combines a Go replacement for the Remnawave backend with a React frontend. Compatibility with `@remnawave/backend-contract` is a core constraint, including endpoint coverage, response envelopes, status codes, and subscription output. The frontend currently pins contract version `3.4.15`; `internal/server/parity_test.go` also checks that version explicitly.
 
-- `backend-go/` is the Go module (`remnawave-go`); run Go commands there, not at the repository root. Its `go.mod` declares Go `1.27.1`.
+- `backend-go/` is the Go module (`gowave`); run Go commands there, not at the repository root. Its `go.mod` declares Go `1.27.1`.
 - `frontend/` is a separate React/TypeScript/Vite application. CI uses Node 22 and pnpm 11 with `pnpm-lock.yaml`. A `package-lock.json` also exists, but CI installs with pnpm.
 - `scripts/` contains contract export/validation, subscription differential fixtures, and a node migration installer.
-- Root `README.md` documents installation, reverse proxy configuration, subscription-page deployment, and rescue/import commands, mostly in Russian. For defaults, consult executable configuration: for example, the actual default SQLite filename is `remnawave.db`, despite the README's `gowave.db` example.
+- Root `README.md` documents installation, reverse proxy configuration, subscription-page deployment, and rescue/import commands, mostly in Russian. For defaults, consult executable configuration (`backend-go/config/config.go`); the default SQLite filename is `gowave.db`.
 
 ## Commands and verification
 
@@ -125,4 +125,4 @@ Fixture regeneration has a separate runtime requirement: `setup-upstream.sh <wor
 - The frontend is **not embedded in the Go binary**. `NewApp` searches, in order, `./frontend/dist`, `./dist`, `../frontend/dist`, `./static`, `/opt/gowave/frontend/dist`, and `/opt/gowave/dist`. The first existing directory wins at construction time.
 - Static serving has an `/assets/` fallback to files in the static root for editor WASM/runtime/schema URLs. Missing file-like requests return 404; extensionless SPA routes fall back to `index.html`. Keep this behavior when modifying asset paths or router fallback.
 - Running the executable as root attempts to create/update `/usr/local/bin/gowave`. `scripts/migrate-node.sh` is a privileged systemd installer for a separate Remnanode binary and can stop a Docker node; it is not a local development setup script.
-- `.github/workflows/release.yml` triggers on `v*` tags and publishes separate frontend tarballs and Linux amd64/arm64 backend binaries. Version metadata is injected with `-X remnawave-go/internal/system.AppVersion=${VERSION}`. The frontend Makefile's `tag-release` creates/pushes an unprefixed version tag, so it does not match that root release trigger.
+- `.github/workflows/release.yml` triggers on `v*` tags and publishes separate frontend tarballs and Linux amd64/arm64 backend binaries. Version metadata is injected with `-X gowave/internal/system.AppVersion=${VERSION}`. The release first runs `ci.yml` (via `workflow_call`), verifies the embedded version with `--version`, publishes `SHA256SUMS`, and pushes a multi-arch image to `ghcr.io/<owner>/gowave`; tags containing `-` become pre-releases. The frontend Makefile's `tag-release` creates `v<package.json version>`.

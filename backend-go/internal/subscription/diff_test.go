@@ -13,9 +13,9 @@ import (
 
 	"gorm.io/gorm"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/subtpl"
-	"remnawave-go/internal/testdb"
+	"gowave/internal/database"
+	"gowave/internal/subtpl"
+	"gowave/internal/testdb"
 )
 
 // testdata/http.json.gz comes from scripts/subscription-diff/run-upstream-http.mjs:

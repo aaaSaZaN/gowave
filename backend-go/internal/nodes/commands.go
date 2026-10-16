@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"gowave/internal/configrender"
+	"gowave/internal/database"
 	"io"
 	"net"
-	"remnawave-go/internal/configrender"
-	"remnawave-go/internal/database"
 	"strconv"
 	"strings"
 )

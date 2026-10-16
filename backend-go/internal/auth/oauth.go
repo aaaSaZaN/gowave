@@ -6,11 +6,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"gowave/internal/database"
+	"gowave/internal/httpx"
 	"io"
 	"net/http"
 	"net/url"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/httpx"
 	"strings"
 	"time"
 

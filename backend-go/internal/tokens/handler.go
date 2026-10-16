@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"time"
 
-	"remnawave-go/internal/contracts"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/httpx"
-	"remnawave-go/internal/middleware"
-	"remnawave-go/internal/notify"
+	"gowave/internal/contracts"
+	"gowave/internal/database"
+	"gowave/internal/httpx"
+	"gowave/internal/middleware"
+	"gowave/internal/notify"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v5"

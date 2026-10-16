@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"gorm.io/gorm"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/testdb"
+	"gowave/internal/database"
+	"gowave/internal/testdb"
 )
 
 type nodeRoundTrip func(*http.Request) (*http.Response, error)

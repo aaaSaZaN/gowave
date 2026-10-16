@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/database"
+	"gowave/internal/subtpl/ojson"
 )
 
 // The defaults Gowave seeds must equal upstream's DEFAULT_TEMPLATE_* (copied

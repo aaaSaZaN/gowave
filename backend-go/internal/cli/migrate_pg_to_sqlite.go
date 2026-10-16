@@ -15,8 +15,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"remnawave-go/config"
-	"remnawave-go/internal/database"
+	"gowave/config"
+	"gowave/internal/database"
 )
 
 var requiredRemnawaveTables = map[string]bool{
@@ -128,7 +128,7 @@ func isRemnawaveEnvPath(path string) bool {
 	return cleanPath == "/opt/remnawave/.env" ||
 		strings.HasPrefix(cleanPath, "../backend-ts/") ||
 		strings.Contains(cleanPath, "/backend-ts/") ||
-		strings.Contains(cleanPath, "/remnawave/") && !strings.Contains(cleanPath, "remnawave-go")
+		strings.Contains(cleanPath, "/remnawave/")
 }
 
 // MigratePostgresToSQLite reads the source in a read-only transaction and builds

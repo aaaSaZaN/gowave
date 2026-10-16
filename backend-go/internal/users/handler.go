@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/httpx"
+	"gowave/internal/database"
+	"gowave/internal/httpx"
 
 	"github.com/go-chi/chi/v5"
 	"gorm.io/gorm"

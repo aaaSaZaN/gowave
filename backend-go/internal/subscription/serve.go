@@ -11,10 +11,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/httpx"
-	"remnawave-go/internal/subtpl"
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/database"
+	"gowave/internal/httpx"
+	"gowave/internal/subtpl"
+	"gowave/internal/subtpl/ojson"
 )
 
 // srrContext is ISRRContext.

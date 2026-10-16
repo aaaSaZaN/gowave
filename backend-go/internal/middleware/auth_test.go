@@ -3,12 +3,12 @@ package middleware_test
 import (
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
+	"gowave/internal/auth"
+	"gowave/internal/database"
+	"gowave/internal/middleware"
+	"gowave/internal/tokens"
 	"net/http"
 	"net/http/httptest"
-	"remnawave-go/internal/auth"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/middleware"
-	"remnawave-go/internal/tokens"
 	"testing"
 	"time"
 )

@@ -7,7 +7,7 @@ package subtpl
 import (
 	"time"
 
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/subtpl/ojson"
 )
 
 // Host mirrors HostWithRawInbound: a host row plus its inbound's raw JSON.

@@ -7,11 +7,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"gorm.io/gorm"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/httpx"
-	"remnawave-go/internal/subtpl"
-	"remnawave-go/internal/subtpl/js"
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/database"
+	"gowave/internal/httpx"
+	"gowave/internal/subtpl"
+	"gowave/internal/subtpl/js"
+	"gowave/internal/subtpl/ojson"
 )
 
 // Handler ports upstream's subscription module on top of internal/subtpl.

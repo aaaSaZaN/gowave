@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"time"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/jobs"
-	"remnawave-go/internal/notify"
-	"remnawave-go/internal/users"
+	"gowave/internal/database"
+	"gowave/internal/jobs"
+	"gowave/internal/notify"
+	"gowave/internal/users"
 
 	"gorm.io/gorm"
 )

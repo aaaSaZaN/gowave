@@ -1,7 +1,7 @@
 package nodes
 
 import (
-	"remnawave-go/internal/database"
+	"gowave/internal/database"
 	"sync"
 	"testing"
 )

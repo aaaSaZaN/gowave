@@ -9,10 +9,10 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/hkdf"
 	"gorm.io/gorm"
+	"gowave/internal/database"
+	"gowave/internal/middleware"
 	"io"
 	"net/http"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/middleware"
 	"time"
 )
 

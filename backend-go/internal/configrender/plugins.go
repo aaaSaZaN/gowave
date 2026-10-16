@@ -3,7 +3,7 @@ package configrender
 import (
 	"encoding/json"
 	"gorm.io/gorm"
-	"remnawave-go/internal/database"
+	"gowave/internal/database"
 	"strings"
 )
 

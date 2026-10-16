@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/httpx"
-	"remnawave-go/internal/users"
+	"gowave/internal/database"
+	"gowave/internal/httpx"
+	"gowave/internal/users"
 
 	"gorm.io/gorm"
 )

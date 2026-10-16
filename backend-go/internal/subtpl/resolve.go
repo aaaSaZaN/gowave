@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"remnawave-go/internal/subtpl/js"
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/subtpl/js"
+	"gowave/internal/subtpl/ojson"
 )
 
 // ResolveOptions mirrors IResolveProxyConfigOptions.

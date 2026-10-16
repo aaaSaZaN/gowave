@@ -21,14 +21,14 @@ import (
 
 	"sync"
 
-	"remnawave-go/config"
-	"remnawave-go/internal/auth"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/keygen"
-	"remnawave-go/internal/nodes"
-	"remnawave-go/internal/nodessh"
-	"remnawave-go/internal/subscription"
-	"remnawave-go/internal/tokens"
+	"gowave/config"
+	"gowave/internal/auth"
+	"gowave/internal/database"
+	"gowave/internal/keygen"
+	"gowave/internal/nodes"
+	"gowave/internal/nodessh"
+	"gowave/internal/subscription"
+	"gowave/internal/tokens"
 )
 
 type JobResult struct {

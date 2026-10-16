@@ -12,27 +12,27 @@ import (
 	"syscall"
 	"time"
 
-	"remnawave-go/config"
-	"remnawave-go/internal/auth"
-	"remnawave-go/internal/cli"
-	"remnawave-go/internal/configprofiles"
-	"remnawave-go/internal/cron"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/infrabilling"
-	"remnawave-go/internal/jobs"
-	"remnawave-go/internal/keygen"
-	"remnawave-go/internal/middleware"
-	"remnawave-go/internal/nodes"
-	"remnawave-go/internal/nodessh"
-	"remnawave-go/internal/notify"
-	"remnawave-go/internal/prometheus"
-	"remnawave-go/internal/squads"
-	"remnawave-go/internal/stubs"
-	"remnawave-go/internal/subscription"
-	"remnawave-go/internal/subtemplates"
-	"remnawave-go/internal/system"
-	"remnawave-go/internal/tokens"
-	"remnawave-go/internal/users"
+	"gowave/config"
+	"gowave/internal/auth"
+	"gowave/internal/cli"
+	"gowave/internal/configprofiles"
+	"gowave/internal/cron"
+	"gowave/internal/database"
+	"gowave/internal/infrabilling"
+	"gowave/internal/jobs"
+	"gowave/internal/keygen"
+	"gowave/internal/middleware"
+	"gowave/internal/nodes"
+	"gowave/internal/nodessh"
+	"gowave/internal/notify"
+	"gowave/internal/prometheus"
+	"gowave/internal/squads"
+	"gowave/internal/stubs"
+	"gowave/internal/subscription"
+	"gowave/internal/subtemplates"
+	"gowave/internal/system"
+	"gowave/internal/tokens"
+	"gowave/internal/users"
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
@@ -49,6 +49,11 @@ func ensureGlobalSymlink() {
 	}
 	exe, _ = filepath.EvalSymlinks(exe)
 	symlinkPath := "/usr/local/bin/gowave"
+	if info, err := os.Lstat(symlinkPath); err == nil && info.Mode()&os.ModeSymlink == 0 {
+		// A regular file is the wrapper `migrate to-docker` installs to forward
+		// CLI commands into the container; a host binary must not replace it.
+		return
+	}
 	target, err := os.Readlink(symlinkPath)
 	if err == nil && target == exe {
 		return
@@ -61,8 +66,12 @@ func Run() {
 	// The panel keeps every timestamp in UTC like upstream's container; pgx and
 	// encoding/json would otherwise render the host's zone.
 	time.Local = time.UTC
-	cfg := config.Load()
 	args := os.Args[1:]
+	if len(args) == 1 && (args[0] == "--version" || args[0] == "version") {
+		fmt.Println(system.AppVersion)
+		return
+	}
+	cfg := config.Load()
 	if cli.IsPostgresToSQLiteMigrationCommand(args) {
 		cli.RunRescue(nil, cfg, args)
 		return
@@ -87,7 +96,7 @@ func Run() {
 			cli.RunRescue(db, cfg, os.Args[2:])
 			return
 		}
-		if firstArg == "import" || firstArg == "--import" || firstArg == "--import-pasarguard" || firstArg == "import-pasarguard" || firstArg == "migrate" || firstArg == "--migrate" || firstArg == "--migrate-pg-to-sqlite" {
+		if firstArg == "import" || firstArg == "--import" || firstArg == "--import-pasarguard" || firstArg == "import-pasarguard" || firstArg == "migrate" || firstArg == "--migrate" || firstArg == "--migrate-pg-to-sqlite" || firstArg == "--migrate-sqlite-to-pg" || firstArg == "migrate-sqlite-to-pg" {
 			cli.RunRescue(db, cfg, os.Args[1:])
 			return
 		}
@@ -117,14 +126,14 @@ func Run() {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		fmt.Printf("Remnawave-Go running on %s\n", serverAddr)
+		fmt.Printf("GoWave running on %s\n", serverAddr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			fmt.Printf("Listen failed: %v\n", err)
 		}
 	}()
 
 	<-quit
-	fmt.Println("Shutting down Remnawave-Go server...")
+	fmt.Println("Shutting down GoWave server...")
 
 	cancel()
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)

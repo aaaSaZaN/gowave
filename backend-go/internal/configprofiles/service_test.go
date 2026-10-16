@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/testdb"
+	"gowave/internal/database"
+	"gowave/internal/testdb"
 )
 
 func TestPatchHostCorrectsStoredModeAndRollsBackInvalidRelations(t *testing.T) {

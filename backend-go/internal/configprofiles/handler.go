@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"remnawave-go/internal/configrender"
-	"remnawave-go/internal/database"
+	"gowave/internal/configrender"
+	"gowave/internal/database"
 
 	"github.com/go-chi/chi/v5"
 	"gorm.io/gorm"

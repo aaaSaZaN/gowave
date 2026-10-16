@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"context"
+	"gowave/internal/contracts"
+	"gowave/internal/database"
 	"net/http"
-	"remnawave-go/internal/contracts"
-	"remnawave-go/internal/database"
 	"strings"
 	"time"
 

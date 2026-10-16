@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/httpx"
-	"remnawave-go/internal/prometheus"
+	"gowave/internal/database"
+	"gowave/internal/httpx"
+	"gowave/internal/prometheus"
 
 	"gorm.io/gorm"
 )
@@ -303,11 +303,11 @@ func (h *Handler) GetHealth(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-
-	var users []database.User
-	if err := h.db.Find(&users).Error; err != nil {
+	var statusRows []struct {
+		Status string
+		Count  int
+	}
+	if err := h.db.Model(&database.User{}).Select("status, COUNT(*) AS count").Group("status").Scan(&statusRows).Error; err != nil {
 		http.Error(w, "failed to load user statistics", http.StatusInternalServerError)
 		return
 	}
@@ -318,9 +318,10 @@ func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
 		"LIMITED":  0,
 		"EXPIRED":  0,
 	}
-
-	for _, u := range users {
-		statusCounts[u.Status]++
+	totalUsers := 0
+	for _, row := range statusRows {
+		statusCounts[row.Status] += row.Count
+		totalUsers += row.Count
 	}
 
 	type OnlineStatsResult struct {
@@ -352,14 +353,12 @@ LEFT JOIN user_traffic ut ON ut.id = u.id`,
 
 	var resp SystemStatsResponse
 	resp.Response.Cpu.Cores = runtime.NumCPU()
-	resp.Response.Memory.Total = m.Sys
-	resp.Response.Memory.Free = m.Sys - m.Alloc
-	resp.Response.Memory.Used = m.Alloc
+	resp.Response.Memory.Total, resp.Response.Memory.Free, resp.Response.Memory.Used = hostMemory()
 	resp.Response.Uptime = int64(time.Since(startTime).Seconds())
 	resp.Response.Timestamp = time.Now().UnixMilli()
 
 	resp.Response.Users.StatusCounts = statusCounts
-	resp.Response.Users.TotalUsers = len(users)
+	resp.Response.Users.TotalUsers = totalUsers
 
 	resp.Response.OnlineStats.LastDay = osr.LastDay
 	resp.Response.OnlineStats.LastWeek = osr.LastWeek

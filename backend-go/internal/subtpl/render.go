@@ -1,7 +1,7 @@
 package subtpl
 
 import (
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/subtpl/ojson"
 )
 
 // Templates returns the parsed template of a type ("XRAY_JSON", "SINGBOX",

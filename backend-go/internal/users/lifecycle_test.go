@@ -1,7 +1,7 @@
 package users
 
 import (
-	"remnawave-go/internal/database"
+	"gowave/internal/database"
 	"testing"
 	"time"
 )

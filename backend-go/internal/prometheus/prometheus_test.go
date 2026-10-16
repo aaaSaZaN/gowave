@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/metrics"
-	"remnawave-go/internal/nodes"
-	"remnawave-go/internal/testdb"
+	"gowave/internal/database"
+	"gowave/internal/metrics"
+	"gowave/internal/nodes"
+	"gowave/internal/testdb"
 )
 
 type hotStats map[string]*nodes.NodeHotMetrics

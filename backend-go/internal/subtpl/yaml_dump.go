@@ -9,7 +9,7 @@ import (
 	"unicode/utf16"
 	"unicode/utf8"
 
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/subtpl/ojson"
 )
 
 // DumpYAML ports js-yaml 5's dump() with default options (DUMP_SCHEMA,

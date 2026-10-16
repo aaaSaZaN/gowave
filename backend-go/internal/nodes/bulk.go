@@ -3,10 +3,10 @@ package nodes
 import (
 	"encoding/json"
 	"fmt"
+	"gowave/internal/database"
+	"gowave/internal/jobs"
 	"math"
 	"reflect"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/jobs"
 	"strings"
 
 	"gorm.io/gorm"

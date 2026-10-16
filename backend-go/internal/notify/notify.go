@@ -24,9 +24,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"remnawave-go/config"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/jobs"
+	"gowave/config"
+	"gowave/internal/database"
+	"gowave/internal/jobs"
 
 	"gopkg.in/yaml.v3"
 	"gorm.io/gorm"

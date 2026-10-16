@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"remnawave-go/internal/database"
+	"gowave/internal/database"
 
 	"gorm.io/gorm"
 )

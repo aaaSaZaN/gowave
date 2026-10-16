@@ -9,8 +9,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/users"
+	"gowave/internal/database"
+	"gowave/internal/users"
 )
 
 var hwidPattern = regexp.MustCompile(`^[a-zA-Z0-9=-]{10,64}$`)

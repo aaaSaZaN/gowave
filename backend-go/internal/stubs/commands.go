@@ -3,11 +3,11 @@ package stubs
 import (
 	"encoding/json"
 	"fmt"
+	"gowave/internal/database"
+	"gowave/internal/jobs"
+	"gowave/internal/nodes"
 	"net"
 	"net/http"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/jobs"
-	"remnawave-go/internal/nodes"
 	"strconv"
 	"time"
 

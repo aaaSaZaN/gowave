@@ -1,4 +1,4 @@
-module remnawave-go
+module gowave
 
 go 1.27.1
 

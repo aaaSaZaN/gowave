@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"gowave/internal/database"
+	"gowave/internal/testdb"
 	"net/http/httptest"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/testdb"
 	"testing"
 	"time"
 )

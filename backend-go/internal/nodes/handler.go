@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"remnawave-go/internal/configprofiles"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/httpx"
+	"gowave/internal/configprofiles"
+	"gowave/internal/database"
+	"gowave/internal/httpx"
 
 	"github.com/go-chi/chi/v5"
 	"gorm.io/gorm"
@@ -56,6 +56,63 @@ func formatNodeResponse(service *Service, n *database.Node) map[string]interface
 // formatNodeWith formats a node reading related rows through db, which may be
 // an open transaction.
 func formatNodeWith(db *gorm.DB, service *Service, n *database.Node) map[string]interface{} {
+	return formatNodeWithInbounds(service, n, loadActiveInbounds(db, []database.Node{*n})[n.UUID])
+}
+
+// loadActiveInbounds returns each node's active inbounds: the inbounds linked
+// to the node, or every inbound of its active profile when it has no links.
+// It issues at most two queries for any number of nodes.
+func loadActiveInbounds(db *gorm.DB, nodes []database.Node) map[string][]database.ConfigProfileInbound {
+	result := make(map[string][]database.ConfigProfileInbound, len(nodes))
+	var nodeUUIDs []string
+	for _, n := range nodes {
+		if n.ActiveConfigProfileUUID != nil && *n.ActiveConfigProfileUUID != "" {
+			nodeUUIDs = append(nodeUUIDs, n.UUID)
+		}
+	}
+	if len(nodeUUIDs) == 0 {
+		return result
+	}
+
+	var linked []struct {
+		database.ConfigProfileInbound
+		LinkedNodeUUID string `gorm:"column:linked_node_uuid"`
+	}
+	db.Table("config_profile_inbounds").
+		Select("config_profile_inbounds.*, config_profile_inbounds_to_nodes.node_uuid AS linked_node_uuid").
+		Joins("JOIN config_profile_inbounds_to_nodes ON config_profile_inbounds_to_nodes.config_profile_inbound_uuid = config_profile_inbounds.uuid").
+		Where("config_profile_inbounds_to_nodes.node_uuid IN ?", nodeUUIDs).
+		Find(&linked)
+	for _, row := range linked {
+		result[row.LinkedNodeUUID] = append(result[row.LinkedNodeUUID], row.ConfigProfileInbound)
+	}
+
+	profileNodes := make(map[string][]string)
+	var profileUUIDs []string
+	for _, n := range nodes {
+		if n.ActiveConfigProfileUUID == nil || *n.ActiveConfigProfileUUID == "" || len(result[n.UUID]) > 0 {
+			continue
+		}
+		profile := *n.ActiveConfigProfileUUID
+		if _, seen := profileNodes[profile]; !seen {
+			profileUUIDs = append(profileUUIDs, profile)
+		}
+		profileNodes[profile] = append(profileNodes[profile], n.UUID)
+	}
+	if len(profileUUIDs) == 0 {
+		return result
+	}
+	var profileInbounds []database.ConfigProfileInbound
+	db.Where("profile_uuid IN ?", profileUUIDs).Find(&profileInbounds)
+	for _, ib := range profileInbounds {
+		for _, nodeUUID := range profileNodes[ib.ProfileUUID] {
+			result[nodeUUID] = append(result[nodeUUID], ib)
+		}
+	}
+	return result
+}
+
+func formatNodeWithInbounds(service *Service, n *database.Node, inbounds []database.ConfigProfileInbound) map[string]interface{} {
 	tags := []string(n.Tags)
 	if tags == nil {
 		tags = []string{}
@@ -79,14 +136,6 @@ func formatNodeWith(db *gorm.DB, service *Service, n *database.Node) map[string]
 		"activeInbounds":          []interface{}{},
 	}
 	if n.ActiveConfigProfileUUID != nil && *n.ActiveConfigProfileUUID != "" {
-		var inbounds []database.ConfigProfileInbound
-		db.Table("config_profile_inbounds").
-			Joins("JOIN config_profile_inbounds_to_nodes ON config_profile_inbounds_to_nodes.config_profile_inbound_uuid = config_profile_inbounds.uuid").
-			Where("config_profile_inbounds_to_nodes.node_uuid = ?", n.UUID).
-			Find(&inbounds)
-		if len(inbounds) == 0 {
-			db.Where("profile_uuid = ?", *n.ActiveConfigProfileUUID).Find(&inbounds)
-		}
 		activeIbList := make([]map[string]interface{}, 0, len(inbounds))
 		for _, ib := range inbounds {
 			var raw json.RawMessage = []byte("{}")
@@ -265,14 +314,12 @@ func (h *Handler) GetNodes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Health is refreshed by StartHealthCheckLoop and on node creation; a
+	// read must not fan out node RPCs and status writes on every poll.
+	inbounds := loadActiveInbounds(h.service.DB(), nodesList)
 	resp := make([]map[string]interface{}, 0, len(nodesList))
-	for _, n := range nodesList {
-		metrics := h.service.GetNodeMetrics(n.UUID)
-		if (metrics == nil || metrics.Versions == nil) && !n.IsDisabled {
-			nodeCopy := n
-			go h.service.CheckNodeHealth(&nodeCopy)
-		}
-		resp = append(resp, formatNodeResponse(h.service, &n))
+	for i := range nodesList {
+		resp = append(resp, formatNodeWithInbounds(h.service, &nodesList[i], inbounds[nodesList[i].UUID]))
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{

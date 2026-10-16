@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"remnawave-go/config"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/notify"
+	"gowave/config"
+	"gowave/internal/database"
+	"gowave/internal/notify"
 )
 
 // TestActionsEnqueueNotifications checks that API actions write the upstream

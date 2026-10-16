@@ -7,29 +7,35 @@ import (
 	"strings"
 	"time"
 
-	"remnawave-go/config"
-	"remnawave-go/internal/auth"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/keygen"
+	"gowave/config"
+	"gowave/internal/auth"
+	"gowave/internal/database"
+	"gowave/internal/keygen"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-func IsPostgresToSQLiteMigrationCommand(args []string) bool {
+func IsMigrationCommand(args []string) bool {
 	if len(args) == 0 {
 		return false
 	}
 	switch args[0] {
-	case "--migrate-pg-to-sqlite", "migrate-pg-to-sqlite":
+	case "--migrate-pg-to-sqlite", "migrate-pg-to-sqlite", "--migrate-sqlite-to-pg", "migrate-sqlite-to-pg", "--migrate-to-docker":
 		return true
-	case "migrate":
-		return len(args) > 1 && (args[1] == "pg-to-sqlite" || args[1] == "postgres-to-sqlite")
-	case "--migrate":
-		return len(args) > 1 && (args[1] == "pg-to-sqlite" || args[1] == "postgres-to-sqlite")
+	case "migrate", "--migrate":
+		if len(args) > 1 {
+			sub := args[1]
+			return sub == "pg-to-sqlite" || sub == "postgres-to-sqlite" || sub == "sqlite-to-pg" || sub == "sqlite-to-postgres" || sub == "to-docker"
+		}
+		return false
 	default:
 		return false
 	}
+}
+
+func IsPostgresToSQLiteMigrationCommand(args []string) bool {
+	return IsMigrationCommand(args)
 }
 
 func migrationDestination(args []string, index int) string {
@@ -37,6 +43,53 @@ func migrationDestination(args []string, index int) string {
 		return strings.TrimSpace(args[index])
 	}
 	return "gowave-migrated.sqlite"
+}
+
+func runToDocker(args []string) {
+	if err := RunMigrateToDocker(args, bufio.NewReader(os.Stdin)); err != nil {
+		fmt.Printf("[-] Migration to Docker failed: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+// runSQLiteToPG handles "[source] [dsn] [--force]" for the SQLite -> PostgreSQL command.
+func runSQLiteToPG(cfg *config.Config, args []string) {
+	force := false
+	var positional []string
+	for _, arg := range args {
+		if arg == "--force" {
+			force = true
+			continue
+		}
+		positional = append(positional, arg)
+	}
+	source, target := "", ""
+	if len(positional) > 0 {
+		source = positional[0]
+	}
+	if len(positional) > 1 {
+		target = positional[1]
+	}
+	if source == "" {
+		detected, err := DetectGoWaveSQLitePath(cfg)
+		if err != nil {
+			fmt.Printf("[-] %v\n", err)
+			os.Exit(1)
+		}
+		source = detected
+	}
+	if target == "" {
+		detected, err := DetectPostgresTargetDSN(cfg)
+		if err != nil {
+			fmt.Printf("[-] %v\n", err)
+			os.Exit(1)
+		}
+		target = detected
+	}
+	if err := MigrateSQLiteToPostgres(cfg, source, target, force); err != nil {
+		fmt.Printf("[-] Migration failed: %v\n", err)
+		os.Exit(1)
+	}
 }
 
 func RunRescue(db *gorm.DB, cfg *config.Config, args []string) {
@@ -89,7 +142,22 @@ func RunRescue(db *gorm.DB, cfg *config.Config, args []string) {
 				os.Exit(1)
 			}
 			return
+		case "--migrate-sqlite-to-pg", "migrate-sqlite-to-pg":
+			runSQLiteToPG(cfg, args[1:])
+			return
+		case "--migrate-to-docker":
+			runToDocker(args[1:])
+			return
 		case "migrate", "--migrate":
+			if len(args) > 1 && (args[1] == "sqlite-to-pg" || args[1] == "sqlite-to-postgres") {
+				runSQLiteToPG(cfg, args[2:])
+				return
+			}
+			if len(args) > 1 && args[1] == "to-docker" {
+				runToDocker(args[2:])
+				return
+			}
+
 			dsn := ""
 			argOffset := 1
 			if len(args) > 1 && (args[1] == "pg-to-sqlite" || args[1] == "postgres-to-sqlite") {
@@ -124,15 +192,25 @@ func PrintNodeSecretKey(db *gorm.DB) {
 }
 
 func printUsage() {
-	fmt.Println("Usage: remnawave-server rescue [flag]")
-	fmt.Println("       remnawave-server import pasarguard [path/dsn]")
-	fmt.Println("       remnawave-server migrate pg-to-sqlite [dsn] [destination]")
-	fmt.Println("       remnawave-server cli [flag]")
+	fmt.Println("Usage: gowave-server rescue [flag]")
+	fmt.Println("       gowave-server import pasarguard [path/dsn]")
+	fmt.Println("       gowave-server migrate pg-to-sqlite [dsn] [destination]")
+	fmt.Println("       gowave-server migrate to-docker [--dir /opt/gowave-docker] [--image ref] [--yes]")
+	fmt.Println("       gowave-server migrate sqlite-to-pg [source_sqlite] [target_dsn] [--force]")
+	fmt.Println("       gowave-server cli [flag]")
 	fmt.Println("\nAvailable commands / flags:")
 	fmt.Println("  --import-pasarguard [path]       Import users, traffic and HWIDs from PasarGuard (SQLite or Postgres)")
 	fmt.Println("  import pasarguard [path]         Import users, traffic and HWIDs from PasarGuard")
-	fmt.Println("  --migrate-pg-to-sqlite [dsn] [destination]  Migrate Remnawave PostgreSQL data to SQLite")
-	fmt.Println("  migrate pg-to-sqlite [dsn] [destination]    Migrate Remnawave PostgreSQL data to SQLite")
+	fmt.Println("  --migrate-pg-to-sqlite [dsn] [dest]  Migrate Remnawave PostgreSQL data to SQLite")
+	fmt.Println("  migrate pg-to-sqlite [dsn] [dest]    Migrate Remnawave PostgreSQL data to SQLite")
+	fmt.Println("  migrate to-docker                    Move this SQLite install to Docker + PostgreSQL")
+	fmt.Println("      --dir <path>                     Compose project directory (default /opt/gowave-docker)")
+	fmt.Println("      --image <ref>                    Panel image (default ghcr.io/aaasazan/gowave:latest)")
+	fmt.Println("      --from <path>                    Current install directory (default: this binary's)")
+	fmt.Println("      --yes                            Do not ask for confirmation")
+	fmt.Println("  --migrate-sqlite-to-pg [src] [dsn]   Copy GoWave SQLite data into an existing PostgreSQL")
+	fmt.Println("  migrate sqlite-to-pg [src] [dsn]     Copy GoWave SQLite data into an existing PostgreSQL")
+	fmt.Println("      --force                         Replace existing users, nodes and hosts in the target")
 	fmt.Println("  --reset-admin                   Remove all admins to re-trigger first-time web onboarding")
 	fmt.Println("  --list-admins                   List all existing administrators")
 	fmt.Println("  --enable-password-auth          Force-enable password authentication in database")
@@ -145,7 +223,7 @@ func interactiveMenu(db *gorm.DB, cfg *config.Config) {
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Println("\n==========================================")
-		fmt.Println("       Remnawave Go - Rescue CLI          ")
+		fmt.Println("          GoWave - Rescue CLI             ")
 		fmt.Println("==========================================")
 		fmt.Println("1) Reset superadmin (removes admin to re-trigger initial setup)")
 		fmt.Println("2) Reset superadmin password")
@@ -155,8 +233,9 @@ func interactiveMenu(db *gorm.DB, cfg *config.Config) {
 		fmt.Println("6) Print node SECRET_KEY")
 		fmt.Println("7) Import database from PasarGuard (SQLite/PostgreSQL)")
 		fmt.Println("8) Migrate from Remnawave PostgreSQL -> Gowave SQLite (and purge Docker)")
+		fmt.Println("9) Move Gowave to Docker (SQLite -> PostgreSQL)")
 		fmt.Println("0) Exit")
-		fmt.Print("\nSelect an option [0-8]: ")
+		fmt.Print("\nSelect an option [0-9]: ")
 
 		input, err := reader.ReadString('\n')
 		if err != nil {
@@ -181,11 +260,15 @@ func interactiveMenu(db *gorm.DB, cfg *config.Config) {
 			ImportPasarGuardInteractive(db, reader)
 		case "8":
 			MigratePGToSQLiteInteractive(cfg, reader)
+		case "9":
+			if err := RunMigrateToDocker(nil, reader); err != nil {
+				fmt.Printf("[-] Migration to Docker failed: %v\n", err)
+			}
 		case "0", "q", "exit":
 			fmt.Println("Exiting Rescue CLI.")
 			return
 		default:
-			fmt.Println("Invalid option, please choose between 0 and 8.")
+			fmt.Println("Invalid option, please choose between 0 and 9.")
 		}
 	}
 }
@@ -219,13 +302,12 @@ func ListAdmins(db *gorm.DB) {
 func EnablePasswordAuth(db *gorm.DB) {
 	res := db.Model(&database.RemnawaveSetting{}).Where("id = 1").Updates(map[string]interface{}{
 		"password_auth_enabled": true,
-		"password_settings":     `{"enabled":true}`,
 	})
 	if res.Error != nil {
-		fmt.Printf("[-] Failed to update settings: %v\n", res.Error)
+		fmt.Printf("[-] Failed to enable password authentication: %v\n", res.Error)
 		return
 	}
-	fmt.Println("[+] Password authentication has been re-enabled!")
+	fmt.Println("[+] Password authentication has been forcibly enabled!")
 }
 
 func resetAdminPasswordInteractive(db *gorm.DB, cfg *config.Config, reader *bufio.Reader) {

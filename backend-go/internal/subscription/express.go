@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/subtpl/ojson"
 )
 
 // The public subscription routes answer exactly like upstream's Express 5

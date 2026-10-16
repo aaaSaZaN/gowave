@@ -3,9 +3,9 @@ package stubs
 import (
 	"encoding/json"
 	"errors"
+	"gowave/internal/database"
+	"gowave/internal/jobs"
 	"net/http"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/jobs"
 	"strings"
 
 	"github.com/go-chi/chi/v5"

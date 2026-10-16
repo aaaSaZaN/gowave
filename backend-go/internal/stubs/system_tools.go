@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"remnawave-go/config"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/httpx"
-	"remnawave-go/internal/subscription"
+	"gowave/config"
+	"gowave/internal/database"
+	"gowave/internal/httpx"
+	"gowave/internal/subscription"
 
 	"github.com/go-chi/chi/v5"
 )

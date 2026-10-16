@@ -5,12 +5,12 @@ import (
 	"sort"
 	"strings"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/httpx"
-	"remnawave-go/internal/metrics"
-	"remnawave-go/internal/prometheus"
-	"remnawave-go/internal/subtpl/js"
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/database"
+	"gowave/internal/httpx"
+	"gowave/internal/metrics"
+	"gowave/internal/prometheus"
+	"gowave/internal/subtpl/js"
+	"gowave/internal/subtpl/ojson"
 )
 
 type trafficByTag struct {

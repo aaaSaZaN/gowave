@@ -5,8 +5,8 @@ import (
 	"compress/gzip"
 	"testing"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/testdb"
+	"gowave/internal/database"
+	"gowave/internal/testdb"
 )
 
 func TestRestoreRepairsSequencesWithMixedPrimaryKeys(t *testing.T) {

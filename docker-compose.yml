@@ -1,0 +1,55 @@
+# GoWave + PostgreSQL. Settings live in .env next to this file (see .env.docker.example).
+# Update: docker compose pull && docker compose up -d
+# Build locally instead of pulling: docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+name: gowave
+
+services:
+  gowave:
+    image: ${GOWAVE_IMAGE:-ghcr.io/aaasazan/gowave:latest}
+    container_name: gowave
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${APP_PORT:-3000}:3000"
+      # Metrics stay on loopback; set METRICS_USER/METRICS_PASS to scrape them
+      - "127.0.0.1:${METRICS_PORT:-3001}:3001"
+    environment:
+      # These override .env: inside the container the panel always uses the
+      # bundled PostgreSQL and fixed ports.
+      - APP_PORT=3000
+      - METRICS_PORT=3001
+      - APP_SECRET=${APP_SECRET:?Set APP_SECRET in .env (openssl rand -hex 32)}
+      - DB_DRIVER=postgres
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-gowave}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-gowave}?sslmode=disable
+      - IN_DOCKER=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/system/health"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: gowave-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-gowave}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      - POSTGRES_DB=${POSTGRES_DB:-gowave}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gowave} -d ${POSTGRES_DB:-gowave}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      # Exposes Postgres port on 127.0.0.1 for migrations, backup and administration
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+
+volumes:
+  postgres_data:

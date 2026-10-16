@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"remnawave-go/internal/httpx"
+	"gowave/internal/httpx"
 
 	"gorm.io/gorm"
 )

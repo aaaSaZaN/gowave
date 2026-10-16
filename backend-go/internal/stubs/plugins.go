@@ -2,9 +2,9 @@ package stubs
 
 import (
 	"encoding/json"
+	"gowave/internal/database"
+	"gowave/internal/jobs"
 	"net/http"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/jobs"
 	"sort"
 	"strings"
 	"time"

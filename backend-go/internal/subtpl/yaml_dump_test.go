@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/subtpl/ojson"
 )
 
 // testdata/yaml-vectors.json comes from scripts/subscription-diff/yaml-vectors.mjs

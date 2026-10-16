@@ -92,9 +92,9 @@ func Load() *Config {
 
 	if dbURL == "" {
 		if dbDriver == "postgres" {
-			dbURL = "postgresql://postgres:postgres@localhost:5432/remnawave"
+			dbURL = "postgresql://postgres:postgres@localhost:5432/gowave"
 		} else {
-			dbURL = "remnawave.db"
+			dbURL = "gowave.db"
 		}
 	}
 

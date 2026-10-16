@@ -2,11 +2,11 @@ package system
 
 import (
 	"encoding/json"
+	"gowave/internal/auth"
+	"gowave/internal/contracts"
+	"gowave/internal/database"
 	"html/template"
 	"net/http"
-	"remnawave-go/internal/auth"
-	"remnawave-go/internal/contracts"
-	"remnawave-go/internal/database"
 	"strings"
 	"time"
 

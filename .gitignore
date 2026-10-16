@@ -42,8 +42,8 @@ bin/
 *.sqlite3
 
 # Binar
-gowave*
-backend-go/gowave*
+/gowave-*
+/backend-go/gowave-*
 backend-go/remnawave-server*
 backend-go/server-linux-*
 backend-go/sazan

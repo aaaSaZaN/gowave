@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
-	"remnawave-go/internal/middleware"
+	"gowave/internal/middleware"
 )
 
 func TestRawProtectedAnnounceOnlyForDeviceLimit(t *testing.T) {

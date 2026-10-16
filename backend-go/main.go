@@ -1,5 +1,5 @@
 package main
 
-import "remnawave-go/internal/server"
+import "gowave/internal/server"
 
 func main() { server.Run() }

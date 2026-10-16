@@ -36,12 +36,16 @@ func IsRunningInDocker() bool {
 }
 
 func (h *Handler) CheckUpdate(w http.ResponseWriter, r *http.Request) {
-	resp, err := http.Get("https://api.github.com/repos/aaaSaZaN/remnawave-go/releases/latest")
+	resp, err := http.Get("https://api.github.com/repos/aaaSaZaN/gowave/releases/latest")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		http.Error(w, "GitHub releases returned "+resp.Status, http.StatusBadGateway)
+		return
+	}
 
 	var release GitHubRelease
 	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
@@ -50,20 +54,36 @@ func (h *Handler) CheckUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	isDocker := IsRunningInDocker()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	result := map[string]interface{}{
 		"currentVersion": AppVersion,
 		"latestVersion":  release.TagName,
 		"changelog":      release.Body,
-		"hasUpdate":      release.TagName != AppVersion && AppVersion != "unknown",
+		"hasUpdate":      release.TagName != "" && release.TagName != AppVersion && AppVersion != "unknown",
 		"isDocker":       isDocker,
 		"canAutoUpdate":  !isDocker,
-	})
+	}
+	if isDocker {
+		result["updateCommand"] = DockerUpdateCommand()
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// DockerUpdateCommand is shown instead of in-panel updates: a container cannot
+// replace its own image, and giving the panel the Docker socket would make a
+// panel compromise a host compromise. GOWAVE_COMPOSE_DIR is written to .env by
+// `gowave migrate to-docker`.
+func DockerUpdateCommand() string {
+	dir := strings.TrimSpace(os.Getenv("GOWAVE_COMPOSE_DIR"))
+	if dir == "" {
+		dir = "/path/to/gowave-compose-dir"
+	}
+	return fmt.Sprintf("cd %s && docker compose pull && docker compose up -d", dir)
 }
 
 func (h *Handler) ApplyUpdate(w http.ResponseWriter, r *http.Request) {
 	if IsRunningInDocker() {
-		http.Error(w, "Auto-update is disabled in Docker environment. Please update manually using 'docker compose pull && docker compose up -d'", http.StatusBadRequest)
+		http.Error(w, "In-panel updates are not available in Docker. Update on the server: "+DockerUpdateCommand(), http.StatusBadRequest)
 		return
 	}
 
@@ -75,8 +95,8 @@ func (h *Handler) ApplyUpdate(w http.ResponseWriter, r *http.Request) {
 	exePath, _ = filepath.EvalSymlinks(exePath)
 
 	arch := runtime.GOARCH
-	binURL := fmt.Sprintf("https://github.com/aaaSaZaN/remnawave-go/releases/latest/download/gowave-linux-%s", arch)
-	frontURL := "https://github.com/aaaSaZaN/remnawave-go/releases/latest/download/gowave-frontend.tar.gz"
+	binURL := fmt.Sprintf("https://github.com/aaaSaZaN/gowave/releases/latest/download/gowave-linux-%s", arch)
+	frontURL := "https://github.com/aaaSaZaN/gowave/releases/latest/download/gowave-frontend.tar.gz"
 
 	tmpBin := exePath + ".new"
 	if err := downloadFile(tmpBin, binURL); err != nil {

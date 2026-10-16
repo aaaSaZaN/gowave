@@ -3,7 +3,7 @@ package subtpl
 import (
 	"strings"
 
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/subtpl/ojson"
 )
 
 const hostSourcePrefix = "$host."

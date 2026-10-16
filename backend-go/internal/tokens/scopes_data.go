@@ -1,5 +1,5 @@
 package tokens
 
-import "remnawave-go/internal/contracts"
+import "gowave/internal/contracts"
 
 var ScopesData = contracts.Scopes

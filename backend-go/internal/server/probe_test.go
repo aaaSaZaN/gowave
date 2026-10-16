@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"remnawave-go/config"
-	"remnawave-go/internal/contracts"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/middleware"
-	"remnawave-go/internal/testdb"
+	"gowave/config"
+	"gowave/internal/contracts"
+	"gowave/internal/database"
+	"gowave/internal/middleware"
+	"gowave/internal/testdb"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"

@@ -4,10 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"gowave/internal/database"
+	"gowave/internal/httpx"
+	"gowave/internal/middleware"
 	"net/http"
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/httpx"
-	"remnawave-go/internal/middleware"
 	"strings"
 	"time"
 

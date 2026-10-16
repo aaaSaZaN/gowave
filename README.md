@@ -15,7 +15,44 @@ Gowave — это оптимизированное решение тяжелых
 
 ---
 
-## Быстрый запуск (Готовый релиз)
+## Быстрый запуск
+
+### Способ 1: Запуск через Docker Compose (GoWave + PostgreSQL)
+
+Рекомендуемый способ запуска с базой PostgreSQL. Образ панели берётся из `ghcr.io/aaasazan/gowave`.
+
+#### Установка Docker
+Если Docker ещё не установлен, поставьте его официальным скриптом (Docker Engine + плагин `docker compose`):
+```bash
+curl -fsSL https://get.docker.com | sudo sh
+```
+> Docker называет этот скрипт «convenience script» и не рекомендует его для production: он ставит последнюю версию без выбора, не спрашивает подтверждения и не предназначен для обновления уже установленного Docker. Для одного VPS с панелью это нормальный способ: скрипт подключает официальный apt/dnf-репозиторий Docker, и дальше Docker обновляется вместе с системой (`apt upgrade`). Запускайте его **один раз** на чистом сервере; повторно для обновления — не нужно. Если нужна фиксированная версия или вы ставите на много серверов, используйте [установку из репозитория](https://docs.docker.com/engine/install/).
+
+#### Запуск панели
+```bash
+# 1. Файлы compose
+mkdir -p /opt/gowave-docker && cd /opt/gowave-docker
+curl -fsSLO https://raw.githubusercontent.com/aaaSaZaN/gowave/main/docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/aaaSaZaN/gowave/main/.env.docker.example -o .env
+
+# 2. Секреты генерируются автоматически, домены укажите в .env
+sed -i "s/^APP_SECRET=.*/APP_SECRET=$(openssl rand -hex 32)/; s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 24)/" .env
+nano .env
+
+# 3. Запуск панели и PostgreSQL
+docker compose up -d
+```
+Панель сразу доступна в браузере по адресу `http://<IP_сервера>:3000`.
+
+**Обновление** выполняется на сервере (из панели в Docker обновиться нельзя: контейнер не может заменить сам себя, а доступ к Docker-сокету из панели дал бы ей root на хосте). Когда выйдет новая версия, панель покажет эту команду:
+```bash
+cd /opt/gowave-docker && docker compose pull && docker compose up -d
+```
+CLI-команды панели в Docker запускаются внутри контейнера: `docker compose exec gowave /app/gowave rescue --list-admins`.
+
+---
+
+### Способ 2: Нативный Standalone запуск (Systemd + SQLite)
 
 Вам **не требуется** устанавливать Go, Node.js или собирать проект вручную на сервере - используйте готовые бинарники для архитектур `x86_64` (AMD/Intel) или `arm64` (ARMv8).
 
@@ -29,19 +66,19 @@ mkdir -p /opt/gowave && cd /opt/gowave
 
 #### Для серверов x86_64 (Intel / AMD):
 ```bash
-curl -L -o gowave-server https://github.com/aaaSaZaN/remnawave-go/releases/latest/download/gowave-linux-amd64
+curl -L -o gowave-server https://github.com/aaaSaZaN/gowave/releases/latest/download/gowave-linux-amd64
 chmod +x gowave-server
 ```
 
 #### Для серверов arm64 / ARMv8:
 ```bash
-curl -L -o gowave-server https://github.com/aaaSaZaN/remnawave-go/releases/latest/download/gowave-linux-arm64
+curl -L -o gowave-server https://github.com/aaaSaZaN/gowave/releases/latest/download/gowave-linux-arm64
 chmod +x gowave-server
 ```
 
 #### Скачивание готового веб-интерфейса:
 ```bash
-curl -LO https://github.com/aaaSaZaN/remnawave-go/releases/latest/download/gowave-frontend.tar.gz
+curl -LO https://github.com/aaaSaZaN/gowave/releases/latest/download/gowave-frontend.tar.gz
 mkdir -p frontend/dist && tar -xzf gowave-frontend.tar.gz -C frontend/dist
 ```
 
@@ -265,7 +302,7 @@ nginx -t && systemctl reload nginx
 
 ```bash
 # Автоматическая миграция одной командой (запускать от root на сервере ноды):
-curl -sSL https://raw.githubusercontent.com/aaaSaZaN/remnawave-go/main/scripts/migrate-node.sh | bash
+curl -sSL https://raw.githubusercontent.com/aaaSaZaN/gowave/main/scripts/migrate-node.sh | bash
 ```
 
 **Что делает скрипт:**
@@ -393,8 +430,8 @@ curl -sSL https://raw.githubusercontent.com/aaaSaZaN/remnawave-go/main/scripts/m
 
 ```bash
 # Клонирование
-git clone https://github.com/aaaSaZaN/remnawave-go.git
-cd remnawave-go
+git clone https://github.com/aaaSaZaN/gowave.git
+cd gowave
 
 # Сборка интерфейса
 pnpm --prefix frontend build
@@ -402,9 +439,14 @@ pnpm --prefix frontend build
 # Кросс-компиляция бинарников под Linux:
 cd backend-go
 # Для x86_64:
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o gowave-linux-amd64 main.go
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o gowave-linux-amd64 ./cmd/server
 # Для arm64:
-CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o gowave-linux-arm64 main.go
+CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o gowave-linux-arm64 ./cmd/server
+```
+
+Docker-образ из исходников вместо `ghcr.io`:
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
 ---
@@ -424,10 +466,35 @@ gowave import pasarguard /opt/pasarguard/data/db.sqlite3
 * Переносит всех пользователей, VLESS UUID, пароли Trojan / Shadowsocks / Hysteria, лимиты трафика, стратегии сброса, заметки и привязки устройств по HWID.
 * Автоматически привязывает пользователей к дефолтному скваду нод.
 
+### 3. Переезд с GoWave SQLite (Systemd) ➔ GoWave в Docker (PostgreSQL)
+Если панель установлена бинарником с SQLite, а вы хотите перейти на Docker Compose с PostgreSQL. Нужен установленный Docker с плагином compose (см. [Установка Docker](#установка-docker)), запускать от root на сервере панели:
+```bash
+gowave migrate to-docker
+
+# Или через спасательное меню (пункт 9):
+gowave rescue
+```
+Команда сама:
+1. Найдёт текущую установку (`/opt/gowave`) и её `.env`, проверит SQLite на битые ссылки между таблицами.
+2. Создаст `/opt/gowave-docker` с `docker-compose.yml` и `.env`: перенесёт **тот же** `APP_SECRET` (без него не войти в панель) и все настройки, сгенерирует пароль PostgreSQL.
+3. Скачает образы, запустит PostgreSQL, остановит `gowave.service` и перенесёт все данные.
+4. Запустит панель в Docker на том же порту и дождётся, пока она ответит.
+5. Отключит `gowave.service`; команда `gowave` дальше выполняется внутри контейнера.
+
+Если любой шаг не удался, Docker-проект удаляется, а старая панель запускается обратно. Файл SQLite не изменяется, поэтому откатиться можно и позже:
+```bash
+cd /opt/gowave-docker && docker compose down
+ln -sf /opt/gowave/gowave-server /usr/local/bin/gowave
+systemctl enable --now gowave
+```
+Флаги: `--dir <путь>` (папка проекта), `--image <образ>` (например, собранный локально), `--from <путь>` (папка старой установки), `--yes` (без подтверждения).
+
+---
+
 ### 2. Переезд с Remnawave (Docker PostgreSQL ➔ Gowave SQLite)
 Если вы хотите избавиться от тяжелого Docker и перейти на легкий одиночный файл SQLite:
 ```bash
-# Перенос данных из PostgreSQL в автономный remnawave.db
+# Перенос данных из PostgreSQL в автономный файл SQLite (по умолчанию gowave-migrated.sqlite)
 gowave migrate pg-to-sqlite
 ```
 * Автоматически находит настройки подключения к PostgreSQL старой Remnawave (`/opt/remnawave/.env`).
@@ -452,6 +519,8 @@ gowave rescue
 | :--- | :--- |
 | `gowave import pasarguard [path]` | Быстрый импорт данных из PasarGuard |
 | `gowave migrate pg-to-sqlite [dsn]` | Перенос данных из Remnawave PostgreSQL в Gowave SQLite |
+| `gowave migrate to-docker` | Переезд установки с SQLite в Docker + PostgreSQL |
+| `gowave migrate sqlite-to-pg [src] [dsn] [--force]` | Копирование данных из Gowave SQLite в уже запущенный PostgreSQL |
 | `gowave rescue --reset-admin` | Удаляет администраторов для повторного прохождения первичной настройки в браузере |
 | `gowave rescue --list-admins` | Выводит список всех зарегистрированных администраторов |
 | `gowave rescue --enable-password-auth` | Принудительно включает аутентификацию по логину/паролю в БД |

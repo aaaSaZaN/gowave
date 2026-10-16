@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"remnawave-go/internal/database"
+	"gowave/internal/database"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"

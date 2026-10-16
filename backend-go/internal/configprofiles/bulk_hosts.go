@@ -3,8 +3,8 @@ package configprofiles
 import (
 	"encoding/json"
 	"gorm.io/gorm"
+	"gowave/internal/database"
 	"net/http"
-	"remnawave-go/internal/database"
 )
 
 func (h *Handler) BulkDeleteHosts(w http.ResponseWriter, r *http.Request) {

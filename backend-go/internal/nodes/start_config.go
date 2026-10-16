@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"remnawave-go/internal/database"
+	"gowave/internal/database"
 	"strconv"
 	"strings"
 	"unicode/utf16"

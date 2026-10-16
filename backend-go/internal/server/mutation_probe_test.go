@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"remnawave-go/internal/contracts"
-	"remnawave-go/internal/database"
+	"gowave/internal/contracts"
+	"gowave/internal/database"
 )
 
 type probeResult struct {

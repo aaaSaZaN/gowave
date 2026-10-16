@@ -17,9 +17,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"gorm.io/gorm"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/testdb"
-	"remnawave-go/internal/users"
+	"gowave/internal/database"
+	"gowave/internal/testdb"
+	"gowave/internal/users"
 )
 
 func subscriptionDB(t *testing.T) (*gorm.DB, *database.User) {

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/subtpl/ojson"
 
 	"gopkg.in/yaml.v3"
 )

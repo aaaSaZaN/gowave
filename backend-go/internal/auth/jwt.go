@@ -3,7 +3,7 @@ package auth
 import (
 	"time"
 
-	"remnawave-go/internal/middleware"
+	"gowave/internal/middleware"
 
 	"github.com/golang-jwt/jwt/v5"
 )

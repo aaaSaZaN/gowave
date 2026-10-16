@@ -15,8 +15,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/users"
+	"gowave/internal/database"
+	"gowave/internal/users"
 )
 
 type PasarGuardProxySettings struct {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"gorm.io/gorm"
-	"remnawave-go/internal/database"
+	"gowave/internal/database"
 	"testing"
 	"time"
 )

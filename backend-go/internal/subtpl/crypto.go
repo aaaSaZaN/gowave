@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"remnawave-go/internal/subtpl/js"
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/subtpl/js"
+	"gowave/internal/subtpl/ojson"
 )
 
 var keyCache sync.Map // input → derived string ("" when invalid)

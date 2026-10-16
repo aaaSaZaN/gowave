@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"remnawave-go/internal/subtpl/js"
+	"gowave/internal/subtpl/js"
 )
 
 // Now is the clock remark templates use; tests pin it.

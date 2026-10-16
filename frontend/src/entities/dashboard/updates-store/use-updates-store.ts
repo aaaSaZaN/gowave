@@ -58,13 +58,13 @@ export const useUpdatesStore = create<IActions & IState>()(
 
                             const starsResponse = await axios.get<{
                                 totalStars: number
-                            }>('https://ungh.cc/stars/aaaSaZaN/remnawave-go')
+                            }>('https://ungh.cc/stars/aaaSaZaN/gowave')
 
                             const versionResponse = await axios.get<{
                                 release: {
                                     tag: string
                                 }
-                            }>('https://ungh.cc/repos/aaaSaZaN/remnawave-go/releases/latest')
+                            }>('https://ungh.cc/repos/aaaSaZaN/gowave/releases/latest')
 
                             set({
                                 remnawaveInfo: {

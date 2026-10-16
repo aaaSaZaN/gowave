@@ -4,8 +4,8 @@ import (
 	"math"
 	"strings"
 
-	"remnawave-go/internal/subtpl/js"
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/subtpl/js"
+	"gowave/internal/subtpl/ojson"
 )
 
 // GenerateLinks ports XrayGeneratorService.generateConfig.

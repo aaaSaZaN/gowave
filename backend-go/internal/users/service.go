@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/jobs"
+	"gowave/internal/database"
+	"gowave/internal/jobs"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"

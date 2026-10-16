@@ -14,9 +14,9 @@ import (
 
 	"gorm.io/gorm"
 
-	"remnawave-go/internal/database"
-	"remnawave-go/internal/metrics"
-	"remnawave-go/internal/nodes"
+	"gowave/internal/database"
+	"gowave/internal/metrics"
+	"gowave/internal/nodes"
 )
 
 const (

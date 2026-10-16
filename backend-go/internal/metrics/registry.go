@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/subtpl/ojson"
 )
 
 // Label is one name/value pair; label order is kept as given, like the

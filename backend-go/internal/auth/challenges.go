@@ -2,7 +2,7 @@ package auth
 
 import (
 	"errors"
-	"remnawave-go/internal/database"
+	"gowave/internal/database"
 	"time"
 
 	"gorm.io/gorm"

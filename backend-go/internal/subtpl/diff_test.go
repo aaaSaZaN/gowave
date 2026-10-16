@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"remnawave-go/internal/subtpl/js"
-	"remnawave-go/internal/subtpl/ojson"
+	"gowave/internal/subtpl/js"
+	"gowave/internal/subtpl/ojson"
 )
 
 // The fixtures come from scripts/subscription-diff: matrix.json lists hosts

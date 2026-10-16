@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"remnawave-go/config"
-	"remnawave-go/internal/testdb"
+	"gowave/config"
+	"gowave/internal/testdb"
 
 	"github.com/go-chi/chi/v5"
 )

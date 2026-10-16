@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"remnawave-go/internal/contracts"
+	"gowave/internal/contracts"
 )
 
 // statusWriter rewrites any 2xx a handler writes to the success status the
