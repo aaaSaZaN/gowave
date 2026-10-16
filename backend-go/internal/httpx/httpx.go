@@ -58,8 +58,12 @@ func Decode(r *http.Request, limit int64, target interface{}) error {
 // ClientIP follows the request-ip package used upstream: well-known proxy
 // headers first, then the socket address. Only meaningful behind a proxy that
 // overwrites these headers.
+//
+// X-Remnawave-Real-IP comes first: the subscription page sends the client's
+// address there and, for an http:// panel URL, sets X-Forwarded-For to
+// 127.0.0.1 on every request.
 func ClientIP(r *http.Request) string {
-	for _, header := range []string{"X-Client-IP", "X-Forwarded-For", "CF-Connecting-IP", "Fastly-Client-Ip", "True-Client-Ip", "X-Real-IP", "X-Cluster-Client-IP", "X-Forwarded", "Forwarded-For"} {
+	for _, header := range []string{"X-Remnawave-Real-IP", "X-Client-IP", "X-Forwarded-For", "CF-Connecting-IP", "Fastly-Client-Ip", "True-Client-Ip", "X-Real-IP", "X-Cluster-Client-IP", "X-Forwarded", "Forwarded-For"} {
 		if value := r.Header.Get(header); value != "" {
 			first := strings.TrimSpace(strings.Split(value, ",")[0])
 			if host, _, err := net.SplitHostPort(first); err == nil {
