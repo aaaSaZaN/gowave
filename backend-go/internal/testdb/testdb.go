@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,11 +16,14 @@ import (
 	"gorm.io/gorm"
 )
 
+var setUTC sync.Once
+
 // Open returns a migrated database that is dropped when the test ends.
 func Open(t testing.TB) *gorm.DB {
 	t.Helper()
-	// Production runs with time.Local = UTC (server.Run).
-	time.Local = time.UTC
+	// Production runs with time.Local = UTC (server.Run). Set it once: a later
+	// write races with goroutines earlier tests left running (e.g. node dials).
+	setUTC.Do(func() { time.Local = time.UTC })
 	dsn := os.Getenv("GOWAVE_TEST_POSTGRES")
 	if dsn == "" {
 		db, err := database.Init("sqlite", ":memory:")

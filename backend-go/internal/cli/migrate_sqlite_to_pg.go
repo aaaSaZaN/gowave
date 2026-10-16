@@ -453,6 +453,17 @@ func migrateTableSQLiteToPG(source, dest *gorm.DB, table string) (int64, error) 
 				continue
 			}
 
+			// SQLite text[] columns hold either PostgreSQL literals ({"a"}) or
+			// JSON written by older releases (["a"]); StringArray reads both.
+			if col.DataType == "ARRAY" {
+				var arr database.StringArray
+				if err := arr.Scan(val); err != nil {
+					return inserted, fmt.Errorf("column %s: %w", col.Name, err)
+				}
+				values[i], _ = arr.Value()
+				continue
+			}
+
 			// Format booleans properly for PostgreSQL driver
 			if col.DataType == "boolean" {
 				switch v := val.(type) {

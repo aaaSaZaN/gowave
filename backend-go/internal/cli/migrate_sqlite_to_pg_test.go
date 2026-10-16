@@ -116,7 +116,6 @@ func TestMigrateSQLiteToPostgres_Integration(t *testing.T) {
 	if pgDSN == "" {
 		t.Skip("Skipping integration test: GOWAVE_TEST_POSTGRES is not set")
 	}
-	time.Local = time.UTC
 
 	sqlitePath := filepath.Join(t.TempDir(), "source.sqlite")
 	source, err := database.Init("sqlite", sqlitePath)
@@ -165,6 +164,21 @@ func TestMigrateSQLiteToPostgres_Integration(t *testing.T) {
 		t.Errorf("external squad link lost: %v", migrated.ExternalSquadUUID)
 	}
 
+	wantScopes := map[string][]string{
+		"tok-json":  {"users:by-username", "system:metadata"},
+		"tok-pg":    {"users:read"},
+		"tok-empty": {},
+	}
+	for tokenUUID, want := range wantScopes {
+		var token database.ApiToken
+		if err := target.Where("uuid = ?", tokenUUID).First(&token).Error; err != nil {
+			t.Fatalf("token %s: %v", tokenUUID, err)
+		}
+		if got := []string(token.Scopes); len(got) != len(want) || (len(want) > 0 && strings.Join(got, ",") != strings.Join(want, ",")) {
+			t.Errorf("token %s scopes = %v, want %v", tokenUUID, got, want)
+		}
+	}
+
 	// Sequences continue after the copied IDs.
 	next := database.User{Username: "after-migration", ShortUUID: "after-migration", VlessUUID: uuid.NewString()}
 	if err := target.Create(&next).Error; err != nil {
@@ -203,6 +217,10 @@ func seedMigrationSource(t *testing.T, db *gorm.DB) {
 		{"INSERT INTO config_profile_inbounds_to_nodes (config_profile_inbound_uuid, node_uuid) VALUES ('in-1', 'node-1')", nil},
 		{"INSERT INTO infra_billing_nodes (uuid, provider_uuid, node_uuid, next_billing_at, created_at, updated_at) VALUES ('bill-node-1', 'prov-1', 'node-1', ?, ?, ?)", []interface{}{now, now, now}},
 		{"INSERT INTO infra_billing_history (uuid, provider_uuid, amount, billed_at) VALUES ('bill-1', 'prov-1', 5, ?)", []interface{}{now}},
+		// Older releases stored text[] values as JSON in SQLite.
+		{"INSERT INTO api_tokens (uuid, name, scopes, created_at, updated_at) VALUES ('tok-json', 'json', '[\"users:by-username\",\"system:metadata\"]', ?, ?)", []interface{}{now, now}},
+		{"INSERT INTO api_tokens (uuid, name, scopes, created_at, updated_at) VALUES ('tok-pg', 'literal', '{\"users:read\"}', ?, ?)", []interface{}{now, now}},
+		{"INSERT INTO api_tokens (uuid, name, scopes, created_at, updated_at) VALUES ('tok-empty', 'empty', '', ?, ?)", []interface{}{now, now}},
 		// More rows than one INSERT batch holds.
 		{"WITH RECURSIVE seq(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM seq WHERE n < 1203) INSERT INTO nodes_usage_history (node_uuid, created_at, download_bytes, upload_bytes, total_bytes, updated_at) SELECT 'node-1', datetime('2026-01-01', '+' || n || ' minutes'), n, n, 2 * n, datetime('2026-01-01') FROM seq", nil},
 	}
