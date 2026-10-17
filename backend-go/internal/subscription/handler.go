@@ -1,6 +1,7 @@
 package subscription
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -19,11 +20,20 @@ type Handler struct {
 	db              *gorm.DB
 	subPublicDomain string
 	disableHistory  bool
+	history         *historyWriter
 }
 
 func NewHandler(db *gorm.DB, subPublicDomain string) *Handler {
-	return &Handler{db: db, subPublicDomain: subPublicDomain}
+	return &Handler{db: db, subPublicDomain: subPublicDomain, history: newHistoryWriter(db)}
 }
+
+// RunHistoryWriter records subscription requests in the background until ctx
+// ends. Without it, requests write their history inline.
+func (h *Handler) RunHistoryWriter(ctx context.Context) { h.history.Run(ctx) }
+
+// WaitHistoryWriter waits for queued history rows after RunHistoryWriter's
+// context was cancelled.
+func (h *Handler) WaitHistoryWriter(timeout time.Duration) { h.history.Wait(timeout) }
 
 // SetDisableHistory follows SERVICE_DISABLE_SRH_RECORDS.
 func (h *Handler) SetDisableHistory(disabled bool) {

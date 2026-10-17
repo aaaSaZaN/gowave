@@ -33,8 +33,11 @@ type Config struct {
 	ShortUUIDLength int
 	// UserUsageIgnoreBelowBytes is USER_USAGE_IGNORE_BELOW_BYTES.
 	UserUsageIgnoreBelowBytes int64
-	MetricsUser               string
-	MetricsPass               string
+	// DBMaxConnections is DB_MAX_CONNECTIONS, the PostgreSQL pool size; 0
+	// keeps database.DefaultMaxConnections.
+	DBMaxConnections int
+	MetricsUser      string
+	MetricsPass      string
 
 	errors []string
 }
@@ -220,6 +223,14 @@ func (c *Config) loadOptional() {
 			c.errors = append(c.errors, "SHORT_UUID_LENGTH must be between 16 and 64")
 		} else {
 			c.ShortUUIDLength = value
+		}
+	}
+	if raw := os.Getenv("DB_MAX_CONNECTIONS"); raw != "" {
+		value, err := strconv.Atoi(raw)
+		if err != nil || value < 1 || value > 500 {
+			c.errors = append(c.errors, "DB_MAX_CONNECTIONS must be between 1 and 500")
+		} else {
+			c.DBMaxConnections = value
 		}
 	}
 	if raw := os.Getenv("USER_USAGE_IGNORE_BELOW_BYTES"); raw != "" {

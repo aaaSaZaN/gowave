@@ -49,11 +49,28 @@ func Init(driver string, databaseURL string) (*gorm.DB, error) {
 				return nil, err
 			}
 		} else {
-			sqlDB.SetMaxOpenConns(50)
-			sqlDB.SetMaxIdleConns(10)
+			SetMaxConnections(db, DefaultMaxConnections)
+			sqlDB.SetConnMaxIdleTime(10 * time.Minute)
 			sqlDB.SetConnMaxLifetime(time.Hour)
 		}
 	}
 
 	return db, nil
+}
+
+// DefaultMaxConnections is the PostgreSQL pool size unless DB_MAX_CONNECTIONS
+// overrides it.
+const DefaultMaxConnections = 20
+
+// SetMaxConnections sizes the PostgreSQL pool. Idle connections are kept up to
+// the same limit: with fewer, bursts above the idle limit close connections and
+// the next burst makes PostgreSQL fork new backends (thousands per minute under
+// load). Each kept backend costs a few MB, so the limit also bounds memory.
+func SetMaxConnections(db *gorm.DB, n int) {
+	sqlDB, err := db.DB()
+	if err != nil || n < 1 || db.Dialector.Name() != "postgres" {
+		return
+	}
+	sqlDB.SetMaxOpenConns(n)
+	sqlDB.SetMaxIdleConns(n)
 }

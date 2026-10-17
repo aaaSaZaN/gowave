@@ -379,16 +379,11 @@ func (h *Handler) profileHeaders(user *subtpl.User, settings *subSettings, hwidL
 }
 
 // recordRequest ports the ADD_SUBSCRIPTION_REQUEST_RECORD job: one history
-// row, keeping the user's latest 24.
+// row, keeping the user's latest 24 (see historyWriter).
 func (h *Handler) recordRequest(userID uint64, userAgent, ip string, ruleName *string, responseType string) {
 	if h.disableHistory {
 		return
 	}
-	record := database.UserSubscriptionRequestHistory{UserID: userID, RequestIP: optionalIP(ip), UserAgent: &userAgent,
-		SrrRuleName: ruleName, SrrResponseType: responseType, RequestAt: time.Now().UTC()}
-	if err := h.db.Create(&record).Error; err != nil {
-		return
-	}
-	keep := h.db.Model(&database.UserSubscriptionRequestHistory{}).Select("id").Where("user_id = ?", userID).Order("request_at DESC").Limit(24)
-	h.db.Where("user_id = ? AND id NOT IN (?)", userID, keep).Delete(&database.UserSubscriptionRequestHistory{})
+	h.history.add(database.UserSubscriptionRequestHistory{UserID: userID, RequestIP: optionalIP(ip), UserAgent: &userAgent,
+		SrrRuleName: ruleName, SrrResponseType: responseType, RequestAt: time.Now().UTC()})
 }

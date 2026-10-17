@@ -2,6 +2,7 @@ package system
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"gowave/internal/httpx"
 	"gowave/internal/prometheus"
 
+	"golang.org/x/sync/singleflight"
 	"gorm.io/gorm"
 )
 
@@ -31,6 +33,8 @@ type Handler struct {
 	// OnRestored runs after a backup is published, to rebuild caches that
 	// depend on restored rows (node mTLS client, synced users).
 	OnRestored func()
+	// stats coalesces concurrent dashboard polls into one database pass.
+	stats singleflight.Group
 }
 
 func NewHandler(db *gorm.DB) *Handler {
@@ -302,78 +306,82 @@ func (h *Handler) GetHealth(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
-	var statusRows []struct {
-		Status string
-		Count  int
-	}
-	if err := h.db.Model(&database.User{}).Select("status, COUNT(*) AS count").Group("status").Scan(&statusRows).Error; err != nil {
-		http.Error(w, "failed to load user statistics", http.StatusInternalServerError)
+	// Requests arriving while a computation runs share its result, so the
+	// answer is never older than the request; only the database work is shared.
+	result, err, _ := h.stats.Do("stats", func() (interface{}, error) { return h.computeStats() })
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	json.NewEncoder(w).Encode(result)
+}
 
+func (h *Handler) computeStats() (*SystemStatsResponse, error) {
+	// One pass over users counts statuses and online activity together; the
+	// dashboard polls this endpoint, so every statement matters.
+	var userRows []struct {
+		Status      string
+		Count       int
+		OnlineNow   int
+		LastDay     int
+		LastWeek    int
+		NeverOnline int
+	}
+	now := time.Now().UTC()
+	if err := h.db.Raw(`
+SELECT
+    u.status AS status,
+    COUNT(*) AS count,
+    COUNT(CASE WHEN ut.online_at >= ? THEN 1 END) AS online_now,
+    COUNT(CASE WHEN ut.online_at >= ? THEN 1 END) AS last_day,
+    COUNT(CASE WHEN ut.online_at >= ? THEN 1 END) AS last_week,
+    COUNT(CASE WHEN ut.online_at IS NULL THEN 1 END) AS never_online
+FROM users u
+LEFT JOIN user_traffic ut ON ut.id = u.id
+GROUP BY u.status`,
+		now.Add(-30*time.Second), now.Add(-24*time.Hour), now.Add(-7*24*time.Hour)).Scan(&userRows).Error; err != nil {
+		return nil, errors.New("failed to load user statistics")
+	}
+
+	resp := &SystemStatsResponse{}
 	statusCounts := map[string]int{
 		"ACTIVE":   0,
 		"DISABLED": 0,
 		"LIMITED":  0,
 		"EXPIRED":  0,
 	}
+	online := &resp.Response.OnlineStats
 	totalUsers := 0
-	for _, row := range statusRows {
+	for _, row := range userRows {
 		statusCounts[row.Status] += row.Count
 		totalUsers += row.Count
+		online.OnlineNow += row.OnlineNow
+		online.LastDay += row.LastDay
+		online.LastWeek += row.LastWeek
+		online.NeverOnline += row.NeverOnline
 	}
 
-	type OnlineStatsResult struct {
-		OnlineNow   int
-		LastDay     int
-		LastWeek    int
-		NeverOnline int
+	var nodeStats struct {
+		TotalBytes  int64
+		OnlineNodes int
 	}
-	var osr OnlineStatsResult
-	now := time.Now().UTC()
 	if err := h.db.Raw(`
 SELECT
-    COUNT(CASE WHEN ut.online_at >= ? THEN 1 END) AS online_now,
-    COUNT(CASE WHEN ut.online_at >= ? THEN 1 END) AS last_day,
-    COUNT(CASE WHEN ut.online_at >= ? THEN 1 END) AS last_week,
-    COUNT(CASE WHEN ut.online_at IS NULL THEN 1 END) AS never_online
-FROM users u
-LEFT JOIN user_traffic ut ON ut.id = u.id`,
-		now.Add(-30*time.Second), now.Add(-24*time.Hour), now.Add(-7*24*time.Hour)).Scan(&osr).Error; err != nil {
-		http.Error(w, "failed to load online statistics", http.StatusInternalServerError)
-		return
+    (SELECT COALESCE(SUM(total_bytes), 0) FROM nodes_usage_history) AS total_bytes,
+    (SELECT COUNT(*) FROM nodes WHERE is_connected = ? AND is_disabled = ?) AS online_nodes`,
+		true, false).Scan(&nodeStats).Error; err != nil {
+		return nil, errors.New("failed to load node statistics")
 	}
 
-	var totalBytesLifetime int64
-	if err := h.db.Model(&database.NodesUsageHistory{}).Select("COALESCE(SUM(total_bytes), 0)").Scan(&totalBytesLifetime).Error; err != nil {
-		http.Error(w, "failed to load node traffic statistics", http.StatusInternalServerError)
-		return
-	}
-
-	var resp SystemStatsResponse
 	resp.Response.Cpu.Cores = runtime.NumCPU()
 	resp.Response.Memory.Total, resp.Response.Memory.Free, resp.Response.Memory.Used = hostMemory()
 	resp.Response.Uptime = int64(time.Since(startTime).Seconds())
 	resp.Response.Timestamp = time.Now().UnixMilli()
-
 	resp.Response.Users.StatusCounts = statusCounts
 	resp.Response.Users.TotalUsers = totalUsers
-
-	resp.Response.OnlineStats.LastDay = osr.LastDay
-	resp.Response.OnlineStats.LastWeek = osr.LastWeek
-	resp.Response.OnlineStats.NeverOnline = osr.NeverOnline
-	resp.Response.OnlineStats.OnlineNow = osr.OnlineNow
-
-	var onlineNodes int64
-	if err := h.db.Model(&database.Node{}).Where("is_connected = ? AND is_disabled = ?", true, false).Count(&onlineNodes).Error; err != nil {
-		http.Error(w, "failed to load node status", http.StatusInternalServerError)
-		return
-	}
-	resp.Response.Nodes.TotalOnline = int(onlineNodes)
-	resp.Response.Nodes.TotalBytesLifetime = fmt.Sprintf("%d", totalBytesLifetime)
-
-	json.NewEncoder(w).Encode(resp)
+	resp.Response.Nodes.TotalOnline = nodeStats.OnlineNodes
+	resp.Response.Nodes.TotalBytesLifetime = fmt.Sprintf("%d", nodeStats.TotalBytes)
+	return resp, nil
 }
 
 func (h *Handler) GetBandwidthStats(w http.ResponseWriter, r *http.Request) {

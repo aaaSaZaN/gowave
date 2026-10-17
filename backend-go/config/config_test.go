@@ -1,6 +1,9 @@
 package config
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestAppHostDefaultsToLoopback(t *testing.T) {
 	t.Setenv("APP_HOST", "")
@@ -21,6 +24,20 @@ func TestIsLoopbackHost(t *testing.T) {
 	} {
 		if got := (&Config{AppHost: host}).IsLoopbackHost(); got != want {
 			t.Errorf("IsLoopbackHost(%q) = %v, want %v", host, got, want)
+		}
+	}
+}
+
+func TestDBMaxConnections(t *testing.T) {
+	t.Setenv("APP_SECRET", "0123456789abcdef0123456789abcdef")
+	t.Setenv("DB_MAX_CONNECTIONS", "20")
+	if cfg := Load(); cfg.DBMaxConnections != 20 || cfg.Validate() != nil {
+		t.Fatalf("DB_MAX_CONNECTIONS=20: got %d, %v", cfg.DBMaxConnections, cfg.Validate())
+	}
+	for _, bad := range []string{"0", "-1", "501", "many"} {
+		t.Setenv("DB_MAX_CONNECTIONS", bad)
+		if err := Load().Validate(); err == nil || !strings.Contains(err.Error(), "DB_MAX_CONNECTIONS") {
+			t.Errorf("DB_MAX_CONNECTIONS=%q should be rejected, got %v", bad, err)
 		}
 	}
 }

@@ -85,6 +85,9 @@ func Run() {
 		fmt.Printf("Database init failed: %v\n", err)
 		os.Exit(1)
 	}
+	if cfg.DBMaxConnections > 0 {
+		database.SetMaxConnections(db, cfg.DBMaxConnections)
+	}
 
 	if err := database.AutoMigrate(db); err != nil {
 		fmt.Printf("Auto migration failed: %v\n", err)
@@ -146,6 +149,8 @@ func Run() {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		fmt.Printf("Server forced shutdown: %v\n", err)
 	}
+	// Background writers flush what requests queued before the shutdown.
+	app.wait(5 * time.Second)
 	fmt.Println("Server exiting")
 }
 
@@ -154,6 +159,7 @@ func Run() {
 type App struct {
 	Router http.Handler
 	start  func(ctx context.Context)
+	wait   func(timeout time.Duration)
 }
 
 // Start launches the scheduler, job workers and node health checks; they stop
@@ -464,7 +470,8 @@ func NewApp(cfg *config.Config, db *gorm.DB) *App {
 		r.Head("/*", spa)
 	}
 
-	return &App{Router: r, start: func(ctx context.Context) {
+	return &App{Router: r, wait: subHandler.WaitHistoryWriter, start: func(ctx context.Context) {
+		go subHandler.RunHistoryWriter(ctx)
 		go notifier.CheckTelegram(ctx)
 		if err := notify.Emit(db, notify.Event{Name: "service.panel_started", Data: map[string]string{"panelVersion": strings.TrimPrefix(system.AppVersion, "v")}}); err != nil {
 			fmt.Printf("panel_started notification: %v\n", err)
