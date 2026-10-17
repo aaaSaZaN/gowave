@@ -595,9 +595,9 @@ func (s *Service) PollNodeStats(node *database.Node) {
 			if err := s.db.Clauses(clause.OnConflict{
 				Columns: []clause.Column{{Name: "node_uuid"}, {Name: "created_at"}},
 				DoUpdates: clause.Assignments(map[string]interface{}{
-					"download_bytes": gorm.Expr("download_bytes + excluded.download_bytes"),
-					"upload_bytes":   gorm.Expr("upload_bytes + excluded.upload_bytes"),
-					"total_bytes":    gorm.Expr("total_bytes + excluded.total_bytes"),
+					"download_bytes": gorm.Expr("nodes_usage_history.download_bytes + excluded.download_bytes"),
+					"upload_bytes":   gorm.Expr("nodes_usage_history.upload_bytes + excluded.upload_bytes"),
+					"total_bytes":    gorm.Expr("nodes_usage_history.total_bytes + excluded.total_bytes"),
 					"updated_at":     gorm.Expr("excluded.updated_at"),
 				}),
 			}).Create(&history).Error; err != nil {
@@ -986,7 +986,20 @@ func (s *Service) GetUserResolvedInbounds(userID uint64) ([]InboundInfo, error) 
 		Joins("JOIN config_profile_inbounds ON internal_squad_inbounds.inbound_uuid = config_profile_inbounds.uuid").
 		Where("internal_squad_members.user_id = ?", userID).
 		Scan(&inbounds).Error
-	return inbounds, err
+	if err != nil {
+		return nil, err
+	}
+	// Squads may share inbounds; a repeated tag makes the node reject the
+	// whole add-user call with "User already exists".
+	seen := make(map[string]bool, len(inbounds))
+	unique := inbounds[:0]
+	for _, inbound := range inbounds {
+		if !seen[inbound.Tag] {
+			seen[inbound.Tag] = true
+			unique = append(unique, inbound)
+		}
+	}
+	return unique, nil
 }
 
 func (s *Service) syncUserToSingleNode(node *database.Node, user *database.User, prevVlessUUID *string, inbounds []InboundInfo) error {

@@ -58,6 +58,29 @@ func parseTableQuery(r *http.Request, defaultSize int) tableQuery {
 	return query
 }
 
+// orderByTableSorting applies the table's sorting param through an allowlist
+// of columns. fallback is the default order and, after explicit sorts, the
+// tiebreak that keeps pages stable when the sort column repeats.
+func orderByTableSorting(query *gorm.DB, r *http.Request, columns map[string]string, fallback string) *gorm.DB {
+	var sorting []struct {
+		ID   string `json:"id"`
+		Desc bool   `json:"desc"`
+	}
+	_ = json.Unmarshal([]byte(r.URL.Query().Get("sorting")), &sorting)
+	for _, sort := range sorting {
+		column, ok := columns[sort.ID]
+		if !ok {
+			continue
+		}
+		direction := " ASC"
+		if sort.Desc {
+			direction = " DESC"
+		}
+		query = query.Order(column + direction)
+	}
+	return query.Order(fallback)
+}
+
 // jsonText extracts a nested text value from a JSON column on both dialects.
 func jsonText(db *gorm.DB, column string, path ...string) string {
 	if db.Dialector.Name() == "postgres" {

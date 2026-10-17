@@ -255,19 +255,18 @@ curl -sSL https://raw.githubusercontent.com/aaaSaZaN/gowave/main/scripts/migrate
 
 ### Вариант 1: Bundled (На одном сервере с панелью)
 
-1. В файле `/opt/gowave/.env` укажите домен вашей страницы подписок:
+1. В `.env` панели (`/opt/gowave-docker/.env` для Docker, `/opt/gowave/.env` для Systemd) укажите домен вашей страницы подписок:
    ```env
    SUB_PUBLIC_DOMAIN=sub.yourdomain.com
    ```
-   И перезапустите Gowave: `systemctl restart gowave`.
-   Страница подписки обращается к панели по её домену: внутри контейнера `127.0.0.1` указывает на сам контейнер, а панель слушает только loopback хоста.
+   И перезапустите Gowave: `cd /opt/gowave-docker && docker compose up -d` (Docker) или `systemctl restart gowave` (Systemd).
 
 2. Создайте каталог для страницы подписки:
    ```bash
    mkdir -p /opt/gowave-sub && cd /opt/gowave-sub
    ```
 
-3. Создайте файл `docker-compose.yml`:
+3. Создайте файл `docker-compose.yml`. Страница подписки подключается к сети `gowave_default` из [Docker Compose](#docker-compose-gowave--postgresql) и обращается к панели напрямую по имени контейнера `gowave:3000`, мимо reverse proxy. Порт панели при этом остаётся закрытым снаружи (`127.0.0.1:3000`):
    ```yaml
    services:
      gowave-subscription-page:
@@ -278,10 +277,17 @@ curl -sSL https://raw.githubusercontent.com/aaaSaZaN/gowave/main/scripts/migrate
          - "127.0.0.1:3010:3010"
        environment:
          - APP_PORT=3010
-         - REMNAWAVE_PANEL_URL=https://panel.yourdomain.com
+         - REMNAWAVE_PANEL_URL=http://gowave:3000
          - REMNAWAVE_API_TOKEN=ВАШ_API_ТОКЕН_ИЗ_ПАНЕЛИ
          - TRUST_PROXY=1
+       networks:
+         - gowave_default
+
+   networks:
+     gowave_default:
+       external: true
    ```
+   При установке через **Systemd** контейнера `gowave` и сети `gowave_default` нет, а панель слушает только loopback хоста (внутри контейнера `127.0.0.1` указывает на сам контейнер). Уберите блоки `networks` и укажите `REMNAWAVE_PANEL_URL=https://panel.yourdomain.com`. Не открывайте ради этого порт панели на `0.0.0.0`.
 
 4. Запустите сервис:
    ```bash

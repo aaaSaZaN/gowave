@@ -817,7 +817,12 @@ func (s *StubHandler) GetHwidDevices(w http.ResponseWriter, r *http.Request) {
 	query.Count(&total)
 
 	var devices []database.HwidDevice
-	query.Order("created_at desc").Offset(start).Limit(size).Find(&devices)
+	query = orderByTableSorting(query, r, map[string]string{
+		"userId": "user_id", "requestIp": "request_ip", "hwid": "hwid", "platform": "platform",
+		"osVersion": "os_version", "deviceModel": "device_model", "userAgent": "user_agent",
+		"createdAt": "created_at", "updatedAt": "updated_at",
+	}, "created_at DESC")
+	query.Offset(start).Limit(size).Find(&devices)
 	if devices == nil {
 		devices = []database.HwidDevice{}
 	}
@@ -1299,7 +1304,11 @@ func (s *StubHandler) GetSubHistory(w http.ResponseWriter, r *http.Request) {
 	query.Count(&total)
 
 	var records []database.UserSubscriptionRequestHistory
-	query.Order("request_at desc").Offset(start).Limit(size).Find(&records)
+	query = orderByTableSorting(query, r, map[string]string{
+		"id": "id", "userId": "user_id", "requestIp": "request_ip", "userAgent": "user_agent",
+		"requestAt": "request_at", "srrResponseType": "srr_response_type", "srrRuleName": "srr_rule_name",
+	}, "request_at DESC")
+	query.Offset(start).Limit(size).Find(&records)
 	if records == nil {
 		records = []database.UserSubscriptionRequestHistory{}
 	}
