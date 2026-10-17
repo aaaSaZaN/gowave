@@ -29,7 +29,7 @@ Tests default to in-memory SQLite. To run the PostgreSQL path against a test dat
 GOWAVE_TEST_POSTGRES='postgres://gowave:gowave@localhost:5432/gowave_test?sslmode=disable' go test -count=1 ./...
 ```
 
-CI provides PostgreSQL 17. `internal/testdb.Open` creates a separate schema for each PostgreSQL test and drops it on cleanup; its database role must be able to create/drop schemas. SQLite tests use one connection and run migrations/default seeding through the same database setup.
+CI provides PostgreSQL 18. `internal/testdb.Open` creates a separate schema for each PostgreSQL test and drops it on cleanup; its database role must be able to create/drop schemas. SQLite tests use one connection and run migrations/default seeding through the same database setup.
 
 ### Frontend (working directory: `frontend`)
 
