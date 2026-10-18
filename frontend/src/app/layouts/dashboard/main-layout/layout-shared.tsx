@@ -4,8 +4,7 @@ import { Outlet, ScrollRestoration } from 'react-router'
 import { SidebarLogoShared, SidebarTitleShared } from '@shared/ui/sidebar'
 
 export const DASHBOARD_LINKS = {
-    githubLink: 'https://github.com/remnawave/panel',
-    telegramLink: 'https://t.me/remnawave'
+    githubLink: 'https://github.com/aaaSaZaN/gowave'
 } as const
 
 type LayoutMainProps = Omit<React.ComponentProps<typeof AppShell.Main>, 'children'>

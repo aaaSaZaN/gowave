@@ -36,7 +36,6 @@ export function MainLayout() {
             withGithub={!isMobile}
             withRecap={!isMobile}
             withSupport={!isMobile}
-            withTelegram={!isMobile}
         />
     )
 

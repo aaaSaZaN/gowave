@@ -14,14 +14,7 @@ import {
 import { GetMetadataCommand } from '@remnawave/backend-contract'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import {
-    TbBrandGithub,
-    TbBrandTelegram,
-    TbCheck,
-    TbCopy,
-    TbGitBranch,
-    TbDownload
-} from 'react-icons/tb'
+import { TbBrandGithub, TbCheck, TbCopy, TbGitBranch, TbDownload } from 'react-icons/tb'
 
 import { instance } from '@shared/api'
 
@@ -177,18 +170,6 @@ export function BuildInfoModal({ remnawaveMetadata, isNewVersionAvailable }: Bui
             </Paper>
 
             <Group gap="sm" grow>
-                <Button
-                    color="cyan"
-                    component="a"
-                    href="https://t.me/remnawave"
-                    leftSection={<TbBrandTelegram size={16} />}
-                    radius="md"
-                    size="sm"
-                    target="_blank"
-                    variant="light"
-                >
-                    Community
-                </Button>
                 <Button
                     component="a"
                     href="https://github.com/aaaSaZaN/gowave"
