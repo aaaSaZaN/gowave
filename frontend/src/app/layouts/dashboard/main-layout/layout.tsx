@@ -34,7 +34,6 @@ export function MainLayout() {
             isGithubLoading={isLoadingUpdates}
             stars={remnawaveInfo.starsCount || undefined}
             withGithub={!isMobile}
-            withPrime
             withRecap={!isMobile}
             withSupport={!isMobile}
             withTelegram={!isMobile}
