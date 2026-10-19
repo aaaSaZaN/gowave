@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
 
 # Stage 1: Build frontend
-FROM node:22-alpine AS frontend
+# Frontend output is architecture-independent: build it once, natively.
+FROM --platform=$BUILDPLATFORM node:22-alpine AS frontend
 
 WORKDIR /src/frontend
 RUN npm install -g pnpm@11
@@ -12,17 +13,19 @@ RUN pnpm install --frozen-lockfile
 COPY frontend/ ./
 RUN pnpm run build
 
-# Stage 2: Build Go backend (same entrypoint and version flag as release.yml)
-FROM golang:1.27-alpine AS backend
+# Stage 2: Build Go backend (same entrypoint and version flag as release.yml).
+# Cross-compile natively instead of running the compiler under QEMU.
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS backend
 
 ARG VERSION=dev
+ARG TARGETOS TARGETARCH
 WORKDIR /src
 
 COPY backend-go/go.mod backend-go/go.sum ./
 RUN go mod download
 
 COPY backend-go/ ./
-RUN CGO_ENABLED=0 go build -trimpath \
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath \
     -ldflags="-s -w -X gowave/internal/system.AppVersion=${VERSION}" \
     -o /out/gowave ./cmd/server
 
