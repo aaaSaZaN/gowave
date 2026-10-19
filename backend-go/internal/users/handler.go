@@ -766,21 +766,21 @@ func (h *Handler) PatchUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, `{"message":"Invalid user ID"}`, http.StatusBadRequest)
 			return
 		}
-		user, _ = h.service.GetByID(id)
+		user, _ = h.service.Resolve(&id, "", "")
 	} else if rawShortUUID, ok := body["shortUuid"]; ok {
 		var shortUUID string
 		if err := json.Unmarshal(rawShortUUID, &shortUUID); err != nil || shortUUID == "" {
 			http.Error(w, `{"message":"Invalid short UUID"}`, http.StatusBadRequest)
 			return
 		}
-		user, _ = h.service.GetByShortUUID(shortUUID)
+		user, _ = h.service.Resolve(nil, shortUUID, "")
 	} else if rawUsername, ok := body["username"]; ok {
 		var username string
 		if err := json.Unmarshal(rawUsername, &username); err != nil || username == "" {
 			http.Error(w, `{"message":"Invalid username"}`, http.StatusBadRequest)
 			return
 		}
-		user, _ = h.service.GetByUsername(username)
+		user, _ = h.service.Resolve(nil, "", username)
 	} else {
 		http.Error(w, `{"message":"User ID or username is required"}`, http.StatusBadRequest)
 		return

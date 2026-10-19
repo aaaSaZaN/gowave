@@ -34,17 +34,27 @@ var statusEvents = map[string]string{
 // works inside the mutation's transaction (SQLite has one connection).
 func eventData(tx *gorm.DB, user *database.User) (map[string]interface{}, error) {
 	snapshot := *user
-	var traffic database.UserTraffic
-	if err := tx.Where("id = ?", user.ID).Limit(1).Find(&traffic).Error; err != nil {
-		return nil, err
-	}
-	if traffic.ID != 0 {
-		snapshot.Traffic = &traffic
-	}
-	if err := loadSquads(tx, []*database.User{&snapshot}); err != nil {
+	if err := loadRelations(tx, &snapshot); err != nil {
 		return nil, err
 	}
 	return FormatUser(&snapshot, subPublicDomain), nil
+}
+
+// loadRelations attaches traffic and squads, as GetByID returns them.
+func loadRelations(tx *gorm.DB, user *database.User) error {
+	var traffic database.UserTraffic
+	if err := tx.Where("id = ?", user.ID).Limit(1).Find(&traffic).Error; err != nil {
+		return err
+	}
+	if traffic.ID != 0 {
+		user.Traffic = &traffic
+	}
+	return loadSquads(tx, []*database.User{user})
+}
+
+// emitLoaded is emitUser for a user whose relations are already loaded.
+func emitLoaded(tx *gorm.DB, user *database.User, name string) error {
+	return notify.Emit(tx, notify.Event{Name: name, Data: FormatUser(user, subPublicDomain)})
 }
 
 func emitUser(tx *gorm.DB, user *database.User, names ...string) error {

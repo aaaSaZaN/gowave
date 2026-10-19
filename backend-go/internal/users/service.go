@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type NodeUserSyncer interface {
@@ -576,25 +577,31 @@ func normalizeUserFields(raw map[string]interface{}) (map[string]interface{}, []
 	return updates, activeSquads, hasSquads
 }
 
+// Update applies the fields and returns the user as GetByID would. The row,
+// its event and node work are loaded once inside the transaction; the outbox
+// entry written there is the node sync, so nothing is enqueued after commit.
 func (s *Service) Update(id uint64, updates map[string]interface{}) (*database.User, error) {
-	prevUser, previousErr := s.GetByID(id)
-	if previousErr != nil {
-		return nil, previousErr
-	}
-	var prevVlessUUID *string
-	if prevUser != nil {
-		prevVlessUUID = &prevUser.VlessUUID
-	}
-
 	dbFields, activeSquads, hasSquads := normalizeUserFields(updates)
 	dbFields["updated_at"] = time.Now().UTC()
 	dbFields["revision"] = gorm.Expr("revision + 1")
 
+	var user database.User
 	err := s.db.Transaction(func(tx *gorm.DB) error {
-		if len(dbFields) > 0 {
-			if err := tx.Model(&database.User{}).Where("id = ?", id).Updates(dbFields).Error; err != nil {
+		// Nodes need the old credential only when it changes.
+		var previous *string
+		if _, ok := dbFields["vless_uuid"]; ok {
+			var old database.User
+			query := tx.Select("vless_uuid").Where("id = ?", id)
+			if tx.Dialector.Name() == "postgres" {
+				query = query.Clauses(clause.Locking{Strength: "UPDATE"})
+			}
+			if err := query.First(&old).Error; err != nil {
 				return err
 			}
+			previous = &old.VlessUUID
+		}
+		if err := tx.Model(&database.User{}).Where("id = ?", id).Updates(dbFields).Error; err != nil {
+			return err
 		}
 		if hasSquads {
 			if err := tx.Where("user_id = ?", id).Delete(&database.InternalSquadMember{}).Error; err != nil {
@@ -613,28 +620,25 @@ func (s *Service) Update(id uint64, updates map[string]interface{}) (*database.U
 				}
 			}
 		}
-		var current database.User
-		if err := tx.Where("id = ?", id).First(&current).Error; err != nil {
+		if err := tx.Where("id = ?", id).First(&user).Error; err != nil {
 			return err
 		}
-		if err := emitUser(tx, &current, "user.modified"); err != nil {
+		if previous == nil {
+			unchanged := user.VlessUUID
+			previous = &unchanged
+		}
+		if err := loadRelations(tx, &user); err != nil {
 			return err
 		}
-		return jobs.EnqueueUser(tx, &current, prevVlessUUID, false)
+		if err := emitLoaded(tx, &user, "user.modified"); err != nil {
+			return err
+		}
+		return jobs.EnqueueUser(tx, &user, previous, false)
 	})
-
 	if err != nil {
 		return nil, err
 	}
-	updatedUser, err := s.GetByID(id)
-	if err == nil && s.syncer != nil {
-		if strings.ToUpper(updatedUser.Status) == "ACTIVE" {
-			s.syncer.SyncUserToNodes(updatedUser, prevVlessUUID)
-		} else {
-			s.syncer.RemoveUserFromNodes(updatedUser)
-		}
-	}
-	return updatedUser, err
+	return &user, nil
 }
 
 func (s *Service) Resolve(id *uint64, shortUUID, username string) (*database.User, error) {
