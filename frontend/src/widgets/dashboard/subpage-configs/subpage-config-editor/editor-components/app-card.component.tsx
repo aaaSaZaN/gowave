@@ -13,6 +13,8 @@ import {
 } from '@tabler/icons-react'
 import isSvg from 'is-svg'
 
+import { sanitizeSvg } from '@shared/utils/misc'
+
 import styles from '../subpage-config-visual-editor.module.css'
 
 interface IProps {
@@ -53,7 +55,7 @@ export function AppCard(props: IProps) {
                         {hasValidIcon ? (
                             <Box
                                 className={styles.appIconSvg}
-                                dangerouslySetInnerHTML={{ __html: svgContent }}
+                                dangerouslySetInnerHTML={{ __html: sanitizeSvg(svgContent) }}
                             />
                         ) : (
                             <IconPhoto color="var(--mantine-color-dimmed)" size={18} />

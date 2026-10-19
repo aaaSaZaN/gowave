@@ -22,6 +22,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { sanitizeSvg } from '@shared/utils/misc'
 
 import styles from '../subpage-config-visual-editor.module.css'
 
@@ -199,7 +200,7 @@ export function SvgLibraryModal(props: IProps) {
                                                     >
                                                         <span
                                                             dangerouslySetInnerHTML={{
-                                                                __html: svg
+                                                                __html: sanitizeSvg(svg)
                                                             }}
                                                             style={{
                                                                 display: 'flex',
@@ -311,7 +312,7 @@ export function SvgLibraryModal(props: IProps) {
                                             >
                                                 <span
                                                     dangerouslySetInnerHTML={{
-                                                        __html: newSvg
+                                                        __html: sanitizeSvg(newSvg)
                                                     }}
                                                     style={{
                                                         display: 'flex',

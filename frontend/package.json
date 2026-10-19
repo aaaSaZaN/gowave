@@ -87,6 +87,7 @@
     "consola": "^3.4.2",
     "country-flag-emoji-polyfill": "^0.1.10",
     "dayjs": "^1.11.23",
+    "dompurify": "3.4.16",
     "dotenv": "^17.4.2",
     "framer-motion": "^14.0.0",
     "highcharts": "^13.0.1",

@@ -15,6 +15,8 @@ import isSvg from 'is-svg'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { sanitizeSvg } from '@shared/utils/misc'
+
 import styles from '../subpage-config-visual-editor.module.css'
 import { RequiredAsterisk } from './required-asterisk'
 
@@ -82,7 +84,9 @@ export function SvgIconSelect(props: IProps) {
                                 {isValidSelectedSvg && selectedSvg ? (
                                     <Box
                                         className={styles.iconSelectSvg}
-                                        dangerouslySetInnerHTML={{ __html: selectedSvg }}
+                                        dangerouslySetInnerHTML={{
+                                            __html: sanitizeSvg(selectedSvg)
+                                        }}
                                     />
                                 ) : (
                                     <IconPhoto color="var(--mantine-color-dimmed)" size={20} />
@@ -138,7 +142,9 @@ export function SvgIconSelect(props: IProps) {
                                             >
                                                 <Box
                                                     className={styles.iconSelectItemSvg}
-                                                    dangerouslySetInnerHTML={{ __html: svg }}
+                                                    dangerouslySetInnerHTML={{
+                                                        __html: sanitizeSvg(svg)
+                                                    }}
                                                 />
 
                                                 {isSelected && (

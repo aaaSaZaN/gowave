@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"time"
@@ -149,11 +150,17 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
+var errAdminExists = errors.New("admin already exists")
+
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var adminCount int64
-	h.db.Model(&database.Admin{}).Count(&adminCount)
+	if err := h.db.Model(&database.Admin{}).Count(&adminCount).Error; err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"message":"Internal server error"}`))
+		return
+	}
 	if adminCount > 0 {
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte(`{"message":"Registration is disabled because an admin already exists"}`))
@@ -161,7 +168,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req RegisterRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := httpx.Decode(r, 4096, &req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"message":"Bad request"}`))
 		return
@@ -189,7 +196,30 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt:    time.Now(),
 	}
 
-	if err := h.db.Create(&admin).Error; err != nil {
+	// The check above only avoids hashing for nothing. The bootstrap condition is
+	// re-checked here with concurrent inserts blocked, so racing requests (or one
+	// whose body arrived after the owner registered) cannot add a second admin.
+	err = h.db.Transaction(func(tx *gorm.DB) error {
+		if tx.Dialector.Name() == "postgres" {
+			if err := tx.Exec(`LOCK TABLE "admin" IN SHARE ROW EXCLUSIVE MODE`).Error; err != nil {
+				return err
+			}
+		}
+		var count int64
+		if err := tx.Model(&database.Admin{}).Count(&count).Error; err != nil {
+			return err
+		}
+		if count > 0 {
+			return errAdminExists
+		}
+		return tx.Create(&admin).Error
+	})
+	if errors.Is(err, errAdminExists) {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte(`{"message":"Registration is disabled because an admin already exists"}`))
+		return
+	}
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{"message":"Failed to create admin"}`))
 		return
