@@ -71,6 +71,10 @@ func NewNodeClient(caCertPEM, clientCertPEM, clientKeyPEM, jwtPrivKeyPEM, jwtPub
 			}
 
 			_, err := certs[0].Verify(opts)
+			var unknownCA x509.UnknownAuthorityError
+			if errors.As(err, &unknownCA) {
+				return fmt.Errorf("%w: the service on this port is not a node of this panel; another program may hold NODE_PORT, or the node uses a SECRET_KEY from another panel", err)
+			}
 			return err
 		}
 	}

@@ -111,12 +111,20 @@ func Run() {
 		os.Exit(1)
 	}
 
+	serverAddr := net.JoinHostPort(cfg.AppHost, cfg.AppPort)
+	// Bind before the workers start: a busy port must stop the process with
+	// a non-zero status so systemd and Docker see the failure.
+	listener, err := net.Listen("tcp", serverAddr)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Listen failed: %v\n", err)
+		os.Exit(1)
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	app := NewApp(cfg, db)
 	app.Start(ctx)
 
-	serverAddr := net.JoinHostPort(cfg.AppHost, cfg.AppPort)
 	if !cfg.IsLoopbackHost() {
 		fmt.Printf("WARNING: APP_HOST=%s exposes the panel without HTTPS. Keep APP_HOST=127.0.0.1 and serve the panel through a reverse proxy (Caddy/Nginx).\n", cfg.AppHost)
 	}
@@ -132,14 +140,19 @@ func Run() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
+	serveErr := make(chan error, 1)
 	go func() {
 		fmt.Printf("GoWave running on %s\n", serverAddr)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			fmt.Printf("Listen failed: %v\n", err)
-		}
+		serveErr <- srv.Serve(listener)
 	}()
 
-	<-quit
+	exitCode := 0
+	select {
+	case <-quit:
+	case err := <-serveErr:
+		fmt.Fprintf(os.Stderr, "Server failed: %v\n", err)
+		exitCode = 1
+	}
 	fmt.Println("Shutting down GoWave server...")
 
 	cancel()
@@ -152,6 +165,9 @@ func Run() {
 	// Background writers flush what requests queued before the shutdown.
 	app.wait(5 * time.Second)
 	fmt.Println("Server exiting")
+	if exitCode != 0 {
+		os.Exit(exitCode)
+	}
 }
 
 // App holds the HTTP router and the background workers. Construction has no
@@ -481,7 +497,7 @@ func NewApp(cfg *config.Config, db *gorm.DB) *App {
 		go nodeService.StartHealthCheckLoop(ctx)
 		go nodeService.SyncAllUsersToConnectedNodes()
 		go metricsExporter.Run(ctx)
-		if cfg.MetricsPort != "" {
+		if cfg.MetricsEnabled && cfg.MetricsPort != "" {
 			go prometheus.Serve(ctx, net.JoinHostPort(cfg.AppHost, cfg.MetricsPort), prometheus.Handler(db, cfg.MetricsUser, cfg.MetricsPass))
 		}
 	}}

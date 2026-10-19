@@ -1077,14 +1077,13 @@
       "debugger": "Отладчик"
     }
   },
-  "copy-docker-compose": {
+  "copy-node-install-command": {
     "widget": {
-      "copy-docker-compose-yml": "Скопировать docker-compose.yml"
+      "copy-install-command": "Скопировать команду установки"
     }
   },
   "create-node-step-1-connection": {
-    "copy-the": "Скопируйте содержимое",
-    "content-for-the-remnawave-node-below": "для ноды Remnawave ниже.",
+    "run-the-install-command": "Скопируйте команду кнопкой ниже и выполните её на сервере ноды: она установит ноду GoWave (remnanode-go) с этим секретным ключом и портом.",
     "learn-more": "Подробнее.",
     "domain-or-ip": "Домен или IP",
     "additional-options": "Дополнительные настройки"

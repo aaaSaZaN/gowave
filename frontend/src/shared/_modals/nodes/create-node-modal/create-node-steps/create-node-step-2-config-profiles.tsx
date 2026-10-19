@@ -11,7 +11,7 @@ import { useGetConfigProfiles } from '@shared/api/hooks'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 
-import { CopyDockerComposeWidget } from './copy-docker-compose.widget'
+import { CopyNodeInstallCommandWidget } from './copy-node-install-command.widget'
 
 interface IProps {
     // oxlint-disable-next-line
@@ -105,7 +105,7 @@ export const CreateNodeStep2ConfigProfiles = ({
             </SectionCard.Root>
 
             <Stack gap="xs" mt="auto">
-                <CopyDockerComposeWidget port={port} />
+                <CopyNodeInstallCommandWidget port={port} />
 
                 <Group justify="space-between">
                     <Button

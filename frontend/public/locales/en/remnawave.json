@@ -1077,14 +1077,13 @@
       "debugger": "Debugger"
     }
   },
-  "copy-docker-compose": {
+  "copy-node-install-command": {
     "widget": {
-      "copy-docker-compose-yml": "Copy docker-compose.yml"
+      "copy-install-command": "Copy install command"
     }
   },
   "create-node-step-1-connection": {
-    "copy-the": "Copy the",
-    "content-for-the-remnawave-node-below": "content for the Remnawave Node below.",
+    "run-the-install-command": "Copy the command with the button below and run it on the node server: it installs the GoWave node (remnanode-go) with this secret key and port.",
     "learn-more": "Learn more.",
     "domain-or-ip": "Domain or IP",
     "additional-options": "Additional options"

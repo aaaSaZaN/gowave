@@ -41,3 +41,12 @@ func TestDBMaxConnections(t *testing.T) {
 		}
 	}
 }
+
+func TestMetricsEnabled(t *testing.T) {
+	for value, want := range map[string]bool{"": true, "true": true, "false": false, " FALSE ": false} {
+		t.Setenv("METRICS_ENABLED", value)
+		if got := Load().MetricsEnabled; got != want {
+			t.Fatalf("METRICS_ENABLED=%q: got %v, want %v", value, got, want)
+		}
+	}
+}

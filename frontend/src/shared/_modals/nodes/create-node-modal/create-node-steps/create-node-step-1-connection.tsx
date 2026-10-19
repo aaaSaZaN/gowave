@@ -1,7 +1,6 @@
 import {
     Anchor,
     Button,
-    Code,
     Divider,
     Group,
     NumberInput,
@@ -34,7 +33,7 @@ import { COUNTRIES } from '@shared/ui/forms/nodes/base-node-form/constants'
 import { SelectInfraProviderShared } from '@shared/ui/infra-billing/select-infra-provider/select-infra-provider.shared'
 import { TagInputPill } from '@shared/ui/tag-input-pill'
 
-import { CopyDockerComposeWidget } from './copy-docker-compose.widget'
+import { CopyNodeInstallCommandWidget } from './copy-node-install-command.widget'
 
 interface IProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,7 +44,7 @@ interface IProps {
 }
 
 export const CreateNodeStep1Connection = ({ form, onNext, secretKey, port }: IProps) => {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
 
     const { data: nodePlugins } = useGetNodePlugins()
     const { data: nodesTags } = useGetNodesTags()
@@ -79,14 +78,14 @@ export const CreateNodeStep1Connection = ({ form, onNext, secretKey, port }: IPr
         >
             <Stack gap="xs" mih={400}>
                 <Text c="dimmed" size="sm">
-                    {t('create-node-step-1-connection.copy-the')}{' '}
-                    <Code c="white" color="gray.8">
-                        docker-compose.yml
-                    </Code>{' '}
-                    {t('create-node-step-1-connection.content-for-the-remnawave-node-below')}{' '}
+                    {t('create-node-step-1-connection.run-the-install-command')}{' '}
                     <Anchor
                         fw="700"
-                        href="https://docs.rw/docs/install/remnawave-node"
+                        href={
+                            i18n.language.startsWith('ru')
+                                ? 'https://aaasazan.github.io/gowave-docs/install/node/install/'
+                                : 'https://aaasazan.github.io/gowave-docs/en/install/node/install/'
+                        }
                         inherit
                         rel="noopener noreferrer"
                         target="_blank"
@@ -272,7 +271,7 @@ export const CreateNodeStep1Connection = ({ form, onNext, secretKey, port }: IPr
                 </Stack>
 
                 <Stack gap="xs" mt="auto">
-                    <CopyDockerComposeWidget port={port} />
+                    <CopyNodeInstallCommandWidget port={port} />
 
                     <Group justify="flex-end" mt="auto">
                         <Button

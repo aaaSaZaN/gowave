@@ -1077,14 +1077,13 @@
       "debugger": "调试器"
     }
   },
-  "copy-docker-compose": {
+  "copy-node-install-command": {
     "widget": {
-      "copy-docker-compose-yml": "复制 docker-compose.yml"
+      "copy-install-command": "复制安装命令"
     }
   },
   "create-node-step-1-connection": {
-    "copy-the": "复制",
-    "content-for-the-remnawave-node-below": "以下是 Remnawave 节点的内容。",
+    "run-the-install-command": "用下方按钮复制命令并在节点服务器上运行：它会使用此密钥和端口安装 GoWave 节点 (remnanode-go)。",
     "learn-more": "了解更多。",
     "domain-or-ip": "域名或IP",
     "additional-options": "附加参数"

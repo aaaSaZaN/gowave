@@ -19,6 +19,7 @@ type Config struct {
 	AppHost         string
 	AppPort         string
 	MetricsPort     string
+	MetricsEnabled  bool // METRICS_ENABLED=false keeps METRICS_PORT closed
 	AppSecret       string
 	DBDriver        string
 	DatabaseURL     string
@@ -137,6 +138,7 @@ func Load() *Config {
 		AppHost:         host,
 		AppPort:         port,
 		MetricsPort:     metricsPort,
+		MetricsEnabled:  !strings.EqualFold(strings.TrimSpace(os.Getenv("METRICS_ENABLED")), "false"),
 		AppSecret:       secret,
 		DBDriver:        dbDriver,
 		DatabaseURL:     dbURL,

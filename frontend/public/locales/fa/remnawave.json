@@ -1077,14 +1077,13 @@
       "debugger": "عیب‌یاب"
     }
   },
-  "copy-docker-compose": {
+  "copy-node-install-command": {
     "widget": {
-      "copy-docker-compose-yml": "کپی کردن docker-compose.yml"
+      "copy-install-command": "کپی دستور نصب"
     }
   },
   "create-node-step-1-connection": {
-    "copy-the": "محتوای",
-    "content-for-the-remnawave-node-below": "زیر را برای نود کپی کنید.",
+    "run-the-install-command": "دستور را با دکمه زیر کپی کنید و روی سرور نود اجرا کنید: نود GoWave (remnanode-go) را با این کلید مخفی و پورت نصب می‌کند.",
     "learn-more": "اطلاعات بیشتر.",
     "domain-or-ip": "دامنه یا آیپی",
     "additional-options": "تنظیمات بیشتر"
