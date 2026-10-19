@@ -1,50 +1,52 @@
 # GoWave
 
-Бэкенд [Remnawave](https://github.com/remnawave), переписанный на Go. Тот же API и веб-интерфейс, но памяти нужно примерно в 20 раз меньше, а запросов в секунду он выдерживает в разы больше.
+The [Remnawave](https://github.com/remnawave) backend rewritten in Go. Same API and web interface, but it needs about 20 times less memory and handles several times more requests per second.
 
-**Документация: [aaasazan.github.io/gowave-docs](https://aaasazan.github.io/gowave-docs/)** · [English](https://aaasazan.github.io/gowave-docs/en/)
+**Documentation: [Russian](https://aaasazan.github.io/gowave-docs/) · [English](https://aaasazan.github.io/gowave-docs/en/)**
 
 | | GoWave | Remnawave |
 | :--- | :--- | :--- |
-| Память под нагрузкой | около 50 МБ | около 1 ГБ |
-| API готов после старта | 0,2 с | 4,8 с |
-| Процессы | один | три, плюс Valkey |
-| База данных | SQLite или PostgreSQL | PostgreSQL |
+| Memory under load | about 50 MB | about 1 GB |
+| API ready after start | 0.2 s | 4.8 s |
+| Processes | one | three, plus Valkey |
+| Database | SQLite or PostgreSQL | PostgreSQL |
 
-Замеры и методика - на странице [бенчмарков](https://aaasazan.github.io/gowave-docs/benchmarks/).
+Measurements and methodology are on the [benchmarks](https://aaasazan.github.io/gowave-docs/en/benchmarks/) page.
 
-## Установка
+## Installation
 
-Нужны Linux-сервер (Debian, Ubuntu или RHEL-семейство, `amd64`/`arm64`) и домен, A-запись которого указывает на этот сервер.
+You need a Linux server (Debian, Ubuntu or the RHEL family, `amd64`/`arm64`) and a domain whose A record points to that server.
 
 ```bash
 sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/aaaSaZaN/gowave/main/install.sh)"
 ```
 
-Установщик спросит базу данных (SQLite или PostgreSQL в Docker), reverse proxy (Caddy, Nginx или свой) и домен, затем настроит HTTPS. Если на сервере есть Remnawave или PasarGuard, он предложит перенести данные. Повторный запуск той же команды открывает меню: обновление, смена домена, удаление.
+The installer first asks for the language (Russian or English), then the database (SQLite or PostgreSQL in Docker), the reverse proxy (Caddy, Nginx or your own) and the domain, and sets up HTTPS. If Remnawave or PasarGuard is found on the server, it offers to migrate the data. Running the same command again opens a menu: update, change the domain, uninstall.
 
-Первый, кто откроет панель, создаёт администратора, поэтому откройте её сразу после установки.
+Whoever opens the panel first creates the admin, so open it right after installation.
 
-## Документация
+## Documentation
 
-| Тема | Страница |
+The documentation is available in [Russian](https://aaasazan.github.io/gowave-docs/) and [English](https://aaasazan.github.io/gowave-docs/en/). The links below go to the English version.
+
+| Topic | Pages |
 | :--- | :--- |
-| С чего начать | [Быстрый старт](https://aaasazan.github.io/gowave-docs/overview/quick-start/), [требования](https://aaasazan.github.io/gowave-docs/install/requirements/) |
-| Установка | [установщик](https://aaasazan.github.io/gowave-docs/install/installer/), [Docker и PostgreSQL](https://aaasazan.github.io/gowave-docs/install/docker/), [systemd и SQLite](https://aaasazan.github.io/gowave-docs/install/systemd/), [обновление](https://aaasazan.github.io/gowave-docs/install/updating/) |
-| Reverse proxy | [Caddy](https://aaasazan.github.io/gowave-docs/install/reverse-proxy/caddy/), [Nginx](https://aaasazan.github.io/gowave-docs/install/reverse-proxy/nginx/) |
-| Ноды | [Go-нода](https://aaasazan.github.io/gowave-docs/install/node/install/) ([remnanode-go](https://github.com/aaaSaZaN/remnanode-go)), [переход с Docker-ноды](https://aaasazan.github.io/gowave-docs/migration/docker-node/) |
-| Страница подписки | [Установка](https://aaasazan.github.io/gowave-docs/install/subscription-page/) |
-| Переезд | [с Remnawave](https://aaasazan.github.io/gowave-docs/migration/remnawave/), [с PasarGuard](https://aaasazan.github.io/gowave-docs/migration/pasarguard/), [с SQLite в Docker](https://aaasazan.github.io/gowave-docs/migration/sqlite-to-docker/), [переход на PostgreSQL 18](https://aaasazan.github.io/gowave-docs/migration/postgres-18/) |
-| Подписки | [Response Rules (SRR)](https://aaasazan.github.io/gowave-docs/features/subscription-rules/), [шаблоны](https://aaasazan.github.io/gowave-docs/features/templates/) |
-| Справочник | [переменные окружения](https://aaasazan.github.io/gowave-docs/reference/environment/), [CLI](https://aaasazan.github.io/gowave-docs/reference/cli/), [совместимость](https://aaasazan.github.io/gowave-docs/reference/compatibility/), [API](https://aaasazan.github.io/gowave-docs/api/) |
+| Getting started | [Quick start](https://aaasazan.github.io/gowave-docs/en/overview/quick-start/), [requirements](https://aaasazan.github.io/gowave-docs/en/install/requirements/) |
+| Installation | [installer](https://aaasazan.github.io/gowave-docs/en/install/installer/), [Docker and PostgreSQL](https://aaasazan.github.io/gowave-docs/en/install/docker/), [systemd and SQLite](https://aaasazan.github.io/gowave-docs/en/install/systemd/), [updating](https://aaasazan.github.io/gowave-docs/en/install/updating/) |
+| Reverse proxy | [Caddy](https://aaasazan.github.io/gowave-docs/en/install/reverse-proxy/caddy/), [Nginx](https://aaasazan.github.io/gowave-docs/en/install/reverse-proxy/nginx/) |
+| Nodes | [Go node](https://aaasazan.github.io/gowave-docs/en/install/node/install/) ([remnanode-go](https://github.com/aaaSaZaN/remnanode-go)), [moving from the Docker node](https://aaasazan.github.io/gowave-docs/en/migration/docker-node/) |
+| Subscription page | [Installation](https://aaasazan.github.io/gowave-docs/en/install/subscription-page/) |
+| Migration | [from Remnawave](https://aaasazan.github.io/gowave-docs/en/migration/remnawave/), [from PasarGuard](https://aaasazan.github.io/gowave-docs/en/migration/pasarguard/), [from SQLite to Docker](https://aaasazan.github.io/gowave-docs/en/migration/sqlite-to-docker/), [moving to PostgreSQL 18](https://aaasazan.github.io/gowave-docs/en/migration/postgres-18/) |
+| Subscriptions | [Response Rules (SRR)](https://aaasazan.github.io/gowave-docs/en/features/subscription-rules/), [templates](https://aaasazan.github.io/gowave-docs/en/features/templates/) |
+| Reference | [environment variables](https://aaasazan.github.io/gowave-docs/en/reference/environment/), [CLI](https://aaasazan.github.io/gowave-docs/en/reference/cli/), [compatibility](https://aaasazan.github.io/gowave-docs/en/reference/compatibility/), [API](https://aaasazan.github.io/gowave-docs/api/) |
 
-## Совместимость
+## Compatibility
 
-GoWave реализует все 218 команд `@remnawave/backend-contract` 3.4.15. Тесты сверяют маршруты с контрактом и проверяют ответы по его JSON-схемам на SQLite и PostgreSQL, а выдачу подписок сравнивают с эталоном оригинального бэкенда. Работают веб-интерфейс Remnawave, ноды `remnawave/node` и [Go-нода](https://github.com/aaaSaZaN/remnanode-go), официальная страница подписки.
+GoWave implements all 218 commands of `@remnawave/backend-contract` 3.4.15. Tests check the routes against the contract and validate responses against its JSON schemas on SQLite and PostgreSQL, and subscription output is compared with the reference output of the original backend. The Remnawave web interface, `remnawave/node` nodes, the [Go node](https://github.com/aaaSaZaN/remnanode-go) and the official subscription page all work.
 
-Главное отличие: регулярные выражения в правилах и шаблонах используют синтаксис RE2 (Go), а не JavaScript. Подробнее - в [сравнении с Remnawave](https://aaasazan.github.io/gowave-docs/overview/comparison/).
+The main difference: regular expressions in rules and templates use RE2 (Go) syntax, not JavaScript. See the [comparison with Remnawave](https://aaasazan.github.io/gowave-docs/en/overview/comparison/) for details.
 
-## Разработка
+## Development
 
 ```bash
 git clone https://github.com/aaaSaZaN/gowave.git && cd gowave
@@ -52,13 +54,13 @@ pnpm --dir frontend install --frozen-lockfile && pnpm --dir frontend build
 cd backend-go && go test ./... && CGO_ENABLED=0 go build -o gowave ./cmd/server
 ```
 
-Проверки контракта, тесты на PostgreSQL и сборка Docker-образа описаны на странице [Сборка из исходников](https://aaasazan.github.io/gowave-docs/development/) и в [AGENTS.md](AGENTS.md).
+Contract checks, PostgreSQL tests and building the Docker image are covered on the [Building from source](https://aaasazan.github.io/gowave-docs/en/development/) page and in [AGENTS.md](AGENTS.md).
 
-## Автор
+## Author
 
 - GoWave: [@aaaSaZaN](https://github.com/aaaSaZaN)
-- Оригинальный проект: [Remnawave](https://github.com/remnawave)
+- Original project: [Remnawave](https://github.com/remnawave)
 
-## Лицензия
+## License
 
-[AGPL-3.0-only](LICENSE), как и кодовая база Remnawave.
+[AGPL-3.0-only](LICENSE), same as the Remnawave codebase.

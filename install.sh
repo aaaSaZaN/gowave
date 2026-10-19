@@ -7,7 +7,8 @@
 # Installs the panel (SQLite with systemd, or PostgreSQL in Docker) behind
 # Caddy or Nginx with HTTPS, or leaves the reverse proxy to the admin. The
 # panel listens on 127.0.0.1 only. When a Remnawave or PasarGuard install is
-# found, offers to move its data.
+# found, offers to move its data. Asks for the language (Russian or English)
+# first.
 # GOWAVE_VERSION=v1.2.3 pins a release instead of the latest one.
 set -Eeuo pipefail
 
@@ -40,12 +41,20 @@ die() {
 }
 have() { command -v "$1" >/dev/null 2>&1; }
 
+UI_LANG=ru
+
+# t prints its first argument (Russian) or its second (English) depending on
+# the language picked at startup.
+t() {
+    if [ "$UI_LANG" = en ]; then printf '%s' "$2"; else printf '%s' "$1"; fi
+}
+
 # run hides command output in $LOG and shows its tail on failure.
 run() {
     printf '\n$ %s\n' "$*" >>"$LOG"
     if ! "$@" </dev/null >>"$LOG" 2>&1; then
         tail -n 25 "$LOG" >&2
-        die "Команда завершилась с ошибкой: $*  (полный лог: $LOG)"
+        die "$(t "Команда завершилась с ошибкой: $*  (полный лог: $LOG)" "Command failed: $*  (full log: $LOG)")"
     fi
 }
 
@@ -75,13 +84,28 @@ choose() {
             printf '  %d) %s\n' "$i" "$option" >&2
             i=$((i + 1))
         done
-        reply=$(ask "Выбор [1]: ")
+        reply=$(ask "$(t 'Выбор' 'Choice') [1]: ")
         reply=${reply:-1}
         if [[ $reply =~ ^[0-9]+$ ]] && [ "$reply" -ge 1 ] && [ "$reply" -le $# ]; then
             printf '%s' "$reply"
             return
         fi
-        warn "Введите число от 1 до $#"
+        warn "$(t "Введите число от 1 до $#" "Enter a number from 1 to $#")"
+    done
+}
+
+# ask_language runs before anything else is printed, so its own prompt is in
+# both languages.
+ask_language() {
+    local reply
+    while :; do
+        printf '\n%s\n  1) Русский\n  2) English\n' "${BOLD}Язык / Language:${RESET}" >&2
+        reply=$(ask 'Выбор / Choice [1]: ')
+        case ${reply:-1} in
+        1) UI_LANG=ru && return ;;
+        2) UI_LANG=en && return ;;
+        esac
+        warn 'Введите 1 или 2 / Enter 1 or 2'
     done
 }
 
@@ -92,21 +116,24 @@ ARCH=''
 APT_UPDATED=false
 
 detect_system() {
-    [ "$(id -u)" -eq 0 ] || die 'Запустите установщик от root (sudo).'
-    (: </dev/tty) 2>/dev/null || die 'Нужен интерактивный терминал: запустите команду из README в SSH-сессии.'
+    # The language is not known yet: these two errors come in both.
+    [ "$(id -u)" -eq 0 ] || die 'Запустите установщик от root (sudo). / Run the installer as root (sudo).'
+    (: </dev/tty) 2>/dev/null ||
+        die 'Нужен интерактивный терминал: запустите команду из README в SSH-сессии. / An interactive terminal is required: run the command from the README in an SSH session.'
     exec 3</dev/tty
-    [ -d /run/systemd/system ] || die 'Нужен systemd.'
+    ask_language
+    [ -d /run/systemd/system ] || die "$(t 'Нужен systemd.' 'systemd is required.')"
     if have apt-get; then
         PKG=apt
     elif have dnf; then
         PKG=dnf
     else
-        die 'Поддерживаются Debian/Ubuntu (apt) и RHEL/Alma/Rocky/Fedora (dnf).'
+        die "$(t 'Поддерживаются Debian/Ubuntu (apt) и RHEL/Alma/Rocky/Fedora (dnf).' 'Supported systems: Debian/Ubuntu (apt) and RHEL/Alma/Rocky/Fedora (dnf).')"
     fi
     case $(uname -m) in
     x86_64 | amd64) ARCH=amd64 ;;
     aarch64 | arm64) ARCH=arm64 ;;
-    *) die "Архитектура $(uname -m) не поддерживается: релизы GoWave собираются для amd64 и arm64." ;;
+    *) die "$(t "Архитектура $(uname -m) не поддерживается: релизы GoWave собираются для amd64 и arm64." "Architecture $(uname -m) is not supported: GoWave releases are built for amd64 and arm64.")" ;;
     esac
     : >>"$LOG"
     chmod 600 "$LOG"
@@ -133,7 +160,7 @@ ensure_tools() {
     have sha256sum || missing+=(coreutils)
     if [ ${#missing[@]} -gt 0 ]; then
         [ "$PKG" = dnf ] && missing=("${missing[@]/iproute2/iproute}")
-        info "Устанавливаю ${missing[*]}"
+        info "$(t 'Устанавливаю' 'Installing') ${missing[*]}"
         pkg_install "${missing[@]}"
     fi
 }
@@ -142,8 +169,8 @@ ensure_docker() {
     if have docker && docker compose version >/dev/null 2>&1; then
         return
     fi
-    info 'Устанавливаю Docker (get.docker.com)'
-    curl -fsSL https://get.docker.com -o "$WORK/get-docker.sh" || die 'Не удалось скачать установщик Docker.'
+    info "$(t 'Устанавливаю Docker (get.docker.com)' 'Installing Docker (get.docker.com)')"
+    curl -fsSL https://get.docker.com -o "$WORK/get-docker.sh" || die "$(t 'Не удалось скачать установщик Docker.' 'Could not download the Docker installer.')"
     run sh "$WORK/get-docker.sh"
     run systemctl enable --now docker
 }
@@ -203,29 +230,31 @@ check_dns() {
     local records ips
     records=$(getent ahosts "$1" 2>/dev/null | awk '{print $1}' | sort -u) || true
     if [ -z "$records" ]; then
-        warn "Домен $1 не резолвится. Создайте A-запись (и AAAA, если есть IPv6) на IP этого сервера и подождите обновления DNS."
+        warn "$(t "Домен $1 не резолвится. Создайте A-запись (и AAAA, если есть IPv6) на IP этого сервера и подождите обновления DNS." "Domain $1 does not resolve. Create an A record (and AAAA if the server has IPv6) pointing to this server's IP and wait for DNS to update.")"
         return 1
     fi
     ips=$(server_ips)
     if [ -z "$ips" ]; then
-        warn 'Не удалось определить внешний IP сервера, пропускаю проверку DNS.'
+        warn "$(t 'Не удалось определить внешний IP сервера, пропускаю проверку DNS.' "Could not detect the server's public IP, skipping the DNS check.")"
         return 0
     fi
     if grep -qxF -f <(printf '%s\n' "$ips") <(printf '%s\n' "$records"); then
         return 0
     fi
-    warn "Домен $1 указывает на $(printf '%s' "$records" | tr '\n' ' '), а у сервера $(printf '%s' "$ips" | tr '\n' ' ')"
-    warn 'Сертификат не выпустится, пока домен не указывает на этот сервер.'
-    confirm 'Продолжить всё равно (например, домен за Cloudflare-прокси)?'
+    records=$(printf '%s' "$records" | tr '\n' ' ')
+    ips=$(printf '%s' "$ips" | tr '\n' ' ')
+    warn "$(t "Домен $1 указывает на $records, а у сервера $ips" "Domain $1 points to $records, but this server has $ips")"
+    warn "$(t 'Сертификат не выпустится, пока домен не указывает на этот сервер.' 'The certificate will not be issued until the domain points to this server.')"
+    confirm "$(t 'Продолжить всё равно (например, домен за Cloudflare-прокси)?' 'Continue anyway (for example, the domain is behind the Cloudflare proxy)?')"
 }
 
 ask_domain() {
     local domain
     while :; do
-        domain=$(ask 'Домен панели (например panel.example.com): ')
+        domain=$(ask "$(t 'Домен панели (например panel.example.com): ' 'Panel domain (for example panel.example.com): ')")
         domain=$(printf '%s' "$domain" | tr '[:upper:]' '[:lower:]' | sed -e 's#^[a-z]*://##' -e 's#[/:].*$##' -e 's/\.$//')
         if ! valid_domain "$domain"; then
-            warn 'Нужен домен вида panel.example.com. Панель без домена и HTTPS не устанавливается.'
+            warn "$(t 'Нужен домен вида panel.example.com. Панель без домена и HTTPS не устанавливается.' 'A domain like panel.example.com is required. The panel is not installed without a domain and HTTPS.')"
             continue
         fi
         # An external proxy may live on another host or behind a tunnel, so
@@ -247,7 +276,7 @@ detect_old_panels() {
     [ -f "$REMNAWAVE_DIR/.env" ] && HAS_REMNAWAVE=true
     if [ -f "$PASARGUARD_DIR/.env" ] || [ -f /var/lib/pasarguard/db.sqlite3 ]; then
         if grep -Eqs '^[[:space:]]*SQLALCHEMY_DATABASE_URL[[:space:]]*=[[:space:]]*["'\'']?(mysql|mariadb)' "$PASARGUARD_DIR/.env"; then
-            warn 'Найден PasarGuard на MySQL/MariaDB: перенос поддерживается только из SQLite и PostgreSQL.'
+            warn "$(t 'Найден PasarGuard на MySQL/MariaDB: перенос поддерживается только из SQLite и PostgreSQL.' 'Found PasarGuard on MySQL/MariaDB: migration is supported only from SQLite and PostgreSQL.')"
         else
             HAS_PASARGUARD=true
         fi
@@ -287,7 +316,7 @@ stop_old_panel() {
     ids=$(old_containers "$SOURCE_DIR")
     [ -n "$ids" ] || return 0
     # shellcheck disable=SC2086
-    info "Останавливаю старую панель: $(container_names $ids)"
+    info "$(t 'Останавливаю старую панель:' 'Stopping the old panel:') $(container_names $ids)"
     # shellcheck disable=SC2086
     run docker update --restart=no $ids
     # shellcheck disable=SC2086
@@ -320,12 +349,12 @@ check_web_ports() {
                 if [ "$allow_old" = true ] && [ -n "$SOURCE_DIR" ] && under_dir "$dir" "$SOURCE_DIR"; then
                     continue
                 fi
-                problems+=("порт $port занят Docker-контейнером $(container_names "$id")${dir:+ ($dir)}")
+                problems+=("$(t "порт $port занят Docker-контейнером" "port $port is held by Docker container") $(container_names "$id")${dir:+ ($dir)}")
             done
         elif [ "$name" = "$PROXY" ] && systemctl is-active --quiet "$PROXY"; then
             continue
         else
-            problems+=("порт $port занят процессом ${name:-неизвестно}")
+            problems+=("$(t "порт $port занят процессом ${name:-неизвестно}" "port $port is held by process ${name:-unknown}")")
         fi
     done
     [ ${#problems[@]} -eq 0 ] && return 0
@@ -348,13 +377,13 @@ release_url() {
 install_release() {
     local dir="$WORK/release" file
     mkdir -p "$dir"
-    info "Скачиваю GoWave ($GOWAVE_VERSION, linux-$ARCH)"
+    info "$(t 'Скачиваю' 'Downloading') GoWave ($GOWAVE_VERSION, linux-$ARCH)"
     for file in "gowave-linux-$ARCH" gowave-frontend.tar.gz SHA256SUMS; do
-        curl -fsSL --retry 3 -o "$dir/$file" "$(release_url "$file")" || die "Не удалось скачать $file"
+        curl -fsSL --retry 3 -o "$dir/$file" "$(release_url "$file")" || die "$(t 'Не удалось скачать' 'Could not download') $file"
     done
     grep -E " \*?(gowave-linux-$ARCH|gowave-frontend\.tar\.gz)\$" "$dir/SHA256SUMS" >"$dir/expected" || true
-    [ "$(wc -l <"$dir/expected")" -eq 2 ] || die 'В SHA256SUMS нет нужных файлов.'
-    (cd "$dir" && sha256sum -c --quiet expected) || die 'Контрольные суммы не совпали, установка прервана.'
+    [ "$(wc -l <"$dir/expected")" -eq 2 ] || die "$(t 'В SHA256SUMS нет нужных файлов.' 'SHA256SUMS does not list the required files.')"
+    (cd "$dir" && sha256sum -c --quiet expected) || die "$(t 'Контрольные суммы не совпали, установка прервана.' 'Checksums do not match, installation aborted.')"
 
     mkdir -p "$INSTALL_DIR/frontend"
     install -m 0755 "$dir/gowave-linux-$ARCH" "$INSTALL_DIR/gowave-server.new"
@@ -414,7 +443,7 @@ start_native() {
     run systemctl restart gowave
     wait_healthy "$APP_PORT" || {
         journalctl -u gowave -n 30 --no-pager >&2 || true
-        die 'Панель не запустилась (journalctl -u gowave).'
+        die "$(t 'Панель не запустилась (journalctl -u gowave).' 'The panel did not start (journalctl -u gowave).')"
     }
 }
 
@@ -440,7 +469,7 @@ migrate_data() {
     # shellcheck disable=SC2086
     [ -n "$app_ids" ] && run docker stop $app_ids
 
-    info "Переношу данные из $SOURCE"
+    info "$(t 'Переношу данные из' 'Migrating data from') $SOURCE"
     if [ "$SOURCE" = remnawave ]; then
         sleep 3
         gowave_cli migrate pg-to-sqlite "" "$INSTALL_DIR/gowave.db" || status=$?
@@ -451,27 +480,28 @@ migrate_data() {
         rm -f "$INSTALL_DIR"/gowave.db*
         # shellcheck disable=SC2086
         [ -n "$app_ids" ] && docker start $app_ids >/dev/null 2>&1
-        die 'Перенос не удался, старая панель запущена обратно. Подробности выше и в '"$LOG"
+        die "$(t "Перенос не удался, старая панель запущена обратно. Подробности выше и в $LOG" "Migration failed, the old panel has been started again. Details above and in $LOG")"
     fi
 }
 
 move_to_docker() {
     ensure_docker
-    info 'Перевожу панель в Docker с PostgreSQL'
-    gowave_cli migrate to-docker --yes --from "$INSTALL_DIR" || die 'Переход в Docker не удался, панель продолжает работать на SQLite.'
+    info "$(t 'Перевожу панель в Docker с PostgreSQL' 'Moving the panel to Docker with PostgreSQL')"
+    gowave_cli migrate to-docker --yes --from "$INSTALL_DIR" ||
+        die "$(t 'Переход в Docker не удался, панель продолжает работать на SQLite.' 'Moving to Docker failed, the panel keeps running on SQLite.')"
 }
 
 # ---------------------------------------------------------------- Caddy
 
 install_caddy() {
     have caddy && return
-    info 'Устанавливаю Caddy'
+    info "$(t 'Устанавливаю Caddy' 'Installing Caddy')"
     if [ "$PKG" = apt ]; then
         pkg_install debian-keyring debian-archive-keyring apt-transport-https gnupg
         curl -fsSL https://dl.cloudsmith.io/public/caddy/stable/gpg.key | gpg --dearmor --yes -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg ||
-            die 'Не удалось добавить ключ репозитория Caddy.'
+            die "$(t 'Не удалось добавить ключ репозитория Caddy.' 'Could not add the Caddy repository key.')"
         curl -fsSL https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt -o /etc/apt/sources.list.d/caddy-stable.list ||
-            die 'Не удалось добавить репозиторий Caddy.'
+            die "$(t 'Не удалось добавить репозиторий Caddy.' 'Could not add the Caddy repository.')"
         chmod o+r /usr/share/keyrings/caddy-stable-archive-keyring.gpg /etc/apt/sources.list.d/caddy-stable.list
         APT_UPDATED=false
         pkg_install caddy
@@ -507,7 +537,7 @@ EOF
         if [ -f "$backup" ]; then cp -p "$backup" "$CADDYFILE"; fi
         rm -f "$CADDY_SITE"
         tail -n 15 "$LOG" >&2
-        die "Caddy не принял конфигурацию (возможно, $DOMAIN уже описан в $CADDYFILE). Исходный Caddyfile восстановлен."
+        die "$(t "Caddy не принял конфигурацию (возможно, $DOMAIN уже описан в $CADDYFILE). Исходный Caddyfile восстановлен." "Caddy rejected the configuration ($DOMAIN may already be defined in $CADDYFILE). The original Caddyfile has been restored.")"
     fi
     run systemctl enable caddy
     run systemctl reload-or-restart caddy
@@ -530,7 +560,7 @@ remove_caddy_site() {
 
 install_nginx() {
     if ! have nginx || ! have certbot; then
-        info 'Устанавливаю Nginx и Certbot'
+        info "$(t 'Устанавливаю Nginx и Certbot' 'Installing Nginx and Certbot')"
         if [ "$PKG" = dnf ] && ! grep -qi fedora /etc/os-release; then
             pkg_install epel-release
         fi
@@ -638,7 +668,7 @@ nginx_apply() {
     if ! nginx -t >>"$LOG" 2>&1; then
         tail -n 15 "$LOG" >&2
         rm -f "$NGINX_SITE"
-        die "Nginx не принял конфигурацию, $NGINX_SITE удалён."
+        die "$(t "Nginx не принял конфигурацию, $NGINX_SITE удалён." "Nginx rejected the configuration, $NGINX_SITE has been removed.")"
     fi
     run systemctl enable nginx
     run systemctl reload-or-restart nginx
@@ -648,14 +678,14 @@ configure_nginx() {
     install_nginx
     local taken
     taken=$(grep -rlsE --exclude="$(basename "$NGINX_SITE")" "server_name[^;]*[[:space:]]${DOMAIN//./\\.}[[:space:];]" /etc/nginx || true)
-    [ -z "$taken" ] || die "Домен $DOMAIN уже описан в $taken. Уберите этот server-блок и запустите установщик снова."
+    [ -z "$taken" ] || die "$(t "Домен $DOMAIN уже описан в $taken. Уберите этот server-блок и запустите установщик снова." "Domain $DOMAIN is already defined in $taken. Remove that server block and run the installer again.")"
     mkdir -p "$ACME_ROOT"
     {
         echo '# Managed by GoWave install.sh (certificate request)'
         nginx_http_block
     } >"$NGINX_SITE"
     nginx_apply
-    info "Выпускаю сертификат Let's Encrypt для $DOMAIN"
+    info "$(t "Выпускаю сертификат Let's Encrypt для $DOMAIN" "Requesting a Let's Encrypt certificate for $DOMAIN")"
     run certbot certonly --webroot -w "$ACME_ROOT" -d "$DOMAIN" --cert-name "$DOMAIN" \
         --non-interactive --agree-tos --register-unsafely-without-email --keep-until-expiring
     mkdir -p "$(dirname "$NGINX_RENEW_HOOK")"
@@ -674,7 +704,10 @@ remove_nginx_site() {
 # ---------------------------------------------------------------- proxy
 
 ask_proxy() {
-    case $(choose 'Reverse proxy с HTTPS:' 'Caddy (сертификат выпускается и продлевается сам)' 'Nginx + Certbot' 'Не настраивать: свой reverse proxy') in
+    case $(choose "$(t 'Reverse proxy с HTTPS:' 'Reverse proxy with HTTPS:')" \
+        "$(t 'Caddy (сертификат выпускается и продлевается сам)' 'Caddy (issues and renews the certificate itself)')" \
+        'Nginx + Certbot' \
+        "$(t 'Не настраивать: свой reverse proxy' 'Skip: I will use my own reverse proxy')") in
     1) PROXY=caddy ;;
     2) PROXY=nginx ;;
     3) PROXY=external ;;
@@ -706,7 +739,7 @@ setup_proxy() {
         configure_nginx
     fi
     open_firewall
-    info "Проверяю https://$DOMAIN"
+    info "$(t 'Проверяю' 'Checking') https://$DOMAIN"
     local i
     for i in $(seq 1 30); do
         if curl -fsS --max-time 5 "https://$DOMAIN/api/system/health" >/dev/null 2>&1; then
@@ -714,13 +747,15 @@ setup_proxy() {
         fi
         sleep 2
     done
-    warn "https://$DOMAIN пока не отвечает. Проверьте DNS и журнал: journalctl -u $PROXY -n 50"
+    warn "$(t "https://$DOMAIN пока не отвечает. Проверьте DNS и журнал: journalctl -u $PROXY -n 50" "https://$DOMAIN is not responding yet. Check DNS and the log: journalctl -u $PROXY -n 50")"
 }
 
 # ---------------------------------------------------------------- install
 
 choose_database() {
-    case $(choose 'База данных:' 'SQLite: один файл, без Docker, обновление из панели (рекомендуется)' 'PostgreSQL в Docker') in
+    case $(choose "$(t 'База данных:' 'Database:')" \
+        "$(t 'SQLite: один файл, без Docker, обновление из панели (рекомендуется)' 'SQLite: a single file, no Docker, updates from the panel (recommended)')" \
+        "$(t 'PostgreSQL в Docker' 'PostgreSQL in Docker')") in
     1) DB_MODE=sqlite ;;
     2) DB_MODE=docker ;;
     esac
@@ -732,18 +767,20 @@ fresh_install() {
     detect_old_panels
     local options=() sources=() modes=() pick
     if [ "$HAS_REMNAWAVE" = true ]; then
-        options+=('Перенести Remnawave в GoWave (SQLite)' 'Перенести Remnawave в GoWave (PostgreSQL в Docker)')
+        options+=("$(t 'Перенести Remnawave в GoWave (SQLite)' 'Migrate Remnawave to GoWave (SQLite)')"
+            "$(t 'Перенести Remnawave в GoWave (PostgreSQL в Docker)' 'Migrate Remnawave to GoWave (PostgreSQL in Docker)')")
         sources+=(remnawave remnawave)
         modes+=(sqlite docker)
     fi
     if [ "$HAS_PASARGUARD" = true ]; then
-        options+=('Перенести PasarGuard в GoWave (SQLite)' 'Перенести PasarGuard в GoWave (PostgreSQL в Docker)')
+        options+=("$(t 'Перенести PasarGuard в GoWave (SQLite)' 'Migrate PasarGuard to GoWave (SQLite)')"
+            "$(t 'Перенести PasarGuard в GoWave (PostgreSQL в Docker)' 'Migrate PasarGuard to GoWave (PostgreSQL in Docker)')")
         sources+=(pasarguard pasarguard)
         modes+=(sqlite docker)
     fi
     if [ ${#options[@]} -gt 0 ]; then
-        options+=('Установить GoWave без переноса')
-        pick=$(choose 'На сервере найдена другая панель. Что сделать?' "${options[@]}")
+        options+=("$(t 'Установить GoWave без переноса' 'Install GoWave without migration')")
+        pick=$(choose "$(t 'На сервере найдена другая панель. Что сделать?' 'Another panel was found on this server. What should be done?')" "${options[@]}")
         if [ "$pick" -le ${#sources[@]} ]; then
             SOURCE=${sources[$((pick - 1))]}
             DB_MODE=${modes[$((pick - 1))]}
@@ -760,22 +797,26 @@ fresh_install() {
     ask_domain
 
     if [ "$PROXY" != external ] && ! check_web_ports true; then
-        die "Освободите порты 80/443 (или выберите другой прокси) и запустите установщик снова."
+        die "$(t 'Освободите порты 80/443 (или выберите другой прокси) и запустите установщик снова.' 'Free ports 80/443 (or pick another proxy) and run the installer again.')"
     fi
     APP_PORT=$(free_port 3000)
 
-    printf '\n%s\n' "${BOLD}Будет установлено:${RESET}"
-    printf '  Панель:   https://%s (локально 127.0.0.1:%s)\n' "$DOMAIN" "$APP_PORT"
-    printf '  База:     %s\n' "$([ "$DB_MODE" = sqlite ] && echo "SQLite, $INSTALL_DIR" || echo "PostgreSQL в Docker, $DOCKER_DIR")"
-    if [ "$PROXY" = external ]; then
-        printf '  Прокси:   свой, направьте его на 127.0.0.1:%s\n' "$APP_PORT"
+    printf '\n%s\n' "${BOLD}$(t 'Будет установлено:' 'About to install:')${RESET}"
+    echo "$(t "  Панель:   https://$DOMAIN (локально 127.0.0.1:$APP_PORT)" "  Panel:     https://$DOMAIN (locally 127.0.0.1:$APP_PORT)")"
+    if [ "$DB_MODE" = sqlite ]; then
+        echo "$(t "  База:     SQLite, $INSTALL_DIR" "  Database:  SQLite, $INSTALL_DIR")"
     else
-        printf '  Прокси:   %s\n' "$PROXY"
+        echo "$(t "  База:     PostgreSQL в Docker, $DOCKER_DIR" "  Database:  PostgreSQL in Docker, $DOCKER_DIR")"
+    fi
+    if [ "$PROXY" = external ]; then
+        echo "$(t "  Прокси:   свой, направьте его на 127.0.0.1:$APP_PORT" "  Proxy:     your own, point it to 127.0.0.1:$APP_PORT")"
+    else
+        echo "$(t "  Прокси:   $PROXY" "  Proxy:     $PROXY")"
     fi
     if [ "$SOURCE" != none ]; then
-        printf '  Перенос:  %s. Старая панель будет остановлена (контейнеры и данные не удаляются).\n' "$SOURCE"
+        echo "$(t "  Перенос:  $SOURCE. Старая панель будет остановлена (контейнеры и данные не удаляются)." "  Migrate:   $SOURCE. The old panel will be stopped (containers and data are not deleted).")"
     fi
-    confirm 'Продолжить?' || die 'Отменено.'
+    confirm "$(t 'Продолжить?' 'Continue?')" || die "$(t 'Отменено.' 'Cancelled.')"
 
     install_release
     write_env
@@ -784,13 +825,13 @@ fresh_install() {
         migrate_data
         stop_old_panel
     fi
-    info 'Запускаю панель'
+    info "$(t 'Запускаю панель' 'Starting the panel')"
     start_native
     [ "$DB_MODE" = docker ] && move_to_docker
 
     sleep 2
     if [ "$PROXY" != external ] && ! check_web_ports false; then
-        die "Панель работает на 127.0.0.1:$APP_PORT, но порты 80/443 заняты. Освободите их и запустите установщик снова: пункт «Настроить домен и HTTPS»."
+        die "$(t "Панель работает на 127.0.0.1:$APP_PORT, но порты 80/443 заняты. Освободите их и запустите установщик снова: пункт «Настроить домен и HTTPS»." "The panel is running on 127.0.0.1:$APP_PORT, but ports 80/443 are taken. Free them and run the installer again: option \"Set up domain and HTTPS\".")"
     fi
     setup_proxy
     print_done
@@ -798,38 +839,52 @@ fresh_install() {
 
 # print_external_proxy tells the admin where to point their own proxy.
 print_external_proxy() {
-    printf '%s\n' "${YELLOW}Reverse proxy не настроен: направьте свой прокси с HTTPS на http://127.0.0.1:$APP_PORT${RESET}"
-    echo 'Нужны заголовки Host, X-Forwarded-For, X-Forwarded-Proto, а для SSH-терминала нод - WebSocket (Upgrade, Connection).'
-    echo 'Если прокси работает в Docker, ему нужен network_mode: host: панель слушает только 127.0.0.1.'
-    echo 'Примеры: https://aaasazan.github.io/gowave-docs/install/reverse-proxy/overview/'
-    echo 'Пока прокси не настроен, панель доступна только с этого сервера, создать администратора извне нельзя.'
+    printf '%s\n' "${YELLOW}$(t "Reverse proxy не настроен: направьте свой прокси с HTTPS на http://127.0.0.1:$APP_PORT" "Reverse proxy is not configured: point your own HTTPS proxy to http://127.0.0.1:$APP_PORT")${RESET}"
+    echo "$(t 'Нужны заголовки Host, X-Forwarded-For, X-Forwarded-Proto, а для SSH-терминала нод - WebSocket (Upgrade, Connection).' \
+        'It must pass the Host, X-Forwarded-For and X-Forwarded-Proto headers, plus WebSocket (Upgrade, Connection) for the node SSH terminal.')"
+    echo "$(t 'Если прокси работает в Docker, ему нужен network_mode: host: панель слушает только 127.0.0.1.' \
+        'If the proxy runs in Docker, it needs network_mode: host, because the panel listens on 127.0.0.1 only.')"
+    echo "$(t 'Примеры:' 'Examples:') https://aaasazan.github.io/gowave-docs/install/reverse-proxy/overview/"
+    echo "$(t 'Пока прокси не настроен, панель доступна только с этого сервера, создать администратора извне нельзя.' \
+        'Until the proxy is set up, the panel is reachable only from this server, so the admin cannot be created from outside.')"
 }
 
 print_done() {
-    printf '\n%s\n' "${GREEN}${BOLD}GoWave установлена: https://$DOMAIN${RESET}"
+    printf '\n%s\n' "${GREEN}${BOLD}$(t 'GoWave установлена:' 'GoWave is installed:') https://$DOMAIN${RESET}"
     [ "$PROXY" = external ] && print_external_proxy
     case $SOURCE in
     none)
         if [ "$PROXY" = external ]; then
-            echo 'Когда прокси заработает, откройте адрес и создайте администратора: это сделает первый, кто откроет панель.'
+            echo "$(t 'Когда прокси заработает, откройте адрес и создайте администратора: это сделает первый, кто откроет панель.' \
+                'Once the proxy works, open the address and create the admin: whoever opens the panel first gets to do it.')"
         else
-            echo 'Откройте адрес и создайте администратора: это сделает первый, кто откроет панель.'
+            echo "$(t 'Откройте адрес и создайте администратора: это сделает первый, кто откроет панель.' \
+                'Open the address and create the admin: whoever opens the panel first gets to do it.')"
         fi
         ;;
-    remnawave) echo 'Данные Remnawave перенесены, входите под прежним администратором.' ;;
-    pasarguard) echo 'Перенесены пользователи PasarGuard и их HWID. Создайте администратора, затем настройте ноды, профили и хосты.' ;;
+    remnawave)
+        echo "$(t 'Данные Remnawave перенесены, входите под прежним администратором.' \
+            'Remnawave data has been migrated, log in with your existing admin.')"
+        ;;
+    pasarguard)
+        echo "$(t 'Перенесены пользователи PasarGuard и их HWID. Создайте администратора, затем настройте ноды, профили и хосты.' \
+            'PasarGuard users and their HWIDs have been migrated. Create an admin, then set up nodes, profiles and hosts.')"
+        ;;
     esac
     if [ "$DB_MODE" = docker ]; then
-        echo "Проект Docker:  $DOCKER_DIR (docker compose logs -f gowave)"
+        echo "$(t 'Проект Docker: ' 'Docker project:') $DOCKER_DIR (docker compose logs -f gowave)"
     else
-        echo "Конфигурация:   $INSTALL_DIR/.env (логи: journalctl -u gowave -f)"
+        echo "$(t 'Конфигурация:  ' 'Configuration: ') $INSTALL_DIR/.env ($(t 'логи' 'logs'): journalctl -u gowave -f)"
     fi
-    echo 'Консоль:        gowave rescue'
+    echo "$(t 'Консоль:       ' 'Console:       ') gowave rescue"
     if [ "$SOURCE" != none ]; then
-        echo "Старая панель остановлена и не запускается при загрузке. Её файлы остались в $SOURCE_DIR."
-        echo "Когда убедитесь, что всё работает, удалите её: cd $SOURCE_DIR && docker compose down"
+        echo "$(t "Старая панель остановлена и не запускается при загрузке. Её файлы остались в $SOURCE_DIR." \
+            "The old panel is stopped and will not start on boot. Its files are still in $SOURCE_DIR.")"
+        echo "$(t "Когда убедитесь, что всё работает, удалите её: cd $SOURCE_DIR && docker compose down" \
+            "Once you are sure everything works, remove it: cd $SOURCE_DIR && docker compose down")"
     fi
-    echo 'Повторный запуск установщика: обновление, смена домена, удаление.'
+    echo "$(t 'Повторный запуск установщика: обновление, смена домена, удаление.' \
+        'Run the installer again to update, change the domain or uninstall.')"
 }
 
 # ---------------------------------------------------------------- existing install
@@ -864,18 +919,18 @@ update_gowave() {
         # Older compose files published the panel on every interface.
         # shellcheck disable=SC2016
         sed -i 's#^\(\s*- \)"${APP_PORT:-3000}:3000"#\1"127.0.0.1:${APP_PORT:-3000}:3000"#' "$DOCKER_DIR/docker-compose.yml"
-        info 'Обновляю образы'
+        info "$(t 'Обновляю образы' 'Updating images')"
         (cd "$DOCKER_DIR" && run docker compose pull && run docker compose up -d --wait --wait-timeout 180)
     else
         install_release
         run systemctl restart gowave
-        wait_healthy "$APP_PORT" || die 'Панель не запустилась после обновления (journalctl -u gowave).'
+        wait_healthy "$APP_PORT" || die "$(t 'Панель не запустилась после обновления (journalctl -u gowave).' 'The panel did not start after the update (journalctl -u gowave).')"
     fi
-    info 'GoWave обновлена'
+    info "$(t 'GoWave обновлена' 'GoWave is updated')"
 
     if [ -z "$(configured_proxy)" ]; then
-        warn 'Панель слушает только 127.0.0.1, а домен с HTTPS не настроен.'
-        confirm 'Настроить домен и HTTPS сейчас?' && configure_domain
+        warn "$(t 'Панель слушает только 127.0.0.1, а домен с HTTPS не настроен.' 'The panel listens on 127.0.0.1 only and no domain with HTTPS is set up.')"
+        confirm "$(t 'Настроить домен и HTTPS сейчас?' 'Set up a domain and HTTPS now?')" && configure_domain
     fi
     return 0
 }
@@ -894,7 +949,7 @@ configure_domain() {
         esac
     fi
     if [ "$PROXY" != external ]; then
-        check_web_ports false || die 'Освободите порты 80/443 и запустите установщик снова.'
+        check_web_ports false || die "$(t 'Освободите порты 80/443 и запустите установщик снова.' 'Free ports 80/443 and run the installer again.')"
     fi
     env_set "$ENV_FILE" PANEL_DOMAIN "$DOMAIN"
     env_set "$ENV_FILE" SUB_PUBLIC_DOMAIN "$DOMAIN/api/sub"
@@ -904,33 +959,33 @@ configure_domain() {
     else
         env_set "$ENV_FILE" APP_HOST 127.0.0.1
         run systemctl restart gowave
-        wait_healthy "$APP_PORT" || die 'Панель не запустилась (journalctl -u gowave).'
+        wait_healthy "$APP_PORT" || die "$(t 'Панель не запустилась (journalctl -u gowave).' 'The panel did not start (journalctl -u gowave).')"
     fi
     setup_proxy
     if [ "$PROXY" = external ]; then
         print_external_proxy
     else
-        info "Готово: https://$DOMAIN"
+        info "$(t 'Готово:' 'Done:') https://$DOMAIN"
     fi
 }
 
 uninstall_gowave() {
-    warn 'Будут удалены панель, её база данных и конфигурация прокси для неё.'
-    [ "$(ask 'Введите yes для подтверждения: ')" = yes ] || die 'Отменено.'
-    if confirm 'Сохранить резервную копию базы и .env в /root?'; then
+    warn "$(t 'Будут удалены панель, её база данных и конфигурация прокси для неё.' 'This removes the panel, its database and its proxy configuration.')"
+    [ "$(ask "$(t 'Введите yes для подтверждения: ' 'Type yes to confirm: ')")" = yes ] || die "$(t 'Отменено.' 'Cancelled.')"
+    if confirm "$(t 'Сохранить резервную копию базы и .env в /root?' 'Save a backup of the database and .env to /root?')"; then
         local backup
         backup=/root/gowave-backup-$(date +%Y%m%d-%H%M%S)
         mkdir -p "$backup"
         if [ "$MODE" = docker ]; then
             cp -p "$DOCKER_DIR/.env" "$backup/" 2>/dev/null || true
             (cd "$DOCKER_DIR" && docker compose exec -T postgres sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"') >"$backup/gowave.sql" ||
-                die "Не удалось снять дамп PostgreSQL, ничего не удалено."
+                die "$(t 'Не удалось снять дамп PostgreSQL, ничего не удалено.' 'Could not dump PostgreSQL, nothing was removed.')"
         fi
         if [ -d "$INSTALL_DIR" ]; then
             mkdir -p "$backup/sqlite"
             cp -p "$INSTALL_DIR/.env" "$INSTALL_DIR"/gowave.db* "$backup/sqlite/" 2>/dev/null || true
         fi
-        info "Копия сохранена: $backup"
+        info "$(t 'Копия сохранена:' 'Backup saved:') $backup"
     fi
     if [ -f "$DOCKER_DIR/docker-compose.yml" ]; then
         (cd "$DOCKER_DIR" && run docker compose down --volumes --remove-orphans)
@@ -943,13 +998,17 @@ uninstall_gowave() {
     rm -f "$CLI_PATH"
     remove_caddy_site
     remove_nginx_site
-    info 'GoWave удалена. Caddy/Nginx, Docker и сертификаты оставлены.'
+    info "$(t 'GoWave удалена. Caddy/Nginx, Docker и сертификаты оставлены.' 'GoWave is removed. Caddy/Nginx, Docker and certificates are left in place.')"
 }
 
 manage_existing() {
     local where=$INSTALL_DIR
     [ "$MODE" = docker ] && where=$DOCKER_DIR
-    case $(choose "GoWave уже установлена ($where). Что сделать?" 'Обновить GoWave' 'Настроить домен и HTTPS' 'Удалить GoWave' 'Выход') in
+    case $(choose "$(t "GoWave уже установлена ($where). Что сделать?" "GoWave is already installed ($where). What should be done?")" \
+        "$(t 'Обновить GoWave' 'Update GoWave')" \
+        "$(t 'Настроить домен и HTTPS' 'Set up domain and HTTPS')" \
+        "$(t 'Удалить GoWave' 'Uninstall GoWave')" \
+        "$(t 'Выход' 'Exit')") in
     1) update_gowave ;;
     2) configure_domain ;;
     3) uninstall_gowave ;;
@@ -961,7 +1020,7 @@ main() {
     detect_system
     WORK=$(mktemp -d)
     trap 'rm -rf "$WORK"' EXIT
-    trap 'printf "%s\n" "${RED}[x] Неожиданная ошибка (строка $LINENO), лог: $LOG${RESET}" >&2' ERR
+    trap 'line=$LINENO; printf "%s\n" "${RED}[x] $(t "Неожиданная ошибка (строка $line), лог: $LOG" "Unexpected error (line $line), log: $LOG")${RESET}" >&2' ERR
     ensure_tools
     detect_existing
     if [ -n "$MODE" ]; then
