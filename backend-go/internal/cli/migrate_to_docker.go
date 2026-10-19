@@ -212,7 +212,7 @@ func prepareToDocker(opts toDockerOptions) (*toDockerPlan, error) {
 // checkSQLiteFileForeignKeys runs the copy's foreign-key check read-only,
 // before the panel is stopped.
 func checkSQLiteFileForeignKeys(path string) error {
-	db, err := gorm.Open(sqlite.Open("file:"+path+"?mode=ro"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	db, err := gorm.Open(sqlite.Open(sqliteReadOnlyURI(path)), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		return fmt.Errorf("open %s: %w", path, err)
 	}

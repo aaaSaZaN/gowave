@@ -85,7 +85,7 @@ func DetectPasarGuardSource(source string) (driver string, dsn string, err error
 			return driver, dsn, err
 		}
 		if _, err := os.Stat(source); err == nil {
-			return "sqlite", source, nil
+			return "sqlite", filepath.Clean(source), nil
 		}
 		return "", "", fmt.Errorf("specified source '%s' not found or invalid", source)
 	}
@@ -174,7 +174,9 @@ func parsePasarGuardDatabaseURL(raw, baseDir string) (driver, dsn string, ok boo
 		if !filepath.IsAbs(path) && baseDir != "" {
 			path = filepath.Join(baseDir, path)
 		}
-		return "sqlite", path, true, nil
+		// sqlite://///var/db.sqlite3 still names /var/db.sqlite3; the extra
+		// slash must not reach the file: URI as an empty authority.
+		return "sqlite", filepath.Clean(path), true, nil
 	case "postgres", "postgresql", "timescaledb":
 		parsed, err := url.Parse("postgresql://" + rest)
 		if err != nil {
@@ -204,6 +206,16 @@ func parsePasarGuardDatabaseURL(raw, baseDir string) (driver, dsn string, ok boo
 	}
 }
 
+// sqliteReadOnlyURI builds a read-only file: URI for path. Concatenating
+// "file:"+path breaks on //var/... (read as a URI authority, which SQLite
+// reports as "out of memory") and on paths containing ?, # or %.
+func sqliteReadOnlyURI(path string) string {
+	if abs, err := filepath.Abs(path); err == nil {
+		path = abs
+	}
+	return (&url.URL{Scheme: "file", Path: filepath.ToSlash(filepath.Clean(path)), RawQuery: "mode=ro"}).String()
+}
+
 func ImportFromPasarGuard(destDB *gorm.DB, source string) error {
 	driver, dsn, err := DetectPasarGuardSource(source)
 	if err != nil {
@@ -218,7 +230,7 @@ func ImportFromPasarGuard(destDB *gorm.DB, source string) error {
 	var srcDB *gorm.DB
 	if driver == "sqlite" {
 		// Read-only: PasarGuard may still be running on this file.
-		srcDB, err = gorm.Open(sqlite.Open("file:"+dsn+"?mode=ro"), gormCfg)
+		srcDB, err = gorm.Open(sqlite.Open(sqliteReadOnlyURI(dsn)), gormCfg)
 	} else {
 		srcDB, err = gorm.Open(postgres.Open(dsn), gormCfg)
 	}

@@ -1,10 +1,14 @@
 package cli
 
 import (
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/glebarez/sqlite"
+	"gorm.io/gorm"
 )
 
 // The .env lines below are what pasarguard.sh writes for each database.
@@ -15,6 +19,7 @@ func TestParsePasarGuardDatabaseURL(t *testing.T) {
 	}{
 		{name: "sqlite v1 absolute", raw: "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3", driver: "sqlite", dsn: "/var/lib/pasarguard/db.sqlite3", ok: true},
 		{name: "sqlite v0 absolute", raw: "sqlite:////var/lib/pasarguard/db.sqlite3", driver: "sqlite", dsn: "/var/lib/pasarguard/db.sqlite3", ok: true},
+		{name: "sqlite extra slash", raw: "sqlite+aiosqlite://///var/lib/pasarguard/db.sqlite3", driver: "sqlite", dsn: "/var/lib/pasarguard/db.sqlite3", ok: true},
 		{name: "sqlite relative", raw: "sqlite+aiosqlite:///db.sqlite3", driver: "sqlite", dsn: "/opt/pasarguard/db.sqlite3", ok: true},
 		{name: "postgres via pgbouncer", raw: "postgresql+asyncpg://pasarguard:p%40ss@127.0.0.1:6432/pasarguard", driver: "postgres", dsn: "postgresql://pasarguard:p%40ss@127.0.0.1:6432/pasarguard?default_query_exec_mode=simple_protocol", ok: true},
 		{name: "asyncpg ssl option", raw: "postgresql+asyncpg://u:p@127.0.0.1:5432/db?ssl=false", driver: "postgres", dsn: "postgresql://u:p@127.0.0.1:5432/db?default_query_exec_mode=simple_protocol&sslmode=disable", ok: true},
@@ -102,5 +107,38 @@ func TestDetectPasarGuardSourceFallsBackToSQLiteFile(t *testing.T) {
 	}
 	if driver != "sqlite" || dsn != dbFile {
 		t.Fatalf("got %s %s", driver, dsn)
+	}
+}
+
+// "file:"+"//var/..." made SQLite read "var" as a URI authority and fail
+// with "out of memory"; ? and # in a path cut the URI short.
+func TestSQLiteReadOnlyURIOpensUnusualPaths(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "pasar guard?#%")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "db.sqlite3")
+	db, err := gorm.Open(sqlite.Open((&url.URL{Scheme: "file", Path: path}).String()), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Exec("CREATE TABLE users (id INTEGER)").Error; err != nil {
+		t.Fatal(err)
+	}
+	closeGormDB(db)
+
+	for _, p := range []string{path, "/" + path} {
+		ro, err := gorm.Open(sqlite.Open(sqliteReadOnlyURI(p)), &gorm.Config{})
+		if err != nil {
+			t.Fatalf("open %q: %v", p, err)
+		}
+		var n int64
+		if err := ro.Table("users").Count(&n).Error; err != nil {
+			t.Fatalf("query %q: %v", p, err)
+		}
+		if err := ro.Exec("INSERT INTO users (id) VALUES (1)").Error; err == nil {
+			t.Fatalf("%q opened writable", p)
+		}
+		closeGormDB(ro)
 	}
 }
