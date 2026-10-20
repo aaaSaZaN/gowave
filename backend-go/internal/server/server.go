@@ -27,6 +27,7 @@ import (
 	"gowave/internal/nodessh"
 	"gowave/internal/notify"
 	"gowave/internal/prometheus"
+	"gowave/internal/serviceunit"
 	"gowave/internal/squads"
 	"gowave/internal/stubs"
 	"gowave/internal/subscription"
@@ -72,6 +73,34 @@ func Run() {
 		fmt.Println(system.AppVersion)
 		return
 	}
+	if len(args) >= 2 && args[0] == "service" && args[1] == "install" {
+		if len(args) > 3 {
+			fmt.Fprintln(os.Stderr, "Usage: gowave service install [directory]")
+			os.Exit(1)
+		}
+		dir := "/opt/gowave"
+		if len(args) == 3 {
+			dir = args[2]
+		}
+		if err := serviceunit.Install(dir, "/etc/systemd/system"); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
+	if len(args) == 0 && !system.IsRunningInDocker() {
+		if migrated, err := serviceunit.MigrateLegacy(); migrated {
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+			return
+		}
+	}
+	if len(args) == 0 && os.Geteuid() == 0 {
+		fmt.Fprintln(os.Stderr, "Run the panel as an unprivileged user; install the native service or configure the container user.")
+		os.Exit(1)
+	}
 	cfg := config.Load()
 	if cli.IsPostgresToSQLiteMigrationCommand(args) {
 		cli.RunRescue(nil, cfg, args)
@@ -106,6 +135,10 @@ func Run() {
 		}
 	}
 
+	if os.Geteuid() == 0 {
+		fmt.Fprintln(os.Stderr, "Run the panel as an unprivileged user.")
+		os.Exit(1)
+	}
 	if err := cfg.Validate(); err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid configuration: %v\n", err)
 		os.Exit(1)

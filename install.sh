@@ -426,7 +426,8 @@ EOF
 }
 
 write_unit() {
-    cat >"$UNIT_FILE" <<EOF
+    if [ ! -f "$UNIT_FILE" ]; then
+        cat >"$UNIT_FILE" <<EOF
 [Unit]
 Description=GoWave Panel
 After=network-online.target
@@ -434,7 +435,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=root
+User=gowave
+Group=gowave
 WorkingDirectory=$INSTALL_DIR
 ExecStart=$INSTALL_DIR/gowave-server
 Restart=always
@@ -444,7 +446,11 @@ LimitNOFILE=65535
 [Install]
 WantedBy=multi-user.target
 EOF
-    run systemctl daemon-reload
+    fi
+    run "$INSTALL_DIR/gowave-server" service install "$INSTALL_DIR"
+    if [ ! -e "$CLI_PATH" ] || [ -L "$CLI_PATH" ]; then
+        ln -sfn "$INSTALL_DIR/gowave-server" "$CLI_PATH"
+    fi
 }
 
 start_native() {
@@ -830,12 +836,12 @@ fresh_install() {
     FRESH_ROLLBACK=true
     install_release
     write_env
-    write_unit
     if [ "$SOURCE" != none ]; then
         migrate_data
         stop_old_panel
         OLD_PANEL_STOPPED=true
     fi
+    write_unit
     info "$(t 'Запускаю панель' 'Starting the panel')"
     start_native
     FRESH_ROLLBACK=false
@@ -858,7 +864,7 @@ OLD_PANEL_STOPPED=false
 rollback_fresh_install() {
     warn "$(t 'Установка не завершена, убираю созданные файлы GoWave.' 'Installation did not finish, removing the GoWave files it created.')"
     systemctl disable --now gowave >/dev/null 2>&1 || true
-    rm -f "$UNIT_FILE"
+    rm -f "$UNIT_FILE" "${UNIT_FILE}.d/90-unprivileged.conf"
     systemctl daemon-reload >/dev/null 2>&1 || true
     [ "$(readlink "$CLI_PATH" 2>/dev/null)" = "$INSTALL_DIR/gowave-server" ] && rm -f "$CLI_PATH"
     rm -rf "$INSTALL_DIR/gowave-server" "$INSTALL_DIR/frontend" "$INSTALL_DIR/.env" "$INSTALL_DIR"/gowave.db*
@@ -969,6 +975,7 @@ update_gowave() {
         (cd "$DOCKER_DIR" && run docker compose pull && run docker compose up -d --wait --wait-timeout 180)
     else
         install_release
+        write_unit
         run systemctl restart gowave
         wait_healthy "$APP_PORT" || die "$(t 'Панель не запустилась после обновления (journalctl -u gowave).' 'The panel did not start after the update (journalctl -u gowave).')"
     fi
@@ -1038,7 +1045,7 @@ uninstall_gowave() {
     fi
     rm -rf "$DOCKER_DIR"
     systemctl disable --now gowave >/dev/null 2>&1 || true
-    rm -f "$UNIT_FILE"
+    rm -f "$UNIT_FILE" "${UNIT_FILE}.d/90-unprivileged.conf"
     systemctl daemon-reload
     rm -rf "$INSTALL_DIR"
     rm -f "$CLI_PATH"

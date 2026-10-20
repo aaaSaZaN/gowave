@@ -25,6 +25,18 @@ The installer first asks for the language (Russian or English), then the databas
 
 Whoever opens the panel first creates the admin, so open it right after installation.
 
+Native services run as the dedicated `gowave` account with `ProtectSystem=strict`,
+`ProtectHome`, private devices and temporary directories, `NoNewPrivileges`, and
+`MemoryDenyWriteExecute`. Only `/opt/gowave` and the service runtime directory are
+writable. `CAP_NET_BIND_SERVICE` allows explicitly configured low ports. A stable
+account is required for SQLite ownership and in-panel updates, so `DynamicUser`
+is disabled. Installers reapply the policy on every update; an existing root
+systemd service also migrates automatically on the first upgraded startup.
+Run native database/rescue commands as `sudo -u gowave` from `/opt/gowave` so new
+files keep the service ownership. Custom writable paths require an administrator's
+systemd override. The Docker image runs as UID/GID 10001; the supplied Compose
+configuration also drops capabilities and uses a read-only root filesystem.
+
 Yandex authentication is unavailable, including with previously saved OAuth
 settings. Its legacy API fields remain disabled for contract compatibility.
 

@@ -133,7 +133,6 @@ func (h *Handler) ApplyUpdate(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		time.Sleep(2 * time.Second)
-		_ = exec.Command("systemctl", "restart", "gowave").Run()
 		os.Exit(0)
 	}()
 }

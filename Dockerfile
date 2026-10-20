@@ -32,7 +32,9 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath \
 # Stage 3: Minimal runtime
 FROM alpine:3.22
 
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata \
+    && addgroup -S -g 10001 gowave \
+    && adduser -S -D -H -u 10001 -G gowave gowave
 
 WORKDIR /app
 
@@ -46,5 +48,7 @@ ENV APP_HOST=0.0.0.0 \
     TZ=UTC
 
 EXPOSE 3000 3001
+
+USER 10001:10001
 
 ENTRYPOINT ["/app/gowave"]
