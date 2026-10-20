@@ -7,8 +7,13 @@ services:
   gowave:
     image: ${GOWAVE_IMAGE:-ghcr.io/aaasazan/gowave:latest}
     container_name: gowave
+    # Other containers on gowave-network (the subscription page) reach the
+    # panel at http://gowave:3000.
+    hostname: gowave
     restart: unless-stopped
     env_file: .env
+    networks:
+      - gowave-network
     ports:
       # Loopback only: put Caddy/Nginx with HTTPS in front of the panel
       - "127.0.0.1:${APP_PORT:-3000}:3000"
@@ -37,7 +42,10 @@ services:
   postgres:
     image: postgres:18-alpine
     container_name: gowave-postgres
+    hostname: gowave-postgres
     restart: unless-stopped
+    networks:
+      - gowave-network
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-gowave}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
@@ -54,6 +62,13 @@ services:
     ports:
       # Exposes Postgres port on 127.0.0.1 for migrations, backup and administration
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+
+networks:
+  # A fixed name, so a separate compose file (the subscription page) can join
+  # it as an external network.
+  gowave-network:
+    name: gowave-network
+    driver: bridge
 
 volumes:
   postgres_data:
