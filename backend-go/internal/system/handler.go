@@ -622,6 +622,12 @@ func (h *Handler) GetSettings(w http.ResponseWriter, r *http.Request) {
 		_ = json.Unmarshal([]byte(setting.OAuth2Settings), &oauth2Settings)
 	}
 
+	// Retain the contract's legacy field while discarding saved credentials.
+	if oauth2Settings != nil {
+		oauth2Settings["yandex"] = map[string]interface{}{
+			"enabled": false, "clientId": nil, "clientSecret": nil, "allowedEmails": []string{},
+		}
+	}
 	passwordSettings := map[string]interface{}{
 		"enabled": setting.PasswordAuthEnabled,
 	}
@@ -674,6 +680,9 @@ func (h *Handler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 		setting.PasskeySettings = string(b)
 	}
 	if os, ok := body["oauth2Settings"]; ok {
+		if providers, ok := os.(map[string]interface{}); ok {
+			delete(providers, "yandex")
+		}
 		b, _ := json.Marshal(os)
 		setting.OAuth2Settings = string(b)
 	}

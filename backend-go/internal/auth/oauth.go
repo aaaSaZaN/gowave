@@ -83,12 +83,6 @@ func (h *OAuthHandler) configuration(provider string) (providerConfig, *oauth2.C
 		endpoint.AuthStyle = oauth2.AuthStyleInParams
 		scopes = []string{"user:email"}
 		redirect = ""
-	case "yandex":
-		endpoint.AuthURL = "https://oauth.yandex.ru/authorize"
-		endpoint.TokenURL = "https://oauth.yandex.ru/token"
-		endpoint.AuthStyle = oauth2.AuthStyleInParams
-		scopes = []string{"login:email"}
-		redirect = ""
 	case "pocketid":
 		issuer = "https://" + config.PlainDomain
 		endpoint.AuthURL = issuer + "/authorize"
@@ -205,12 +199,6 @@ func (h *OAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-	case "yandex":
-		var profile struct {
-			Email string `json:"default_email"`
-		}
-		err = h.fetchIdentity(ctx, "https://login.yandex.ru/info?format=json", token.AccessToken, &profile)
-		identity = profile.Email
 	default:
 		raw, _ := token.Extra("id_token").(string)
 		if issuer == "" {

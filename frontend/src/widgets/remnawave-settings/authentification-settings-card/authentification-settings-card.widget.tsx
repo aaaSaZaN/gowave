@@ -31,7 +31,7 @@ import { queryClient } from '@shared/api'
 import { QueryKeys } from '@shared/api/hooks/keys-factory'
 import { useUpdateRemnawaveSettings } from '@shared/api/hooks/remnawave-settings/remnawave-settings.mutation.hooks'
 import { CheckboxCardShared } from '@shared/ui/checkbox-card/checkbox-card.shared'
-import { PocketidLogo, YandexLogo } from '@shared/ui/logos'
+import { PocketidLogo } from '@shared/ui/logos'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 import { TagInputPill } from '@shared/ui/tag-input-pill'
@@ -75,13 +75,6 @@ const getOAuth2ProvidersConfig = () =>
                 'frontendDomain',
                 'allowedEmails'
             ] as const
-        },
-        {
-            key: 'yandex' as const,
-            title: 'Yandex',
-            icon: <YandexLogo size={24} />,
-            iconColor: '#FC3F1D',
-            fields: ['clientId', 'clientSecret', 'allowedEmails'] as const
         },
         {
             key: 'keycloak' as const,
@@ -210,7 +203,8 @@ export const AuthentificationSettingsCardWidget = (props: IProps) => {
             oauth2Settings: {
                 github: oauth2Settings.github,
                 pocketid: oauth2Settings.pocketid,
-                yandex: oauth2Settings.yandex,
+                // Required by the pinned upstream contract.
+                yandex: { enabled: false, clientId: null, clientSecret: null, allowedEmails: [] },
                 keycloak: oauth2Settings.keycloak,
                 generic: oauth2Settings.generic,
                 telegram: oauth2Settings.telegram

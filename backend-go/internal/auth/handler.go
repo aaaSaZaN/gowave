@@ -130,6 +130,12 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 		var oauth2 map[string]map[string]interface{}
 		if err := json.Unmarshal([]byte(setting.OAuth2Settings), &oauth2); err == nil {
 			for provider, data := range oauth2 {
+				if provider == "yandex" {
+					continue
+				}
+				if _, supported := resp.Response.Authentication.OAuth2.Providers[provider]; !supported {
+					continue
+				}
 				if en, ok := data["enabled"].(bool); ok {
 					resp.Response.Authentication.OAuth2.Providers[provider] = en
 				}

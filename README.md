@@ -25,6 +25,9 @@ The installer first asks for the language (Russian or English), then the databas
 
 Whoever opens the panel first creates the admin, so open it right after installation.
 
+Yandex authentication is unavailable, including with previously saved OAuth
+settings. Its legacy API fields remain disabled for contract compatibility.
+
 ## Documentation
 
 The documentation is available in [Russian](https://aaasazan.github.io/gowave-docs/) and [English](https://aaasazan.github.io/gowave-docs/en/). The links below go to the English version.
