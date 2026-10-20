@@ -8,12 +8,11 @@ interface IProps {
     port?: number
 }
 
-const NODE_INSTALL_URL = 'https://raw.githubusercontent.com/aaaSaZaN/remnanode-go/main/install.sh'
+const NODE_INSTALL_URL = 'https://raw.githubusercontent.com/aaaSaZaN/remnanode-go/main/migrate.sh'
 
-// The installer is downloaded in full before sh runs it: no curl | sh, and
-// sh -c also works on routers without bash.
+// Download the complete migration installer before Bash executes it.
 const buildNodeInstallCommand = (secretKey: string, port?: number) =>
-    `sudo SECRET_KEY='${secretKey}' NODE_PORT=${port ?? 2222} sh -c "$(curl -fsSL ${NODE_INSTALL_URL})"`
+    `sudo SECRET_KEY='${secretKey}' NODE_PORT=${port ?? 2222} bash -c "$(curl -fsSL ${NODE_INSTALL_URL})"`
 
 export const CopyNodeInstallCommandWidget = ({ port }: IProps) => {
     const { data: secretKey, isLoading: isSecretKeyLoading } = useGetNodeSecretKey()
