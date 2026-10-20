@@ -181,3 +181,44 @@ func TestHandlersIntegration(t *testing.T) {
 		t.Errorf("expected tag VIP, got %s", updated.Tag)
 	}
 }
+
+// TestBulkHandlersApply checks the bulk endpoints change the stored users, not
+// just their status codes: bulk/all/update takes its fields at the top level.
+func TestBulkHandlersApply(t *testing.T) {
+	db := setupTestDB(t)
+	svc := NewService(db)
+	h := NewHandler(svc, "sub.example.com")
+
+	var ids []string
+	for _, name := range []string{"bulk_a", "bulk_b", "bulk_c"} {
+		u, err := svc.Create(CreateUserDTO{Username: name, ExpireAt: time.Now().Add(24 * time.Hour)})
+		if err != nil {
+			t.Fatalf("create user: %v", err)
+		}
+		ids = append(ids, strconv.FormatUint(u.ID, 10))
+	}
+
+	req := httptest.NewRequest("POST", "/api/users/bulk/all/update", bytes.NewReader([]byte(`{"status":"DISABLED","tag":"ALL"}`)))
+	w := httptest.NewRecorder()
+	h.BulkAllUpdate(w, req)
+	if w.Code != http.StatusAccepted {
+		t.Fatalf("BulkAllUpdate returned %d: %s", w.Code, w.Body)
+	}
+	var changed int64
+	db.Model(&database.User{}).Where("status = ? AND tag = ?", "DISABLED", "ALL").Count(&changed)
+	if changed != 3 {
+		t.Fatalf("bulk/all/update changed %d of 3 users", changed)
+	}
+
+	req = httptest.NewRequest("POST", "/api/users/bulk/delete", bytes.NewReader([]byte(`{"userIds":[`+ids[0]+`,`+ids[1]+`]}`)))
+	w = httptest.NewRecorder()
+	h.BulkDelete(w, req)
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("BulkDelete returned %d: %s", w.Code, w.Body)
+	}
+	var left []database.User
+	db.Find(&left)
+	if len(left) != 1 || strconv.FormatUint(left[0].ID, 10) != ids[2] {
+		t.Fatalf("bulk/delete left %d users, want only %s", len(left), ids[2])
+	}
+}
