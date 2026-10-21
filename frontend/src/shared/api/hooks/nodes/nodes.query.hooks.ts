@@ -7,6 +7,7 @@ import {
     GetNodesCommand
 } from '@remnawave/backend-contract'
 import { keepPreviousData } from '@tanstack/react-query'
+import { z } from 'zod'
 
 import { sToMs } from '@shared/utils/time-utils'
 
@@ -27,7 +28,10 @@ export const nodesQueryKeys = createQueryKeys('nodes', {
     },
     getNodeMetadata: (route: GetNodeMetadataCommand.RequestParams) => ({
         queryKey: [route]
-    })
+    }),
+    getTrafficSummary: {
+        queryKey: null
+    }
 })
 
 export const useGetNodes = createGetQueryHook({
@@ -85,4 +89,26 @@ export const useGetNodeMetadata = createGetQueryHook({
     rQueryParams: {
         staleTime: sToMs(60)
     }
+})
+
+// Gowave extension, not part of the Remnawave contract.
+const GetNodesTrafficSummaryResponseSchema = z.object({
+    response: z.object({
+        nodes: z.array(
+            z.object({
+                uuid: z.string(),
+                lifetimeTrafficBytes: z.number()
+            })
+        )
+    })
+})
+
+export const useGetNodesTrafficSummary = createGetQueryHook({
+    endpoint: '/api/nodes/traffic-summary',
+    responseSchema: GetNodesTrafficSummaryResponseSchema,
+    getQueryKey: () => nodesQueryKeys.getTrafficSummary.queryKey,
+    rQueryParams: {
+        staleTime: sToMs(60)
+    },
+    errorHandler: (error) => errorHandler(error, 'Get Nodes Traffic Summary')
 })

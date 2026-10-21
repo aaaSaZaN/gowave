@@ -263,7 +263,9 @@
       "connected": "connected",
       "connecting": "connecting",
       "disabled": "disabled",
-      "disconnected": "disconnected"
+      "disconnected": "disconnected",
+      "config-not-applied": "config not applied",
+      "error": "error"
     }
   },
   "create-user-modal": {
@@ -402,7 +404,16 @@
     "consumption": "Consumption",
     "core-configuration": "Core configuration",
     "tracking-and-billing": "Tracking & billing",
-    "management": "Management"
+    "management": "Management",
+    "tracking-start": {
+      "label": "Start counting from",
+      "period": "Current period",
+      "period-description": "Traffic since {{date}}, when the current period began.",
+      "zero": "Zero",
+      "zero-description": "The counter starts from 0 when you save.",
+      "keep": "Accumulated",
+      "keep-description": "Keeps everything accumulated so far: {{value}}."
+    }
   },
   "home": {
     "page": {
@@ -982,7 +993,9 @@
   "node-stats": {
     "card": {
       "traffic-refill-in-days": "Traffic refill in (days):",
-      "represents-the-uptime-of-the-xray-core": "Represents the uptime of the Xray Core"
+      "represents-the-uptime-of-the-xray-core": "Represents the uptime of the Xray Core",
+      "lifetime-traffic": "All time",
+      "lifetime-traffic-description": "Actual traffic through the node since it was added. Monthly resets do not clear it."
     }
   },
   "host-tags-input": {
@@ -1904,5 +1917,9 @@
     "connections-title": "Saved connections",
     "connections-empty": "No saved connections yet",
     "connections-current": "Current"
+  },
+  "node-error-message": {
+    "config-not-applied": "New config not applied",
+    "config-not-applied-description": "Xray rejected the config, so the node keeps serving the previous one. Fix the config profile and save it again."
   }
 }

@@ -13,8 +13,18 @@ import {
     RestartNodeCommand,
     UpdateNodeCommand
 } from '@remnawave/backend-contract'
+import { z } from 'zod'
 
 import { createMutationHook } from '../../tsq-helpers'
+
+// trafficTrackingStart is a Gowave extension: how the counter starts when the
+// update enables traffic tracking.
+export const TRAFFIC_TRACKING_START = ['period', 'zero', 'keep'] as const
+export type TTrafficTrackingStart = (typeof TRAFFIC_TRACKING_START)[number]
+
+const UpdateNodeBodySchema = UpdateNodeCommand.RequestBodySchema.extend({
+    trafficTrackingStart: z.enum(TRAFFIC_TRACKING_START).optional()
+})
 
 export const useCreateNode = createMutationHook({
     endpoint: CreateNodeCommand.TSQ_url,
@@ -42,7 +52,7 @@ export const useCreateNode = createMutationHook({
 
 export const useUpdateNode = createMutationHook({
     endpoint: UpdateNodeCommand.TSQ_url,
-    bodySchema: UpdateNodeCommand.RequestBodySchema,
+    bodySchema: UpdateNodeBodySchema,
     responseSchema: UpdateNodeCommand.ResponseSchema,
     requestMethod: UpdateNodeCommand.endpointDetails.REQUEST_METHOD,
     rMutationParams: {

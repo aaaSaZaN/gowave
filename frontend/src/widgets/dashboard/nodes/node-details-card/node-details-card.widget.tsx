@@ -1,10 +1,10 @@
 import { GetActiveSessionsOnNodeFeature } from '@features/ui/dashboard/nodes/get-active-sesions-on-node'
-import { OpenNodeLogsFeature } from '@features/ui/dashboard/nodes/open-node-logs'
-import { OpenNodeUpdateFeature } from '@features/ui/dashboard/nodes/open-node-update'
 import { GetNodeInboundsHostsFeature } from '@features/ui/dashboard/nodes/get-node-inbounds-hosts'
 import { GetNodeLinkedHostsFeature } from '@features/ui/dashboard/nodes/get-node-linked-hosts'
 import { GetNodeUsersUsageFeature } from '@features/ui/dashboard/nodes/get-node-users-usage'
+import { OpenNodeLogsFeature } from '@features/ui/dashboard/nodes/open-node-logs'
 import { OpenNodeSshFeature } from '@features/ui/dashboard/nodes/open-node-ssh'
+import { OpenNodeUpdateFeature } from '@features/ui/dashboard/nodes/open-node-update'
 import {
     ActionIcon,
     Badge,
@@ -31,11 +31,17 @@ import {
     PiUsersDuotone,
     PiWarningCircle
 } from 'react-icons/pi'
-import { TbChevronRight, TbJson, TbPower, TbWifi, TbWifiOff } from 'react-icons/tb'
+import { TbChevronRight, TbJson, TbPower, TbSum, TbWifi, TbWifiOff } from 'react-icons/tb'
 
 import { showModal } from '@shared/_modals/show-modal'
 import { queryClient } from '@shared/api'
-import { QueryKeys, useDisableNode, useEnableNode, useGetNodeMetadata } from '@shared/api/hooks'
+import {
+    QueryKeys,
+    useDisableNode,
+    useEnableNode,
+    useGetNodeMetadata,
+    useGetNodesTrafficSummary
+} from '@shared/api/hooks'
 import { Logo } from '@shared/ui'
 import { XrayLogo } from '@shared/ui/logos'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
@@ -69,6 +75,10 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
     const { data: metadata, isLoading: isMetadataLoading } = useGetNodeMetadata({
         route: { uuid: node.uuid }
     })
+    const { data: trafficSummary } = useGetNodesTrafficSummary()
+    const lifetimeTrafficBytes = trafficSummary?.nodes.find(
+        (item) => item.uuid === node.uuid
+    )?.lifetimeTrafficBytes
     const { mutate: disableNode, isPending: isDisableNodePending } = useDisableNode(mutationParams)
     const { mutate: enableNode, isPending: isEnableNodePending } = useEnableNode(mutationParams)
 
@@ -354,6 +364,25 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                             </Text>
                         </Group>
                     )}
+
+                    {lifetimeTrafficBytes !== undefined && (
+                        <Tooltip
+                            label={t('node-stats.card.lifetime-traffic-description')}
+                            maw={320}
+                            multiline
+                            withArrow
+                        >
+                            <Group gap={4} justify="center" mt={6}>
+                                <TbSum color="var(--mantine-color-dimmed)" size={12} />
+                                <Text c="dimmed" size="xs">
+                                    {t('node-stats.card.lifetime-traffic')}:{' '}
+                                    <Text c="gray.3" ff="monospace" fw={600} span>
+                                        {prettifyBytesUtil(lifetimeTrafficBytes) || '0 B'}
+                                    </Text>
+                                </Text>
+                            </Group>
+                        </Tooltip>
+                    )}
                 </Box>
             </SectionCard.Section>
             {node.isConnected && (
@@ -400,89 +429,100 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                             </Group>
                         </Paper>
 
-                        {node.versions && (() => {
-                            const isGoNode =
-                                (node.versions as any)?.nodeType === 'go' ||
-                                node.versions.node?.includes('(Go)')
-                            const isCustomXray = Boolean(
-                                (node.versions as any)?.isCustom ||
-                                (node.versions as any)?.isCustomXray ||
-                                node.versions.xray?.toLowerCase().includes("custom") ||
-                                node.versions.xray?.toLowerCase().includes("mod")
-                            )
-                            return (
-                                <Paper
-                                    p="xs"
-                                    radius="md"
-                                    style={{
-                                        background: isCustomXray
-                                            ? "rgba(59, 130, 246, 0.08)"
-                                            : "rgba(20, 184, 166, 0.08)",
-                                        border: isCustomXray
-                                            ? "1px solid rgba(59, 130, 246, 0.25)"
-                                            : "1px solid rgba(20, 184, 166, 0.25)"
-                                    }}
-                                >
-                                    <Tooltip
-                                        label={
-                                            isGoNode
-                                                ? 'Нажмите, чтобы выбрать версию Xray Core'
-                                                : t('node-details-card.widget.xray-core-version')
-                                        }
+                        {node.versions &&
+                            (() => {
+                                const isGoNode =
+                                    (node.versions as any)?.nodeType === 'go' ||
+                                    node.versions.node?.includes('(Go)')
+                                const isCustomXray = Boolean(
+                                    (node.versions as any)?.isCustom ||
+                                    (node.versions as any)?.isCustomXray ||
+                                    node.versions.xray?.toLowerCase().includes('custom') ||
+                                    node.versions.xray?.toLowerCase().includes('mod')
+                                )
+                                return (
+                                    <Paper
+                                        p="xs"
+                                        radius="md"
+                                        style={{
+                                            background: isCustomXray
+                                                ? 'rgba(59, 130, 246, 0.08)'
+                                                : 'rgba(20, 184, 166, 0.08)',
+                                            border: isCustomXray
+                                                ? '1px solid rgba(59, 130, 246, 0.25)'
+                                                : '1px solid rgba(20, 184, 166, 0.25)'
+                                        }}
                                     >
-                                        <UnstyledButton
-                                            aria-label={
+                                        <Tooltip
+                                            label={
                                                 isGoNode
-                                                    ? `Выбрать версию Xray Core. Установлена ${node.versions.xray}`
-                                                    : t('node-details-card.widget.xray-core-version')
+                                                    ? 'Нажмите, чтобы выбрать версию Xray Core'
+                                                    : t(
+                                                          'node-details-card.widget.xray-core-version'
+                                                      )
                                             }
-                                            disabled={!isGoNode}
-                                            onClick={() =>
-                                                isGoNode &&
-                                                showModal('nodes_updateNodeModal', { node, initialTab: 'core' })
-                                            }
-                                            style={{
-                                                borderRadius: 'var(--mantine-radius-sm)',
-                                                cursor: isGoNode ? 'pointer' : 'default',
-                                                display: 'block',
-                                                width: '100%'
-                                            }}
                                         >
-                                            <Group gap="xs" justify="center">
-                                                <XrayLogo
-                                                    color={
-                                                        isCustomXray
-                                                            ? 'var(--mantine-color-blue-5)'
-                                                            : 'var(--mantine-color-teal-5)'
-                                                    }
-                                                    size={16}
-                                                />
-                                                <Text
-                                                    c={isCustomXray ? 'blue.5' : 'teal.5'}
-                                                    fw={600}
-                                                    size="sm"
-                                                    td={isGoNode ? 'underline' : undefined}
-                                                    style={
-                                                        isGoNode
-                                                            ? { textDecorationStyle: 'dotted', textUnderlineOffset: 3 }
-                                                            : undefined
-                                                    }
-                                                >
-                                                    {node.versions.xray}
-                                                </Text>
-                                                {isGoNode && (
-                                                    <TbChevronRight
-                                                        aria-hidden
-                                                        color="var(--mantine-color-dimmed)"
-                                                        size={14}
+                                            <UnstyledButton
+                                                aria-label={
+                                                    isGoNode
+                                                        ? `Выбрать версию Xray Core. Установлена ${node.versions.xray}`
+                                                        : t(
+                                                              'node-details-card.widget.xray-core-version'
+                                                          )
+                                                }
+                                                disabled={!isGoNode}
+                                                onClick={() =>
+                                                    isGoNode &&
+                                                    showModal('nodes_updateNodeModal', {
+                                                        node,
+                                                        initialTab: 'core'
+                                                    })
+                                                }
+                                                style={{
+                                                    borderRadius: 'var(--mantine-radius-sm)',
+                                                    cursor: isGoNode ? 'pointer' : 'default',
+                                                    display: 'block',
+                                                    width: '100%'
+                                                }}
+                                            >
+                                                <Group gap="xs" justify="center">
+                                                    <XrayLogo
+                                                        color={
+                                                            isCustomXray
+                                                                ? 'var(--mantine-color-blue-5)'
+                                                                : 'var(--mantine-color-teal-5)'
+                                                        }
+                                                        size={16}
                                                     />
-                                                )}
-                                            </Group>
-                                        </UnstyledButton>
-                                    </Tooltip>
-                                </Paper>
-                            )
-                        })()}
+                                                    <Text
+                                                        c={isCustomXray ? 'blue.5' : 'teal.5'}
+                                                        fw={600}
+                                                        size="sm"
+                                                        td={isGoNode ? 'underline' : undefined}
+                                                        style={
+                                                            isGoNode
+                                                                ? {
+                                                                      textDecorationStyle: 'dotted',
+                                                                      textUnderlineOffset: 3
+                                                                  }
+                                                                : undefined
+                                                        }
+                                                    >
+                                                        {node.versions.xray}
+                                                    </Text>
+                                                    {isGoNode && (
+                                                        <TbChevronRight
+                                                            aria-hidden
+                                                            color="var(--mantine-color-dimmed)"
+                                                            size={14}
+                                                        />
+                                                    )}
+                                                </Group>
+                                            </UnstyledButton>
+                                        </Tooltip>
+                                    </Paper>
+                                )
+                            })()}
 
                         {node.xrayUptime !== 0 && (
                             <Paper
@@ -525,10 +565,10 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                             >
                                 <Tooltip
                                     label={
-                                        (node as any)?.versions?.nodeType === "go" ||
-                                        node.versions.node?.includes("(Go)")
-                                            ? "Версия ноды, remnanode-go"
-                                            : t("node-details-card.widget.remnawave-node-version")
+                                        (node as any)?.versions?.nodeType === 'go' ||
+                                        node.versions.node?.includes('(Go)')
+                                            ? 'Версия ноды, remnanode-go'
+                                            : t('node-details-card.widget.remnawave-node-version')
                                     }
                                 >
                                     <Group gap="xs" justify="center">

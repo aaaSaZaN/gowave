@@ -3,7 +3,7 @@ import { UpdateNodeCommand } from '@remnawave/backend-contract'
 import { NodeDetailsCardWidget } from '@widgets/dashboard/nodes/node-details-card'
 import { NodeSystemCardWidget } from '@widgets/dashboard/nodes/node-system-card'
 import { motion } from 'motion/react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { queryClient } from '@shared/api'
 import {
@@ -12,6 +12,7 @@ import {
     useGetNode,
     useGetNodeIntegrations,
     useGetNodePlugins,
+    TTrafficTrackingStart,
     useGetNodeSecretKey,
     useUpdateNode
 } from '@shared/api/hooks'
@@ -28,6 +29,8 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
     const { nodeUuid, onClose } = props
 
     const isFormInitialized = useRef(false)
+    const [trafficTrackingStart, setTrafficTrackingStart] =
+        useState<TTrafficTrackingStart>('period')
 
     const form = useForm<UpdateNodeCommand.RequestBody>({
         name: 'edit-node-form',
@@ -120,10 +123,14 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
             Object.entries(values).filter(([field]) => form.isDirty(field))
         ) as Partial<UpdateNodeCommand.RequestBody>
 
+        const enablesTracking =
+            !fetchedNode.isTrafficTrackingActive && values.isTrafficTrackingActive === true
+
         updateNode({
             variables: {
                 ...changedValues,
                 uuid: fetchedNode.uuid,
+                ...(enablesTracking && { trafficTrackingStart }),
                 ...(changedValues.configProfile !== undefined && {
                     configProfile: {
                         activeConfigProfileUuid:
@@ -159,6 +166,15 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
             nodePlugins={nodePlugins.nodePlugins}
             nodeSystemCard={<NodeSystemCardWidget node={fetchedNode} />}
             secretKey={secretKey}
+            trafficTrackingStart={
+                fetchedNode.isTrafficTrackingActive
+                    ? undefined
+                    : {
+                          accumulatedBytes: fetchedNode.trafficUsedBytes ?? 0,
+                          onChange: setTrafficTrackingStart,
+                          value: trafficTrackingStart
+                      }
+            }
         />
     )
 }

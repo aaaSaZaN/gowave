@@ -4,6 +4,7 @@ import {
     Collapse,
     Group,
     NumberInput,
+    SegmentedControl,
     Stack,
     Switch,
     TagsInput,
@@ -18,12 +19,14 @@ import { useTranslation } from 'react-i18next'
 import { PiTagDuotone } from 'react-icons/pi'
 import { TbBell, TbChartBar, TbChartLine, TbClock, TbExternalLink } from 'react-icons/tb'
 
-import { useGetNodesTags } from '@shared/api/hooks'
+import { TTrafficTrackingStart, useGetNodesTags } from '@shared/api/hooks'
 import { TrafficLimitInput } from '@shared/ui/forms/traffic-limit-input'
 import { SelectInfraProviderShared } from '@shared/ui/infra-billing/select-infra-provider/select-infra-provider.shared'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { TagInputPill } from '@shared/ui/tag-input-pill'
+import { prettifyBytesUtil } from '@shared/utils/bytes'
+import { getNodeTrafficPeriodStartUtil } from '@shared/utils/time-utils'
 
 import classes from './node-tracking-and-billing.card.module.css'
 
@@ -34,10 +37,18 @@ function extractFirstUrl(text: string): null | string {
     return match ? match[0] : null
 }
 
+// How the counter starts when an edit enables tracking on a node that had it off.
+export interface ITrafficTrackingStartControl {
+    accumulatedBytes: number
+    onChange: (value: TTrafficTrackingStart) => void
+    value: TTrafficTrackingStart
+}
+
 interface IProps<T extends CreateNodeCommand.RequestBody | UpdateNodeCommand.RequestBody> {
     cardVariants: Variants
     form: UseFormReturnType<T>
     motionWrapper: ForwardRefComponent<HTMLDivElement, HTMLMotionProps<'div'>>
+    trafficTrackingStart?: ITrafficTrackingStartControl
 }
 
 export const NodeTrackingAndBillingCard = <
@@ -45,16 +56,39 @@ export const NodeTrackingAndBillingCard = <
 >(
     props: IProps<T>
 ) => {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const { data: nodesTags } = useGetNodesTags()
-    const { cardVariants, form, motionWrapper } = props
+    const { cardVariants, form, motionWrapper, trafficTrackingStart } = props
 
     const [advancedOpened, setAdvancedOpened] = useState<boolean>(false)
     const [firstNoteUrl, setFirstNoteUrl] = useState<null | string>(null)
+    const [resetDay, setResetDay] = useState<number>(form.getValues().trafficResetDay ?? 1)
 
     form.watch('isTrafficTrackingActive', ({ value }) => {
         setAdvancedOpened(value ?? false)
     })
+
+    form.watch('trafficResetDay', ({ value }) => {
+        setResetDay(typeof value === 'number' ? value : 1)
+    })
+
+    const trackingStartDescription = () => {
+        switch (trafficTrackingStart?.value) {
+            case 'period':
+                return t('base-node-form.tracking-start.period-description', {
+                    date: getNodeTrafficPeriodStartUtil(resetDay).toLocaleDateString(
+                        i18n.language,
+                        { day: 'numeric', month: 'long' }
+                    )
+                })
+            case 'zero':
+                return t('base-node-form.tracking-start.zero-description')
+            default:
+                return t('base-node-form.tracking-start.keep-description', {
+                    value: prettifyBytesUtil(trafficTrackingStart?.accumulatedBytes ?? 0) || '0 B'
+                })
+        }
+    }
 
     form.watch('note', ({ value }) => {
         setFirstNoteUrl(extractFirstUrl(typeof value === 'string' ? value : ''))
@@ -168,6 +202,47 @@ export const NodeTrackingAndBillingCard = <
                                             }}
                                         />
                                     </Group>
+
+                                    {trafficTrackingStart && (
+                                        <Stack gap={6}>
+                                            <Text fw={500} size="sm">
+                                                {t('base-node-form.tracking-start.label')}
+                                            </Text>
+                                            <SegmentedControl
+                                                data={[
+                                                    {
+                                                        value: 'period',
+                                                        label: t(
+                                                            'base-node-form.tracking-start.period'
+                                                        )
+                                                    },
+                                                    {
+                                                        value: 'zero',
+                                                        label: t(
+                                                            'base-node-form.tracking-start.zero'
+                                                        )
+                                                    },
+                                                    {
+                                                        value: 'keep',
+                                                        label: t(
+                                                            'base-node-form.tracking-start.keep'
+                                                        )
+                                                    }
+                                                ]}
+                                                fullWidth
+                                                onChange={(value) =>
+                                                    trafficTrackingStart.onChange(
+                                                        value as TTrafficTrackingStart
+                                                    )
+                                                }
+                                                size="xs"
+                                                value={trafficTrackingStart.value}
+                                            />
+                                            <Text c="dimmed" size="xs">
+                                                {trackingStartDescription()}
+                                            </Text>
+                                        </Stack>
+                                    )}
                                 </Stack>
                             </Collapse>
                         </Box>

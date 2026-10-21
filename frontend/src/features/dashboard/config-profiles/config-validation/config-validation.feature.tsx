@@ -105,10 +105,15 @@ export const ConfigValidationFeature = {
                 replaceSnippetsInArray(clonedCurrentValue.routing.balancers, snippetsMap)
             }
 
-            let validationResult: null | string = null
-            if (typeof window.XrayParseConfig === 'function') {
-                validationResult = window.XrayParseConfig(JSON.stringify(clonedCurrentValue))
+            if (typeof window.XrayParseConfig !== 'function') {
+                setResult(
+                    `${dayjs().format('HH:mm:ss')} | Xray validator (WASM) is not loaded: the config was not checked.`
+                )
+                setIsConfigValid(false)
+                return
             }
+
+            const validationResult = window.XrayParseConfig(JSON.stringify(clonedCurrentValue))
 
             setResult(
                 `${dayjs().format('HH:mm:ss')} | ${validationResult || 'Xray config is valid.'}`

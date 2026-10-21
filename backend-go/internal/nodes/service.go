@@ -471,6 +471,19 @@ func (s *Service) StartNode(node *database.Node, force bool) (bool, error) {
 
 	startupSuccessful = true
 	ok, err := client.StartXray(node, payload)
+	if err != nil {
+		log.Printf("[NODES] start %s failed: %v", node.Name, err)
+		// Remnanode (Go) validates a config before stopping the running Xray,
+		// so a rejected config can leave the node serving the previous one.
+		if health, healthErr := client.CheckHealth(node); healthErr == nil && health.IsAlive {
+			reason := summarizeXrayError(err.Error())
+			s.db.Model(&database.Node{}).Where("uuid = ?", node.UUID).Updates(map[string]interface{}{
+				"is_connecting":     false,
+				"xray_config_error": reason,
+			})
+			return false, &ConfigRejectedError{Reason: reason, Invalid: strings.Contains(err.Error(), xrayConfigInvalidPrefix)}
+		}
+	}
 	now := time.Now().UTC()
 	updates := map[string]interface{}{
 		"is_connected":        ok,
@@ -478,9 +491,11 @@ func (s *Service) StartNode(node *database.Node, force bool) (bool, error) {
 		"last_status_change":  &now,
 		"last_status_message": nil,
 	}
+	if ok {
+		updates["xray_config_error"] = nil
+	}
 	if err != nil {
-		msg := err.Error()
-		updates["last_status_message"] = &msg
+		updates["last_status_message"] = summarizeXrayError(err.Error())
 	}
 	s.db.Model(&database.Node{}).Where("uuid = ?", node.UUID).Updates(updates)
 
@@ -810,11 +825,22 @@ func (s *Service) Update(uuid string, updates map[string]interface{}) (*database
 	return s.GetByUUID(uuid)
 }
 
-func (s *Service) UpdateWithConfigProfile(uuid string, updates map[string]interface{}, changeProfile bool, profileUUID *string, inboundUUIDs []string) (*database.Node, error) {
+// UpdateWithConfigProfile applies a node update; trackingStart chooses how
+// the traffic counter starts when the update enables tracking.
+func (s *Service) UpdateWithConfigProfile(uuid string, updates map[string]interface{}, changeProfile bool, profileUUID *string, inboundUUIDs []string, trackingStart string) (*database.Node, error) {
 	updates["updated_at"] = time.Now().UTC()
 	err := s.db.Transaction(func(tx *gorm.DB) error {
+		var before database.Node
+		if err := tx.Select("is_traffic_tracking_active").Where("uuid = ?", uuid).First(&before).Error; err != nil {
+			return err
+		}
 		if err := updateNodeWithProfile(tx, uuid, updates, changeProfile, profileUUID, inboundUUIDs); err != nil {
 			return err
+		}
+		if !before.IsTrafficTrackingActive {
+			if err := applyTrackingStart(tx, uuid, trackingStart, time.Now()); err != nil {
+				return err
+			}
 		}
 		return s.emitNodeByUUID(tx, uuid, "node.modified")
 	})
@@ -1229,6 +1255,12 @@ func (s *Service) ApplyNodeJob(ctx context.Context, job *database.Job) error {
 		return nil
 	}
 	ok, err := s.StartNode(node, true)
+	var rejected *ConfigRejectedError
+	if errors.As(err, &rejected) && rejected.Invalid {
+		// Retrying cannot fix a config Xray rejects; saving a fixed profile
+		// enqueues a new start.
+		return nil
+	}
 	if err != nil {
 		return err
 	}
@@ -1248,6 +1280,7 @@ func (s *Service) SetDisabled(nodeUUID string, disabled bool) (*database.Node, e
 		if disabled {
 			updates["is_connected"] = false
 			updates["last_status_change"] = time.Now().UTC()
+			updates["xray_config_error"] = nil
 		}
 		if err := tx.Model(&database.Node{}).Where("uuid = ?", nodeUUID).Updates(updates).Error; err != nil {
 			return err

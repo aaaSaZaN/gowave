@@ -263,7 +263,9 @@
       "connected": "подключена",
       "connecting": "подключается",
       "disabled": "выключена",
-      "disconnected": "отключена"
+      "disconnected": "отключена",
+      "config-not-applied": "конфиг не применён",
+      "error": "ошибка"
     }
   },
   "create-user-modal": {
@@ -402,7 +404,16 @@
     "consumption": "Расход",
     "core-configuration": "Конфигурация ядра",
     "tracking-and-billing": "Учёт и биллинг",
-    "management": "Управление"
+    "management": "Управление",
+    "tracking-start": {
+      "label": "С чего начать подсчёт",
+      "period": "Текущий период",
+      "period-description": "Трафик с {{date}}, начала текущего периода.",
+      "zero": "С нуля",
+      "zero-description": "Счётчик начнётся с 0 в момент сохранения.",
+      "keep": "Всё накопленное",
+      "keep-description": "Останется всё, что уже накопилось: {{value}}."
+    }
   },
   "home": {
     "page": {
@@ -982,7 +993,9 @@
   "node-stats": {
     "card": {
       "traffic-refill-in-days": "Пополнение трафика через (дней):",
-      "represents-the-uptime-of-the-xray-core": "Показывает аптайм Xray Core"
+      "represents-the-uptime-of-the-xray-core": "Показывает аптайм Xray Core",
+      "lifetime-traffic": "За всё время",
+      "lifetime-traffic-description": "Реальный трафик через ноду с момента её добавления. Ежемесячный сброс его не обнуляет."
     }
   },
   "host-tags-input": {
@@ -1904,5 +1917,9 @@
     "connections-title": "Сохранённые подключения",
     "connections-empty": "Сохранённых подключений пока нет",
     "connections-current": "Текущее"
+  },
+  "node-error-message": {
+    "config-not-applied": "Новый конфиг не применён",
+    "config-not-applied-description": "Xray отклонил конфиг, нода продолжает работать на предыдущем. Исправьте профиль конфига и сохраните его снова."
   }
 }

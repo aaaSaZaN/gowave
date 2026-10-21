@@ -64,8 +64,8 @@ func TestMigrationsFreshAndExisting(t *testing.T) {
 			}
 			var count int64
 			db.Table("gowave_migrations").Count(&count)
-			if count != 3 {
-				t.Fatalf("expected 3 migrations, got %d", count)
+			if count != 4 {
+				t.Fatalf("expected 4 migrations, got %d", count)
 			}
 		})
 	}

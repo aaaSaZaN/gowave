@@ -366,6 +366,7 @@ func NewApp(cfg *config.Config, db *gorm.DB) *App {
 
 		protected.Get("/api/nodes", nodeHandler.GetNodes)
 		protected.Get("/api/nodes/tags", nodeHandler.GetTags)
+		protected.Get("/api/nodes/traffic-summary", nodeHandler.GetTrafficSummary)
 		protected.Post("/api/nodes", nodeHandler.CreateNode)
 		protected.Patch("/api/nodes", nodeHandler.PatchNode)
 		protected.Get("/api/nodes/{uuid}", nodeHandler.GetNode)

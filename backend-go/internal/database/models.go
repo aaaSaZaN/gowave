@@ -183,6 +183,7 @@ type Node struct {
 	Note                      *string        `gorm:"type:text" json:"note"`
 	LastStatusChange          *time.Time     `json:"lastStatusChange,omitempty"`
 	LastStatusMessage         *string        `gorm:"type:text" json:"lastStatusMessage"`
+	XrayConfigError           *string        `gorm:"type:text" json:"-"`
 	CreatedAt                 time.Time      `json:"createdAt"`
 	UpdatedAt                 time.Time      `json:"updatedAt"`
 	ActiveConfigProfile       *ConfigProfile `gorm:"foreignKey:ActiveConfigProfileUUID;references:UUID;constraint:OnDelete:SET NULL" json:"-"`

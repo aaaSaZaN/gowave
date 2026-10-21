@@ -12,8 +12,8 @@ import {
     UpdateNodeCommand
 } from '@remnawave/backend-contract'
 import { NodeErrorMessageWidget } from '@widgets/dashboard/nodes/node-error-message'
-import { motion } from 'motion/react'
 import { t } from 'i18next'
+import { motion } from 'motion/react'
 import { ReactNode } from 'react'
 import { PiFloppyDiskDuotone } from 'react-icons/pi'
 import { TbCopy, TbDots } from 'react-icons/tb'
@@ -24,7 +24,10 @@ import { ModalFooter } from '@shared/ui/modal-footer'
 import { NodeConfigProfilesCard } from './node-config-profiles.card'
 import { NodeConsumptionCard } from './node-consumption.card'
 import { NodeIpsCard } from './node-ips.card'
-import { NodeTrackingAndBillingCard } from './node-tracking-and-billing.card'
+import {
+    ITrafficTrackingStartControl,
+    NodeTrackingAndBillingCard
+} from './node-tracking-and-billing.card'
 import { NodeVitalsCard } from './node-vitals.card'
 
 const MotionWrapper = motion.div
@@ -59,6 +62,7 @@ interface IProps<T extends UpdateNodeCommand.RequestBody> {
     nodePlugins: GetNodePluginsCommand.Response['response']['nodePlugins']
     nodeSystemCard?: ReactNode
     secretKey: GetNodeSecretKeyCommand.Response['response'] | undefined
+    trafficTrackingStart?: ITrafficTrackingStartControl
 }
 
 export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IProps<T>) => {
@@ -72,7 +76,8 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
         nodeSystemCard,
         handleClose,
         handleSubmit,
-        isDataSubmitting
+        isDataSubmitting,
+        trafficTrackingStart
     } = props
 
     const isMobile = useIsMobile()
@@ -122,6 +127,7 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
                         cardVariants={cardVariants}
                         form={form}
                         motionWrapper={MotionWrapper}
+                        trafficTrackingStart={trafficTrackingStart}
                     />
 
                     <NodeConsumptionCard
@@ -191,6 +197,7 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
                             cardVariants={cardVariants}
                             form={form}
                             motionWrapper={MotionWrapper}
+                            trafficTrackingStart={trafficTrackingStart}
                         />
                     </MotionStack>
                 </Group>

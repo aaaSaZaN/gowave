@@ -8,6 +8,8 @@ import {
     PiWarningCircle
 } from 'react-icons/pi'
 
+import { hasNodeStatusMessage, isNodeConfigRejected } from '@shared/utils/misc'
+
 import { IProps } from './interface'
 
 export const NodeStatusBadgeWidget = memo(
@@ -27,7 +29,17 @@ export const NodeStatusBadgeWidget = memo(
                 )
                 color = 'gray'
                 status = t('node-status-badge.widget.disabled')
-            } else if (nodeData.isConnected && (!nodeData.lastStatusMessage || nodeData.lastStatusMessage === 'OK') && (nodeData.xrayUptime ?? 1) > 0) {
+            } else if (isNodeConfigRejected(nodeData)) {
+                icon = (
+                    <PiWarningCircle size={18} style={{ color: 'var(--mantine-color-orange-5)' }} />
+                )
+                color = 'orange'
+                status = t('node-status-badge.widget.config-not-applied')
+            } else if (
+                nodeData.isConnected &&
+                !hasNodeStatusMessage(nodeData) &&
+                (nodeData.xrayUptime ?? 1) > 0
+            ) {
                 icon = <PiPulseDuotone size={18} style={{ color: 'var(--mantine-color-teal-6)' }} />
                 color = 'teal'
                 status = t('node-status-badge.widget.connected')
@@ -43,11 +55,18 @@ export const NodeStatusBadgeWidget = memo(
             } else {
                 icon = <PiWarningCircle size={18} style={{ color: 'var(--mantine-color-red-3)' }} />
                 color = 'red'
-                status = nodeData.lastStatusMessage || t('node-status-badge.widget.disconnected')
+                status = t('node-status-badge.widget.disconnected')
             }
 
             return { icon, color, status }
-        }, [nodeData.isConnected, nodeData.isConnecting, nodeData.isDisabled, nodeData.lastStatusMessage, nodeData.xrayUptime, t])
+        }, [
+            nodeData.isConnected,
+            nodeData.isConnecting,
+            nodeData.isDisabled,
+            nodeData.lastStatusMessage,
+            nodeData.xrayUptime,
+            t
+        ])
 
         if (!withText) {
             return (

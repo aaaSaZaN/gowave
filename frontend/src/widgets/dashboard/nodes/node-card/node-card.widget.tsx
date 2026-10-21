@@ -19,10 +19,11 @@ import {
 } from 'react-icons/pi'
 import { TbAlertCircle, TbPackage, TbPlugConnected } from 'react-icons/tb'
 
+import { useGetNodesTrafficSummary } from '@shared/api/hooks'
 import { Logo } from '@shared/ui/logo'
 import { XrayLogo } from '@shared/ui/logos'
 import { prettifyBytesUtil, prettySiRealtimeBytesUtil } from '@shared/utils/bytes'
-import { faviconResolver } from '@shared/utils/misc'
+import { faviconResolver, hasNodeStatusMessage, isNodeConfigRejected } from '@shared/utils/misc'
 import { getNodeResetDaysUtil, getXrayUptimeUtil } from '@shared/utils/time-utils'
 
 import { NodeStatusBadgeWidget } from '../node-status-badge'
@@ -37,7 +38,14 @@ const getNodeColors = (node: IProps['node']) => {
             boxShadow: 'rgba(107, 114, 128, 0.2)'
         }
     }
-    const isWorking = node.isConnected && (!node.lastStatusMessage || node.lastStatusMessage === 'OK') && (node.xrayUptime ?? 1) > 0
+    if (isNodeConfigRejected(node)) {
+        return {
+            backgroundColor: 'rgba(249, 115, 22, 0.15)',
+            borderColor: 'rgba(249, 115, 22, 0.3)',
+            boxShadow: 'rgba(249, 115, 22, 0.2)'
+        }
+    }
+    const isWorking = node.isConnected && !hasNodeStatusMessage(node) && (node.xrayUptime ?? 1) > 0
     if (isWorking) {
         return {
             backgroundColor: 'rgba(45, 212, 191, 0.15)',
@@ -80,6 +88,10 @@ export const NodeCardWidget = memo((props: IProps) => {
     } = props
 
     const clipboard = useClipboard({ timeout: 500 })
+    const { data: trafficSummary } = useGetNodesTrafficSummary()
+    const lifetimeTrafficBytes = trafficSummary?.nodes.find(
+        (item) => item.uuid === node.uuid
+    )?.lifetimeTrafficBytes
 
     const sortable = useSortable({
         id: node.uuid,
@@ -251,10 +263,27 @@ export const NodeCardWidget = memo((props: IProps) => {
                                     <Text className={classes.nodeName} fw={600} size="md">
                                         {node.name}
                                     </Text>
-                                    {node.lastStatusMessage && node.lastStatusMessage !== "OK" && (
-                                        <Badge color="red" variant="light" size="sm">
-                                            {node.lastStatusMessage}
-                                        </Badge>
+                                    {hasNodeStatusMessage(node) && (
+                                        <Tooltip
+                                            label={node.lastStatusMessage}
+                                            maw={480}
+                                            multiline
+                                            withArrow
+                                        >
+                                            <Badge
+                                                color={
+                                                    isNodeConfigRejected(node) ? 'orange' : 'red'
+                                                }
+                                                size="sm"
+                                                variant="light"
+                                            >
+                                                {isNodeConfigRejected(node)
+                                                    ? t(
+                                                          'node-status-badge.widget.config-not-applied'
+                                                      )
+                                                    : t('node-status-badge.widget.error')}
+                                            </Badge>
+                                        </Tooltip>
                                     )}
                                 </Flex>
 
@@ -316,28 +345,44 @@ export const NodeCardWidget = memo((props: IProps) => {
                             </Flex>
                         </div>
 
-                        <div>
-                            <Box>
-                                <Flex direction="column" gap={4}>
-                                    <Flex align="center" justify="space-between">
-                                        <Text c="dimmed" ff="monospace" fw={600} size="sm" truncate>
-                                            {prettyUsedData}
-                                        </Text>
-                                        <Text c="dimmed" size="xs" truncate>
-                                            {maxData}
-                                        </Text>
+                        <Tooltip
+                            disabled={lifetimeTrafficBytes === undefined}
+                            label={`${t('node-stats.card.lifetime-traffic')}: ${
+                                prettifyBytesUtil(lifetimeTrafficBytes ?? 0) || '0 B'
+                            }`}
+                            withArrow
+                        >
+                            <div>
+                                <Box>
+                                    <Flex direction="column" gap={4}>
+                                        <Flex align="center" justify="space-between">
+                                            <Text
+                                                c="dimmed"
+                                                ff="monospace"
+                                                fw={600}
+                                                size="sm"
+                                                truncate
+                                            >
+                                                {prettyUsedData}
+                                            </Text>
+                                            <Text c="dimmed" size="xs" truncate>
+                                                {maxData}
+                                            </Text>
+                                        </Flex>
+                                        <Progress
+                                            color={
+                                                node.isTrafficTrackingActive
+                                                    ? progressColor
+                                                    : 'teal'
+                                            }
+                                            radius="sm"
+                                            size="sm"
+                                            value={node.isTrafficTrackingActive ? percentage : 100}
+                                        />
                                     </Flex>
-                                    <Progress
-                                        color={
-                                            node.isTrafficTrackingActive ? progressColor : 'teal'
-                                        }
-                                        radius="sm"
-                                        size="sm"
-                                        value={node.isTrafficTrackingActive ? percentage : 100}
-                                    />
-                                </Flex>
-                            </Box>
-                        </div>
+                                </Box>
+                            </div>
+                        </Tooltip>
 
                         <div>
                             <Flex align="center" gap="xs" justify="space-between">
@@ -489,11 +534,11 @@ export const NodeCardWidget = memo((props: IProps) => {
                                         Boolean(
                                             (node.versions as any)?.isCustom ||
                                             (node.versions as any)?.isCustomXray ||
-                                            node.versions?.xray?.toLowerCase().includes("custom") ||
-                                            node.versions?.xray?.toLowerCase().includes("mod")
+                                            node.versions?.xray?.toLowerCase().includes('custom') ||
+                                            node.versions?.xray?.toLowerCase().includes('mod')
                                         )
-                                            ? "var(--mantine-color-blue-5)"
-                                            : "var(--mantine-color-dimmed)"
+                                            ? 'var(--mantine-color-blue-5)'
+                                            : 'var(--mantine-color-dimmed)'
                                     }
                                     size={12}
                                 />
@@ -502,11 +547,11 @@ export const NodeCardWidget = memo((props: IProps) => {
                                         Boolean(
                                             (node.versions as any)?.isCustom ||
                                             (node.versions as any)?.isCustomXray ||
-                                            node.versions?.xray?.toLowerCase().includes("custom") ||
-                                            node.versions?.xray?.toLowerCase().includes("mod")
+                                            node.versions?.xray?.toLowerCase().includes('custom') ||
+                                            node.versions?.xray?.toLowerCase().includes('mod')
                                         )
-                                            ? "blue.4"
-                                            : "dimmed"
+                                            ? 'blue.4'
+                                            : 'dimmed'
                                     }
                                     ff="monospace"
                                     size="xs"

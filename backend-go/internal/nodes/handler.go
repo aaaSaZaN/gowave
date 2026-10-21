@@ -47,6 +47,9 @@ type UpdateNodeDTO struct {
 	IntegrationUUIDs *[]string `json:"integrationUuids"`
 	Note             *string   `json:"note"`
 	IPs              *[]NodeIP `json:"ips"`
+	// TrafficTrackingStart is a Gowave extension: how the counter starts when
+	// this update enables traffic tracking (keep, zero or period).
+	TrafficTrackingStart *string `json:"trafficTrackingStart"`
 }
 
 func formatNodeResponse(service *Service, n *database.Node) map[string]interface{} {
@@ -178,6 +181,11 @@ func formatNodeWithInbounds(service *Service, n *database.Node, inbounds []datab
 	statusMsg := n.LastStatusMessage
 	if statusMsg != nil && (*statusMsg == "OK" || *statusMsg == "") {
 		statusMsg = nil
+	}
+	// A connected node with a status message is serving its previous config
+	// because it rejected the latest one.
+	if statusMsg == nil && n.IsConnected && !n.IsDisabled && n.XrayConfigError != nil && *n.XrayConfigError != "" {
+		statusMsg = n.XrayConfigError
 	}
 
 	var systemObj interface{} = nil
@@ -473,6 +481,15 @@ func (h *Handler) handleUpdateNode(w http.ResponseWriter, r *http.Request, targe
 		updates["ips"] = encoded
 	}
 
+	trackingStart := ""
+	if dto.TrafficTrackingStart != nil {
+		if !ValidTrackingStart(*dto.TrafficTrackingStart) {
+			httpx.Error(w, r, http.StatusBadRequest, "E000", "trafficTrackingStart must be keep, zero or period")
+			return
+		}
+		trackingStart = *dto.TrafficTrackingStart
+	}
+
 	var profileUUID *string
 	var activeInbounds []string
 	profileUpdate := dto.ConfigProfile != nil
@@ -480,7 +497,7 @@ func (h *Handler) handleUpdateNode(w http.ResponseWriter, r *http.Request, targe
 		profileUUID = dto.ConfigProfile.ActiveConfigProfileUUID
 		activeInbounds = dto.ConfigProfile.ActiveInbounds
 	}
-	node, err := h.service.UpdateWithConfigProfile(targetUUID, updates, profileUpdate, profileUUID, activeInbounds)
+	node, err := h.service.UpdateWithConfigProfile(targetUUID, updates, profileUpdate, profileUUID, activeInbounds, trackingStart)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{"message": "Failed to update node"})
@@ -543,6 +560,21 @@ func (h *Handler) DisableNode(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"response": formatNodeResponse(h.service, node),
 	})
+}
+
+// GetTrafficSummary reports each node's lifetime traffic, which the monthly
+// trafficUsedBytes reset does not clear. Gowave extension, not in the contract.
+func (h *Handler) GetTrafficSummary(w http.ResponseWriter, r *http.Request) {
+	totals, err := h.service.LifetimeTraffic()
+	if err != nil {
+		httpx.Error(w, r, http.StatusInternalServerError, "E000", "Failed to read node traffic")
+		return
+	}
+	nodes := make([]map[string]interface{}, 0, len(totals))
+	for nodeUUID, total := range totals {
+		nodes = append(nodes, map[string]interface{}{"uuid": nodeUUID, "lifetimeTrafficBytes": total})
+	}
+	httpx.Response(w, map[string]interface{}{"nodes": nodes})
 }
 
 func (h *Handler) ResetTraffic(w http.ResponseWriter, r *http.Request) {
