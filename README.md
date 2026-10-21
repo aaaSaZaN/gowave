@@ -21,7 +21,7 @@ You need a Linux server (Debian, Ubuntu or the RHEL family, `amd64`/`arm64`) and
 sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/aaaSaZaN/gowave/main/install.sh)"
 ```
 
-The installer first asks for the language (Russian or English), then the database (SQLite or PostgreSQL in Docker), the reverse proxy (Caddy, Nginx or your own) and the domain, and sets up HTTPS. If an upstream panel or PasarGuard is found on the server, it offers to migrate the data. Running the same command again opens a menu: update, change the domain, uninstall.
+The installer first asks for the language (Russian or English), then the database (SQLite or PostgreSQL in Docker), the reverse proxy (Caddy, Nginx or your own), the domain, and the dashboard path (default `/`), and sets up HTTPS. It also offers to install GoWave Node on the same server after the panel is ready. If an upstream panel or PasarGuard is found on the server, it offers to migrate the data. Running the same command again opens a menu: update, change the domain or dashboard path, install/update the local node, or uninstall.
 
 Whoever opens the panel first creates the admin, so open it right after installation.
 
@@ -80,7 +80,7 @@ Contract checks, PostgreSQL tests and building the Docker image are covered on t
 
 [AGPL-3.0-only](LICENSE), inherited from the original codebase.
 
-## Dashboard path
+## Dashboard path and upgrades
 
 Set `PANEL_BASE_PATH=/private/panel/` in the panel's `.env` to place the dashboard
 at `https://panel.example.com/private/panel/`. Nested paths are supported; only
@@ -96,6 +96,19 @@ The dashboard is served only beneath the configured path; `/` returns 404 when a
 custom prefix is configured. Separately hosted frontends must supply the same
 HTML base URL and serve assets beneath it.
 
+The installer's **Change dashboard path** action backs up `.env`, restarts the
+panel, checks dashboard delivery and API health, and restores the previous
+configuration if verification fails. Update the panel first if an old release
+does not support this setting. Ordinary updates and SQLite-to-Docker migration
+preserve the setting, credentials, and subscription URLs.
+
+Local node installation is optional and does not create panel configuration
+profiles or register the node automatically. For a new node, select a free port
+(default `2222`), then add its displayed address and port in the panel. In Docker,
+use a server address reachable from the panel container. Existing nodes retain
+their credentials and port; the node installer handles service migration and
+rollback. A failed node installation leaves the panel running and can be retried
+from the installer menu. Panel removal does not remove the independent node.
 
 Project-owned branding uses GoWave. Required copyright notices, dependency
 identifiers and runtime resources, and legacy protocol/database/migration

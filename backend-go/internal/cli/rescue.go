@@ -104,6 +104,14 @@ func RunRescue(db *gorm.DB, cfg *config.Config, args []string) {
 		case "--enable-password-auth":
 			EnablePasswordAuth(db)
 			return
+		case "--print-secret-key-raw":
+			key, err := keygen.NewService(db).GenerateNodeSecretKey()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+			fmt.Println(key)
+			return
 		case "--print-secret-key":
 			PrintNodeSecretKey(db)
 			return
@@ -214,6 +222,7 @@ func printUsage() {
 	fmt.Println("  --reset-admin                   Remove all admins to re-trigger first-time web onboarding")
 	fmt.Println("  --list-admins                   List all existing administrators")
 	fmt.Println("  --enable-password-auth          Force-enable password authentication in database")
+	fmt.Println("  --print-secret-key-raw          Print only the node secret key (for scripts)")
 	fmt.Println("  --print-secret-key              Generate and print a valid SECRET_KEY for GoWave Node")
 	fmt.Println("  --help, -h                      Show this help message")
 	fmt.Println("\nRun without flags to start the interactive rescue menu.")

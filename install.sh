@@ -419,6 +419,7 @@ APP_SECRET=$(openssl rand -hex 32)
 DB_DRIVER=sqlite
 DATABASE_URL=gowave.db
 PANEL_DOMAIN=$DOMAIN
+PANEL_BASE_PATH=$PANEL_BASE_PATH
 SUB_PUBLIC_DOMAIN=$DOMAIN/api/sub
 GOWAVE_PROXY=$PROXY
 EOF
@@ -754,7 +755,7 @@ setup_proxy() {
         configure_nginx
     fi
     open_firewall
-    info "$(t 'Проверяю' 'Checking') https://$DOMAIN"
+    info "$(t 'Проверяю' 'Checking') https://$DOMAIN$PANEL_BASE_PATH"
     local i
     for i in $(seq 1 30); do
         if curl -fsS --max-time 5 "https://$DOMAIN/api/system/health" >/dev/null 2>&1; then
@@ -777,6 +778,123 @@ choose_database() {
 }
 
 DB_MODE=sqlite
+
+# Dashboard paths are restricted to characters safe in URLs and .env files.
+PANEL_BASE_PATH=/
+INSTALL_NODE=false
+NODE_INSTALL_URL=https://raw.githubusercontent.com/aaaSaZaN/gowave-node/main/install.sh
+
+normalize_panel_path() {
+    local value=${1:-/} first
+    if [ "$value" = / ]; then printf /; return; fi
+    [[ $value =~ ^/[a-zA-Z0-9_-]+(/[a-zA-Z0-9_-]+)*/?$ ]] || return 1
+    first=${value#/}; first=${first%%/*}
+    case $first in api|metrics) return 1 ;; esac
+    printf '%s/' "${value%/}"
+}
+
+ask_panel_path() {
+    local value normalized
+    while :; do
+        value=$(ask "$(t 'Путь панели' 'Dashboard path') [${PANEL_BASE_PATH:-/}]: ")
+        if normalized=$(normalize_panel_path "${value:-${PANEL_BASE_PATH:-/}}"); then
+            PANEL_BASE_PATH=$normalized
+            return
+        fi
+        warn "$(t 'Пример: /panel/. Допустимы буквы, цифры, дефис и подчёркивание; /api и /metrics заняты.' 'Example: /panel/. Use letters, numbers, hyphens and underscores; /api and /metrics are reserved.')"
+    done
+}
+
+restart_panel() {
+    if [ "$MODE" = docker ]; then
+        (cd "$DOCKER_DIR" && docker compose up -d --force-recreate --wait --wait-timeout 180 gowave) >>"$LOG" 2>&1
+    else
+        systemctl restart gowave >>"$LOG" 2>&1
+    fi
+}
+
+verify_panel_path() {
+    local output=$WORK/dashboard-check.html
+    wait_healthy "$APP_PORT" || return 1
+    curl -fsS --max-time 10 "http://127.0.0.1:$APP_PORT$PANEL_BASE_PATH" -o "$output" || return 1
+    if [ "${1:-}" = --legacy ]; then
+        # Recovery must also accept bundles installed before base-path support.
+        grep -Eqi '<!doctype html|<html' "$output"
+    else
+        grep -Fq "<base href=\"$PANEL_BASE_PATH\" data-gowave-base" "$output"
+    fi
+}
+
+configure_panel_path() {
+    local previous backup
+    APP_PORT=$(env_get "$ENV_FILE" APP_PORT); APP_PORT=${APP_PORT:-3000}
+    DOMAIN=$(env_get "$ENV_FILE" PANEL_DOMAIN)
+    previous=$(env_get "$ENV_FILE" PANEL_BASE_PATH); previous=${previous:-/}
+    PANEL_BASE_PATH=$previous
+    ask_panel_path
+    [ "$PANEL_BASE_PATH" != "$previous" ] || return 0
+    backup=$(mktemp "$ENV_FILE.path-backup.XXXXXX") || return 1
+    (umask 077; cp -p "$ENV_FILE" "$backup"; chmod 600 "$backup") || return 1
+    if env_set "$ENV_FILE" PANEL_BASE_PATH "$PANEL_BASE_PATH" && restart_panel && verify_panel_path; then
+        info "$(t 'Панель доступна:' 'Dashboard available:') https://$DOMAIN$PANEL_BASE_PATH"
+        info "$(t 'Резервная копия:' 'Configuration backup:') $backup"
+        warn "$(t 'Для собственного прокси: передавайте путь без изменений. Это меняет адрес панели, но не ограничивает доступ к API.' 'For external proxies, forward the path unchanged. This changes the dashboard address; it does not restrict API access.')"
+        return 0
+    fi
+    warn "$(t 'Новый путь не прошёл проверку. Восстанавливаю конфигурацию.' 'The new path failed verification. Restoring configuration.')"
+    cp -p "$backup" "$ENV_FILE" || return 1
+    PANEL_BASE_PATH=$previous
+    if ! restart_panel || ! verify_panel_path --legacy; then
+        warn "$(t 'Автовосстановление не прошло проверку. Конфигурация сохранена в' 'Automatic recovery failed verification. Configuration is saved at') $backup"
+        return 1
+    fi
+    warn "$(t 'Прежняя конфигурация восстановлена.' 'The previous configuration has been restored.')"
+    return 1
+}
+
+panel_node_secret() {
+    # Do not use run/gowave_cli: those log command output, including secrets.
+    if [ "$MODE" = docker ]; then
+        (cd "$DOCKER_DIR" && docker compose exec -T gowave /app/gowave rescue --print-secret-key-raw </dev/null)
+    else
+        (cd "$INSTALL_DIR" && ./gowave-server rescue --print-secret-key-raw </dev/null)
+    fi
+}
+
+install_local_node() {
+    local installer=$WORK/node-install.sh secret port address
+    port=$(ask "$(t 'Порт новой ноды (существующая нода сохранит свой порт)' 'New node port (existing nodes retain their port)') [2222]: ")
+    port=${port:-2222}
+    if ! [[ $port =~ ^[0-9]{1,5}$ ]] || [ "$((10#$port))" -lt 1 ] || [ "$((10#$port))" -gt 65535 ]; then
+        warn "$(t 'Некорректный порт.' 'Invalid node port.')"; return 0
+    fi
+    port=$((10#$port))
+    if ! secret=$(panel_node_secret) || ! [[ $secret =~ ^[A-Za-z0-9+/=_-]+$ ]]; then
+        warn "$(t 'Не удалось получить ключ ноды. Обновите панель и повторите установку ноды через меню.' 'Could not obtain node credentials. Update the panel and retry node installation from the menu.')"
+        return 0
+    fi
+    if ! curl -fsSL --connect-timeout 15 --max-time 180 --retry 2 -o "$installer" "$NODE_INSTALL_URL"; then
+        unset secret
+        warn "$(t 'Не удалось скачать установщик ноды. Повторите через меню; панель продолжает работать.' 'Could not download the node installer. Retry from the menu; the panel remains running.')"
+        return 0
+    fi
+    # The maintained installer validates port conflicts before touching services,
+    # preserves existing credentials/ports, and rolls back failed migrations.
+    if ! SECRET_KEY="$secret" NODE_PORT="$port" sh "$installer"; then
+        unset secret
+        warn "$(t 'Нода не установлена. Повторите через меню; панель продолжает работать.' 'Node installation failed. Retry from the menu; the panel remains running.')"
+        return 0
+    fi
+    unset secret
+    if [ "$MODE" = docker ]; then
+        address=$(server_ips | head -n 1)
+        address=${address:-SERVER_IP}
+    else
+        address=127.0.0.1
+    fi
+    info "$(t 'Добавьте ноду в панели: адрес' 'Add the node in the dashboard: address') $address, $(t 'порт' 'port') $port."
+    info "$(t 'Для существующей ноды используйте сохранённые адрес и порт. Затем назначьте профиль и хост.' 'For an existing node, use its saved address and port. Then assign a configuration profile and host.')"
+}
 
 fresh_install() {
     detect_old_panels
@@ -810,6 +928,9 @@ fresh_install() {
 
     ask_proxy
     ask_domain
+    ask_panel_path
+    INSTALL_NODE=false
+    confirm "$(t 'Установить GoWave Node на этом сервере после установки панели?' 'Install GoWave Node on this server after the panel is ready?')" && INSTALL_NODE=true
 
     if [ "$PROXY" != external ] && ! check_web_ports true; then
         die "$(t 'Освободите порты 80/443 (или выберите другой прокси) и запустите установщик снова.' 'Free ports 80/443 (or pick another proxy) and run the installer again.')"
@@ -817,7 +938,7 @@ fresh_install() {
     APP_PORT=$(free_port 3000)
 
     printf '\n%s\n' "${BOLD}$(t 'Будет установлено:' 'About to install:')${RESET}"
-    echo "$(t "  Панель:   https://$DOMAIN (локально 127.0.0.1:$APP_PORT)" "  Panel:     https://$DOMAIN (locally 127.0.0.1:$APP_PORT)")"
+    echo "$(t "  Панель:   https://$DOMAIN$PANEL_BASE_PATH (локально 127.0.0.1:$APP_PORT)" "  Panel:     https://$DOMAIN$PANEL_BASE_PATH (locally 127.0.0.1:$APP_PORT)")"
     if [ "$DB_MODE" = sqlite ]; then
         echo "$(t "  База:     SQLite, $INSTALL_DIR" "  Database:  SQLite, $INSTALL_DIR")"
     else
@@ -853,6 +974,10 @@ fresh_install() {
     fi
     setup_proxy
     print_done
+    MODE=native
+    ENV_FILE=$INSTALL_DIR/.env
+    if [ "$DB_MODE" = docker ]; then MODE=docker; ENV_FILE=$DOCKER_DIR/.env; fi
+    if [ "$INSTALL_NODE" = true ]; then install_local_node; fi
 }
 
 FRESH_ROLLBACK=false
@@ -893,7 +1018,7 @@ on_exit() {
 print_external_proxy() {
     printf '%s\n' "${YELLOW}$(t "Reverse proxy не настроен: направьте свой прокси с HTTPS на http://127.0.0.1:$APP_PORT" "Reverse proxy is not configured: point your own HTTPS proxy to http://127.0.0.1:$APP_PORT")${RESET}"
     echo "$(t 'Нужны заголовки Host, X-Forwarded-For, X-Forwarded-Proto, а для SSH-терминала нод - WebSocket (Upgrade, Connection).' \
-        'It must pass the Host, X-Forwarded-For and X-Forwarded-Proto headers, plus WebSocket (Upgrade, Connection) for the node SSH terminal.')"
+        'Forward paths unchanged. Pass Host, X-Forwarded-For and X-Forwarded-Proto headers, plus WebSocket (Upgrade, Connection) for the node SSH terminal.')"
     echo "$(t 'Если прокси работает в Docker, ему нужен network_mode: host: панель слушает только 127.0.0.1.' \
         'If the proxy runs in Docker, it needs network_mode: host, because the panel listens on 127.0.0.1 only.')"
     echo "$(t 'Примеры:' 'Examples:') https://aaasazan.github.io/gowave-docs/install/reverse-proxy/overview/"
@@ -902,7 +1027,7 @@ print_external_proxy() {
 }
 
 print_done() {
-    printf '\n%s\n' "${GREEN}${BOLD}$(t 'GoWave установлена:' 'GoWave is installed:') https://$DOMAIN${RESET}"
+    printf '\n%s\n' "${GREEN}${BOLD}$(t 'GoWave установлена:' 'GoWave is installed:') https://$DOMAIN$PANEL_BASE_PATH${RESET}"
     [ "$PROXY" = external ] && print_external_proxy
     case $SOURCE in
     none)
@@ -936,7 +1061,7 @@ print_done() {
             "Once you are sure everything works, remove it: cd $SOURCE_DIR && docker compose down")"
     fi
     echo "$(t 'Повторный запуск установщика: обновление, смена домена, удаление.' \
-        'Run the installer again to update, change the domain or uninstall.')"
+        'Run the installer again to update, change the domain or dashboard path, install a node, or uninstall.')"
 }
 
 # ---------------------------------------------------------------- existing install
@@ -967,6 +1092,8 @@ configured_proxy() {
 update_gowave() {
     APP_PORT=$(env_get "$ENV_FILE" APP_PORT)
     APP_PORT=${APP_PORT:-3000}
+    PANEL_BASE_PATH=$(env_get "$ENV_FILE" PANEL_BASE_PATH)
+    PANEL_BASE_PATH=${PANEL_BASE_PATH:-/}
     if [ "$MODE" = docker ]; then
         # Older compose files published the panel on every interface.
         # shellcheck disable=SC2016
@@ -991,6 +1118,8 @@ update_gowave() {
 configure_domain() {
     APP_PORT=$(env_get "$ENV_FILE" APP_PORT)
     APP_PORT=${APP_PORT:-3000}
+    PANEL_BASE_PATH=$(env_get "$ENV_FILE" PANEL_BASE_PATH)
+    PANEL_BASE_PATH=${PANEL_BASE_PATH:-/}
     ask_proxy
     ask_domain
     local previous
@@ -1018,7 +1147,7 @@ configure_domain() {
     if [ "$PROXY" = external ]; then
         print_external_proxy
     else
-        info "$(t 'Готово:' 'Done:') https://$DOMAIN"
+        info "$(t 'Готово:' 'Done:') https://$DOMAIN$PANEL_BASE_PATH"
     fi
 }
 
@@ -1060,12 +1189,16 @@ manage_existing() {
     case $(choose "$(t "GoWave уже установлена ($where). Что сделать?" "GoWave is already installed ($where). What should be done?")" \
         "$(t 'Обновить GoWave' 'Update GoWave')" \
         "$(t 'Настроить домен и HTTPS' 'Set up domain and HTTPS')" \
+        "$(t 'Изменить путь панели' 'Change dashboard path')" \
+        "$(t 'Установить или обновить локальную ноду' 'Install or update the local node')" \
         "$(t 'Удалить GoWave' 'Uninstall GoWave')" \
         "$(t 'Выход' 'Exit')") in
     1) update_gowave ;;
     2) configure_domain ;;
-    3) uninstall_gowave ;;
-    4) exit 0 ;;
+    3) configure_panel_path ;;
+    4) install_local_node ;;
+    5) uninstall_gowave ;;
+    6) exit 0 ;;
     esac
 }
 
@@ -1083,4 +1216,4 @@ main() {
     fi
 }
 
-main "$@"
+if [[ ${BASH_SOURCE[0]} = "$0" ]]; then main "$@"; fi
