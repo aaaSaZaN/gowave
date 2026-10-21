@@ -88,3 +88,26 @@ func TestPerNodeSerialization(t *testing.T) {
 		t.Fatal("same-node job acquired during active lease", err)
 	}
 }
+
+func TestPermanentErrorFailsWithoutRetry(t *testing.T) {
+	db, err := database.Init("sqlite", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sql, _ := db.DB()
+	defer sql.Close()
+	if err := database.AutoMigrate(db); err != nil {
+		t.Fatal(err)
+	}
+	Enqueue(db, "test", "node", "node", 1, nil)
+	q := New(db)
+	q.Register("test", func(context.Context, *database.Job) error { return Permanent(errors.New("no binary")) })
+	if worked, err := q.RunOne(context.Background()); !worked || err == nil {
+		t.Fatal("failed job not attempted")
+	}
+	var job database.Job
+	db.First(&job)
+	if job.State != "failed" || job.Attempts != 1 || job.LastError != "no binary" {
+		t.Fatalf("permanent failure state %+v", job)
+	}
+}

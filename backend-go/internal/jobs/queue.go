@@ -29,6 +29,14 @@ type RetryAfterError struct {
 func (e *RetryAfterError) Error() string { return e.Err.Error() }
 func (e *RetryAfterError) Unwrap() error { return e.Err }
 
+// PermanentError fails a job at once instead of retrying it.
+type PermanentError struct{ Err error }
+
+func (e *PermanentError) Error() string { return e.Err.Error() }
+func (e *PermanentError) Unwrap() error { return e.Err }
+
+func Permanent(err error) error { return &PermanentError{Err: err} }
+
 type Queue struct {
 	db       *gorm.DB
 	handlers map[string]Handler
@@ -168,7 +176,8 @@ func (q *Queue) RunOne(ctx context.Context) (bool, error) {
 	updates := map[string]interface{}{"state": "completed", "lease_until": nil, "last_error": "", "updated_at": now}
 	if err != nil {
 		state := "pending"
-		if job.Attempts >= 10 {
+		var permanent *PermanentError
+		if job.Attempts >= 10 || errors.As(err, &permanent) {
 			state = "failed"
 		}
 		shift := job.Attempts

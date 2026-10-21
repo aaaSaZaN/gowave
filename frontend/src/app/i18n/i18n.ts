@@ -18,7 +18,9 @@ i18n.use(initReactI18next)
         load: 'languageOnly',
         preload: ['en', 'ru', 'fa', 'zh'],
         backend: {
-            loadPath: '/locales/{{lng}}/{{ns}}.json'
+            loadPath: '/locales/{{lng}}/{{ns}}.json',
+            // Locale URLs carry no hash, so a new build must not reuse cached files.
+            queryStringParams: { v: __BUILD_ID__ }
         },
         interpolation: {
             escapeValue: false

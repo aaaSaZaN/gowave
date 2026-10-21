@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"gowave/internal/configrender"
 	"gowave/internal/database"
+	"gowave/internal/jobs"
 	"io"
 	"net"
 	"strconv"
@@ -81,6 +82,11 @@ func (s *Service) ApplyCommandJob(ctx context.Context, job *database.Job) error 
 	}
 	result, err := client.Call(ctx, &node, command.Path, command.Body)
 	if err != nil {
+		if job.Kind == "geocheck" {
+			// The geocheck modal polls this job: report a failed check instead
+			// of running it on the node again.
+			return jobs.Permanent(err)
+		}
 		return err
 	}
 	if job.Kind == "geocheck" {

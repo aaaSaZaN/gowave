@@ -4,7 +4,7 @@ import {
     Collapse,
     Group,
     NumberInput,
-    SegmentedControl,
+    Radio,
     Stack,
     Switch,
     TagsInput,
@@ -72,23 +72,34 @@ export const NodeTrackingAndBillingCard = <
         setResetDay(typeof value === 'number' ? value : 1)
     })
 
-    const trackingStartDescription = () => {
-        switch (trafficTrackingStart?.value) {
-            case 'period':
-                return t('base-node-form.tracking-start.period-description', {
-                    date: getNodeTrafficPeriodStartUtil(resetDay).toLocaleDateString(
-                        i18n.language,
-                        { day: 'numeric', month: 'long' }
-                    )
+    const trackingStartOptions: {
+        description: string
+        label: string
+        value: TTrafficTrackingStart
+    }[] = [
+        {
+            value: 'period',
+            label: t('base-node-form.tracking-start.period'),
+            description: t('base-node-form.tracking-start.period-description', {
+                date: getNodeTrafficPeriodStartUtil(resetDay).toLocaleDateString(i18n.language, {
+                    day: 'numeric',
+                    month: 'long'
                 })
-            case 'zero':
-                return t('base-node-form.tracking-start.zero-description')
-            default:
-                return t('base-node-form.tracking-start.keep-description', {
-                    value: prettifyBytesUtil(trafficTrackingStart?.accumulatedBytes ?? 0) || '0 B'
-                })
+            })
+        },
+        {
+            value: 'zero',
+            label: t('base-node-form.tracking-start.zero'),
+            description: t('base-node-form.tracking-start.zero-description')
+        },
+        {
+            value: 'keep',
+            label: t('base-node-form.tracking-start.keep'),
+            description: t('base-node-form.tracking-start.keep-description', {
+                value: prettifyBytesUtil(trafficTrackingStart?.accumulatedBytes ?? 0) || '0 B'
+            })
         }
-    }
+    ]
 
     form.watch('note', ({ value }) => {
         setFirstNoteUrl(extractFirstUrl(typeof value === 'string' ? value : ''))
@@ -204,44 +215,28 @@ export const NodeTrackingAndBillingCard = <
                                     </Group>
 
                                     {trafficTrackingStart && (
-                                        <Stack gap={6}>
-                                            <Text fw={500} size="sm">
-                                                {t('base-node-form.tracking-start.label')}
-                                            </Text>
-                                            <SegmentedControl
-                                                data={[
-                                                    {
-                                                        value: 'period',
-                                                        label: t(
-                                                            'base-node-form.tracking-start.period'
-                                                        )
-                                                    },
-                                                    {
-                                                        value: 'zero',
-                                                        label: t(
-                                                            'base-node-form.tracking-start.zero'
-                                                        )
-                                                    },
-                                                    {
-                                                        value: 'keep',
-                                                        label: t(
-                                                            'base-node-form.tracking-start.keep'
-                                                        )
-                                                    }
-                                                ]}
-                                                fullWidth
-                                                onChange={(value) =>
-                                                    trafficTrackingStart.onChange(
-                                                        value as TTrafficTrackingStart
-                                                    )
-                                                }
-                                                size="xs"
-                                                value={trafficTrackingStart.value}
-                                            />
-                                            <Text c="dimmed" size="xs">
-                                                {trackingStartDescription()}
-                                            </Text>
-                                        </Stack>
+                                        <Radio.Group
+                                            label={t('base-node-form.tracking-start.label')}
+                                            onChange={(value) =>
+                                                trafficTrackingStart.onChange(
+                                                    value as TTrafficTrackingStart
+                                                )
+                                            }
+                                            styles={{ label: { fontWeight: 500 } }}
+                                            value={trafficTrackingStart.value}
+                                        >
+                                            <Stack gap="xs" mt="xs">
+                                                {trackingStartOptions.map((option) => (
+                                                    <Radio
+                                                        description={option.description}
+                                                        key={option.value}
+                                                        label={option.label}
+                                                        size="xs"
+                                                        value={option.value}
+                                                    />
+                                                ))}
+                                            </Stack>
+                                        </Radio.Group>
                                     )}
                                 </Stack>
                             </Collapse>

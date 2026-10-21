@@ -124,7 +124,9 @@ export default defineConfig({
     define: {
         __DOMAIN_BACKEND__: JSON.stringify(process.env.DOMAIN_BACKEND || 'example.com').trim(),
         __NODE_ENV__: JSON.stringify(process.env.NODE_ENV).trim(),
-        __DOMAIN_OVERRIDE__: JSON.stringify(process.env.DOMAIN_OVERRIDE || '0').trim()
+        __DOMAIN_OVERRIDE__: JSON.stringify(process.env.DOMAIN_OVERRIDE || '0').trim(),
+        // Busts the browser cache of unhashed files such as locales on each build.
+        __BUILD_ID__: JSON.stringify(Date.now().toString(36))
     },
     server: {
         host: '0.0.0.0',
