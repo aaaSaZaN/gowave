@@ -4,7 +4,7 @@ import { findNodeAtOffset, getLocation, parseTree } from 'jsonc-parser'
 
 import { decodeBase64 } from '@shared/utils/misc/base64'
 
-const ACTION_ID = 'remnawave.openBase64Editor'
+const ACTION_ID = 'gowave.openBase64Editor'
 
 export interface IBase64EditorRequest {
     label: string

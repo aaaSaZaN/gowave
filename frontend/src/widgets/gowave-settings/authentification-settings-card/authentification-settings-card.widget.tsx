@@ -28,8 +28,8 @@ import { showModal } from '@shared/_modals/show-modal'
 import { HelpActionIconShared } from '@shared/_modals/universal'
 import { THelpDrawerAvailableScreen } from '@shared/_modals/universal/help-drawer/help-drawer.types'
 import { queryClient } from '@shared/api'
+import { useUpdateGowaveSettings } from '@shared/api/hooks/gowave-settings/gowave-settings.mutation.hooks'
 import { QueryKeys } from '@shared/api/hooks/keys-factory'
-import { useUpdateRemnawaveSettings } from '@shared/api/hooks/remnawave-settings/remnawave-settings.mutation.hooks'
 import { CheckboxCardShared } from '@shared/ui/checkbox-card/checkbox-card.shared'
 import { PocketidLogo } from '@shared/ui/logos'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
@@ -212,11 +212,11 @@ export const AuthentificationSettingsCardWidget = (props: IProps) => {
         }
     })
 
-    const { mutate: updateSettings, isPending: isUpdatePending } = useUpdateRemnawaveSettings({
+    const { mutate: updateSettings, isPending: isUpdatePending } = useUpdateGowaveSettings({
         mutationFns: {
             onSuccess(data) {
                 queryClient.refetchQueries({
-                    queryKey: QueryKeys.remnawaveSettings.getRemnawaveSettings.queryKey
+                    queryKey: QueryKeys.gowaveSettings.getGowaveSettings.queryKey
                 })
 
                 form.setValues({

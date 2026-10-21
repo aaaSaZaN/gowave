@@ -5,5 +5,5 @@ set -eu
 
 installer=$(mktemp)
 trap 'rm -f -- "$installer"' EXIT
-curl -fsSL https://raw.githubusercontent.com/aaaSaZaN/remnanode-go/main/install.sh -o "$installer"
+curl -fsSL https://raw.githubusercontent.com/aaaSaZaN/gowave-node/main/install.sh -o "$installer"
 sh "$installer" "$@"

@@ -567,8 +567,8 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                                     label={
                                         (node as any)?.versions?.nodeType === 'go' ||
                                         node.versions.node?.includes('(Go)')
-                                            ? 'Версия ноды, remnanode-go'
-                                            : t('node-details-card.widget.remnawave-node-version')
+                                            ? 'Версия ноды, gowave-node'
+                                            : t('node-details-card.widget.gowave-node-version')
                                     }
                                 >
                                     <Group gap="xs" justify="center">

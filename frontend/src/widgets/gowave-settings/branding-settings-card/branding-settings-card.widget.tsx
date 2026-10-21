@@ -21,8 +21,8 @@ import { HiQuestionMarkCircle } from 'react-icons/hi'
 import { TbAlertCircle, TbLink, TbStar } from 'react-icons/tb'
 
 import { queryClient } from '@shared/api'
+import { useUpdateGowaveSettings } from '@shared/api/hooks/gowave-settings/gowave-settings.mutation.hooks'
 import { QueryKeys } from '@shared/api/hooks/keys-factory'
-import { useUpdateRemnawaveSettings } from '@shared/api/hooks/remnawave-settings/remnawave-settings.mutation.hooks'
 import { Logo } from '@shared/ui'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SettingsCardShared } from '@shared/ui/settings-card'
@@ -60,11 +60,11 @@ export const BrandingSettingsCardWidget = (props: IProps) => {
         }
     })
 
-    const { mutate: updateSettings, isPending: isUpdatePending } = useUpdateRemnawaveSettings({
+    const { mutate: updateSettings, isPending: isUpdatePending } = useUpdateGowaveSettings({
         mutationFns: {
             onSuccess() {
                 queryClient.refetchQueries({
-                    queryKey: QueryKeys.remnawaveSettings.getRemnawaveSettings.queryKey
+                    queryKey: QueryKeys.gowaveSettings.getGowaveSettings.queryKey
                 })
                 queryClient.refetchQueries({
                     queryKey: QueryKeys.auth.getAuthStatus.queryKey
@@ -155,7 +155,7 @@ export const BrandingSettingsCardWidget = (props: IProps) => {
                                         {t('branding-settings-card.widget.example-mantine-colors')}:
                                     </Text>
                                     <Code block c="blue" fz="xs">
-                                        {'{cyan}Remna{white}wave'}
+                                        {'{cyan}Go{white}Wave'}
                                     </Code>
                                 </Box>
 
@@ -189,7 +189,7 @@ export const BrandingSettingsCardWidget = (props: IProps) => {
                 <SettingsCardShared.Container>
                     <SettingsCardShared.Header
                         description={t(
-                            'branding-settings-card.widget.customize-your-remnawave-instance'
+                            'branding-settings-card.widget.customize-your-gowave-instance'
                         )}
                         icon={<Logo size={24} />}
                         iconColor="cyan"
@@ -206,7 +206,7 @@ export const BrandingSettingsCardWidget = (props: IProps) => {
                                 key={form.key('brandingSettings.title')}
                                 label={t('branding-settings-card.widget.brand-name')}
                                 leftSection={<TbStar size={16} />}
-                                placeholder="Remnawave"
+                                placeholder="Gowave"
                                 rightSection={brandingTitleHoverCard()}
                                 {...form.getInputProps('brandingSettings.title')}
                             />

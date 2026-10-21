@@ -1,5 +1,5 @@
 // Package subtpl ports upstream's subscription-template module
-// (src/modules/subscription-template at remnawave/backend 3.4.5): proxy
+// (src/modules/subscription-template at upstream/backend 3.4.5): proxy
 // resolution, the five client generators, the remark template engine and the
 // host mapper. scripts/subscription-diff compares it with the TypeScript.
 package subtpl

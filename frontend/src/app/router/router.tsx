@@ -4,6 +4,7 @@ import { ConfigProfilesPageConnector } from '@pages/dashboard/config-profiles/co
 import { ConfigProfileByUuidPageConnector } from '@pages/dashboard/config-profiles/connectors/config-profile-by-uuid.page.connector'
 import { InfraBillingPageConnector } from '@pages/dashboard/crm/infra-billing/connectors/infra-billing.page.connector'
 import { ExternalSquadsPageConnector } from '@pages/dashboard/external-squads/connectors'
+import { GowaveSettingsConnector } from '@pages/dashboard/gowave-settings/connectors'
 import { HomePageConnector } from '@pages/dashboard/home/connectors'
 import { HostsPageConnector } from '@pages/dashboard/hosts/ui/connectors'
 import { HttpStatsPageConnector } from '@pages/dashboard/http-stats/ui/connectors/http-stats.page.connector'
@@ -15,7 +16,6 @@ import { NodesMetricsPageConnector } from '@pages/dashboard/nodes-metrics/ui/con
 import { NodesPageConnector } from '@pages/dashboard/nodes/ui/connectors'
 import { OpenEntityPage } from '@pages/dashboard/open-entity'
 import { QuickOpenPage } from '@pages/dashboard/quick-open'
-import { RemnawaveSettingsConnector } from '@pages/dashboard/remnawave-settings/connectors'
 import { ResponseRulesPageConnector } from '@pages/dashboard/response-rules/connectors/response-rules.page.connector'
 import { SessionsExplorerPageConnector } from '@pages/dashboard/sessions-explorer/ui/connectors/sessions-explorer.page.connector'
 import { SrhInspectorPageConnector } from '@pages/dashboard/srh-inspector/ui/connectors'
@@ -114,8 +114,8 @@ const router = createBrowserRouter(
                         />
 
                         <Route
-                            element={<RemnawaveSettingsConnector />}
-                            path={ROUTES.DASHBOARD.MANAGEMENT.REMNAWAVE_SETTINGS}
+                            element={<GowaveSettingsConnector />}
+                            path={ROUTES.DASHBOARD.MANAGEMENT.GOWAVE_SETTINGS}
                         />
 
                         <Route path={ROUTES.DASHBOARD.MANAGEMENT.NODE_PLUGINS.ROOT}>
@@ -190,7 +190,6 @@ const router = createBrowserRouter(
         </Route>
     )
 )
-
 export function Router() {
     return <RouterProvider router={router} />
 }

@@ -28,9 +28,9 @@ const DEFINITIONS_REF_PREFIX = '#/definitions/'
 const PROTECTED_ROOT_KEYS = new Set(['api', 'inbounds', 'metrics', 'snippets', 'stats'])
 
 const CUSTOM_CORE_SCHEMA = {
-    title: 'Remnawave Custom Core',
+    title: 'Gowave Custom Core',
     markdownDescription: [
-        '**Remnawave custom field.** Not part of Xray-Core – it is handled by the Remnawave Node.',
+        '**Gowave custom field.** Not part of Xray-Core – it is handled by the Gowave Node.',
         '',
         '> ⚠️ **Beta feature. Use strictly at your own risk.**',
         '>',
@@ -209,9 +209,9 @@ export const MonacoSetupFeature = {
 
             const snippetSchema = {
                 name: 'snippet',
-                title: 'Remnawave Snippets',
+                title: 'Gowave Snippets',
                 markdownDescription:
-                    'Create your own snippets to quickly configure your **Outbounds** or **Rules**. \n\n\nReference them here, Remnawave will handle the rest.',
+                    'Create your own snippets to quickly configure your **Outbounds** or **Rules**. \n\n\nReference them here, Gowave will handle the rest.',
                 type: 'string',
                 enum: snippetNames,
                 markdownEnumDescriptions: snippetDescriptions,
@@ -224,7 +224,7 @@ export const MonacoSetupFeature = {
 
             const rootSnippetsSchema = {
                 name: 'snippets',
-                title: 'Remnawave Snippets',
+                title: 'Gowave Snippets',
                 markdownDescription: [
                     'Snippets merged into the **root** of this config.',
                     '',
@@ -521,13 +521,13 @@ export const MonacoSetupNodePluginEditorFeature = {
     setup: async (sharedLists: TSharedLists = []) => {
         try {
             const schema = NodePluginEditorSchema.toJSONSchema() as any
-            if (schema && typeof schema === "object") {
+            if (schema && typeof schema === 'object') {
                 schema.additionalProperties = true
                 if (schema.properties) {
                     schema.properties.sharedLists = {
-                        type: "array",
-                        items: { type: "object" },
-                        description: "Optional shared lists definition"
+                        type: 'array',
+                        items: { type: 'object' },
+                        description: 'Optional shared lists definition'
                     }
                 }
             }

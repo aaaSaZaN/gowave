@@ -60,7 +60,7 @@ export function RecapContent() {
                     if (!ref.current) throw new Error('ref')
                     return ref.current
                 },
-                `remnawave-recap-${dayjs().format('YYYY-MM-DD')}.png`
+                `gowave-recap-${dayjs().format('YYYY-MM-DD')}.png`
             )
         } catch (error) {
             notifications.show({
@@ -84,7 +84,7 @@ export function RecapContent() {
             if (!ref.current) throw new Error('ref')
             await downloadScreenshot(
                 ref.current,
-                `remnawave-recap-${dayjs().format('YYYY-MM-DD')}.png`
+                `gowave-recap-${dayjs().format('YYYY-MM-DD')}.png`
             )
         } catch {
             notifications.show({
@@ -235,7 +235,7 @@ export function RecapContent() {
                     <div className={classes.brand}>
                         <Logo size={24} style={{ color: accent }} />
                         <span className={classes.brandName}>
-                            <span style={{ color: accent }}>REMNA</span>WAVE
+                            <span style={{ color: accent }}>GO</span>WAVE
                         </span>
                     </div>
 

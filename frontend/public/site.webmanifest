@@ -1,6 +1,6 @@
 {
-    "name": "Remnawave",
-    "short_name": "Remnawave",
+    "name": "GoWave",
+    "short_name": "GoWave",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#161B23",
@@ -8,7 +8,7 @@
     "id": "/",
     "orientation": "any",
     "scope": "/",
-    "description": "Remnawave Dashboard",
+    "description": "GoWave Dashboard",
     "theme_color": "#161B23",
     "icons": [
         {
@@ -45,14 +45,14 @@
             "sizes": "1512x850",
             "type": "image/jpeg",
             "form_factor": "wide",
-            "label": "Remnawave Dashboard Overview"
+            "label": "GoWave Dashboard Overview"
         },
         {
             "src": "/favicons/preview_mobile.jpg",
             "sizes": "645x1398",
             "type": "image/jpeg",
             "form_factor": "narrow",
-            "label": "Remnawave Dashboard Overview"
+            "label": "GoWave Dashboard Overview"
         }
     ]
 }

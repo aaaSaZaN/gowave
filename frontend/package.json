@@ -1,16 +1,16 @@
 {
-  "name": "@remnawave/frontend",
+  "name": "@gowave/frontend",
   "version": "3.4.4",
   "private": false,
-  "homepage": "https://github.com/remnawave",
+  "homepage": "https://github.com/aaaSaZaN/gowave",
   "bugs": {
-    "url": "https://github.com/remnawave/frontend/issues"
+    "url": "https://github.com/aaaSaZaN/gowave/issues"
   },
   "license": "AGPL-3.0-only",
-  "author": "REMNAWAVE <github.com/remnawave>",
+  "author": "GoWave Contributors",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/remnawave/frontend.git"
+    "url": "git+https://github.com/aaaSaZaN/gowave.git"
   },
   "type": "module",
   "scripts": {

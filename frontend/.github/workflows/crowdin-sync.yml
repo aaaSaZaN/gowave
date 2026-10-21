@@ -36,7 +36,7 @@ jobs:
 
 
             ### 🔍 Translation Status
-            Check the current translation status at [i18n.remna.st](https://i18n.remna.st)
+            Translation sources live in frontend/public/locales/en/gowave.json.
 
             ---
             *Automated by [Crowdin GitHub Action](https://github.com/crowdin/github-action)*

@@ -3,14 +3,15 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 import HttpApi from 'i18next-http-backend'
 import { initReactI18next } from 'react-i18next'
 
+
 i18n.use(initReactI18next)
     .use(LanguageDetector)
     .use(HttpApi)
     .init({
         fallbackLng: 'en',
         debug: process.env.NODE_ENV === 'development',
-        defaultNS: ['remnawave'],
-        ns: ['remnawave'],
+        defaultNS: ['gowave'],
+        ns: ['gowave'],
         detection: {
             order: ['localStorage', 'navigator', 'htmlTag', 'path', 'subdomain'],
             convertDetectedLanguage: (lng) => (lng.includes('-') ? lng.split('-')[0] : lng)

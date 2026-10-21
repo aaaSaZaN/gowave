@@ -14,10 +14,8 @@ frontend/dist
 **/*.db-*
 **/*.sqlite*
 /gowave-*
-remnawave-*
 sazan
 server-*
 backend-go/gowave-*
-backend-go/remnawave-*
 backend-go/sazan
 backend-go/server-*

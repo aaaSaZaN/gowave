@@ -2,7 +2,7 @@
 
 ## Repository context
 
-Gowave combines a Go replacement for the Remnawave backend with a React frontend. Compatibility with `@remnawave/backend-contract` is a core constraint, including endpoint coverage, response envelopes, status codes, and subscription output. The frontend currently pins contract version `3.4.15`; `internal/server/parity_test.go` also checks that version explicitly.
+Gowave combines a Go backend with a React frontend. Compatibility with `@remnawave/backend-contract` is a core constraint, including endpoint coverage, response envelopes, status codes, and subscription output. The frontend currently pins contract version `3.4.15`; `internal/server/parity_test.go` also checks that version explicitly.
 
 - `backend-go/` is the Go module (`gowave`); run Go commands there, not at the repository root. Its `go.mod` declares Go `1.27.1`.
 - `frontend/` is a separate React/TypeScript/Vite application. CI uses Node 22 and pnpm 11 with `pnpm-lock.yaml`. A `package-lock.json` also exists, but CI installs with pnpm.
@@ -116,7 +116,7 @@ Backend tests live beside their packages. `internal/server` includes route parit
 
 Subscription parity tests compare output against committed upstream fixtures under `internal/subtpl/testdata` and `internal/subscription`. The scripts in `scripts/subscription-diff` explain how to generate matrix, golden, crypto, YAML, and JavaScript vectors. Ordinary Go tests use committed fixtures without requiring upstream Node code.
 
-Fixture regeneration has a separate runtime requirement: `setup-upstream.sh <work-dir>` extracts a pinned upstream commit from `UPSTREAM_REPO` (default `~/remnawave-backend`) and downloads Node **24.21.0**. Its comment notes Node 26 breaks the upstream x25519 helper. Rendering pins time and randomness; preserve `TZ=UTC` and the documented generator invocation when refreshing golden outputs.
+Fixture regeneration has a separate runtime requirement: `setup-upstream.sh <work-dir>` extracts a pinned upstream commit from `UPSTREAM_REPO` (legacy local checkout path) and downloads Node **24.21.0**. Its comment notes Node 26 breaks the upstream x25519 helper. Rendering pins time and randomness; preserve `TZ=UTC` and the documented generator invocation when refreshing golden outputs.
 
 ## Runtime and deployment gotchas
 
@@ -124,5 +124,9 @@ Fixture regeneration has a separate runtime requirement: `setup-upstream.sh <wor
 - Defaults are API port 3000 and metrics port 3001. PostgreSQL is inferred from a PostgreSQL DSN when `DB_DRIVER` is absent; otherwise SQLite is the default.
 - The frontend is **not embedded in the Go binary**. `NewApp` searches, in order, `./frontend/dist`, `./dist`, `../frontend/dist`, `./static`, `/opt/gowave/frontend/dist`, and `/opt/gowave/dist`. The first existing directory wins at construction time.
 - Static serving has an `/assets/` fallback to files in the static root for editor WASM/runtime/schema URLs. Missing file-like requests return 404; extensionless SPA routes fall back to `index.html`. Keep this behavior when modifying asset paths or router fallback.
-- Running the executable as root attempts to create/update `/usr/local/bin/gowave`. `scripts/migrate-node.sh` is a privileged systemd installer for a separate Remnanode binary and can stop a Docker node; it is not a local development setup script.
+- Running the executable as root attempts to create/update `/usr/local/bin/gowave`. `scripts/migrate-node.sh` is a privileged systemd installer for a separate GoWave Node binary and can stop a Docker node; it is not a local development setup script.
 - `.github/workflows/release.yml` triggers on `v*` tags and publishes separate frontend tarballs and Linux amd64/arm64 backend binaries. Version metadata is injected with `-X gowave/internal/system.AppVersion=${VERSION}`. The release first runs `ci.yml` (via `workflow_call`), verifies the embedded version with `--version`, publishes `SHA256SUMS`, and pushes a multi-arch image to `ghcr.io/<owner>/gowave`; tags containing `-` become pre-releases. The frontend Makefile's `tag-release` creates `v<package.json version>`.
+
+## Branding
+
+Use GoWave for project-owned names. Preserve dependency identifiers, license attribution, and the exact legacy protocol/database/migration identifiers recorded in `scripts/branding-allowlist.json`; run `node scripts/check-branding.cjs` after changes.

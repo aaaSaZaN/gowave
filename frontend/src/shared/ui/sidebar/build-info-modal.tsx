@@ -23,7 +23,7 @@ import classes from './build-info-modal.module.css'
 
 interface BuildInfoModalProps {
     isNewVersionAvailable: boolean
-    remnawaveMetadata: GetMetadataCommand.Response['response']
+    gowaveMetadata: GetMetadataCommand.Response['response']
 }
 
 interface IPanelUpdateCheck {
@@ -31,7 +31,7 @@ interface IPanelUpdateCheck {
     updateCommand?: string
 }
 
-export function BuildInfoModal({ remnawaveMetadata, isNewVersionAvailable }: BuildInfoModalProps) {
+export function BuildInfoModal({ gowaveMetadata, isNewVersionAvailable }: BuildInfoModalProps) {
     const [isUpdating, setIsUpdating] = useState(false)
 
     // Docker installs update with `docker compose pull`; the panel only shows the command.
@@ -138,21 +138,19 @@ export function BuildInfoModal({ remnawaveMetadata, isNewVersionAvailable }: Bui
                             size="lg"
                             variant="light"
                         >
-                            {remnawaveMetadata.version}
+                            {gowaveMetadata.version}
                         </Badge>
 
                         <Badge
-                            color={
-                                remnawaveMetadata.git?.backend?.branch === 'dev' ? 'red' : 'teal'
-                            }
+                            color={gowaveMetadata.git?.backend?.branch === 'dev' ? 'red' : 'teal'}
                             leftSection={<TbGitBranch size={16} />}
                             size="lg"
                             variant="light"
                         >
-                            {remnawaveMetadata.git?.backend?.branch || 'main'}
+                            {gowaveMetadata.git?.backend?.branch || 'main'}
                         </Badge>
                     </Group>
-                    <CopyButton timeout={2000} value={JSON.stringify(remnawaveMetadata, null, 2)}>
+                    <CopyButton timeout={2000} value={JSON.stringify(gowaveMetadata, null, 2)}>
                         {({ copied, copy }) => (
                             <Tooltip label="Copy build info">
                                 <ActionIcon

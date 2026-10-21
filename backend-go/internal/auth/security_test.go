@@ -66,7 +66,7 @@ func TestPasswordAuthenticationPolicy(t *testing.T) {
 		{"invalid JSON", `{"enabled":`, true, http.StatusInternalServerError},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			if err := db.Model(&database.RemnawaveSetting{}).Where("id=1").Updates(map[string]interface{}{"password_settings": tc.settings, "password_auth_enabled": tc.enabled}).Error; err != nil {
+			if err := db.Model(&database.PanelSetting{}).Where("id=1").Updates(map[string]interface{}{"password_settings": tc.settings, "password_auth_enabled": tc.enabled}).Error; err != nil {
 				t.Fatal(err)
 			}
 			w := httptest.NewRecorder()
@@ -138,7 +138,7 @@ func TestChallengeExpiryAndConsumption(t *testing.T) {
 
 func TestPasskeyRegistrationAndSignedLogin(t *testing.T) {
 	db := securityDB(t)
-	db.Model(&database.RemnawaveSetting{}).Where("id=1").Update("passkey_settings", `{"enabled":true,"rpId":"panel.example","origin":"https://panel.example"}`)
+	db.Model(&database.PanelSetting{}).Where("id=1").Update("passkey_settings", `{"enabled":true,"rpId":"panel.example","origin":"https://panel.example"}`)
 	h := NewPasskeyHandler(db, "private-secret-at-least-32-characters", 12)
 	adminRequest := func(body []byte) *http.Request {
 		r := httptest.NewRequest("POST", "/", bytes.NewReader(body))

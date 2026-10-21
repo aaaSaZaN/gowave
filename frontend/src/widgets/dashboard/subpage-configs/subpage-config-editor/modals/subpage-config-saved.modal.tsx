@@ -6,7 +6,7 @@ import { TbCheck } from 'react-icons/tb'
 import { CopyableCodeBlock } from '@shared/ui/copyable-code-block'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
-const DOCKER_COMMAND = 'docker restart remnawave-subscription-page'
+const DOCKER_COMMAND = 'docker restart gowave-subscription-page'
 
 export const showSubpageConfigSavedModal = (t: TFunction) =>
     modals.open({

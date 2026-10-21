@@ -122,10 +122,10 @@ export const useMobileMenuSections = (): MenuItem[] => {
                 },
 
                 {
-                    name: t('constants.remnawave-settings'),
-                    href: ROUTES.DASHBOARD.MANAGEMENT.REMNAWAVE_SETTINGS,
+                    name: t('constants.gowave-settings'),
+                    href: ROUTES.DASHBOARD.MANAGEMENT.GOWAVE_SETTINGS,
                     icon: Logo,
-                    id: 'remnawave-settings'
+                    id: 'gowave-settings'
                 }
             ]
         },

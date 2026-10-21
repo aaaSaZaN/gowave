@@ -91,7 +91,7 @@ export const useGetNodeMetadata = createGetQueryHook({
     }
 })
 
-// Gowave extension, not part of the Remnawave contract.
+// Gowave extension, not part of the Gowave contract.
 const GetNodesTrafficSummaryResponseSchema = z.object({
     response: z.object({
         nodes: z.array(

@@ -6,6 +6,7 @@ import { bandwidthStatsQueryKeys } from './bandwidth-stats/bandwidth-stats.query
 import { configProfilesQueryKeys } from './config-profiles/config-profiles.query.hooks'
 import { connectionsQueryKeys } from './connections/connections.query.hooks'
 import { externalSquadsQueryKeys } from './external-squads/external-squads.query.hooks'
+import { gowaveSettingsQueryKeys } from './gowave-settings/gowave-settings.query.hooks'
 import { hostsQueryKeys } from './hosts/hosts.query.hooks'
 import { hwidUserDevicesQueryKeys } from './hwid-user-devices/hwid-user-devices.query.hooks'
 import { infraBillingQueryKeys } from './infra-billing/infra-billing.query.hooks'
@@ -14,7 +15,6 @@ import { nodeIntegrationsQueryKeys } from './node-integrations/node-integrations
 import { nodePluginsQueryKeys } from './node-plugins/node-plugins.query.hooks'
 import { nodesQueryKeys } from './nodes/nodes.query.hooks'
 import { passkeysQueryKeys } from './passkeys/passkeys.query.hooks'
-import { remnawaveSettingsQueryKeys } from './remnawave-settings/remnawave-settings.query.hooks'
 import { snippetsQueryKeys } from './snippets/snippets.query.hooks'
 import { subpageConfigsQueryKeys } from './subpage-configs/subpage-configs.query.hooks'
 import { subscriptionRequestHistoryQueryKeys } from './subscription-request-history/subscription-request-history.query.hooks'
@@ -39,7 +39,7 @@ export const QueryKeys = mergeQueryKeys(
     subscriptionRequestHistoryQueryKeys,
     snippetsQueryKeys,
     externalSquadsQueryKeys,
-    remnawaveSettingsQueryKeys,
+    gowaveSettingsQueryKeys,
     passkeysQueryKeys,
     subpageConfigsQueryKeys,
     bandwidthStatsQueryKeys,

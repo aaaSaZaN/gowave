@@ -6,7 +6,7 @@ import { sToMs } from '@shared/utils/time-utils'
 
 const CACHE_TIME = sToMs(24 * 60 * 60)
 
-export interface IRemnawaveInfo {
+export interface IGowaveInfo {
     latestVersion: string
     starsCount: number
 }
@@ -14,21 +14,21 @@ export interface IRemnawaveInfo {
 interface IState {
     isLoading: boolean
     lastUpdateTimestamp: number
-    remnawaveInfo: IRemnawaveInfo
+    gowaveInfo: IGowaveInfo
 }
 
 interface IActions {
     actions: {
-        getRemnawaveInfo: () => Promise<void>
+        getGowaveInfo: () => Promise<void>
         resetState: () => void
-        setRemnawaveInfo: (info: IRemnawaveInfo) => void
+        setGowaveInfo: (info: IGowaveInfo) => void
     }
 }
 
 const initialState: IState = {
     isLoading: false,
     lastUpdateTimestamp: 0,
-    remnawaveInfo: {
+    gowaveInfo: {
         latestVersion: '',
         starsCount: 0
     }
@@ -40,15 +40,15 @@ export const useUpdatesStore = create<IActions & IState>()(
             (set, get) => ({
                 ...initialState,
                 actions: {
-                    getRemnawaveInfo: async () => {
-                        const { lastUpdateTimestamp, remnawaveInfo } = get()
+                    getGowaveInfo: async () => {
+                        const { lastUpdateTimestamp, gowaveInfo } = get()
                         const now = Date.now()
 
                         if (
                             lastUpdateTimestamp &&
                             now - lastUpdateTimestamp < CACHE_TIME &&
-                            remnawaveInfo.latestVersion &&
-                            remnawaveInfo.starsCount > 0
+                            gowaveInfo.latestVersion &&
+                            gowaveInfo.starsCount > 0
                         ) {
                             return
                         }
@@ -67,7 +67,7 @@ export const useUpdatesStore = create<IActions & IState>()(
                             }>('https://ungh.cc/repos/aaaSaZaN/gowave/releases/latest')
 
                             set({
-                                remnawaveInfo: {
+                                gowaveInfo: {
                                     latestVersion: versionResponse.data.release.tag,
                                     starsCount: starsResponse.data.totalStars
                                 },
@@ -80,8 +80,8 @@ export const useUpdatesStore = create<IActions & IState>()(
                         }
                     },
 
-                    setRemnawaveInfo: (info: IRemnawaveInfo) => {
-                        set({ remnawaveInfo: info, lastUpdateTimestamp: Date.now() })
+                    setGowaveInfo: (info: IGowaveInfo) => {
+                        set({ gowaveInfo: info, lastUpdateTimestamp: Date.now() })
                     },
                     resetState: () => {
                         set({ ...initialState })
@@ -93,17 +93,17 @@ export const useUpdatesStore = create<IActions & IState>()(
         {
             name: 'updatesStore',
             storage: createJSONStorage(() => localStorage),
-            version: 2,
+            version: 3,
             migrate: () => ({ ...initialState }),
             partialize: (state) => ({
                 lastUpdateTimestamp: state.lastUpdateTimestamp,
-                remnawaveInfo: state.remnawaveInfo
+                gowaveInfo: state.gowaveInfo
             })
         }
     )
 )
 
-export const useRemnawaveInfo = () => useUpdatesStore((state) => state.remnawaveInfo)
+export const useGowaveInfo = () => useUpdatesStore((state) => state.gowaveInfo)
 export const useLastUpdateTimestamp = () => useUpdatesStore((state) => state.lastUpdateTimestamp)
-export const useIsLoadingRemnawaveUpdates = () => useUpdatesStore((state) => state.isLoading)
+export const useIsLoadingGowaveUpdates = () => useUpdatesStore((state) => state.isLoading)
 export const useUpdatesStoreActions = () => useUpdatesStore((state) => state.actions)

@@ -170,7 +170,7 @@ func (e *probeEnv) sweepGets(ids probeIDs, expectedStatus map[string]int) ([]pro
 // pinned zod response schemas.
 func TestContractResponseProbe(t *testing.T) {
 	e := newProbeEnv(t)
-	if err := e.db.Model(&database.RemnawaveSetting{}).Where("id = 1").
+	if err := e.db.Model(&database.PanelSetting{}).Where("id = 1").
 		Update("passkey_settings", `{"enabled":true,"rpId":"panel.example.com","origin":"https://panel.example.com"}`).Error; err != nil {
 		t.Fatal(err)
 	}

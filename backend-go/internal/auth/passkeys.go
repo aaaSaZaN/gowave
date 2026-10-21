@@ -37,7 +37,7 @@ func (u passkeyUser) WebAuthnDisplayName() string                { return u.admi
 func (u passkeyUser) WebAuthnCredentials() []webauthn.Credential { return u.credentials }
 
 func (h *PasskeyHandler) configured() (*webauthn.WebAuthn, error) {
-	var setting database.RemnawaveSetting
+	var setting database.PanelSetting
 	if err := h.db.First(&setting, 1).Error; err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (h *PasskeyHandler) configured() (*webauthn.WebAuthn, error) {
 	if !config.Enabled || config.RPID == "" || config.Origin == "" {
 		return nil, errors.New("passkey authentication is disabled or unconfigured")
 	}
-	return webauthn.New(&webauthn.Config{RPID: config.RPID, RPDisplayName: "Remnawave", RPOrigins: []string{config.Origin, "https://" + config.RPID}, AuthenticatorSelection: protocol.AuthenticatorSelection{ResidentKey: protocol.ResidentKeyRequirementPreferred, UserVerification: protocol.VerificationRequired}})
+	return webauthn.New(&webauthn.Config{RPID: config.RPID, RPDisplayName: "GoWave", RPOrigins: []string{config.Origin, "https://" + config.RPID}, AuthenticatorSelection: protocol.AuthenticatorSelection{ResidentKey: protocol.ResidentKeyRequirementPreferred, UserVerification: protocol.VerificationRequired}})
 }
 
 func (h *PasskeyHandler) loadUser(id string) (*passkeyUser, error) {

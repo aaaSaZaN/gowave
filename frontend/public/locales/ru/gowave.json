@@ -20,7 +20,7 @@
     "tools": "Инструменты",
     "srh-inspector": "Инспектор SRH",
     "response-rules": "Правила ответов",
-    "remnawave-settings": "Настройки Remnawave",
+    "gowave-settings": "Настройки GoWave",
     "node-plugins": "Плагины",
     "quick-open": "Быстрый переход",
     "tb-reports": "Отчёты Torrent Blocker",
@@ -300,7 +300,7 @@
       "subscription-qr-code": "QR-код подписки",
       "edit-user-headline": "Изменить пользователя",
       "subscription-url-description-line-1": "Домен и путь берутся из переменной .env:",
-      "subscription-url-description-line-2": "Чтобы изменить, поправьте .env и перезапустите Remnawave командой:",
+      "subscription-url-description-line-2": "Чтобы изменить, поправьте .env и перезапустите GoWave командой:",
       "management": "Управление",
       "danger-zone": "Опасная зона",
       "detailed-info": "Подробности",
@@ -337,9 +337,9 @@
     "single-domain": "Один домен",
     "default-mode-for-one-domain": "Режим по умолчанию для одного домена",
     "multi-domain": "Несколько доменов",
-    "multi-domain-description": "Несколько доменов через запятую. Remnawave будет выбирать один из них случайным образом.",
+    "multi-domain-description": "Несколько доменов через запятую. GoWave будет выбирать один из них случайным образом.",
     "wildcard-domain": "Wildcard-домен",
-    "wildcard-domain-description": "Wildcard-шаблон для поддоменов. Remnawave подставит вместо * случайную строку.",
+    "wildcard-domain-description": "Wildcard-шаблон для поддоменов. GoWave подставит вместо * случайную строку.",
     "override-sni-from-address": "Брать SNI из адреса",
     "override-sni-from-address-description": "Подставляет в SNI значение поля «Адрес». Особенно полезно для конфигураций с несколькими доменами или wildcard-доменом.",
     "shuffled-hosts-hover-card": "Перемешанные хосты встанут в начало списка и будут отсортированы случайным образом.",
@@ -356,7 +356,7 @@
     "keep-sni-blank": "Оставить SNI пустым",
     "keep-sni-blank-description": "Иногда SNI нужно оставить пустым. Эта опция принудительно очищает его. У неё наивысший приоритет, поэтому она сработает, даже если SNI уже задан.",
     "exclude-from-subscription-type": "Исключить из типа подписки",
-    "hidden-host-description": "По умолчанию Remnawave не включает скрытые хосты в подписку. Скрытые хосты работают с Mihomo, Xray-Json Advanced и Raw.",
+    "hidden-host-description": "По умолчанию GoWave не включает скрытые хосты в подписку. Скрытые хосты работают с Mihomo, Xray-Json Advanced и Raw.",
     "server-description-1": "В поддерживаемых клиентах название протокола (например, vless) заменится на указанное здесь описание.",
     "server-description-2": "Эту возможность поддерживают не все клиенты. Подробности — в документации приложений из списка ниже.",
     "supported-clients": "Поддерживаемые клиенты",
@@ -399,7 +399,7 @@
     "notify-percent": "Уведомлять при %",
     "e-g-50": "напр. 50",
     "consumption-m-line-1": "Применяет выбранный множитель к трафику пользователя (1.0 = обычный, 0.5 = половина, 2.0 = двойной).",
-    "consumption-m-line-2": "Проще говоря: если лимит трафика пользователя 1 ГиБ, а множитель 2.0, реально он потратит только 0.5 ГиБ, но Remnawave покажет расход в 1 ГиБ и пользователь уйдёт в LIMITED.",
+    "consumption-m-line-2": "Проще говоря: если лимит трафика пользователя 1 ГиБ, а множитель 2.0, реально он потратит только 0.5 ГиБ, но GoWave покажет расход в 1 ГиБ и пользователь уйдёт в LIMITED.",
     "node-vitals": "Основное",
     "consumption": "Расход",
     "core-configuration": "Конфигурация ядра",
@@ -419,15 +419,15 @@
     "page": {
       "online-stats": "Статистика онлайна",
       "bandwidth": "Трафик",
-      "remnawave-usage": "Нагрузка Remnawave",
+      "gowave-usage": "Нагрузка GoWave",
       "process-details": "Подробности процесса"
     },
     "runtime-info": {
       "title": "Гид по метрикам рантайма",
       "subtitle": "Что на самом деле означает каждое число на карточке процесса",
-      "intro": "Каждая карточка показывает живой срез одного <highlight>процесса Remnawave</highlight>. Этот гид объясняет, что измеряет каждая метрика и когда стоит беспокоиться.",
+      "intro": "Каждая карточка показывает живой срез одного <highlight>процесса GoWave</highlight>. Этот гид объясняет, что измеряет каждая метрика и когда стоит беспокоиться.",
       "instance-types-title": "Типы процессов",
-      "instance-types-description": "Remnawave разделён на несколько специализированных процессов. У каждого своя задача, своя память и свой event loop.",
+      "instance-types-description": "GoWave разделён на несколько специализированных процессов. У каждого своя задача, своя память и свой event loop.",
       "api-description": "Обрабатывает все HTTP-запросы от дашборда и эндпоинтов подписки. Это <highlight>основной процесс, с которым работают пользователи</highlight> — практически каждый запрос панели и подписки обслуживается здесь.",
       "scheduler-description": "<highlight>Диспетчер по расписанию</highlight>. Сам он ничего не выполняет — в назначенный момент просто кладёт задачу в очередь, откуда её заберёт <highlight>Processor</highlight>.",
       "processor-description": "Собственно <highlight>воркер</highlight>. Разбирает очередь и делает тяжёлую работу: <highlight>проверки состояния нод</highlight>, <highlight>агрегацию трафика</highlight> по пользователям и нодам и другие долгие задачи, которые нельзя вешать на API.",
@@ -606,8 +606,8 @@
     "widget": {
       "requirements": "Требования",
       "warning-activity": "IP-адрес показывается, пока <highlight>Xray Core</highlight> считает <highlight>соединение открытым</highlight>. Из-за этого часть показанных адресов может быть уже отключена. Отслеживайте последнюю активность конкретного IP по иконке <highlight>часов</highlight>.",
-      "warning-version": "Remnawave Node версии <highlight>{{version}}</highlight> или выше",
-      "warning-docker": "Добавьте следующее в <highlight>docker-compose.yml</highlight> ноды Remnawave (/opt/remnanode)",
+      "warning-version": "GoWave Node версии <highlight>{{version}}</highlight> или выше",
+      "warning-docker": "Добавьте следующее в <highlight>docker-compose.yml</highlight> ноды GoWave (/opt/gowave-node)",
       "warning-patience": "Сбор данных может занять время, не закрывайте это окно!",
       "warning-n-plus-one": "<highlight>Обратите внимание</highlight>: запрос делает <highlight>N+1</highlight> обращений к gRPC API <highlight>Xray Core</highlight>, потому что метода для пакетной выдачи там нет. <highlight>N</highlight> — число пользователей, которые сейчас онлайн на этой ноде.",
       "fetching": "Собираем активные сессии...",
@@ -795,10 +795,10 @@
       "widget": {
         "please-select-a-provider-and-billing-node": "Выберите провайдера и биллинговую ноду",
         "next-billing-at": "Следующее списание",
-        "next-billing-at-description": "Дата и время следующего списания по этой ноде. Remnawave напомнит о нём заранее.",
+        "next-billing-at-description": "Дата и время следующего списания по этой ноде. GoWave напомнит о нём заранее.",
         "existing": "Существующая",
         "custom": "Своя",
-        "custom-name-description": "Укажите своё название, если нода не управляется Remnawave."
+        "custom-name-description": "Укажите своё название, если нода не управляется GoWave."
       }
     }
   },
@@ -916,7 +916,7 @@
   "disclaimer-overlay": {
     "title": "Отказ от ответственности",
     "subtitle": "Прочитайте это, прежде чем продолжить.",
-    "intro": "Remnawave — это <highlight>открытый, self-hosted</highlight> инструмент для проксирования и управления пользователями. Он предоставляется <warning>«как есть», без каких-либо гарантий</warning>, явных или подразумеваемых.",
+    "intro": "GoWave — это <highlight>открытый, self-hosted</highlight> инструмент для проксирования и управления пользователями. Он предоставляется <warning>«как есть», без каких-либо гарантий</warning>, явных или подразумеваемых.",
     "responsibility": "Вы <highlight>несёте полную ответственность</highlight> за то, как разворачиваете и используете эту программу.",
     "compliance": "Вы обязаны соблюдать <highlight>все законы и нормы</highlight>, действующие в вашей юрисдикции.",
     "liability": "Разработчики и контрибьюторы <warning>не несут ответственности</warning> за неправомерное использование, ущерб или потерю данных.",
@@ -971,7 +971,7 @@
       "disable-node": "Выключить ноду",
       "config-profile-or-inbounds-is-missing": "Не задан профиль или инбаунды",
       "xray-core-version": "Версия Xray Core",
-      "remnawave-node-version": "Версия ноды, @remnawave/node"
+      "gowave-node-version": "Версия ноды, GoWave Node"
     }
   },
   "config-profiles": {
@@ -1096,7 +1096,7 @@
     }
   },
   "create-node-step-1-connection": {
-    "run-the-install-command": "Скопируйте команду кнопкой ниже и выполните её на сервере ноды: она установит ноду GoWave (remnanode-go) с этим секретным ключом и портом.",
+    "run-the-install-command": "Скопируйте команду кнопкой ниже и выполните её на сервере ноды: она установит ноду GoWave (gowave-node) с этим секретным ключом и портом.",
     "learn-more": "Подробнее.",
     "domain-or-ip": "Домен или IP",
     "additional-options": "Дополнительные настройки"
@@ -1104,7 +1104,7 @@
   "create-node-step-3-status": {
     "establishing-mtls-connection": "Устанавливаем mTLS-соединение...",
     "xray-core-is-up-and-running": "Xray Core запущен и работает!",
-    "remnawave-will-try-to-reconnect-shortly": "Remnawave скоро попробует переподключиться...",
+    "gowave-will-try-to-reconnect-shortly": "GoWave скоро попробует переподключиться...",
     "no-errors-so-far": "Ошибок пока нет"
   },
   "external-squad-card": {
@@ -1230,7 +1230,7 @@
   },
   "branding-settings-card": {
     "widget": {
-      "customize-your-remnawave-instance": "Настройка внешнего вида Remnawave",
+      "customize-your-gowave-instance": "Настройка внешнего вида GoWave",
       "branding-settings": "Настройки брендинга",
       "the-title-that-will-be-displayed-on-login-page": "Заголовок, который будет показан на странице входа",
       "brand-name": "Название бренда",
@@ -1376,7 +1376,7 @@
       "open-svg-library": "Открыть библиотеку SVG",
       "installation-guides-design": "Оформление инструкций по установке"
     },
-    "subpage-config-saved-line-1": "Чтобы изменения применились, перезапустите docker-контейнер Remnawave Subscription-page.",
+    "subpage-config-saved-line-1": "Чтобы изменения применились, перезапустите docker-контейнер GoWave Subscription-page.",
     "subpage-config-saved-line-2": "Например, можно выполнить в терминале такую команду:"
   },
   "app-editor-drawer-content": {
@@ -1450,7 +1450,7 @@
     "tab": {
       "widget": {
         "subscription-page-config": "Конфигурация страницы подписки",
-        "subscription-page-config-description": "Для этого внешнего сквада можно переопределить конфигурацию страницы подписки (Remnawave Subscription Page).",
+        "subscription-page-config-description": "Для этого внешнего сквада можно переопределить конфигурацию страницы подписки (GoWave Subscription Page).",
         "subpage-config": "Конфигурация страницы",
         "select-config": "Выберите конфигурацию..."
       }
@@ -1832,7 +1832,7 @@
     "failed-description": "Ноде не удалось выполнить GeoCheck.",
     "view-image": "Отчёт",
     "no-image": "В отчёте нет изображения, откройте JSON",
-    "requires-node-version": "Требуется Remnawave Node {{version}} или новее"
+    "requires-node-version": "Требуется GoWave Node {{version}} или новее"
   },
   "quick-open": {
     "page": {

@@ -1,5 +1,5 @@
 // Package httpx writes responses in the envelope and error shapes used by the
-// upstream Remnawave backend.
+// upstream upstream backend.
 package httpx
 
 import (
@@ -59,7 +59,7 @@ func Decode(r *http.Request, limit int64, target interface{}) error {
 // headers first, then the socket address. Only meaningful behind a proxy that
 // overwrites these headers.
 //
-// X-Remnawave-Real-IP comes first: the subscription page sends the client's
+// X-upstream-Real-IP comes first: the subscription page sends the client's
 // address there and, for an http:// panel URL, sets X-Forwarded-For to
 // 127.0.0.1 on every request.
 func ClientIP(r *http.Request) string {

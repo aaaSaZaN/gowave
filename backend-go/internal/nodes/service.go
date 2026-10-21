@@ -473,7 +473,7 @@ func (s *Service) StartNode(node *database.Node, force bool) (bool, error) {
 	ok, err := client.StartXray(node, payload)
 	if err != nil {
 		log.Printf("[NODES] start %s failed: %v", node.Name, err)
-		// Remnanode (Go) validates a config before stopping the running Xray,
+		// GoWave Node validates a config before stopping the running Xray,
 		// so a rejected config can leave the node serving the previous one.
 		if health, healthErr := client.CheckHealth(node); healthErr == nil && health.IsAlive {
 			reason := summarizeXrayError(err.Error())

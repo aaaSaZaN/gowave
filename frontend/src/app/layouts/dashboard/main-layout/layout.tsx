@@ -4,7 +4,7 @@ import { useIsMobile } from '@shared/hooks'
 import { HeaderControls } from '@shared/ui/header-buttons'
 import { QuickLauncher } from '@shared/ui/quick-launcher'
 
-import { useIsLoadingRemnawaveUpdates, useRemnawaveInfo } from '@entities/dashboard/updates-store'
+import { useIsLoadingGowaveUpdates, useGowaveInfo } from '@entities/dashboard/updates-store'
 import { useExperimentalFeature } from '@entities/dashboard/view-preferences-store'
 
 import { DASHBOARD_LINKS } from './layout-shared'
@@ -24,18 +24,17 @@ export function MainLayout() {
         getInitialValueInEffect: false
     })
 
-    const remnawaveInfo = useRemnawaveInfo()
-    const isLoadingUpdates = useIsLoadingRemnawaveUpdates()
+    const gowaveInfo = useGowaveInfo()
+    const isLoadingUpdates = useIsLoadingGowaveUpdates()
     const launcherRoutes = useQuickLauncherRoutes()
 
     const headerControls = (
         <HeaderControls
             {...DASHBOARD_LINKS}
             isGithubLoading={isLoadingUpdates}
-            stars={remnawaveInfo.starsCount || undefined}
+            stars={gowaveInfo.starsCount || undefined}
             withGithub={!isMobile}
             withRecap={!isMobile}
-            withSupport={!isMobile}
         />
     )
 
@@ -45,7 +44,7 @@ export function MainLayout() {
                 headerControls={headerControls}
                 isSocialButtons={isMobile}
                 isLoadingUpdates={isLoadingUpdates}
-                remnawaveInfo={remnawaveInfo}
+                gowaveInfo={gowaveInfo}
             />
         )
     }

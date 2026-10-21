@@ -79,10 +79,10 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 	var adminCount int64
 	h.db.Model(&database.Admin{}).Count(&adminCount)
 
-	var setting database.RemnawaveSetting
+	var setting database.PanelSetting
 	if err := h.db.First(&setting, 1).Error; err != nil {
-		setting = database.RemnawaveSetting{
-			Title:               "Remnawave",
+		setting = database.PanelSetting{
+			Title:               "GoWave",
 			IsLoginAllowed:      true,
 			IsRegisterAllowed:   false,
 			PasswordAuthEnabled: false,
@@ -144,7 +144,7 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	title := setting.Title
 	if title == "" {
-		title = "Remnawave"
+		title = "GoWave"
 	}
 	resp.Response.Branding.Title = &title
 	if setting.LogoURL != "" {
@@ -270,7 +270,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, r, http.StatusForbidden, "A068", "Forbidden")
 	}
 
-	var setting database.RemnawaveSetting
+	var setting database.PanelSetting
 	if err := h.db.First(&setting, 1).Error; err != nil {
 		httpx.Error(w, r, http.StatusInternalServerError, "A067", "Get auth status error")
 		return

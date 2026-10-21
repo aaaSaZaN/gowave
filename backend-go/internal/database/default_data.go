@@ -63,16 +63,16 @@ dns:
 proxies:
 
 proxy-groups:
-  - name: '→ Remnawave'
+  - name: '→ GoWave'
     type: 'select'
     proxies:
 
 rules:
-  - MATCH,→ Remnawave
+  - MATCH,→ GoWave
 `
 
 const DefaultTemplateStash = `proxy-groups:
-  - name: → Remnawave
+  - name: → GoWave
     type: select
     proxies:
 
@@ -106,7 +106,7 @@ rules:
   - PROCESS-NAME,uTorrent,DIRECT
   - PROCESS-NAME,WebTorrent,DIRECT
   - GEOIP,LAN,DIRECT
-  - MATCH,→ Remnawave
+  - MATCH,→ GoWave
 script:
   shortcuts:
     quic: network == 'udp' and dst_port == 443
@@ -175,15 +175,15 @@ dns:
 proxies:
 
 proxy-groups:
-  - name: '→ Remnawave'
+  - name: '→ GoWave'
     type: 'select'
     proxies:
 
 rules:
-  - MATCH,→ Remnawave
+  - MATCH,→ GoWave
 `
 
-const DefaultTemplateSingbox = `{"dns":{"rules":[{"server":"remote","query_type":["A","AAAA"]}],"servers":[{"tag":"cf-dns","type":"tls","server":"1.1.1.1"},{"tag":"local","type":"udp","server":"1.1.1.1"},{"tag":"remote","type":"fakeip","inet4_range":"198.18.0.0/15","inet6_range":"fc00::/18"}],"independent_cache":true},"log":{"level":"debug","disabled":true,"timestamp":true},"route":{"rules":[{"action":"sniff"},{"action":"hijack-dns","protocol":"dns"},{"outbound":"direct","ip_is_private":true}],"auto_detect_interface":true,"default_domain_resolver":"local"},"inbounds":[{"mtu":9000,"tag":"tun-in","type":"tun","stack":"mixed","address":["172.19.0.1/30","fdfe:dcba:9876::1/126"],"platform":{"http_proxy":{"server":"127.0.0.1","enabled":true,"server_port":2412}},"auto_route":true,"strict_route":true,"interface_name":"tun125","endpoint_independent_nat":true},{"tag":"mixed-in","type":"mixed","users":[],"listen":"127.0.0.1","listen_port":2412,"set_system_proxy":false}],"outbounds":[{"tag":"→ Remnawave","type":"selector","outbounds":null,"interrupt_exist_connections":true},{"tag":"direct","type":"direct"}],"experimental":{"clash_api":{"external_ui":"yacd","default_mode":"rule","external_controller":"127.0.0.1:9090","external_ui_download_url":"https://github.com/MetaCubeX/Yacd-meta/archive/gh-pages.zip","external_ui_download_detour":"direct"},"cache_file":{"path":"remnawave.db","enabled":true,"cache_id":"remnawave","store_fakeip":true}}}`
+const DefaultTemplateSingbox = `{"dns":{"rules":[{"server":"remote","query_type":["A","AAAA"]}],"servers":[{"tag":"cf-dns","type":"tls","server":"1.1.1.1"},{"tag":"local","type":"udp","server":"1.1.1.1"},{"tag":"remote","type":"fakeip","inet4_range":"198.18.0.0/15","inet6_range":"fc00::/18"}],"independent_cache":true},"log":{"level":"debug","disabled":true,"timestamp":true},"route":{"rules":[{"action":"sniff"},{"action":"hijack-dns","protocol":"dns"},{"outbound":"direct","ip_is_private":true}],"auto_detect_interface":true,"default_domain_resolver":"local"},"inbounds":[{"mtu":9000,"tag":"tun-in","type":"tun","stack":"mixed","address":["172.19.0.1/30","fdfe:dcba:9876::1/126"],"platform":{"http_proxy":{"server":"127.0.0.1","enabled":true,"server_port":2412}},"auto_route":true,"strict_route":true,"interface_name":"tun125","endpoint_independent_nat":true},{"tag":"mixed-in","type":"mixed","users":[],"listen":"127.0.0.1","listen_port":2412,"set_system_proxy":false}],"outbounds":[{"tag":"→ GoWave","type":"selector","outbounds":null,"interrupt_exist_connections":true},{"tag":"direct","type":"direct"}],"experimental":{"clash_api":{"external_ui":"yacd","default_mode":"rule","external_controller":"127.0.0.1:9090","external_ui_download_url":"https://github.com/MetaCubeX/Yacd-meta/archive/gh-pages.zip","external_ui_download_detour":"direct"},"cache_file":{"path":"remnawave.db","enabled":true,"cache_id":"remnawave","store_fakeip":true}}}`
 
 const DefaultTemplateXrayJson = `{"dns":{"servers":["1.1.1.1","1.0.0.1"],"queryStrategy":"UseIP"},"routing":{"rules":[{"type":"field","protocol":["bittorrent"],"outboundTag":"direct"}],"domainMatcher":"hybrid","domainStrategy":"IPIfNonMatch"},"inbounds":[{"tag":"socks","port":10808,"listen":"127.0.0.1","protocol":"socks","settings":{"udp":true,"auth":"noauth"},"sniffing":{"enabled":true,"routeOnly":false,"destOverride":["http","tls","quic"]}},{"tag":"http","port":10809,"listen":"127.0.0.1","protocol":"http","settings":{"allowTransparent":false},"sniffing":{"enabled":true,"routeOnly":false,"destOverride":["http","tls","quic"]}}],"outbounds":[{"tag":"direct","protocol":"freedom"},{"tag":"block","protocol":"blackhole"}]}`
 
@@ -192,11 +192,11 @@ const DefaultSubpageConfig = `{"version":"1","locales":["en","ru","zh","fa","fr"
 const DefaultCustomRemarks = `{"expiredUsers":["Subscription Expired"],"limitedUsers":["Traffic Limit Reached"],"disabledUsers":["Subscription Disabled"],"emptyHosts":["No Hosts Available"],"HWIDMaxDevicesExceeded":["Device Limit Exceeded"],"HWIDNotSupported":["HWID Not Supported"]}`
 
 func SeedDefaults(db *gorm.DB) {
-	var remnaCount int64
-	db.Model(&RemnawaveSetting{}).Count(&remnaCount)
-	if remnaCount == 0 {
-		db.Create(&RemnawaveSetting{
-			Title:               "Remnawave",
+	var settingsCount int64
+	db.Model(&PanelSetting{}).Count(&settingsCount)
+	if settingsCount == 0 {
+		db.Create(&PanelSetting{
+			Title:               "GoWave",
 			IsLoginAllowed:      true,
 			IsRegisterAllowed:   false,
 			PasswordAuthEnabled: true,

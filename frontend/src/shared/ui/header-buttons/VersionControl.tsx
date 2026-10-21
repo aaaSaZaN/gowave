@@ -4,9 +4,9 @@ import clsx from 'clsx'
 import { useMemo } from 'react'
 import semver from 'semver'
 
-import { useGetRemnawaveMetadata } from '@shared/api/hooks'
+import { useGetGowaveMetadata } from '@shared/api/hooks'
 
-import { useRemnawaveInfo } from '@entities/dashboard/updates-store'
+import { useGowaveInfo } from '@entities/dashboard/updates-store'
 
 import { Logo } from '../logo'
 import { BaseOverlayHeader } from '../overlays/base-overlay-header'
@@ -16,14 +16,14 @@ import { SkeletonHeaderControl } from './SkeletonHeaderControl'
 import classes from './VersionControl.module.css'
 
 export function VersionControl() {
-    const remnawaveInfo = useRemnawaveInfo()
-    const { data: remnawaveMetadata, isLoading } = useGetRemnawaveMetadata()
+    const gowaveInfo = useGowaveInfo()
+    const { data: gowaveMetadata, isLoading } = useGetGowaveMetadata()
 
     const [isNewVersionAvailable, isDev] = useMemo(() => {
-        if (!remnawaveMetadata) return [false, false]
+        if (!gowaveMetadata) return [false, false]
 
-        const currentVersion = semver.clean(remnawaveMetadata.version) || remnawaveMetadata.version
-        const latest = semver.clean(remnawaveInfo.latestVersion) || remnawaveInfo.latestVersion
+        const currentVersion = semver.clean(gowaveMetadata.version) || gowaveMetadata.version
+        const latest = semver.clean(gowaveInfo.latestVersion) || gowaveInfo.latestVersion
 
         const hasUpdate = Boolean(
             latest &&
@@ -33,10 +33,10 @@ export function VersionControl() {
             semver.gt(latest, currentVersion)
         )
 
-        return [hasUpdate, remnawaveMetadata.git?.backend?.branch !== 'main']
-    }, [remnawaveInfo.latestVersion, remnawaveMetadata])
+        return [hasUpdate, gowaveMetadata.git?.backend?.branch !== 'main']
+    }, [gowaveInfo.latestVersion, gowaveMetadata])
 
-    if (isLoading || !remnawaveMetadata) {
+    if (isLoading || !gowaveMetadata) {
         return <SkeletonHeaderControl width={85} />
     }
 
@@ -56,7 +56,7 @@ export function VersionControl() {
             children: (
                 <BuildInfoModal
                     isNewVersionAvailable={isNewVersionAvailable}
-                    remnawaveMetadata={remnawaveMetadata}
+                    gowaveMetadata={gowaveMetadata}
                 />
             )
         })
@@ -74,7 +74,7 @@ export function VersionControl() {
             <Group gap={8} ml={10} mr={10} wrap="nowrap">
                 <Logo size={20} />
                 <Text ff="text" fw={600} size="sm">
-                    {remnawaveMetadata.version}
+                    {gowaveMetadata.version}
                 </Text>
             </Group>
         </HeaderControl>

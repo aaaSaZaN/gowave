@@ -44,7 +44,7 @@ export const HomePage = (props: IProps) => {
     const runtimeRef = useRef<HTMLDivElement>(null)
     const [copying, setCopying] = useState(false)
 
-    const { systemInfo, bandwidthStats, remnawaveHealth } = props
+    const { systemInfo, bandwidthStats, gowaveHealth } = props
 
     const copyRuntimeScreenshot = async () => {
         if (!runtimeRef.current || copying) return
@@ -56,7 +56,7 @@ export const HomePage = (props: IProps) => {
                 })
                 if (!runtimeRef.current) throw new Error('runtimeRef')
                 return runtimeRef.current
-            }, 'remnawave-runtime.png')
+            }, 'gowave-runtime.png')
         } catch (error) {
             notifications.show({
                 color: 'red',
@@ -68,7 +68,7 @@ export const HomePage = (props: IProps) => {
         }
     }
 
-    if (!systemInfo || !bandwidthStats || !remnawaveHealth) {
+    if (!systemInfo || !bandwidthStats || !gowaveHealth) {
         return <LoadingScreen />
     }
 
@@ -76,8 +76,8 @@ export const HomePage = (props: IProps) => {
     const simpleMetrics = getSimpleMetrics(systemInfo, t)
     const usersMetrics = getUsersMetrics(systemInfo.users, t)
     const onlineMetrics = getOnlineMetrics(systemInfo.onlineStats, t)
-    const runtimeSummaryMetrics = getRuntimeSummaryMetrics(remnawaveHealth.runtimeMetrics, t)
-    const runtimeProcessMetrics = getRuntimeProcessMetrics(remnawaveHealth.runtimeMetrics)
+    const runtimeSummaryMetrics = getRuntimeSummaryMetrics(gowaveHealth.runtimeMetrics, t)
+    const runtimeProcessMetrics = getRuntimeProcessMetrics(gowaveHealth.runtimeMetrics)
 
     return (
         <Page title={t('constants.home')}>
@@ -85,7 +85,7 @@ export const HomePage = (props: IProps) => {
                 {runtimeSummaryMetrics.length > 0 && (
                     <div className={classes.section}>
                         <Title className={classes.title} m="xs" ml={0} order={4}>
-                            {t('home.page.remnawave-usage')}
+                            {t('home.page.gowave-usage')}
                         </Title>
 
                         <SimpleGrid cols={{ base: 1, sm: 2, xl: 4 }} spacing="xs">
@@ -186,7 +186,7 @@ export const HomePage = (props: IProps) => {
                     </SimpleGrid>
                 </div>
 
-                {remnawaveHealth.runtimeMetrics && remnawaveHealth.runtimeMetrics.length > 0 && (
+                {gowaveHealth.runtimeMetrics && gowaveHealth.runtimeMetrics.length > 0 && (
                     <div className={classes.section}>
                         <Group align="center" gap="xs" m="xs" ml={0}>
                             <Title className={classes.title} order={4}>
@@ -232,7 +232,7 @@ export const HomePage = (props: IProps) => {
                             </ActionIcon>
                         </Group>
                         <SimpleGrid cols={{ base: 1, sm: 1, xl: 2 }} ref={runtimeRef} spacing="xs">
-                            {remnawaveHealth.runtimeMetrics.map((metric, index) => (
+                            {gowaveHealth.runtimeMetrics.map((metric, index) => (
                                 <AnimatedCard index={index} key={metric.pid}>
                                     <RuntimeDetailCard metric={metric} />
                                 </AnimatedCard>

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Prepares the reference upstream backend used by scripts/subscription-diff:
 #   scripts/subscription-diff/setup-upstream.sh <work-dir>
-# It extracts remnawave/backend at the pinned commit from a local clone
-# (UPSTREAM_REPO, default ~/remnawave-backend), installs its locked
+# It extracts the upstream backend at the pinned commit from a local clone
+# (UPSTREAM_REPO overrides the legacy default checkout location), installs its locked
 # dependencies, generates the Prisma client and downloads Node 24.21 (the
 # version upstream's Dockerfile uses; Node 26 breaks its x25519 helper).
 set -euo pipefail

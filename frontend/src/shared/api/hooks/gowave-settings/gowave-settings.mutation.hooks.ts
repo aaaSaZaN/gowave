@@ -3,7 +3,7 @@ import { UpdateRemnawaveSettingsCommand } from '@remnawave/backend-contract'
 
 import { createMutationHook } from '../../tsq-helpers'
 
-export const useUpdateRemnawaveSettings = createMutationHook({
+export const useUpdateGowaveSettings = createMutationHook({
     endpoint: UpdateRemnawaveSettingsCommand.TSQ_url,
     bodySchema: UpdateRemnawaveSettingsCommand.RequestBodySchema,
     responseSchema: UpdateRemnawaveSettingsCommand.ResponseSchema,
@@ -12,7 +12,7 @@ export const useUpdateRemnawaveSettings = createMutationHook({
         onSuccess: () => {
             notifications.show({
                 title: 'Success',
-                message: 'Remnawave settings updated successfully',
+                message: 'Gowave settings updated successfully',
                 color: 'teal'
             })
         }

@@ -97,8 +97,8 @@ export const LoginPage = () => {
         }
 
         return [
-            { text: 'Remna', color: 'cyan' },
-            { text: 'wave', color: 'white' }
+            { text: 'Go', color: 'cyan' },
+            { text: 'Wave', color: 'white' }
         ]
     }, [authStatus])
 

@@ -52,7 +52,7 @@ func TestMigrationsFreshAndExisting(t *testing.T) {
 			if err := AutoMigrate(db); err != nil {
 				t.Fatal("migration replay:", err)
 			}
-			var settings RemnawaveSetting
+			var settings PanelSetting
 			if err := db.First(&settings).Error; err != nil {
 				t.Fatal(err)
 			}
@@ -64,8 +64,8 @@ func TestMigrationsFreshAndExisting(t *testing.T) {
 			}
 			var count int64
 			db.Table("gowave_migrations").Count(&count)
-			if count != 4 {
-				t.Fatalf("expected 4 migrations, got %d", count)
+			if count != 5 {
+				t.Fatalf("expected 5 migrations, got %d", count)
 			}
 		})
 	}
@@ -83,5 +83,68 @@ func TestFreshSchema(t *testing.T) {
 	}
 	if len(SchemaTableOrder()) != len(schemaModels()) {
 		t.Fatal("restore table list differs from model list")
+	}
+}
+
+func TestBrandingMigrationPreservesCustomTitles(t *testing.T) {
+	for _, dialect := range []string{"sqlite", "postgres"} {
+		t.Run(dialect, func(t *testing.T) {
+			dsn := ":memory:"
+			if dialect == "postgres" {
+				dsn = os.Getenv("GOWAVE_TEST_POSTGRES")
+				if dsn == "" {
+					t.Skip("GOWAVE_TEST_POSTGRES not set")
+				}
+			}
+			db, err := Init(dialect, dsn)
+			if err != nil {
+				t.Fatal(err)
+			}
+			sql, _ := db.DB()
+			defer sql.Close()
+			if dialect == "postgres" {
+				name := "branding_" + uuid.NewString()[:8]
+				if err := db.Exec("CREATE SCHEMA " + name).Error; err != nil {
+					t.Fatal(err)
+				}
+				defer db.Exec("DROP SCHEMA " + name + " CASCADE")
+				sql.SetMaxOpenConns(1)
+				if err := db.Exec("SET search_path TO " + name).Error; err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := AutoMigrate(db); err != nil {
+				t.Fatal(err)
+			}
+			var fresh PanelSetting
+			if err := db.First(&fresh).Error; err != nil {
+				t.Fatal(err)
+			}
+			if fresh.Title != "GoWave" {
+				t.Fatalf("fresh title %q", fresh.Title)
+			}
+			for _, title := range []string{"Remnawave", "Custom Company", "{cyan}My{white}Panel"} {
+				if err := db.Model(&PanelSetting{}).Where("id = ?", fresh.ID).Update("title", title).Error; err != nil {
+					t.Fatal(err)
+				}
+				if err := db.Exec("DELETE FROM gowave_migrations WHERE name = ?", "005_gowave_branding.sql").Error; err != nil {
+					t.Fatal(err)
+				}
+				if err := AutoMigrate(db); err != nil {
+					t.Fatal(err)
+				}
+				var saved PanelSetting
+				if err := db.First(&saved).Error; err != nil {
+					t.Fatal(err)
+				}
+				want := title
+				if title == "Remnawave" {
+					want = "GoWave"
+				}
+				if saved.Title != want {
+					t.Fatalf("%q became %q; want %q", title, saved.Title, want)
+				}
+			}
+		})
 	}
 }

@@ -57,7 +57,7 @@ func oauthRandom() string {
 	return base64.RawURLEncoding.EncodeToString(data)
 }
 func (h *OAuthHandler) configuration(provider string) (providerConfig, *oauth2.Config, string, error) {
-	var settings database.RemnawaveSetting
+	var settings database.PanelSetting
 	if err := h.db.First(&settings).Error; err != nil {
 		return providerConfig{}, nil, "", err
 	}

@@ -20,7 +20,7 @@
     "tools": "Tools",
     "srh-inspector": "SRH Inspector",
     "response-rules": "Response Rules",
-    "remnawave-settings": "Remnawave Settings",
+    "gowave-settings": "GoWave Settings",
     "node-plugins": "Plugins",
     "quick-open": "Quick open",
     "tb-reports": "Torrent Blocker Reports",
@@ -300,7 +300,7 @@
       "subscription-qr-code": "Subscription QR code",
       "edit-user-headline": "Edit user",
       "subscription-url-description-line-1": "Domain and path resolved from .env variable:",
-      "subscription-url-description-line-2": "If you want to change it, please change it in the .env file and restart Remnawave using command:",
+      "subscription-url-description-line-2": "If you want to change it, please change it in the .env file and restart GoWave using command:",
       "management": "Management",
       "danger-zone": "Danger zone",
       "detailed-info": "Detailed info",
@@ -337,9 +337,9 @@
     "single-domain": "Single domain",
     "default-mode-for-one-domain": "Default mode for one domain",
     "multi-domain": "Multi domain",
-    "multi-domain-description": "Multiple domains separated by commas. Remnawave will randomly choose one of the domains.",
+    "multi-domain-description": "Multiple domains separated by commas. GoWave will randomly choose one of the domains.",
     "wildcard-domain": "Wildcard domain",
-    "wildcard-domain-description": "Wildcard pattern for subdomains. Remnawave will replace * with the randomly generated string.",
+    "wildcard-domain-description": "Wildcard pattern for subdomains. GoWave will replace * with the randomly generated string.",
     "override-sni-from-address": "Override SNI from address",
     "override-sni-from-address-description": "This option replaces the SNI value with the specified Address field value. This is particularly useful for multi-domain or wildcard domain configurations.",
     "shuffled-hosts-hover-card": "Shuffled hosts will be placed at the top of the list and sorted randomly.",
@@ -356,7 +356,7 @@
     "keep-sni-blank": "Keep SNI blank",
     "keep-sni-blank-description": "In some cases, SNI must be left blank. Use this option to force an empty SNI. Note that this option has the highest priority, so it will be applied even if SNI is already set.",
     "exclude-from-subscription-type": "Exclude from subscription type",
-    "hidden-host-description": "By default, Remnawave will not include hidden hosts in the subscription. Hidden hosts can be used with Mihomo, Xray-Json Advanced, and Raw.",
+    "hidden-host-description": "By default, GoWave will not include hidden hosts in the subscription. Hidden hosts can be used with Mihomo, Xray-Json Advanced, and Raw.",
     "server-description-1": "In supported clients, the protocol name (e.g. vless) will be replaced with the description specified here.",
     "server-description-2": "Not all client applications support this feature. For more details, refer to the documentation of the apps listed below.",
     "supported-clients": "Supported clients",
@@ -399,7 +399,7 @@
     "notify-percent": "Notification %",
     "e-g-50": "e.g. 50",
     "consumption-m-line-1": "Applies the selected multiplier to the user's traffic (1.0 = normal, 0.5 = half, 2.0 = double).",
-    "consumption-m-line-2": "In simple terms, this means that if a user's traffic limit is 1 GiB and the consumption multiplier is 2.0, the user will be able to use only 0.5 GiB of traffic (real usage), but Remnawave will show usage as 1 GiB and the user will be LIMITED.",
+    "consumption-m-line-2": "In simple terms, this means that if a user's traffic limit is 1 GiB and the consumption multiplier is 2.0, the user will be able to use only 0.5 GiB of traffic (real usage), but GoWave will show usage as 1 GiB and the user will be LIMITED.",
     "node-vitals": "Vitals",
     "consumption": "Consumption",
     "core-configuration": "Core configuration",
@@ -419,15 +419,15 @@
     "page": {
       "online-stats": "Online stats",
       "bandwidth": "Bandwidth",
-      "remnawave-usage": "Remnawave usage",
+      "gowave-usage": "GoWave usage",
       "process-details": "Process details"
     },
     "runtime-info": {
       "title": "Runtime metrics guide",
       "subtitle": "What every number on a runtime card actually means",
-      "intro": "Each card shows a live snapshot of a single <highlight>Remnawave process</highlight>. Use this guide to understand what each metric measures and when to worry about it.",
+      "intro": "Each card shows a live snapshot of a single <highlight>GoWave process</highlight>. Use this guide to understand what each metric measures and when to worry about it.",
       "instance-types-title": "Process types",
-      "instance-types-description": "Remnawave is split into several specialized processes. Each one has its own job, its own memory, and its own event loop.",
+      "instance-types-description": "GoWave is split into several specialized processes. Each one has its own job, its own memory, and its own event loop.",
       "api-description": "Handles every HTTP request from the dashboard and subscription endpoints. This is the <highlight>main user-facing process</highlight> — virtually every panel and subscription request is served here.",
       "scheduler-description": "A <highlight>cron-driven dispatcher</highlight>. It does not run any work itself — at the scheduled moment it simply pushes a job into the queue for the <highlight>Processor</highlight> to pick up.",
       "processor-description": "The actual <highlight>worker</highlight>. It consumes queued jobs and runs the heavy lifting: <highlight>node health checks</highlight>, <highlight>traffic aggregation</highlight> per user and per node, and other long-running tasks that must not block the API.",
@@ -606,8 +606,8 @@
     "widget": {
       "requirements": "Requirements",
       "warning-activity": "An IP address will be shown when <highlight>Xray Core</highlight> considers the <highlight>connection still open</highlight>. As a result, some of the IP addresses shown may no longer be connected. Use the <highlight>clock</highlight> icon to track the last activity of a given IP.",
-      "warning-version": "Remnawave Node version <highlight>{{version}}</highlight> or higher",
-      "warning-docker": "Add the following to <highlight>docker-compose.yml</highlight> of Remnawave Node (/opt/remnanode)",
+      "warning-version": "GoWave Node version <highlight>{{version}}</highlight> or higher",
+      "warning-docker": "Add the following to <highlight>docker-compose.yml</highlight> of GoWave Node (/opt/gowave-node)",
       "warning-patience": "Fetching data may take some time, do not close this window!",
       "warning-n-plus-one": "<highlight>Please note</highlight>: this request performs <highlight>N+1</highlight> calls to the gRPC API of <highlight>Xray Core</highlight> due to the lack of bulk data retrieval methods. <highlight>N</highlight> is the number of users currently online on the given node.",
       "fetching": "Fetching active sessions...",
@@ -795,10 +795,10 @@
       "widget": {
         "please-select-a-provider-and-billing-node": "Please select a provider and billing node",
         "next-billing-at": "Next billing at",
-        "next-billing-at-description": "The date and time for the next billing of this node. Remnawave will notify you about upcoming billing.",
+        "next-billing-at-description": "The date and time for the next billing of this node. GoWave will notify you about upcoming billing.",
         "existing": "Existing",
         "custom": "Custom",
-        "custom-name-description": "Use a custom name when the node is not managed by Remnawave."
+        "custom-name-description": "Use a custom name when the node is not managed by GoWave."
       }
     }
   },
@@ -916,7 +916,7 @@
   "disclaimer-overlay": {
     "title": "Disclaimer",
     "subtitle": "Please read this notice before you continue.",
-    "intro": "Remnawave is an <highlight>open-source, self-hosted</highlight> proxy and user-management tool. It is provided <warning>\"as is\", without any warranty</warning> of any kind, express or implied.",
+    "intro": "GoWave is an <highlight>open-source, self-hosted</highlight> proxy and user-management tool. It is provided <warning>\"as is\", without any warranty</warning> of any kind, express or implied.",
     "responsibility": "You are <highlight>solely responsible</highlight> for how you deploy and use this software.",
     "compliance": "You must comply with <highlight>all laws and regulations</highlight> applicable in your jurisdiction.",
     "liability": "The developers and contributors accept <warning>no liability</warning> for any misuse, damage, or data loss.",
@@ -971,7 +971,7 @@
       "disable-node": "Disable node",
       "config-profile-or-inbounds-is-missing": "Config profile or inbounds is missing",
       "xray-core-version": "Xray Core version",
-      "remnawave-node-version": "Node version, @remnawave/node"
+      "gowave-node-version": "Node version, GoWave Node"
     }
   },
   "config-profiles": {
@@ -1096,7 +1096,7 @@
     }
   },
   "create-node-step-1-connection": {
-    "run-the-install-command": "Copy the command with the button below and run it on the node server: it installs the GoWave node (remnanode-go) with this secret key and port.",
+    "run-the-install-command": "Copy the command with the button below and run it on the node server: it installs the GoWave node (gowave-node) with this secret key and port.",
     "learn-more": "Learn more.",
     "domain-or-ip": "Domain or IP",
     "additional-options": "Additional options"
@@ -1104,7 +1104,7 @@
   "create-node-step-3-status": {
     "establishing-mtls-connection": "Establishing mTLS connection...",
     "xray-core-is-up-and-running": "Xray Core is up and running!",
-    "remnawave-will-try-to-reconnect-shortly": "Remnawave will try to reconnect shortly...",
+    "gowave-will-try-to-reconnect-shortly": "GoWave will try to reconnect shortly...",
     "no-errors-so-far": "No errors so far"
   },
   "external-squad-card": {
@@ -1230,7 +1230,7 @@
   },
   "branding-settings-card": {
     "widget": {
-      "customize-your-remnawave-instance": "Customize the look of your Remnawave instance",
+      "customize-your-gowave-instance": "Customize the look of your GoWave instance",
       "branding-settings": "Branding settings",
       "the-title-that-will-be-displayed-on-login-page": "The title that will be displayed on login page",
       "brand-name": "Brand name",
@@ -1376,7 +1376,7 @@
       "open-svg-library": "Open SVG library",
       "installation-guides-design": "Installation guides design"
     },
-    "subpage-config-saved-line-1": "To apply the changes, please restart the Remnawave Subscription-page Docker container.",
+    "subpage-config-saved-line-1": "To apply the changes, please restart the GoWave Subscription-page Docker container.",
     "subpage-config-saved-line-2": "For example, you can use the following command in your terminal:"
   },
   "app-editor-drawer-content": {
@@ -1450,7 +1450,7 @@
     "tab": {
       "widget": {
         "subscription-page-config": "Subscription page config",
-        "subscription-page-config-description": "You can override the subscription page configuration (Remnawave Subscription Page) for this external squad.",
+        "subscription-page-config-description": "You can override the subscription page configuration (GoWave Subscription Page) for this external squad.",
         "subpage-config": "Subpage config",
         "select-config": "Select config..."
       }
@@ -1832,7 +1832,7 @@
     "failed-description": "The node could not complete the GeoCheck.",
     "view-image": "Report",
     "no-image": "No image in the report, open JSON",
-    "requires-node-version": "Requires Remnawave Node {{version}} or newer"
+    "requires-node-version": "Requires GoWave Node {{version}} or newer"
   },
   "quick-open": {
     "page": {

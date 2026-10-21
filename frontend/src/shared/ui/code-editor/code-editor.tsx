@@ -14,7 +14,7 @@ import { RepairResult, repairJsonInEditor } from '@shared/utils/monaco/repair-js
 import { LoaderModalShared } from '../loader-modal/loader-model.shared'
 import styles from './CodeEditor.module.css'
 
-const REPAIR_ACTION_ID = 'remnawave.repairJson'
+const REPAIR_ACTION_ID = 'gowave.repairJson'
 
 const REPAIR_LABEL = 'Repair JSON'
 

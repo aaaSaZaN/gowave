@@ -1,6 +1,6 @@
 import type { editor } from 'monaco-editor'
 
-const DETAILS_PATCHED = Symbol('remnawave.suggestDetailsPatched')
+const DETAILS_PATCHED = Symbol('gowave.suggestDetailsPatched')
 
 export function setupSuggestWidget(editor: editor.IStandaloneCodeEditor): void {
     try {

@@ -177,7 +177,7 @@ type NodeHealthCheckResult struct {
 func (c *Client) CheckHealth(node *database.Node) (NodeHealthCheckResult, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	// Remnanode/TS endpoint is /node/xray/healthcheck
+	// Compatible node endpoint is /node/xray/healthcheck
 	url := fmt.Sprintf("https://%s:%d/node/xray/healthcheck", node.Address, getNodePort(node))
 	resp, err := c.doRequest(ctx, "GET", url, nil)
 	if err != nil {

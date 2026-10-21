@@ -6,7 +6,7 @@
 #
 # Installs the panel (SQLite with systemd, or PostgreSQL in Docker) behind
 # Caddy or Nginx with HTTPS, or leaves the reverse proxy to the admin. The
-# panel listens on 127.0.0.1 only. When a Remnawave or PasarGuard install is
+# panel listens on 127.0.0.1 only. When an upstream panel or PasarGuard install is
 # found, offers to move its data. Asks for the language (Russian or English)
 # first.
 # GOWAVE_VERSION=v1.2.3 pins a release instead of the latest one.
@@ -23,7 +23,7 @@ CADDY_SITE=/etc/caddy/gowave.caddy
 NGINX_SITE=/etc/nginx/conf.d/gowave.conf
 NGINX_RENEW_HOOK=/etc/letsencrypt/renewal-hooks/deploy/gowave-nginx.sh
 ACME_ROOT=/var/www/gowave-acme
-REMNAWAVE_DIR=/opt/remnawave
+UPSTREAM_DIR=/opt/remnawave
 PASARGUARD_DIR=/opt/pasarguard
 LOG=/var/log/gowave-install.log
 
@@ -267,13 +267,13 @@ ask_domain() {
 
 # ---------------------------------------------------------------- old panels
 
-HAS_REMNAWAVE=false
+HAS_UPSTREAM=false
 HAS_PASARGUARD=false
 SOURCE=none
 SOURCE_DIR=''
 
 detect_old_panels() {
-    [ -f "$REMNAWAVE_DIR/.env" ] && HAS_REMNAWAVE=true
+    [ -f "$UPSTREAM_DIR/.env" ] && HAS_UPSTREAM=true
     if [ -f "$PASARGUARD_DIR/.env" ] || [ -f /var/lib/pasarguard/db.sqlite3 ]; then
         if grep -Eqs '^[[:space:]]*SQLALCHEMY_DATABASE_URL[[:space:]]*=[[:space:]]*["'\'']?(mysql|mariadb)' "$PASARGUARD_DIR/.env"; then
             warn "$(t 'Найден PasarGuard на MySQL/MariaDB: перенос поддерживается только из SQLite и PostgreSQL.' 'Found PasarGuard on MySQL/MariaDB: migration is supported only from SQLite and PostgreSQL.')"
@@ -472,9 +472,9 @@ gowave_cli() {
 # again if the copy fails; its database keeps running.
 migrate_data() {
     local app_service app_ids db_ids status=0
-    if [ "$SOURCE" = remnawave ]; then
+    if [ "$SOURCE" = upstream ]; then
         app_service=remnawave
-        db_ids=$(old_containers "$REMNAWAVE_DIR" remnawave-db)
+        db_ids=$(old_containers "$UPSTREAM_DIR" remnawave-db)
         # shellcheck disable=SC2086
         [ -n "$db_ids" ] && run docker start $db_ids
     else
@@ -485,7 +485,7 @@ migrate_data() {
     [ -n "$app_ids" ] && run docker stop $app_ids
 
     info "$(t 'Переношу данные из' 'Migrating data from') $SOURCE"
-    if [ "$SOURCE" = remnawave ]; then
+    if [ "$SOURCE" = upstream ]; then
         sleep 3
         gowave_cli migrate pg-to-sqlite "" "$INSTALL_DIR/gowave.db" || status=$?
     else
@@ -781,10 +781,10 @@ DB_MODE=sqlite
 fresh_install() {
     detect_old_panels
     local options=() sources=() modes=() pick
-    if [ "$HAS_REMNAWAVE" = true ]; then
-        options+=("$(t 'Перенести Remnawave в GoWave (SQLite)' 'Migrate Remnawave to GoWave (SQLite)')"
-            "$(t 'Перенести Remnawave в GoWave (PostgreSQL в Docker)' 'Migrate Remnawave to GoWave (PostgreSQL in Docker)')")
-        sources+=(remnawave remnawave)
+    if [ "$HAS_UPSTREAM" = true ]; then
+        options+=("$(t 'Перенести прежнюю панель в GoWave (SQLite)' 'Migrate upstream panel to GoWave (SQLite)')"
+            "$(t 'Перенести прежнюю панель в GoWave (PostgreSQL в Docker)' 'Migrate upstream panel to GoWave (PostgreSQL in Docker)')")
+        sources+=(upstream upstream)
         modes+=(sqlite docker)
     fi
     if [ "$HAS_PASARGUARD" = true ]; then
@@ -799,7 +799,7 @@ fresh_install() {
         if [ "$pick" -le ${#sources[@]} ]; then
             SOURCE=${sources[$((pick - 1))]}
             DB_MODE=${modes[$((pick - 1))]}
-            SOURCE_DIR=$REMNAWAVE_DIR
+            SOURCE_DIR=$UPSTREAM_DIR
             [ "$SOURCE" = pasarguard ] && SOURCE_DIR=$PASARGUARD_DIR
         else
             choose_database
@@ -914,9 +914,9 @@ print_done() {
                 'Open the address and create the admin: whoever opens the panel first gets to do it.')"
         fi
         ;;
-    remnawave)
-        echo "$(t 'Данные Remnawave перенесены, входите под прежним администратором.' \
-            'Remnawave data has been migrated, log in with your existing admin.')"
+    upstream)
+        echo "$(t 'Данные прежней панели перенесены, входите под прежним администратором.' \
+            'Upstream panel data has been migrated, log in with your existing admin.')"
         ;;
     pasarguard)
         echo "$(t 'Перенесены пользователи PasarGuard и их HWID. Создайте администратора, затем настройте ноды, профили и хосты.' \

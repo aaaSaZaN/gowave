@@ -45,7 +45,7 @@ func schemaModels() []interface{} {
 		&ConfigProfile{},
 		&ConfigProfileInbound{},
 		&ConfigProfileInboundsToNodes{},
-		&RemnawaveSetting{},
+		&PanelSetting{},
 		&ApiToken{},
 		&SubscriptionTemplate{},
 		&SubscriptionPageConfig{},

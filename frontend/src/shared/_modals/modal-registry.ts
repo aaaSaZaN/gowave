@@ -4,6 +4,7 @@ import NiceModal from '@ebay/nice-modal-react'
 
 import { ConfigProfileInboundsDrawer, ActiveNodesModal } from './config-profiles'
 import { ExternalSquadsDrawer } from './external-squads'
+import { PasskeysDrawer } from './gowave-settings'
 import {
     CreateHostDrawer,
     EditHostDrawer,
@@ -39,7 +40,6 @@ import {
     NodeLogsModal,
     UpdateNodeModal
 } from './nodes'
-import { PasskeysDrawer } from './remnawave-settings'
 import { SharedListEditorModal, SharedListsModal } from './shared-lists'
 import { SnippetsModal } from './snippets'
 import {

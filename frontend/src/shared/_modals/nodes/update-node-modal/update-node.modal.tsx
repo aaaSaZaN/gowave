@@ -17,13 +17,7 @@ import {
 import { GetNodeCommand } from '@remnawave/backend-contract'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import {
-    TbAlertTriangle,
-    TbArrowRight,
-    TbCheck,
-    TbCloudDownload,
-    TbCpu
-} from 'react-icons/tb'
+import { TbAlertTriangle, TbArrowRight, TbCheck, TbCloudDownload, TbCpu } from 'react-icons/tb'
 
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { instance } from '@shared/api/axios'
@@ -61,7 +55,7 @@ interface IUpdatesCheckResponse {
 
 type ReleaseChannel = 'stable' | 'prerelease' | 'version'
 
-const NODE_REPOSITORY = 'aaaSaZaN/remnanode-go'
+const NODE_REPOSITORY = 'aaaSaZaN/gowave-node'
 const XRAY_REPOSITORY = 'XTLS/Xray-core'
 
 const archAliases: Record<string, string[]> = {
@@ -79,21 +73,30 @@ function getCompatibleAsset(
     release: IReleaseInfo,
     os: string,
     architecture: string,
-    binaryName: 'remnanode' | 'rw-core'
+    binaryName: 'gowave-node' | 'rw-core'
 ) {
     const aliases = archAliases[architecture] || [architecture]
     const assets = release.assets || []
     const matches = (asset: IReleaseAsset, alias: string, requireOS: boolean) => {
         const name = asset.name.toLowerCase()
-        if (['.dgst', '.sha256', '.sha512', '.sha1', '.sig', '.asc', '.txt', '.json'].some((suffix) => name.endsWith(suffix))) {
+        if (
+            ['.dgst', '.sha256', '.sha512', '.sha1', '.sig', '.asc', '.txt', '.json'].some(
+                (suffix) => name.endsWith(suffix)
+            )
+        ) {
             return false
         }
         if (requireOS && !name.includes(os.toLowerCase())) return false
-        if ((architecture === 'mips' || architecture === 'mips64') && (name.includes('le') || name.includes('el'))) {
+        if (
+            (architecture === 'mips' || architecture === 'mips64') &&
+            (name.includes('le') || name.includes('el'))
+        ) {
             return false
         }
-        return name.includes(alias.toLowerCase()) &&
+        return (
+            name.includes(alias.toLowerCase()) &&
             (binaryName === 'rw-core' || name.includes(binaryName))
+        )
     }
 
     for (const alias of aliases) {
@@ -112,7 +115,12 @@ function getErrorMessage(error: unknown) {
         message?: string
         response?: { data?: { message?: string; error?: string } }
     }
-    return value?.response?.data?.message || value?.response?.data?.error || value?.message || 'Не удалось выполнить обновление.'
+    return (
+        value?.response?.data?.message ||
+        value?.response?.data?.error ||
+        value?.message ||
+        'Не удалось выполнить обновление.'
+    )
 }
 
 export const UpdateNodeModal = NiceModal.create((props: IProps) => {
@@ -164,78 +172,99 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
     const nodeReleases = nodeUpdatesQuery.data?.allReleases || []
     const coreReleases = coreUpdatesQuery.data?.allReleases || []
     const nodeOptions = useMemo(
-        () => nodeReleases
-            .filter((release) => getCompatibleAsset(
-                release,
-                nodeUpdatesQuery.data?.os || 'linux',
-                nodeUpdatesQuery.data?.architecture || '',
-                'remnanode'
-            ))
-            .map((release) => ({
-                value: release.tag_name,
-                label: `${release.tag_name} · ${release.prerelease ? 'Pre-release' : 'Release'}`
-            })),
+        () =>
+            nodeReleases
+                .filter((release) =>
+                    getCompatibleAsset(
+                        release,
+                        nodeUpdatesQuery.data?.os || 'linux',
+                        nodeUpdatesQuery.data?.architecture || '',
+                        'gowave-node'
+                    )
+                )
+                .map((release) => ({
+                    value: release.tag_name,
+                    label: `${release.tag_name} · ${release.prerelease ? 'Pre-release' : 'Release'}`
+                })),
         [nodeReleases, nodeUpdatesQuery.data?.architecture, nodeUpdatesQuery.data?.os]
     )
     const coreOptions = useMemo(
-        () => coreReleases
-            .filter((release) => getCompatibleAsset(
+        () =>
+            coreReleases
+                .filter((release) =>
+                    getCompatibleAsset(
+                        release,
+                        coreUpdatesQuery.data?.os || 'linux',
+                        coreUpdatesQuery.data?.architecture || '',
+                        'rw-core'
+                    )
+                )
+                .map((release) => ({
+                    value: release.tag_name,
+                    label: `${release.tag_name} · ${release.prerelease ? 'Pre-release' : 'Release'}`
+                })),
+        [coreReleases, coreUpdatesQuery.data?.architecture, coreUpdatesQuery.data?.os]
+    )
+
+    const latestNodeStable = nodeReleases.find(
+        (release) =>
+            !release.prerelease &&
+            getCompatibleAsset(
+                release,
+                nodeUpdatesQuery.data?.os || 'linux',
+                nodeUpdatesQuery.data?.architecture || '',
+                'gowave-node'
+            )
+    )
+    const latestNodePrerelease = nodeReleases.find(
+        (release) =>
+            release.prerelease &&
+            getCompatibleAsset(
+                release,
+                nodeUpdatesQuery.data?.os || 'linux',
+                nodeUpdatesQuery.data?.architecture || '',
+                'gowave-node'
+            )
+    )
+    const latestCoreStable = coreReleases.find(
+        (release) =>
+            !release.prerelease &&
+            getCompatibleAsset(
                 release,
                 coreUpdatesQuery.data?.os || 'linux',
                 coreUpdatesQuery.data?.architecture || '',
                 'rw-core'
-            ))
-            .map((release) => ({
-                value: release.tag_name,
-                label: `${release.tag_name} · ${release.prerelease ? 'Pre-release' : 'Release'}`
-            })),
-        [coreReleases, coreUpdatesQuery.data?.architecture, coreUpdatesQuery.data?.os]
+            )
+    )
+    const latestCorePrerelease = coreReleases.find(
+        (release) =>
+            release.prerelease &&
+            getCompatibleAsset(
+                release,
+                coreUpdatesQuery.data?.os || 'linux',
+                coreUpdatesQuery.data?.architecture || '',
+                'rw-core'
+            )
     )
 
-    const latestNodeStable = nodeReleases.find((release) =>
-        !release.prerelease && getCompatibleAsset(
-            release,
-            nodeUpdatesQuery.data?.os || 'linux',
-            nodeUpdatesQuery.data?.architecture || '',
-            'remnanode'
-        )
-    )
-    const latestNodePrerelease = nodeReleases.find((release) =>
-        release.prerelease && getCompatibleAsset(
-            release,
-            nodeUpdatesQuery.data?.os || 'linux',
-            nodeUpdatesQuery.data?.architecture || '',
-            'remnanode'
-        )
-    )
-    const latestCoreStable = coreReleases.find((release) =>
-        !release.prerelease && getCompatibleAsset(
-            release,
-            coreUpdatesQuery.data?.os || 'linux',
-            coreUpdatesQuery.data?.architecture || '',
-            'rw-core'
-        )
-    )
-    const latestCorePrerelease = coreReleases.find((release) =>
-        release.prerelease && getCompatibleAsset(
-            release,
-            coreUpdatesQuery.data?.os || 'linux',
-            coreUpdatesQuery.data?.architecture || '',
-            'rw-core'
-        )
-    )
-
-    const nodeTargetVersion = nodeChannel === 'version'
-        ? selectedNodeVersion || ''
-        : (nodeChannel === 'stable' ? latestNodeStable?.tag_name : latestNodePrerelease?.tag_name) || ''
-    const coreTargetVersion = coreChannel === 'version'
-        ? selectedCoreVersion || ''
-        : (coreChannel === 'stable' ? latestCoreStable?.tag_name : latestCorePrerelease?.tag_name) || ''
+    const nodeTargetVersion =
+        nodeChannel === 'version'
+            ? selectedNodeVersion || ''
+            : (nodeChannel === 'stable'
+                  ? latestNodeStable?.tag_name
+                  : latestNodePrerelease?.tag_name) || ''
+    const coreTargetVersion =
+        coreChannel === 'version'
+            ? selectedCoreVersion || ''
+            : (coreChannel === 'stable'
+                  ? latestCoreStable?.tag_name
+                  : latestCorePrerelease?.tag_name) || ''
 
     const applyMutation = useMutation({
         mutationFn: async () => {
             if (activeTab === 'node') {
-                if (!nodeTargetVersion) throw new Error('Нет подходящего релиза Remnanode для этой архитектуры.')
+                if (!nodeTargetVersion)
+                    throw new Error('Нет подходящего релиза GoWave Node для этой архитектуры.')
                 const res = await instance.post(`/api/nodes/${node.uuid}/updates/apply` as any, {
                     type: 'node',
                     repo: NODE_REPOSITORY,
@@ -256,7 +285,8 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                 return res.data
             }
 
-            if (!coreTargetVersion) throw new Error('Нет подходящего релиза Xray для этой архитектуры.')
+            if (!coreTargetVersion)
+                throw new Error('Нет подходящего релиза Xray для этой архитектуры.')
             const res = await instance.post(`/api/nodes/${node.uuid}/updates/apply` as any, {
                 type: 'core',
                 repo: XRAY_REPOSITORY,
@@ -266,19 +296,22 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
         }
     })
 
-    const isLoading = activeTab === 'node'
-        ? nodeUpdatesQuery.isLoading
-        : coreUpdatesQuery.isLoading
+    const isLoading = activeTab === 'node' ? nodeUpdatesQuery.isLoading : coreUpdatesQuery.isLoading
     const updateInfo = activeTab === 'node' ? nodeUpdatesQuery.data : coreUpdatesQuery.data
-    const queryError = activeTab === 'node'
-        ? nodeUpdatesQuery.error || updateInfo?.error
-        : coreUpdatesQuery.error || updateInfo?.error
-    const targetVersion = activeTab === 'node'
-        ? nodeTargetVersion
-        : coreDownloadUrl.trim() ? 'По ссылке' : coreTargetVersion
-    const canUpdate = activeTab === 'node'
-        ? Boolean(nodeTargetVersion)
-        : Boolean(coreDownloadUrl.trim() || coreTargetVersion)
+    const queryError =
+        activeTab === 'node'
+            ? nodeUpdatesQuery.error || updateInfo?.error
+            : coreUpdatesQuery.error || updateInfo?.error
+    const targetVersion =
+        activeTab === 'node'
+            ? nodeTargetVersion
+            : coreDownloadUrl.trim()
+              ? 'По ссылке'
+              : coreTargetVersion
+    const canUpdate =
+        activeTab === 'node'
+            ? Boolean(nodeTargetVersion)
+            : Boolean(coreDownloadUrl.trim() || coreTargetVersion)
 
     const releaseSelector = (
         channel: ReleaseChannel,
@@ -292,8 +325,14 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
         <Stack gap="xs">
             <Select
                 data={[
-                    { value: 'stable', label: `Последний Release${channel === 'stable' && targetVersion ? ` · ${targetVersion}` : ''}` },
-                    { value: 'prerelease', label: `Последний Pre-release${channel === 'prerelease' && targetVersion ? ` · ${targetVersion}` : ''}` },
+                    {
+                        value: 'stable',
+                        label: `Последний Release${channel === 'stable' && targetVersion ? ` · ${targetVersion}` : ''}`
+                    },
+                    {
+                        value: 'prerelease',
+                        label: `Последний Pre-release${channel === 'prerelease' && targetVersion ? ` · ${targetVersion}` : ''}`
+                    },
                     { value: 'version', label: 'Выбрать конкретную версию…' }
                 ]}
                 label="Канал релиза"
@@ -344,7 +383,8 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                     title="Перезапуск службы"
                     variant="light"
                 >
-                    Установка Remnanode или Xray перезапустит службу. Активные соединения кратковременно прервутся.
+                    Установка GoWave Node или Xray перезапустит службу. Активные соединения
+                    кратковременно прервутся.
                 </Alert>
 
                 <Tabs
@@ -356,31 +396,41 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                     value={activeTab}
                 >
                     <Tabs.List grow>
-                        <Tabs.Tab value="node">Remnanode Go</Tabs.Tab>
-                        <Tabs.Tab leftSection={<TbCpu size={16} />} value="core">Xray Core</Tabs.Tab>
+                        <Tabs.Tab value="node">GoWave Node Go</Tabs.Tab>
+                        <Tabs.Tab leftSection={<TbCpu size={16} />} value="core">
+                            Xray Core
+                        </Tabs.Tab>
                     </Tabs.List>
                 </Tabs>
 
                 {isLoading ? (
                     <Group justify="center" p="xl">
                         <Loader color="blue" size="sm" />
-                        <Text c="dimmed" size="xs">Загрузка списка релизов…</Text>
+                        <Text c="dimmed" size="xs">
+                            Загрузка списка релизов…
+                        </Text>
                     </Group>
                 ) : (
                     <>
                         {queryError && (
                             <Alert color="red" title="Не удалось получить релизы" variant="light">
-                                {typeof queryError === 'string' ? queryError : getErrorMessage(queryError)}
+                                {typeof queryError === 'string'
+                                    ? queryError
+                                    : getErrorMessage(queryError)}
                             </Alert>
                         )}
 
                         <Group justify="space-between">
                             <Group gap="xs">
-                                <Text fw={500} size="sm">Установлено:</Text>
+                                <Text fw={500} size="sm">
+                                    Установлено:
+                                </Text>
                                 <Badge color="gray" size="md" variant="light">
                                     {activeTab === 'node'
                                         ? updateInfo?.currentVersion || 'не получена'
-                                        : updateInfo?.currentCoreVersion || node.versions?.xray || 'не получена'}
+                                        : updateInfo?.currentCoreVersion ||
+                                          node.versions?.xray ||
+                                          'не получена'}
                                 </Badge>
                             </Group>
                             <Badge color="dark" size="sm" variant="outline">
@@ -392,7 +442,9 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
 
                         {activeTab === 'node' ? (
                             <Stack gap="sm">
-                                <Text fw={600} size="sm">Выберите релиз Remnanode Go</Text>
+                                <Text fw={600} size="sm">
+                                    Выберите релиз GoWave Node Go
+                                </Text>
                                 {releaseSelector(
                                     nodeChannel,
                                     setNodeChannel,
@@ -400,12 +452,14 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                                     setSelectedNodeVersion,
                                     nodeOptions,
                                     nodeTargetVersion,
-                                    'Релиз Remnanode Go'
+                                    'Релиз GoWave Node Go'
                                 )}
                             </Stack>
                         ) : (
                             <Stack gap="sm">
-                                <Text fw={600} size="sm">Выберите официальный релиз Xray Core</Text>
+                                <Text fw={600} size="sm">
+                                    Выберите официальный релиз Xray Core
+                                </Text>
                                 {releaseSelector(
                                     coreChannel,
                                     setCoreChannel,
@@ -431,14 +485,22 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                         )}
 
                         <Group gap="xs">
-                            <Text c="dimmed" size="xs">Установка:</Text>
+                            <Text c="dimmed" size="xs">
+                                Установка:
+                            </Text>
                             <Badge color="gray" size="sm" variant="outline">
                                 {activeTab === 'node'
                                     ? updateInfo?.currentVersion || 'текущая версия'
-                                    : updateInfo?.currentCoreVersion || node.versions?.xray || 'текущая версия'}
+                                    : updateInfo?.currentCoreVersion ||
+                                      node.versions?.xray ||
+                                      'текущая версия'}
                             </Badge>
                             <TbArrowRight size={14} />
-                            <Badge color={targetVersion ? 'blue' : 'gray'} size="sm" variant="filled">
+                            <Badge
+                                color={targetVersion ? 'blue' : 'gray'}
+                                size="sm"
+                                variant="filled"
+                            >
                                 {targetVersion || 'выберите релиз'}
                             </Badge>
                         </Group>
@@ -448,7 +510,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                         <Checkbox
                             checked={confirmed}
                             color="orange"
-                            label={`Подтверждаю установку ${activeTab === 'node' ? 'Remnanode Go' : 'Xray Core'} и перезапуск службы`}
+                            label={`Подтверждаю установку ${activeTab === 'node' ? 'GoWave Node Go' : 'Xray Core'} и перезапуск службы`}
                             onChange={(event) => setConfirmed(event.currentTarget.checked)}
                             size="sm"
                         />
@@ -456,9 +518,9 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                         {applyMutation.isSuccess && (
                             <Alert color="teal" icon={<TbCheck size={18} />} title="Запрос принят">
                                 {activeTab === 'node'
-                                    ? `Remnanode обновляется до ${nodeTargetVersion}.`
-                                    : `Xray Core обновляется${coreDownloadUrl.trim() ? ' по указанной ссылке' : ` до ${coreTargetVersion}`}.`}
-                                {' '}Служба перезапускается.
+                                    ? `GoWave Node обновляется до ${nodeTargetVersion}.`
+                                    : `Xray Core обновляется${coreDownloadUrl.trim() ? ' по указанной ссылке' : ` до ${coreTargetVersion}`}.`}{' '}
+                                Служба перезапускается.
                             </Alert>
                         )}
                         {applyMutation.isError && (
@@ -468,7 +530,12 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                         )}
 
                         <Group justify="flex-end" mt="sm">
-                            <Button disabled={applyMutation.isPending} onClick={hide} size="sm" variant="subtle">
+                            <Button
+                                disabled={applyMutation.isPending}
+                                onClick={hide}
+                                size="sm"
+                                variant="subtle"
+                            >
                                 Закрыть
                             </Button>
                             <Button
@@ -477,7 +544,10 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                                     !confirmed ||
                                     !canUpdate ||
                                     applyMutation.isPending ||
-                                    Boolean(queryError && (activeTab === 'node' || !coreDownloadUrl.trim()))
+                                    Boolean(
+                                        queryError &&
+                                        (activeTab === 'node' || !coreDownloadUrl.trim())
+                                    )
                                 }
                                 leftSection={<TbCloudDownload size={16} />}
                                 loading={applyMutation.isPending}

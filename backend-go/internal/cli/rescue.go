@@ -201,8 +201,8 @@ func printUsage() {
 	fmt.Println("\nAvailable commands / flags:")
 	fmt.Println("  --import-pasarguard [path]       Import users, traffic and HWIDs from PasarGuard (SQLite or Postgres)")
 	fmt.Println("  import pasarguard [path]         Import users, traffic and HWIDs from PasarGuard")
-	fmt.Println("  --migrate-pg-to-sqlite [dsn] [dest]  Migrate Remnawave PostgreSQL data to SQLite")
-	fmt.Println("  migrate pg-to-sqlite [dsn] [dest]    Migrate Remnawave PostgreSQL data to SQLite")
+	fmt.Println("  --migrate-pg-to-sqlite [dsn] [dest]  Migrate upstream panel PostgreSQL data to SQLite")
+	fmt.Println("  migrate pg-to-sqlite [dsn] [dest]    Migrate upstream panel PostgreSQL data to SQLite")
 	fmt.Println("  migrate to-docker                    Move this SQLite install to Docker + PostgreSQL")
 	fmt.Println("      --dir <path>                     Compose project directory (default /opt/gowave-docker)")
 	fmt.Println("      --image <ref>                    Panel image (default ghcr.io/aaasazan/gowave:latest)")
@@ -214,7 +214,7 @@ func printUsage() {
 	fmt.Println("  --reset-admin                   Remove all admins to re-trigger first-time web onboarding")
 	fmt.Println("  --list-admins                   List all existing administrators")
 	fmt.Println("  --enable-password-auth          Force-enable password authentication in database")
-	fmt.Println("  --print-secret-key              Generate and print a valid SECRET_KEY for remnanode")
+	fmt.Println("  --print-secret-key              Generate and print a valid SECRET_KEY for GoWave Node")
 	fmt.Println("  --help, -h                      Show this help message")
 	fmt.Println("\nRun without flags to start the interactive rescue menu.")
 }
@@ -232,7 +232,7 @@ func interactiveMenu(db *gorm.DB, cfg *config.Config) {
 		fmt.Println("5) Enable username/password authentication")
 		fmt.Println("6) Print node SECRET_KEY")
 		fmt.Println("7) Import database from PasarGuard (SQLite/PostgreSQL)")
-		fmt.Println("8) Migrate from Remnawave PostgreSQL -> Gowave SQLite (and purge Docker)")
+		fmt.Println("8) Migrate from upstream panel PostgreSQL -> Gowave SQLite (and purge Docker)")
 		fmt.Println("9) Move Gowave to Docker (SQLite -> PostgreSQL)")
 		fmt.Println("0) Exit")
 		fmt.Print("\nSelect an option [0-9]: ")
@@ -300,7 +300,7 @@ func ListAdmins(db *gorm.DB) {
 }
 
 func EnablePasswordAuth(db *gorm.DB) {
-	res := db.Model(&database.RemnawaveSetting{}).Where("id = 1").Updates(map[string]interface{}{
+	res := db.Model(&database.PanelSetting{}).Where("id = 1").Updates(map[string]interface{}{
 		"password_auth_enabled": true,
 	})
 	if res.Error != nil {

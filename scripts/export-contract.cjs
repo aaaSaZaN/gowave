@@ -85,7 +85,7 @@ for (const command of commands) {
 process.stdout.write(
     JSON.stringify({
         openapi: '3.1.0',
-        info: { title: 'Gowave (Remnawave-compatible API)', version: pkg.version },
+        info: { title: 'GoWave API', version: pkg.version },
         paths,
         components: { securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } } },
     }) + '\n',

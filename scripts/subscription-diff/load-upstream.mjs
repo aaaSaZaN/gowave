@@ -1,5 +1,5 @@
-// Loads upstream Remnawave TypeScript modules (decorators + tsconfig path
-// aliases) through jiti from UPSTREAM_DIR, a checkout of remnawave/backend
+// Loads upstream TypeScript modules (decorators + tsconfig path
+// aliases) through jiti from UPSTREAM_DIR, a checkout of the upstream backend
 // at the pinned commit with `npm ci` done.
 import { createRequire } from 'node:module';
 import path from 'node:path';

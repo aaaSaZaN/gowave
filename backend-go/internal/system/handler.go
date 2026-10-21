@@ -554,9 +554,9 @@ func (h *Handler) GetRecap(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetSettings(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var setting database.RemnawaveSetting
+	var setting database.PanelSetting
 	h.db.First(&setting)
-	title := "Remnawave"
+	title := "GoWave"
 	if setting.Title != "" {
 		title = setting.Title
 	}
@@ -665,11 +665,11 @@ func (h *Handler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var setting database.RemnawaveSetting
+	var setting database.PanelSetting
 	h.db.First(&setting)
 	if setting.ID == 0 {
 		setting.ID = 1
-		setting.Title = "Remnawave"
+		setting.Title = "GoWave"
 		setting.IsLoginAllowed = true
 		setting.PasswordAuthEnabled = true
 		h.db.Create(&setting)
@@ -719,7 +719,7 @@ func (h *Handler) RestoreBackup(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	out, err := os.CreateTemp("", "remnawave_restore_*.tar.gz")
+	out, err := os.CreateTemp("", "gowave_restore_*.tar.gz")
 	if err != nil {
 		httpx.Error(w, r, http.StatusInternalServerError, httpx.CodeInternal, "Cannot create temporary file")
 		return

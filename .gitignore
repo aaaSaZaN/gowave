@@ -44,13 +44,9 @@ bin/
 # Binar
 /gowave-*
 /backend-go/gowave-*
-backend-go/remnawave-server*
 backend-go/server-linux-*
 backend-go/sazan
-remnawave-server*
 
-remnanode*
-node-go/remnanode*
 
 # Separate / excluded components
 backend-ts/

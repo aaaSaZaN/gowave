@@ -55,14 +55,14 @@ jobs:
 
       - name: Create ZIP archive of /dist
         run: |
-          zip -r remnawave-frontend.zip ./dist
+          zip -r gowave-frontend.zip ./dist
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
-          files: remnawave-frontend.zip
+          files: gowave-frontend.zip
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
           append_body: true
@@ -71,18 +71,14 @@ jobs:
           prerelease: false
           name: ${{ github.ref_name }}
           body: |
-            # 🌊 Remnawave Frontend v${{ github.ref_name }}
+            # 🌊 GoWave Frontend v${{ github.ref_name }}
 
-            <p align="center">
-            <a href="https://t.me/remnawave" target="_blank" rel="noopener noreferrer">
-              <img src="https://img.shields.io/badge/Join%20community-Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Join community on Telegram" width="220" height="auto">
-            </a>
-            </p>
+            [Source and issues](https://github.com/aaaSaZaN/gowave)
 
             ${{ env.CHANGELOG }}
 
             ### 📦 Artifacts
-            - remnawave-frontend.zip - archive with built frontend
+            - gowave-frontend.zip - archive with built frontend
 
             ### 🔍 Details
             - Commit: ${{ github.sha }}

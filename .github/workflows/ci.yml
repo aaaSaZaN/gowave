@@ -88,6 +88,10 @@ jobs:
         working-directory: frontend
         run: pnpm install --frozen-lockfile
 
+      - name: Branding references
+        run: |
+          node scripts/check-branding.cjs
+
       - name: Typecheck
         working-directory: frontend
         run: pnpm run typecheck

@@ -1,0 +1,270 @@
+{
+  "description": "Reviewed exceptions. Inspect matching lines with node scripts/check-branding.cjs --inspect before changing a digest. Dependency package identifiers and LICENSE/LICENCE are allowed separately.",
+  "files": {
+    "README.md": {
+      "reason": "Original-project attribution; copyright and license provenance.",
+      "count": 1,
+      "sha256": "1baa3d6b708c3bd300c8055b8067e58a27704a64221fc9197c1d4c3bd3ad1a58"
+    },
+    "backend-go/config/config.go": {
+      "reason": "Reject the known insecure legacy secret; removing this check would weaken validation.",
+      "count": 1,
+      "sha256": "254d9ed0de62134ca2b6c3ff2215a3a59061a4bf7b31696062b21c0a9d2eccfa"
+    },
+    "backend-go/internal/auth/oauth.go": {
+      "reason": "Legacy protocol or stored data identifier required for compatibility.",
+      "count": 1,
+      "sha256": "1761bc6353aa15d9aeb5dd2d0457e4e52b5a0fc7202196a84a8936ccbdc1ebf5"
+    },
+    "backend-go/internal/cli/migrate_pg_to_sqlite.go": {
+      "reason": "Detect existing installations, container names, and database hosts during safe migration.",
+      "count": 5,
+      "sha256": "bf441e1bac2916ac45904de0bcfb9b9a87dfc8bd91bf4c89a66404fa51869248"
+    },
+    "backend-go/internal/contracts/commands.json": {
+      "reason": "Pinned dependency contract export; routes, schemas, and scope identifiers remain byte-compatible.",
+      "count": 9,
+      "sha256": "e057b01746220c8ed9c929f3ff49ea4c8fa5cdc2aba95dc38af34d04f8ec27fe"
+    },
+    "backend-go/internal/contracts/openapi.json": {
+      "reason": "Pinned dependency contract export; routes, schemas, and scope identifiers remain byte-compatible.",
+      "count": 1,
+      "sha256": "d72aab7f7f89d46d8f23d06680dff7c075bdf0736f2dddd170fcc97151c6a615"
+    },
+    "backend-go/internal/contracts/registry.go": {
+      "reason": "Pinned dependency contract export; routes, schemas, and scope identifiers remain byte-compatible.",
+      "count": 1,
+      "sha256": "f197975b04ba72c6da96e2efe6185714ca0c187f70cb70c7fbf776c5aee19bef"
+    },
+    "backend-go/internal/contracts/scopes.json": {
+      "reason": "Pinned dependency contract export; routes, schemas, and scope identifiers remain byte-compatible.",
+      "count": 15,
+      "sha256": "8f83412b82d82da5e43ba99a6b3a3cd3b45b8ad14014774e54d884dc513b0c89"
+    },
+    "backend-go/internal/database/default_data.go": {
+      "reason": "Legacy protocol or stored data identifier required for compatibility.",
+      "count": 1,
+      "sha256": "6f874d997f2a6940f136a154c7afdf41cf65e653fd4b68907d600c03361823df"
+    },
+    "backend-go/internal/database/migrations/postgres/001_initial.sql": {
+      "reason": "Historical schema identifiers and stock-title upgrade matching; preserves imported databases and custom titles.",
+      "count": 1,
+      "sha256": "5c86e812565a27153026c5a4e3351109652b5d76a75e6a81a87643ae32b5d6b5"
+    },
+    "backend-go/internal/database/migrations/postgres/002_port_fields.sql": {
+      "reason": "Historical schema identifiers and stock-title upgrade matching; preserves imported databases and custom titles.",
+      "count": 5,
+      "sha256": "51d7c98425a9fbe97ae8c3d311903c611b99d49c87f8d06182399c489d39b0cd"
+    },
+    "backend-go/internal/database/migrations/postgres/005_gowave_branding.sql": {
+      "reason": "Historical schema identifiers and stock-title upgrade matching; preserves imported databases and custom titles.",
+      "count": 1,
+      "sha256": "5fd79cda65bf115cce0e5c02a578ffc6965281192fed35d539605da133627531"
+    },
+    "backend-go/internal/database/migrations/sqlite/001_initial.sql": {
+      "reason": "Historical schema identifiers and stock-title upgrade matching; preserves imported databases and custom titles.",
+      "count": 1,
+      "sha256": "0671780fa82b41462fec9dbad4cb92e2dee9ac0a8d4f3e1538c1abc713ba11a8"
+    },
+    "backend-go/internal/database/migrations/sqlite/002_port_fields.sql": {
+      "reason": "Historical schema identifiers and stock-title upgrade matching; preserves imported databases and custom titles.",
+      "count": 5,
+      "sha256": "51d7c98425a9fbe97ae8c3d311903c611b99d49c87f8d06182399c489d39b0cd"
+    },
+    "backend-go/internal/database/migrations/sqlite/005_gowave_branding.sql": {
+      "reason": "Historical schema identifiers and stock-title upgrade matching; preserves imported databases and custom titles.",
+      "count": 1,
+      "sha256": "5fd79cda65bf115cce0e5c02a578ffc6965281192fed35d539605da133627531"
+    },
+    "backend-go/internal/database/migrations_test.go": {
+      "reason": "Historical schema identifiers and stock-title upgrade matching; preserves imported databases and custom titles.",
+      "count": 4,
+      "sha256": "050906351afc48a34b14f42938f785618954fa617bafa80837ad743e9dc2d9e3"
+    },
+    "backend-go/internal/database/models.go": {
+      "reason": "Legacy protocol or stored data identifier required for compatibility.",
+      "count": 1,
+      "sha256": "22e6b1829844d053c712022ba4181282c762cf7ea013cca3455607b25273eff9"
+    },
+    "backend-go/internal/httpx/httpx.go": {
+      "reason": "Legacy protocol or stored data identifier required for compatibility.",
+      "count": 1,
+      "sha256": "5519dd65163bc2bf59d015e0596d2aa51636b1332cb1308a10e2baa8866011e6"
+    },
+    "backend-go/internal/httpx/httpx_test.go": {
+      "reason": "Legacy protocol or stored data identifier required for compatibility.",
+      "count": 2,
+      "sha256": "83c76f1d150ba96e85b9e6ff225c5293f46bf8e0681e51b26aa96317a1beede1"
+    },
+    "backend-go/internal/metrics/definitions.go": {
+      "reason": "Existing metric names and labels used by monitoring integrations.",
+      "count": 2,
+      "sha256": "18d5c6a5c8551be76d54ed462d01ebc06f293417a355c7810dd683fa765ea3fe"
+    },
+    "backend-go/internal/metrics/registry.go": {
+      "reason": "Existing metric names and labels used by monitoring integrations.",
+      "count": 2,
+      "sha256": "3fa2cde7cc64530a793045072e7036329d3718c349cdc991bc433bc8af214840"
+    },
+    "backend-go/internal/metrics/testdata/prom-vectors.json": {
+      "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
+      "count": 23,
+      "sha256": "4a335b44de24abc4e3d4ec52119974d504efb8474d9582672ee6969ef86b2f25"
+    },
+    "backend-go/internal/middleware/cors.go": {
+      "reason": "Legacy protocol or stored data identifier required for compatibility.",
+      "count": 4,
+      "sha256": "2c14d7dd1023b95db6d233a14890c35e7092c036f1f47eaf3e31fa5e3920be35"
+    },
+    "backend-go/internal/nodes/client.go": {
+      "reason": "Legacy protocol or stored data identifier required for compatibility.",
+      "count": 1,
+      "sha256": "6191e618cf4bf40acb56f8dddfc5b71b1e536cce58145cb74261c39f97642e52"
+    },
+    "backend-go/internal/nodes/config_rejection_test.go": {
+      "reason": "Legacy protocol or stored data identifier required for compatibility.",
+      "count": 1,
+      "sha256": "0244cb23df3c855617aba5f9de896dfb8c12d962c69a6a20847a5bc2e08a3b97"
+    },
+    "backend-go/internal/nodessh/tickets.go": {
+      "reason": "Legacy protocol or stored data identifier required for compatibility.",
+      "count": 1,
+      "sha256": "a2ff484fc345d7e301b43d0f284bd172db81b4d738cea43a034c205522275685"
+    },
+    "backend-go/internal/notify/notify.go": {
+      "reason": "Legacy protocol or stored data identifier required for compatibility.",
+      "count": 4,
+      "sha256": "467499d417fad95f2827cfe4eae047f84e650a890ebd76aaa831d42a616e24a3"
+    },
+    "backend-go/internal/notify/notify_test.go": {
+      "reason": "Legacy protocol or stored data identifier required for compatibility.",
+      "count": 2,
+      "sha256": "71c91ae876022fef6c9387b4bfab495b0916900441e08ff0f61a784476525c59"
+    },
+    "backend-go/internal/prometheus/prometheus_test.go": {
+      "reason": "Existing metric names and labels used by monitoring integrations.",
+      "count": 12,
+      "sha256": "009dee1f4412eefba7a431e05acd7e0e76b237de65e777aa4749ae53ea475524"
+    },
+    "backend-go/internal/server/server.go": {
+      "reason": "Legacy protocol or stored data identifier required for compatibility.",
+      "count": 2,
+      "sha256": "315c2659226759f726a5522663dbc8c63fcd9b8b1d678219dc85ba216a62d2bc"
+    },
+    "backend-go/internal/subscription/serve.go": {
+      "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
+      "count": 1,
+      "sha256": "557bf293c0da7f6ecb91d874cb352d3e4895af7b6ced6f355dd61416dc5394b0"
+    },
+    "backend-go/internal/subscription/subscription_test.go": {
+      "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
+      "count": 1,
+      "sha256": "6fcb002e5b93b045145a12c38e7e19116bc2b3635fce615e0147def0c35cfb69"
+    },
+    "backend-go/internal/subtpl/defaults_test.go": {
+      "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
+      "count": 1,
+      "sha256": "54e234ad60a5a9a7d6368cfcc9150029a387521503d3b29611554ed90e2e3128"
+    },
+    "backend-go/internal/subtpl/gen_mihomo.go": {
+      "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
+      "count": 7,
+      "sha256": "9fdbd3ac326948e8550d384ae9795324d2a3a685b335b81c468d1a94212baddb"
+    },
+    "backend-go/internal/subtpl/gen_singbox.go": {
+      "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
+      "count": 2,
+      "sha256": "d88207b33efd4d57c4a50f024712e6e2115ab731e7a3d91f23615250ade885da"
+    },
+    "backend-go/internal/subtpl/gen_xray_json.go": {
+      "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
+      "count": 3,
+      "sha256": "81e59ffab1949ff739eddf1edf79ba0628cbaeb0e7ed445b14161fe2d2c15123"
+    },
+    "backend-go/internal/subtpl/testdata/matrix.json": {
+      "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
+      "count": 7,
+      "sha256": "3250e24ae9947ae1f83f3def5a74dc54cfcb6fc1d4f0ae713d34c043e155b3bb"
+    },
+    "backend-go/internal/subtpl/testdata/yaml-vectors.json": {
+      "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
+      "count": 20,
+      "sha256": "c5563d67c0b64a40324d23b8a1b22556eb04d7a17ff3a58764e8e25d180cc2d2"
+    },
+    "backend-go/internal/system/oauth_removed_test.go": {
+      "reason": "Legacy protocol or stored data identifier required for compatibility.",
+      "count": 2,
+      "sha256": "e912740c95ddb1d7356de6f09238ddba8a558f3f749caedc7630b55f0f7e0640"
+    },
+    "backend-go/internal/tokens/scopes.json": {
+      "reason": "Pinned dependency contract export; routes, schemas, and scope identifiers remain byte-compatible.",
+      "count": 15,
+      "sha256": "8f83412b82d82da5e43ba99a6b3a3cd3b45b8ad14014774e54d884dc513b0c89"
+    },
+    "frontend/Makefile": {
+      "reason": "Existing external editor/template/help/geolocation resource dependency or upstream author identifier.",
+      "count": 1,
+      "sha256": "899b8a9cf3831b7220e8d3cfa5d820908af86d307eb85007b143f787c2556ad2"
+    },
+    "frontend/src/shared/_modals/nodes/node-geocheck-modal/geocheck-result.widget.tsx": {
+      "reason": "Existing external editor/template/help/geolocation resource dependency or upstream author identifier.",
+      "count": 1,
+      "sha256": "d2a863dd97905749451725e7d7609d3c973187dd6567ad2adb82be5041ddfd2a"
+    },
+    "frontend/src/shared/_modals/universal/help-drawer/help-drawer.shared.tsx": {
+      "reason": "Existing external editor/template/help/geolocation resource dependency or upstream author identifier.",
+      "count": 1,
+      "sha256": "40ebb1754e95c87954dbe92ad2fb3b0b7216ef36432cd1803fd6b2cf5cff1b46"
+    },
+    "frontend/src/shared/constants/templates/template-list-links.tsx": {
+      "reason": "Existing external editor/template/help/geolocation resource dependency or upstream author identifier.",
+      "count": 5,
+      "sha256": "462ef43599523c1deb5e42321887edae946645116f1d12774ebeadea2f719143"
+    },
+    "frontend/src/shared/ui/load-templates/template-selector.tsx": {
+      "reason": "Existing external editor/template/help/geolocation resource dependency or upstream author identifier.",
+      "count": 2,
+      "sha256": "903e98f9becc86a24e9ba797ef47b384cb99a8c3814c9eacd6c8252a030ae4f3"
+    },
+    "frontend/src/widgets/dashboard/templates/subscription-template-editor/utils/setup-template-monaco.tsx": {
+      "reason": "Legacy protocol or stored data identifier required for compatibility.",
+      "count": 2,
+      "sha256": "4d3d6c2e148d9dc92399e8914018abe65c52423d83bba0bd25e997a74211794b"
+    },
+    "frontend/vite.config.ts": {
+      "reason": "Legacy protocol or stored data identifier required for compatibility.",
+      "count": 1,
+      "sha256": "eb3fa02c265c850d76caefd9f2865e995c8b853ab6fa30e86e9a7fc392477714"
+    },
+    "install.sh": {
+      "reason": "Detect existing installations, container names, and database hosts during safe migration.",
+      "count": 3,
+      "sha256": "07f0971973b85f2354bda93084ab0afddb3d31be8703ed6ac16af40952c8a61a"
+    },
+    "scripts/check-branding.cjs": {
+      "reason": "Scanner patterns recognize dependency identifiers and prohibited legacy branding.",
+      "count": 5,
+      "sha256": "1674f429e725dc1affdc818a4527afe38c371fe8857730651ba0b263be770991"
+    },
+    "scripts/subscription-diff/matrix.mjs": {
+      "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
+      "count": 1,
+      "sha256": "ec9291fedf4d35cb8d920cd35a81dd9123bdac02cd8378fffb84dedb016e9de5"
+    },
+    "scripts/subscription-diff/prom-vectors.mjs": {
+      "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
+      "count": 22,
+      "sha256": "2b43d4d9a62ed8c7db7cd8d68ecbb80195a7c5b434dbc5b6be9f371a32d32a25"
+    },
+    "scripts/subscription-diff/setup-upstream.sh": {
+      "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
+      "count": 1,
+      "sha256": "41e71be1c4e7596d49a2999af26cfdcd89c2c55acd4a83e383a822bdf0d18561"
+    },
+    "scripts/subscription-diff/yaml-vectors.mjs": {
+      "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
+      "count": 1,
+      "sha256": "379d140ab3437802b4bf936e3b3736306ee4164dd89393dba05d46d05008ba50"
+    }
+  }
+}

@@ -1,4 +1,4 @@
-// Package contracts owns the pinned Remnawave endpoint scope registry.
+// Package contracts owns the pinned upstream endpoint scope registry.
 package contracts
 
 import (

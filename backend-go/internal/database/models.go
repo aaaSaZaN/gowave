@@ -342,9 +342,9 @@ func (ConfigProfileInboundsToNodes) TableName() string {
 	return "config_profile_inbounds_to_nodes"
 }
 
-type RemnawaveSetting struct {
+type PanelSetting struct {
 	ID                  uint   `gorm:"primaryKey" json:"id"`
-	Title               string `gorm:"type:varchar(128);default:'Remnawave'"`
+	Title               string `gorm:"type:varchar(128);default:'GoWave'"`
 	LogoURL             string `gorm:"type:varchar(255)" json:"logoUrl"`
 	IsLoginAllowed      bool   `gorm:"default:true" json:"isLoginAllowed"`
 	IsRegisterAllowed   bool   `gorm:"default:false" json:"isRegisterAllowed"`
@@ -355,7 +355,7 @@ type RemnawaveSetting struct {
 	BrandingSettings    string `gorm:"type:text;default:'{}'"`
 }
 
-func (RemnawaveSetting) TableName() string {
+func (PanelSetting) TableName() string {
 	return "remnawave_settings"
 }
 

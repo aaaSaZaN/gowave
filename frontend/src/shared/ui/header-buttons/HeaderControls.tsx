@@ -4,7 +4,6 @@ import { GithubControl } from './GithubControl'
 import { LanguageControl } from './LanguageControl'
 import { LogoutControl } from './LogoutControl'
 import { RecapControl } from './RecapControl'
-import { SupportControl } from './SupportControl'
 import { VersionControl } from './VersionControl'
 
 interface HeaderControlsProps extends BoxProps {
@@ -15,14 +14,12 @@ interface HeaderControlsProps extends BoxProps {
     withLanguage?: boolean
     withLogout?: boolean
     withRecap?: boolean
-    withSupport?: boolean
     withVersion?: boolean
 }
 
 export function HeaderControls({
     githubLink,
     withGithub = true,
-    withSupport = true,
     withLogout = true,
     withLanguage = true,
     withVersion = true,
@@ -33,8 +30,6 @@ export function HeaderControls({
 }: HeaderControlsProps) {
     return (
         <Group gap="xs" {...others}>
-            {withSupport && <SupportControl />}
-
             {withVersion && <VersionControl />}
             {withGithub && (
                 <GithubControl isLoading={isGithubLoading} link={githubLink!} stars={stars} />

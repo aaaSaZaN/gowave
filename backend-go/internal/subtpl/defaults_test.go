@@ -3,13 +3,14 @@ package subtpl
 import (
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 
 	"gowave/internal/database"
 	"gowave/internal/subtpl/ojson"
 )
 
-// The defaults Gowave seeds must equal upstream's DEFAULT_TEMPLATE_* (copied
+// Apart from the display label, seeded defaults must equal upstream DEFAULT_TEMPLATE_* (copied
 // into testdata/matrix.json by scripts/subscription-diff/matrix.mjs).
 func TestSeededTemplatesMatchUpstream(t *testing.T) {
 	data, err := os.ReadFile("testdata/matrix.json")
@@ -43,9 +44,11 @@ func TestSeededTemplatesMatchUpstream(t *testing.T) {
 			}
 			got, _ = value.(*ojson.Object)
 		}
-		if ojson.StringifyIndent(got, 1) != ojson.StringifyIndent(want, 1) {
+		// Keep the original fixture intact; only stock display labels are rebranded.
+		expected := strings.ReplaceAll(ojson.StringifyIndent(want, 1), "→ Remnawave", "→ GoWave")
+		if ojson.StringifyIndent(got, 1) != expected {
 			t.Errorf("%s default template differs from upstream", kind)
-			reportDiff(t, ojson.StringifyIndent(got, 1), ojson.StringifyIndent(want, 1))
+			reportDiff(t, ojson.StringifyIndent(got, 1), expected)
 		}
 	}
 }

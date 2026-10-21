@@ -112,7 +112,7 @@ export const CreateNodeStep3Status = ({ nodeUuid, onClose }: IProps) => {
 
                                 <Text c="dimmed" fw={600} size="sm" ta="center">
                                     {t(
-                                        'create-node-step-3-status.remnawave-will-try-to-reconnect-shortly'
+                                        'create-node-step-3-status.gowave-will-try-to-reconnect-shortly'
                                     )}
                                 </Text>
                             </>

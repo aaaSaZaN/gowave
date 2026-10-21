@@ -29,7 +29,7 @@ func GenerateXrayJSON(params XrayJSONParams) string {
 			}
 		}
 		if ojson.Truthy(base.Value("remnawave")) {
-			if injected := applyRemnawaveInjector(base, host, params.Hosts, params.IsExtendedClient); injected != nil {
+			if injected := applyTemplateInjector(base, host, params.Hosts, params.IsExtendedClient); injected != nil {
 				configs = append(configs, injected)
 			}
 			continue
@@ -288,7 +288,7 @@ func sharesTag(a, b []string) bool {
 	return false
 }
 
-func applyRemnawaveInjector(base *ojson.Object, host *Resolved, all []*Resolved, isExtendedClient bool) any {
+func applyTemplateInjector(base *ojson.Object, host *Resolved, all []*Resolved, isExtendedClient bool) any {
 	injector, _ := base.Value("remnawave").(*ojson.Object)
 	if injector == nil {
 		return nil

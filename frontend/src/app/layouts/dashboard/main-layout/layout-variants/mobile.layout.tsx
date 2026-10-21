@@ -3,7 +3,7 @@ import { useClickOutside, useDisclosure } from '@mantine/hooks'
 
 import { HeaderControls } from '@shared/ui'
 
-import { IRemnawaveInfo } from '@entities/dashboard/updates-store'
+import { IGowaveInfo } from '@entities/dashboard/updates-store'
 
 import { DASHBOARD_LINKS } from '../layout-shared'
 import { SidebarShellLayout } from './sidebar-shell.layout'
@@ -12,11 +12,11 @@ interface IProps {
     headerControls: React.ReactNode
     isLoadingUpdates: boolean
     isSocialButtons: boolean
-    remnawaveInfo: IRemnawaveInfo
+    gowaveInfo: IGowaveInfo
 }
 
 export const MobileLayout = (props: IProps) => {
-    const { headerControls, isLoadingUpdates, isSocialButtons, remnawaveInfo } = props
+    const { headerControls, isLoadingUpdates, isSocialButtons, gowaveInfo } = props
 
     const [opened, { toggle }] = useDisclosure()
 
@@ -35,7 +35,7 @@ export const MobileLayout = (props: IProps) => {
                         <HeaderControls
                             {...DASHBOARD_LINKS}
                             isGithubLoading={isLoadingUpdates}
-                            stars={remnawaveInfo.starsCount || undefined}
+                            stars={gowaveInfo.starsCount || undefined}
                             withLanguage={false}
                             withLogout={false}
                             withVersion={false}

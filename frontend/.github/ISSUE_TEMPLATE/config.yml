@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 🐞 Bug Tracker Remnawave
-    url: https://f.docs.rw/c/bug-reports/13
+  - name: 🐞 Bug Tracker GoWave
+    url: https://github.com/aaaSaZaN/gowave/issues
     about: Report a bug — here
-  - name: 💡 Feature Request Remnawave
-    url: https://f.docs.rw/c/fr/7
+  - name: 💡 Feature Request GoWave
+    url: https://github.com/aaaSaZaN/gowave/issues
     about: Suggest a feature — here

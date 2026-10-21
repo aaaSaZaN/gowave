@@ -42,9 +42,9 @@ export * from './nodes/nodes.query.hooks'
 export * from './passkeys/passkeys.hooks'
 
 export * from './passkeys/passkeys.query.hooks'
-export * from './remnawave-settings/remnawave-settings.mutation.hooks'
+export * from './gowave-settings/gowave-settings.mutation.hooks'
 
-export * from './remnawave-settings/remnawave-settings.query.hooks'
+export * from './gowave-settings/gowave-settings.query.hooks'
 export * from './snippets/snippets.mutation.hooks'
 
 export * from './snippets/snippets.query.hooks'

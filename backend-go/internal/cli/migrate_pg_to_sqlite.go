@@ -19,7 +19,7 @@ import (
 	"gowave/internal/database"
 )
 
-var requiredRemnawaveTables = map[string]bool{
+var requiredUpstreamTables = map[string]bool{
 	"users":                   true,
 	"user_traffic":            true,
 	"nodes":                   true,
@@ -47,7 +47,7 @@ type sqliteColumn struct {
 	Name string `gorm:"column:name"`
 }
 
-func DetectRemnawavePostgresDSN() (string, error) {
+func DetectUpstreamPostgresDSN() (string, error) {
 	candidates := []string{
 		"/opt/remnawave/.env",
 		"../backend-ts/.env",
@@ -85,7 +85,7 @@ func DetectRemnawavePostgresDSN() (string, error) {
 			}
 		}
 
-		panelEnv := isRemnawaveEnvPath(path)
+		panelEnv := isUpstreamEnvPath(path)
 		for _, candidate := range []string{directURL, fullURL} {
 			if candidate == "" {
 				continue
@@ -120,10 +120,10 @@ func DetectRemnawavePostgresDSN() (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("no Remnawave PostgreSQL configuration automatically detected")
+	return "", fmt.Errorf("no upstream panel PostgreSQL configuration automatically detected")
 }
 
-func isRemnawaveEnvPath(path string) bool {
+func isUpstreamEnvPath(path string) bool {
 	cleanPath := filepath.ToSlash(filepath.Clean(path))
 	return cleanPath == "/opt/remnawave/.env" ||
 		strings.HasPrefix(cleanPath, "../backend-ts/") ||
@@ -133,10 +133,10 @@ func isRemnawaveEnvPath(path string) bool {
 
 // MigratePostgresToSQLite reads the source in a read-only transaction and builds
 // a fresh SQLite database beside the requested destination. It never rewrites
-// the source DB, GoWave .env, or Remnawave containers.
+// the source DB, GoWave .env, or upstream containers.
 func MigratePostgresToSQLite(_ *config.Config, sourceDSN, destPath string) error {
 	if sourceDSN == "" {
-		detected, err := DetectRemnawavePostgresDSN()
+		detected, err := DetectUpstreamPostgresDSN()
 		if err != nil {
 			return err
 		}
@@ -207,9 +207,9 @@ func MigratePostgresToSQLite(_ *config.Config, sourceDSN, destPath string) error
 			for _, table := range tables {
 				tableSet[table] = struct{}{}
 			}
-			for table := range requiredRemnawaveTables {
+			for table := range requiredUpstreamTables {
 				if _, ok := tableSet[table]; !ok {
-					return fmt.Errorf("required Remnawave table %q does not exist", table)
+					return fmt.Errorf("required upstream panel table %q does not exist", table)
 				}
 			}
 
@@ -262,7 +262,7 @@ func MigratePostgresToSQLite(_ *config.Config, sourceDSN, destPath string) error
 	if normalizedNulls > 0 {
 		fmt.Printf("[i] %d NULL values in non-pointer Go model fields were mapped to their Go zero values.\n", normalizedNulls)
 	}
-	fmt.Println("The migrated database is ready to inspect before stopping the old Remnawave services.")
+	fmt.Println("The migrated database is ready to inspect before stopping the old upstream panel services.")
 	return nil
 }
 
@@ -448,12 +448,12 @@ func closeGormDB(db *gorm.DB) error {
 
 func MigratePGToSQLiteInteractive(cfg *config.Config, reader *bufio.Reader) {
 	fmt.Println("\n=======================================================")
-	fmt.Println("  Migrate Remnawave PostgreSQL data to GoWave SQLite  ")
+	fmt.Println("  Migrate upstream panel PostgreSQL data to GoWave SQLite  ")
 	fmt.Println("=======================================================")
 
-	detected, _ := DetectRemnawavePostgresDSN()
+	detected, _ := DetectUpstreamPostgresDSN()
 	if detected != "" {
-		fmt.Println("[*] Found a Remnawave PostgreSQL configuration.")
+		fmt.Println("[*] Found an upstream panel PostgreSQL configuration.")
 		fmt.Print("Press ENTER to use it, or type a custom PostgreSQL DSN: ")
 	} else {
 		fmt.Print("Enter PostgreSQL connection DSN: ")
@@ -477,6 +477,6 @@ func MigratePGToSQLiteInteractive(cfg *config.Config, reader *bufio.Reader) {
 		fmt.Printf("[-] Migration failed: %v\n", err)
 		return
 	}
-	fmt.Println("[*] The original PostgreSQL database and Remnawave services are untouched.")
-	fmt.Println("[*] Point GoWave to the validated SQLite file, restart it, and verify the panel before stopping Remnawave.")
+	fmt.Println("[*] The original PostgreSQL database and upstream panel services are untouched.")
+	fmt.Println("[*] Point GoWave to the validated SQLite file, restart it, and verify the panel before stopping the upstream panel.")
 }

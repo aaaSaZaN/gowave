@@ -20,7 +20,7 @@ const GetNodeGeocheckFeatureComponent = (props: IProps) => {
     const nodeVersion = node.versions?.node
 
     const isSupported = useMemo(() => {
-        // Remnanode (Go) has its own version line, which the panel marks with "(Go)";
+        // GoWave Node (Go) has its own version line, which the panel marks with "(Go)";
         // every release of it serves geocheck.
         if (nodeVersion?.includes('(Go)')) {
             return true

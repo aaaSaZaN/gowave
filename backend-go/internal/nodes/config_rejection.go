@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// xrayConfigInvalidPrefix starts the error Remnanode (Go) returns when
+// xrayConfigInvalidPrefix starts the error GoWave Node returns when
 // "xray run -test" rejects a config.
 const xrayConfigInvalidPrefix = "invalid Xray configuration"
 

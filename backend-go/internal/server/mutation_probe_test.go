@@ -75,7 +75,7 @@ func responseField(raw json.RawMessage, path ...string) string {
 // scripts/validate-contract.cjs (GOWAVE_PROBE_OUT + "-mutations.json").
 func TestContractMutationProbe(t *testing.T) {
 	e := newProbeEnv(t)
-	if err := e.db.Model(&database.RemnawaveSetting{}).Where("id = 1").
+	if err := e.db.Model(&database.PanelSetting{}).Where("id = 1").
 		Update("passkey_settings", `{"enabled":true,"rpId":"panel.example.com","origin":"https://panel.example.com"}`).Error; err != nil {
 		t.Fatal(err)
 	}

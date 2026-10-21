@@ -13,7 +13,7 @@ import (
 func TestSettingsDiscardRemovedOAuthProvider(t *testing.T) {
 	db := testdb.Open(t)
 	h := NewHandler(db)
-	if err := db.Model(&database.RemnawaveSetting{}).Where("id=1").Update("oauth2_settings", `{"yandex":{"enabled":true,"clientId":"old-client","clientSecret":"old-secret"},"github":{"enabled":true}}`).Error; err != nil {
+	if err := db.Model(&database.PanelSetting{}).Where("id=1").Update("oauth2_settings", `{"yandex":{"enabled":true,"clientId":"old-client","clientSecret":"old-secret"},"github":{"enabled":true}}`).Error; err != nil {
 		t.Fatal(err)
 	}
 	response := httptest.NewRecorder()
@@ -39,7 +39,7 @@ func TestSettingsDiscardRemovedOAuthProvider(t *testing.T) {
 	if response.Code >= 400 {
 		t.Fatalf("update: %d %s", response.Code, response.Body.String())
 	}
-	var saved database.RemnawaveSetting
+	var saved database.PanelSetting
 	if err := db.First(&saved).Error; err != nil {
 		t.Fatal(err)
 	}

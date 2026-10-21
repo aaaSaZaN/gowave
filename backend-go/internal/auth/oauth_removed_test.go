@@ -13,7 +13,7 @@ import (
 func TestRemovedYandexCannotBeEnabledBySavedSettings(t *testing.T) {
 	db := securityDB(t)
 	settings := `{"yandex":{"enabled":true,"clientId":"old-client","clientSecret":"old-secret","allowedEmails":["admin@example.com"]},"github":{"enabled":true,"clientId":"github-client","clientSecret":"github-secret"}}`
-	if err := db.Model(&database.RemnawaveSetting{}).Where("id=1").Update("oauth2_settings", settings).Error; err != nil {
+	if err := db.Model(&database.PanelSetting{}).Where("id=1").Update("oauth2_settings", settings).Error; err != nil {
 		t.Fatal(err)
 	}
 

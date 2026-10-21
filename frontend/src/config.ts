@@ -1,10 +1,9 @@
 export const app = {
-    name: 'Remnawave',
-    githubRepo: 'https://github.com/remnawave/backend',
-    githubStars: 'https://github.com/remnawave/backend/stargazers',
-    githubIssues: 'https://github.com/remnawave/backend/issues',
-    githubOrg: 'https://github.com/remnawave',
-    githubDonation: 'https://github.com/remnawave/backend#donation',
+    name: 'GoWave',
+    githubRepo: 'https://github.com/aaaSaZaN/gowave',
+    githubStars: 'https://github.com/aaaSaZaN/gowave/stargazers',
+    githubIssues: 'https://github.com/aaaSaZaN/gowave/issues',
+    githubOrg: 'https://github.com/aaaSaZaN',
     configEditor: {
         wasmUrl: '/assets/main.wasm',
         wasmJsUrl: '/assets/wasm_exec.js',

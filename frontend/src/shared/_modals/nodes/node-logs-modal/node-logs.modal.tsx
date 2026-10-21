@@ -18,13 +18,7 @@ import {
 import { GetNodeCommand } from '@remnawave/backend-contract'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import {
-    TbCheck,
-    TbCopy,
-    TbListDetails,
-    TbRefresh,
-    TbTerminal2
-} from 'react-icons/tb'
+import { TbCheck, TbCopy, TbListDetails, TbRefresh, TbTerminal2 } from 'react-icons/tb'
 
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { instance } from '@shared/api/axios'
@@ -82,11 +76,7 @@ export const NodeLogsModal = NiceModal.create((props: IProps) => {
         if (line.includes('[Warning]') || line.includes('WARN')) {
             return 'var(--mantine-color-yellow-4)'
         }
-        if (
-            line.includes('[Error]') ||
-            line.includes('ERROR') ||
-            line.includes('FATAL')
-        ) {
+        if (line.includes('[Error]') || line.includes('ERROR') || line.includes('FATAL')) {
             return 'var(--mantine-color-red-4)'
         }
         if (line.includes('[Info]') || line.includes('INFO')) {
@@ -128,7 +118,7 @@ export const NodeLogsModal = NiceModal.create((props: IProps) => {
                         <SegmentedControl
                             data={[
                                 { label: 'Xray Core', value: 'xray' },
-                                { label: 'Remnanode (Go)', value: 'node' }
+                                { label: 'GoWave Node (Go)', value: 'node' }
                             ]}
                             onChange={(val) => setActiveTab(val as 'xray' | 'node')}
                             size="xs"

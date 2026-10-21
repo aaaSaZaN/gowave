@@ -8,7 +8,7 @@ interface IProps {
     port?: number
 }
 
-const NODE_INSTALL_URL = 'https://raw.githubusercontent.com/aaaSaZaN/remnanode-go/main/install.sh'
+const NODE_INSTALL_URL = 'https://raw.githubusercontent.com/aaaSaZaN/gowave-node/main/install.sh'
 
 // Download the complete migration installer before the shell executes it.
 const buildNodeInstallCommand = (secretKey: string, port?: number) =>

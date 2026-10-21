@@ -28,13 +28,13 @@ export const systemQueryKeys = createQueryKeys('system', {
     getNodesStatistics: {
         queryKey: null
     },
-    getRemnawaveHealth: {
+    getGowaveHealth: {
         queryKey: null
     },
     getNodesMetrics: {
         queryKey: null
     },
-    getRemnawaveMetadata: {
+    getGowaveMetadata: {
         queryKey: null
     },
     getRecap: {
@@ -93,16 +93,16 @@ export const useGetNodesStatisticsCommand = createGetQueryHook({
     errorHandler: (error) => errorHandler(error, 'Get Nodes Statistics')
 })
 
-export const useGetRemnawaveHealth = createGetQueryHook({
+export const useGetGowaveHealth = createGetQueryHook({
     endpoint: GetRemnawaveHealthCommand.TSQ_url,
     responseSchema: GetRemnawaveHealthCommand.ResponseSchema,
-    getQueryKey: () => systemQueryKeys.getRemnawaveHealth.queryKey,
+    getQueryKey: () => systemQueryKeys.getGowaveHealth.queryKey,
     rQueryParams: {
         placeholderData: keepPreviousData,
         staleTime: sToMs(10),
         refetchInterval: sToMs(10)
     },
-    errorHandler: (error) => errorHandler(error, 'Get Remnawave Health')
+    errorHandler: (error) => errorHandler(error, 'Get Gowave Health')
 })
 
 export const useGetNodesMetrics = createGetQueryHook({
@@ -117,16 +117,16 @@ export const useGetNodesMetrics = createGetQueryHook({
     errorHandler: (error) => errorHandler(error, 'Get Nodes Metrics')
 })
 
-export const useGetRemnawaveMetadata = createGetQueryHook({
+export const useGetGowaveMetadata = createGetQueryHook({
     endpoint: GetMetadataCommand.TSQ_url,
     responseSchema: GetMetadataCommand.ResponseSchema,
-    getQueryKey: () => systemQueryKeys.getRemnawaveMetadata.queryKey,
+    getQueryKey: () => systemQueryKeys.getGowaveMetadata.queryKey,
     rQueryParams: {
         placeholderData: keepPreviousData,
         refetchOnMount: false,
         staleTime: sToMs(3_600)
     },
-    errorHandler: (error) => errorHandler(error, 'Get Remnawave Metadata')
+    errorHandler: (error) => errorHandler(error, 'Get Gowave Metadata')
 })
 
 export const useGetRecap = createGetQueryHook({

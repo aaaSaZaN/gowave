@@ -13,15 +13,15 @@ const OpenNodeUpdateFeatureComponent = (props: IProps) => {
     const { node } = props
 
     const isGoNode =
-        (node as any)?.versions?.nodeType === "go" ||
-        (node as any)?.versions?.node?.includes("(Go)")
+        (node as any)?.versions?.nodeType === 'go' ||
+        (node as any)?.versions?.node?.includes('(Go)')
 
     if (!isGoNode) {
         return null
     }
 
     return (
-        <Tooltip label="Обновить Remnanode">
+        <Tooltip label="Обновить GoWave Node">
             <ActionIcon
                 color="blue"
                 onClick={() => {

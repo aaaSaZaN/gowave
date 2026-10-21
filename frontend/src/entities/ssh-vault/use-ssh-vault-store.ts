@@ -199,7 +199,7 @@ function generatedKey(nodeUuid: string): INewNodeKey {
     return {
         algo: 'ssh-ed25519',
         material: pair.privateKey,
-        publicKeyLine: toOpenSshPublicKey(pair.publicKey, `remnawave:${nodeUuid}`)
+        publicKeyLine: toOpenSshPublicKey(pair.publicKey, `gowave:${nodeUuid}`)
     }
 }
 
@@ -615,7 +615,7 @@ export const useSshVaultStore = create<IActions & IState>()(
                     storeNodeKey(get().dataKey, nodeUuid, generatedKey(nodeUuid)),
 
                 importNodeKey: async (nodeUuid, privateKey) => {
-                    const parsed = await parseSshPrivateKey(privateKey, `remnawave:${nodeUuid}`)
+                    const parsed = await parseSshPrivateKey(privateKey, `gowave:${nodeUuid}`)
 
                     return storeNodeKey(get().dataKey, nodeUuid, { ...parsed, imported: true })
                 },

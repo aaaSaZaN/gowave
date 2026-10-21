@@ -1,18 +1,5 @@
-## Remnawave Frontend
+# GoWave frontend
 
-Frontend for Remnawave Panel..
-
-Learn more about Remnawave Panel [here](https://docs.rw/).
-
-# Contributors
-
-Check [open issues](https://github.com/remnawave/panel/issues) to help the progress of this project.
-
-<p align="center">
-Thanks to the all contributors who have helped improve Remnawave:
-</p>
-<p align="center">
-<a href="https://github.com/remnawave/frontend/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=remnawave/frontend" />
-</a>
-</p>
+React frontend for [GoWave](https://github.com/aaaSaZaN/gowave).
+See the root README for installation and development instructions.
+Upstream copyright notices are preserved in [LICENCE](LICENCE).
