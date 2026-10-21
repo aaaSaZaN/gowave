@@ -127,6 +127,6 @@ Fixture regeneration has a separate runtime requirement: `setup-upstream.sh <wor
 - Running the executable as root attempts to create/update `/usr/local/bin/gowave`. `scripts/migrate-node.sh` is a privileged systemd installer for a separate GoWave Node binary and can stop a Docker node; it is not a local development setup script.
 - `.github/workflows/release.yml` triggers on `v*` tags and publishes separate frontend tarballs and Linux amd64/arm64 backend binaries. Version metadata is injected with `-X gowave/internal/system.AppVersion=${VERSION}`. The release first runs `ci.yml` (via `workflow_call`), verifies the embedded version with `--version`, publishes `SHA256SUMS`, and pushes a multi-arch image to `ghcr.io/<owner>/gowave`; tags containing `-` become pre-releases. The frontend Makefile's `tag-release` creates `v<package.json version>`.
 
-## Branding
+## Branding and dashboard location
 
-Use GoWave for project-owned names. Preserve dependency identifiers, license attribution, and the exact legacy protocol/database/migration identifiers recorded in `scripts/branding-allowlist.json`; run `node scripts/check-branding.cjs` after changes.
+Use GoWave for project-owned names. Preserve dependency identifiers, license attribution, and the exact legacy protocol/database/migration identifiers recorded in `scripts/branding-allowlist.json`; run `node scripts/check-branding.cjs` after changes. `PANEL_BASE_PATH` moves only dashboard routes and static assets; API and public subscription URLs remain unchanged.

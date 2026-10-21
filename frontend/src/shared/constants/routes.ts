@@ -1,3 +1,4 @@
+import { panelUrl } from '@shared/lib/panel-path'
 export const ROUTES = {
     AUTH: {
         ROOT: '/auth',
@@ -68,4 +69,4 @@ export const OPEN_ENTITY = {
 export type TOpenEntity = (typeof OPEN_ENTITY)[keyof typeof OPEN_ENTITY]
 
 export const buildOpenEntityUrl = (entity: TOpenEntity, id: number | string) =>
-    `${window.location.origin}${ROUTES.DASHBOARD.OPEN_ENTITY.replace(':entity', entity).replace(':id', String(id))}`
+    `${window.location.origin}${panelUrl(ROUTES.DASHBOARD.OPEN_ENTITY.replace(':entity', entity).replace(':id', String(id)))}`

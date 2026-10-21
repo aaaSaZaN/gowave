@@ -1,6 +1,8 @@
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import { FC } from 'react'
 
+import { panelUrl } from '@shared/lib/panel-path'
+
 import { IProps } from './interfaces/props.interface'
 
 export const LottieStopShared: FC<IProps> = (props) => {
@@ -15,7 +17,7 @@ export const LottieStopShared: FC<IProps> = (props) => {
                     autoResize: true,
                     devicePixelRatio: window.devicePixelRatio || 2
                 }}
-                src="/lotties/stop-v2.lottie"
+                src={panelUrl('/lotties/stop-v2.lottie')}
             />
         </div>
     )

@@ -1,6 +1,8 @@
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import { FC } from 'react'
 
+import { panelUrl } from '@shared/lib/panel-path'
+
 import { IProps } from './interfaces/props.interface'
 
 export const LottieJailShared: FC<IProps> = (props) => {
@@ -15,7 +17,7 @@ export const LottieJailShared: FC<IProps> = (props) => {
                     autoResize: true,
                     devicePixelRatio: window.devicePixelRatio || 2
                 }}
-                src="/lotties/jail.lottie"
+                src={panelUrl('/lotties/jail.lottie')}
             />
         </div>
     )

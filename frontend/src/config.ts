@@ -1,3 +1,4 @@
+import { panelUrl } from '@shared/lib/panel-path'
 export const app = {
     name: 'GoWave',
     githubRepo: 'https://github.com/aaaSaZaN/gowave',
@@ -5,13 +6,13 @@ export const app = {
     githubIssues: 'https://github.com/aaaSaZaN/gowave/issues',
     githubOrg: 'https://github.com/aaaSaZaN',
     configEditor: {
-        wasmUrl: '/assets/main.wasm',
-        wasmJsUrl: '/assets/wasm_exec.js',
-        jsonSchemaUrl: '/assets/xray.schema.json',
-        jsonSchemaCnUrl: '/assets/xray.schema.cn.json'
+        wasmUrl: panelUrl('/assets/main.wasm'),
+        wasmJsUrl: panelUrl('/assets/wasm_exec.js'),
+        jsonSchemaUrl: panelUrl('/assets/xray.schema.json'),
+        jsonSchemaCnUrl: panelUrl('/assets/xray.schema.cn.json')
     },
     templateEditor: {
-        singboxJsonSchemaUrl: '/assets/singbox.schema.json',
-        mihomoYamlSchemaUrl: '/assets/mihomo.schema.json'
+        singboxJsonSchemaUrl: panelUrl('/assets/singbox.schema.json'),
+        mihomoYamlSchemaUrl: panelUrl('/assets/mihomo.schema.json')
     }
 }

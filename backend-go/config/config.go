@@ -25,6 +25,7 @@ type Config struct {
 	DatabaseURL     string
 	FrontEndDomain  string
 	PanelDomain     string
+	PanelBasePath   string
 	SubPublicDomain string
 	JWTLifetime     int
 
@@ -144,6 +145,7 @@ func Load() *Config {
 		DatabaseURL:     dbURL,
 		FrontEndDomain:  feDomain,
 		PanelDomain:     panelDomain,
+		PanelBasePath:   os.Getenv("PANEL_BASE_PATH"),
 		SubPublicDomain: subDomain,
 		JWTLifetime:     jwtLifetime,
 		MetricsUser:     os.Getenv("METRICS_USER"),
@@ -256,7 +258,27 @@ func (c *Config) IsLoopbackHost() bool {
 }
 
 // Validate prevents accidentally deploying with a public or weak signing key.
+// NormalizePanelBasePath validates a dashboard-only mount point.
+func NormalizePanelBasePath(value string) (string, error) {
+	if value == "" || value == "/" {
+		return "/", nil
+	}
+	if !regexp.MustCompile(`^/[a-zA-Z0-9_-]+(/[a-zA-Z0-9_-]+)*/?$`).MatchString(value) {
+		return "", fmt.Errorf("PANEL_BASE_PATH must be an absolute path with letters, numbers, underscores, and hyphens")
+	}
+	first := strings.Split(strings.Trim(value, "/"), "/")[0]
+	if first == "api" || first == "metrics" {
+		return "", fmt.Errorf("PANEL_BASE_PATH overlaps a backend endpoint")
+	}
+	return strings.TrimRight(value, "/") + "/", nil
+}
+
 func (c *Config) Validate() error {
+	base, err := NormalizePanelBasePath(c.PanelBasePath)
+	if err != nil {
+		return err
+	}
+	c.PanelBasePath = base
 	if len(c.AppSecret) < 32 || c.AppSecret == "change_me" || c.AppSecret == "remnawave-default-secret-key-32chars-minimum!!" {
 		return fmt.Errorf("APP_SECRET must be a private, randomly generated value of at least 32 characters")
 	}

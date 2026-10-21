@@ -485,39 +485,9 @@ func NewApp(cfg *config.Config, db *gorm.DB) *App {
 		}
 	}
 	if staticDir != "" {
-		fs := http.FileServer(http.Dir(staticDir))
-		spa := func(w http.ResponseWriter, r *http.Request) {
-			path := filepath.Join(staticDir, r.URL.Path)
-			if info, err := os.Stat(path); err == nil && !info.IsDir() {
-				if strings.HasSuffix(r.URL.Path, ".html") {
-					w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-				}
-				fs.ServeHTTP(w, r)
-				return
-			}
-
-			// If requested with /assets/ prefix, check directly in root of staticDir:
-			// (handles schemas like /assets/xray.schema.json, /assets/main.wasm, /assets/wasm_exec.js)
-			if strings.HasPrefix(r.URL.Path, "/assets/") {
-				altPath := filepath.Join(staticDir, strings.TrimPrefix(r.URL.Path, "/assets/"))
-				if info, err := os.Stat(altPath); err == nil && !info.IsDir() {
-					http.ServeFile(w, r, altPath)
-					return
-				}
-			}
-
-			// If an asset / file was requested (has file extension), do NOT return index.html
-			ext := filepath.Ext(r.URL.Path)
-			if ext != "" && ext != ".html" {
-				http.NotFound(w, r)
-				return
-			}
-
-			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-			http.ServeFile(w, r, filepath.Join(staticDir, "index.html"))
-		}
-		r.Get("/*", spa)
-		r.Head("/*", spa)
+		spa := dashboardHandler(staticDir, cfg.PanelBasePath)
+		r.Get("/*", spa.ServeHTTP)
+		r.Head("/*", spa.ServeHTTP)
 	}
 
 	return &App{Router: r, wait: subHandler.WaitHistoryWriter, start: func(ctx context.Context) {

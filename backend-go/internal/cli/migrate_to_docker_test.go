@@ -58,6 +58,7 @@ func TestResolveSourceSQLite(t *testing.T) {
 
 func TestBuildDockerEnvKeepsSecretsAndRendersLiterally(t *testing.T) {
 	old := map[string]string{
+		"PANEL_BASE_PATH":    "/private/panel/",
 		"APP_SECRET":         "s3cr$t-with-dollar_and_more_than_32_chars!",
 		"APP_PORT":           "3000",
 		"DB_DRIVER":          "sqlite",
@@ -73,6 +74,7 @@ func TestBuildDockerEnvKeepsSecretsAndRendersLiterally(t *testing.T) {
 	}
 	for key, value := range map[string]string{
 		"APP_SECRET":         old["APP_SECRET"],
+		"PANEL_BASE_PATH":    old["PANEL_BASE_PATH"],
 		"TELEGRAM_BOT_TOKEN": old["TELEGRAM_BOT_TOKEN"],
 		"GOWAVE_COMPOSE_DIR": "/opt/gowave-docker",
 		"POSTGRES_PASSWORD":  "pgpass",

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 
 import { useGetAuthStatus } from '@shared/api/hooks/auth/auth.query.hooks'
 import { ROUTES } from '@shared/constants'
+import { panelUrl } from '@shared/lib/panel-path'
 
 import { Logo } from '../logo'
 import classes from './sidebar.module.css'
@@ -21,7 +22,7 @@ export const SidebarLogoShared = () => {
             <Image
                 alt="logo"
                 className={classes.fadeIn}
-                fallbackSrc="/favicons/logo.svg"
+                fallbackSrc={panelUrl('/favicons/logo.svg')}
                 fit="contain"
                 onClick={handleClick}
                 src={authStatus.branding.logoUrl}

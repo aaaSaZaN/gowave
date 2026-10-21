@@ -39,6 +39,7 @@ import {
 
 import { ErrorBoundaryHoc } from '@shared/hocs/error-boundary'
 import { AuthGuard } from '@shared/hocs/guards/auth-guard'
+import { panelBasePath } from '@shared/lib/panel-path'
 
 import { ROUTES } from '../../shared/constants'
 import { AuthLayout } from '../layouts/auth'
@@ -188,7 +189,8 @@ const router = createBrowserRouter(
                 <Route element={<NotFoundPageComponent />} path="*" />
             </Route>
         </Route>
-    )
+    ),
+    { basename: panelBasePath }
 )
 export function Router() {
     return <RouterProvider router={router} />
