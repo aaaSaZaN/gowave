@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 // Dependency identifiers and attribution are allowed. Other retained identifiers
 // are recorded by file and content digest so additions require explicit review.
 const fs = require('node:fs');

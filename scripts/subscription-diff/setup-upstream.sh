@@ -23,7 +23,7 @@ if [ ! -d upstream/node_modules ]; then
     git -C "$REPO" cat-file -e "$COMMIT" 2>/dev/null || git -C "$REPO" fetch --quiet origin
     rm -rf upstream && mkdir upstream
     git -C "$REPO" archive "$COMMIT" | tar -x -C upstream
-    (cd upstream && npm ci --ignore-scripts --no-audit --no-fund)
+    (cd upstream && bun install --frozen-lockfile --ignore-scripts)
     (cd upstream && PATH="$PWD/node_modules/.bin:$PATH" node node_modules/prisma/build/index.js generate --no-engine >/dev/null)
 fi
 echo "UPSTREAM_DIR=$WORK/upstream"

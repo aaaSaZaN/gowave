@@ -2,16 +2,15 @@
 
 # Stage 1: Build frontend
 # Frontend output is architecture-independent: build it once, natively.
-FROM --platform=$BUILDPLATFORM node:22-alpine AS frontend
+ARG BUN_VERSION=1.4.2
+FROM --platform=$BUILDPLATFORM docker.io/oven/bun:${BUN_VERSION}-alpine AS frontend
 
 WORKDIR /src/frontend
-RUN npm install -g pnpm@11
-
-COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY frontend/package.json frontend/bun.lock ./
+RUN bun install --frozen-lockfile
 
 COPY frontend/ ./
-RUN pnpm run build
+RUN bun run build
 
 # Stage 2: Build Go backend (same entrypoint and version flag as release.yml).
 # Cross-compile natively instead of running the compiler under QEMU.

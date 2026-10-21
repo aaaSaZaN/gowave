@@ -1,10 +1,10 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 // Exports every command from the pinned @remnawave/backend-contract as
 // {name, method, path, scope, kind, description} so Go tests can verify parity
-// without Node.js at runtime. Run from the repository root:
-//   node scripts/export-contract.cjs > backend-go/internal/contracts/commands.json
+// without a JavaScript runtime. Run from the repository root:
+//   bun scripts/export-contract.cjs > backend-go/internal/contracts/commands.json
 // With --openapi it prints an OpenAPI 3.1 document built from the zod schemas:
-//   node scripts/export-contract.cjs --openapi > backend-go/internal/contracts/openapi.json
+//   bun scripts/export-contract.cjs --openapi > backend-go/internal/contracts/openapi.json
 const path = require('path');
 
 (function main() {

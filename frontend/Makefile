@@ -25,19 +25,19 @@ clean:
 	rm -f $(MONACO_FILES)
 
 bump-patch:
-	npm version patch --no-git-tag-version
-	npm install
+	bun pm version patch --no-git-tag-version
+	bun install
 
 bump-minor:
-	npm version minor --no-git-tag-version
-	npm install
+	bun pm version minor --no-git-tag-version
+	bun install
 
 bump-major:
-	npm version major --no-git-tag-version
-	npm install
+	bun pm version major --no-git-tag-version
+	bun install
 
 tag-release:
-	@VERSION=$$(node -p "require('./package.json').version") && \
+	@VERSION=$$(bun -p "require('./package.json').version") && \
 	echo "Creating signed tag for version $$VERSION..." && \
 	git tag -s "v$$VERSION" -m "Release v$$VERSION" && \
 	git push origin --follow-tags && \

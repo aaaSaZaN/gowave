@@ -1,5 +1,5 @@
 {
-  "description": "Reviewed exceptions. Inspect matching lines with node scripts/check-branding.cjs --inspect before changing a digest. Dependency package identifiers and LICENSE/LICENCE are allowed separately.",
+  "description": "Reviewed exceptions. Inspect matching lines with bun scripts/check-branding.cjs --inspect before changing a digest. Dependency package identifiers and LICENSE/LICENCE are allowed separately.",
   "files": {
     "README.md": {
       "reason": "Original-project attribution; copyright and license provenance.",

@@ -35,27 +35,27 @@ jobs:
         id: tag
         uses: JinoArch/get-latest-tag@latest
 
-      - name: Setup Node
-        uses: actions/setup-node@v7
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: '24.19.0'
+          bun-version-file: frontend/package.json
 
       - name: Generate changelog
         id: changelog
         run: |
-          CHANGELOG=$(npx changelogen --from=${{ steps.tag.outputs.previousTag }} --to=${{ steps.tag.outputs.latestTag }} | sed '/^\[log\]/d')
+          CHANGELOG=$(bunx --bun changelogen --from=${{ steps.tag.outputs.previousTag }} --to=${{ steps.tag.outputs.latestTag }} | sed '/^\[log\]/d')
           echo "CHANGELOG<<EOF" >> $GITHUB_ENV
           echo "$CHANGELOG" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Install dependencies and build
         run: |
-          npm ci
-          npm run start:build
+          bun install --cwd frontend --frozen-lockfile
+          bun run --cwd frontend start:build
 
       - name: Create ZIP archive of /dist
         run: |
-          zip -r gowave-frontend.zip ./dist
+          (cd frontend && zip -r ../gowave-frontend.zip ./dist)
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631

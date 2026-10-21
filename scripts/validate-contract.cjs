@@ -1,8 +1,8 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 // Validates responses captured by the Go probe test against the pinned
 // @remnawave/backend-contract zod schemas.
 //   GOWAVE_PROBE_OUT=/tmp/probe.json go test ./internal/server -run Probe
-//   node scripts/validate-contract.cjs /tmp/probe.json
+//   bun scripts/validate-contract.cjs /tmp/probe.json
 const path = require('path');
 const fs = require('fs');
 const contract = require(path.resolve(__dirname, '../frontend/node_modules/@remnawave/backend-contract'));

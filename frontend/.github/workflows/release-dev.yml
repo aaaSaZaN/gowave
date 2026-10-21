@@ -30,29 +30,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup Node
-        uses: actions/setup-node@v7
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: '24.19.0'
+          bun-version-file: frontend/package.json
 
       - name: Install dependencies
         run: |
-          npm ci
+          bun install --cwd frontend --frozen-lockfile
 
       - name: Upload sources
         env:
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
           CROWDIN_API_TOKEN: ${{ secrets.CROWDIN_API_TOKEN }}
         run: |
-          npm run crowdin:upload
+          bun run --cwd frontend crowdin:upload
 
       - name: Build
         run: |
-          npm run start:build
+          bun run --cwd frontend start:build
 
       - name: Create ZIP archive of /dist
         run: |
-          zip -r gowave-frontend.zip ./dist
+          (cd frontend && zip -r ../gowave-frontend.zip ./dist)
 
       - name: Remove previous ZIP from release (if exists)
         env:

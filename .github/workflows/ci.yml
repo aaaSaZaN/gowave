@@ -74,39 +74,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          version: 11
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
+          bun-version-file: frontend/package.json
 
       - name: Install (locked)
         working-directory: frontend
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Branding references and installer behavior
         run: |
-          node scripts/check-branding.cjs
+          bun scripts/check-branding.cjs
           bash -n install.sh
           bash scripts/tests/installer.sh
 
       - name: Typecheck
         working-directory: frontend
-        run: pnpm run typecheck
+        run: bun run typecheck
 
       - name: Build
         working-directory: frontend
-        run: pnpm run build
+        run: bun run build
 
       - name: Contract fixture is current
         run: |
-          node scripts/export-contract.cjs > /tmp/commands.json
+          bun scripts/export-contract.cjs > /tmp/commands.json
           diff -u backend-go/internal/contracts/commands.json /tmp/commands.json
-          node scripts/export-contract.cjs --openapi > /tmp/openapi.json
+          bun scripts/export-contract.cjs --openapi > /tmp/openapi.json
           cmp backend-go/internal/contracts/openapi.json /tmp/openapi.json
 
       - uses: actions/download-artifact@v4
@@ -117,7 +111,7 @@ jobs:
       - name: Responses match contract schemas
         run: |
           for file in probe probe-mutations probe-pg probe-pg-mutations; do
-            node scripts/validate-contract.cjs ${{ runner.temp }}/$file.json
+            bun scripts/validate-contract.cjs ${{ runner.temp }}/$file.json
           done
 
   docker:

@@ -63,9 +63,11 @@ The main difference: regular expressions in rules and templates use RE2 (Go) syn
 
 ## Development
 
+Use Bun 1.4.2 (pinned in `frontend/package.json`) for frontend dependencies and scripts.
+
 ```bash
 git clone https://github.com/aaaSaZaN/gowave.git && cd gowave
-pnpm --dir frontend install --frozen-lockfile && pnpm --dir frontend build
+(cd frontend && bun install --frozen-lockfile && bun run build)
 cd backend-go && go test ./... && CGO_ENABLED=0 go build -o gowave ./cmd/server
 ```
 
@@ -113,5 +115,5 @@ from the installer menu. Panel removal does not remove the independent node.
 Project-owned branding uses GoWave. Required copyright notices, dependency
 identifiers and runtime resources, and legacy protocol/database/migration
 identifiers are retained for compatibility. Reviewed exceptions are recorded in
-`scripts/branding-allowlist.json`; run `node scripts/check-branding.cjs` to check
+`scripts/branding-allowlist.json`; run `bun scripts/check-branding.cjs` to check
 for unreviewed references.

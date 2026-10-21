@@ -5,7 +5,7 @@
 Gowave combines a Go backend with a React frontend. Compatibility with `@remnawave/backend-contract` is a core constraint, including endpoint coverage, response envelopes, status codes, and subscription output. The frontend currently pins contract version `3.4.15`; `internal/server/parity_test.go` also checks that version explicitly.
 
 - `backend-go/` is the Go module (`gowave`); run Go commands there, not at the repository root. Its `go.mod` declares Go `1.27.1`.
-- `frontend/` is a separate React/TypeScript/Vite application. CI uses Node 22 and pnpm 11 with `pnpm-lock.yaml`. A `package-lock.json` also exists, but CI installs with pnpm.
+- `frontend/` is a separate React/TypeScript/Vite application. Use Bun 1.4.2 for dependency installation and package scripts locally, in CI, and in Docker. `frontend/package.json` pins the version and `frontend/bun.lock` locks dependencies.
 - `scripts/` contains contract export/validation, subscription differential fixtures, and a node migration installer.
 - Root `README.md` documents installation, reverse proxy configuration, subscription-page deployment, and rescue/import commands, mostly in Russian. For defaults, consult executable configuration (`backend-go/config/config.go`); the default SQLite filename is `gowave.db`.
 
@@ -34,13 +34,14 @@ CI provides PostgreSQL 18. `internal/testdb.Open` creates a separate schema for 
 ### Frontend (working directory: `frontend`)
 
 ```sh
-pnpm install --frozen-lockfile
-pnpm run start:dev
-pnpm run typecheck
-pnpm run build
-pnpm run check
+bun install --frozen-lockfile
+bun run start:dev
+bun run typecheck
+bun run build
+bun run check
 ```
 
+- Commit dependency changes together with `bun.lock`; use `bun install` to update it. Package scripts use each tool's declared runtime; Oxfmt's HTML formatter requires Node.js.
 - `build` runs only `vite build`; it does **not** typecheck. CI runs `typecheck` separately. `start:build` runs TypeScript followed by the production build.
 - `check` runs oxfmt and oxlint. `format:fix` and `lint:fix` apply their respective fixes. CI currently runs typecheck/build/contract checks, not this lint/format command.
 - No frontend test script is defined. Backend tests and schema probes cover API compatibility.
@@ -52,9 +53,9 @@ pnpm run check
 After frontend dependencies are installed, run from the repository root:
 
 ```sh
-node scripts/export-contract.cjs > /tmp/commands.json
+bun scripts/export-contract.cjs > /tmp/commands.json
 diff -u backend-go/internal/contracts/commands.json /tmp/commands.json
-node scripts/export-contract.cjs --openapi > /tmp/openapi.json
+bun scripts/export-contract.cjs --openapi > /tmp/openapi.json
 cmp backend-go/internal/contracts/openapi.json /tmp/openapi.json
 ```
 
@@ -64,8 +65,8 @@ To capture and validate live handler responses:
 # From backend-go:
 GOWAVE_PROBE_OUT=/tmp/probe.json go test ./internal/server -run Probe -count=1
 # From the repository root:
-node scripts/validate-contract.cjs /tmp/probe.json
-node scripts/validate-contract.cjs /tmp/probe-mutations.json
+bun scripts/validate-contract.cjs /tmp/probe.json
+bun scripts/validate-contract.cjs /tmp/probe-mutations.json
 ```
 
 CI performs these checks for SQLite and PostgreSQL. The exporter and validator resolve the contract from `frontend/node_modules`; they do not require a root package install. When updating the pinned contract, regenerate the committed `commands.json` and `openapi.json` using the exporter and inspect parity tests and scope registries as well.
@@ -108,7 +109,7 @@ Use `internal/httpx` for upstream-compatible JSON: success is commonly `{"respon
 - The sample frontend environment points at port **3003** with override enabled, while the Go default and Vite proxy target are **3000**. Adjust environment values deliberately when setting up development.
 - TypeScript aliases for `@shared`, `@entities`, `@features`, `@widgets`, `@pages`, and `@public` are declared in `tsconfig.json`; Vite resolves those paths. Do not assume every formatter import group has a matching TypeScript alias.
 - Styling uses Mantine and colocated CSS modules. Formatting is defined by `.oxfmtrc.json`: four spaces for code, single quotes, no semicolons or trailing commas, and import sorting. Oxlint also enforces React hook/compiler rules and rejects explicit `any`.
-- Translations live in `public/locales`; `pnpm run toc` regenerates `@types/resources.ts` from English resources. Existing Crowdin scripts target the `dev` branch; the download script explicitly selects Afrikaans.
+- Translations live in `public/locales`; `bun run toc` regenerates `@types/resources.ts` from English resources. Existing Crowdin scripts target the `dev` branch; the download script explicitly selects Afrikaans.
 
 ## Tests and fixtures
 
@@ -116,7 +117,7 @@ Backend tests live beside their packages. `internal/server` includes route parit
 
 Subscription parity tests compare output against committed upstream fixtures under `internal/subtpl/testdata` and `internal/subscription`. The scripts in `scripts/subscription-diff` explain how to generate matrix, golden, crypto, YAML, and JavaScript vectors. Ordinary Go tests use committed fixtures without requiring upstream Node code.
 
-Fixture regeneration has a separate runtime requirement: `setup-upstream.sh <work-dir>` extracts a pinned upstream commit from `UPSTREAM_REPO` (legacy local checkout path) and downloads Node **24.21.0**. Its comment notes Node 26 breaks the upstream x25519 helper. Rendering pins time and randomness; preserve `TZ=UTC` and the documented generator invocation when refreshing golden outputs.
+Fixture regeneration has a separate runtime requirement: `setup-upstream.sh <work-dir>` extracts a pinned upstream commit from `UPSTREAM_REPO` (legacy local checkout path), installs dependencies with Bun, and downloads Node **24.21.0** solely for executing the upstream reference backend. Its comment notes Node 26 breaks the upstream x25519 helper. Rendering pins time and randomness; preserve `TZ=UTC` and the documented generator invocation when refreshing golden outputs.
 
 ## Runtime and deployment gotchas
 
@@ -129,4 +130,4 @@ Fixture regeneration has a separate runtime requirement: `setup-upstream.sh <wor
 
 ## Branding and dashboard location
 
-Use GoWave for project-owned names. Preserve dependency identifiers, license attribution, and the exact legacy protocol/database/migration identifiers recorded in `scripts/branding-allowlist.json`; run `node scripts/check-branding.cjs` after changes. `PANEL_BASE_PATH` moves only dashboard routes and static assets; API and public subscription URLs remain unchanged.
+Use GoWave for project-owned names. Preserve dependency identifiers, license attribution, and the exact legacy protocol/database/migration identifiers recorded in `scripts/branding-allowlist.json`; run `bun scripts/check-branding.cjs` after changes. `PANEL_BASE_PATH` moves only dashboard routes and static assets; API and public subscription URLs remain unchanged.
