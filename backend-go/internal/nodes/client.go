@@ -484,6 +484,14 @@ func (c *Client) ApplyUpdate(node *database.Node, payload map[string]interface{}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		// The node explains failed installs as {"error": "..."}; without it the
+		// dialog only shows the status code.
+		var failure struct {
+			Error string `json:"error"`
+		}
+		if json.NewDecoder(io.LimitReader(resp.Body, 64<<10)).Decode(&failure) == nil && failure.Error != "" {
+			return nil, fmt.Errorf("node returned status %d: %s", resp.StatusCode, failure.Error)
+		}
 		return nil, fmt.Errorf("node returned status %d", resp.StatusCode)
 	}
 

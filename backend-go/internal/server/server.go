@@ -302,7 +302,9 @@ func NewApp(cfg *config.Config, db *gorm.DB) *App {
 	r := chi.NewRouter()
 	r.Use(chimiddleware.StripSlashes)
 	r.Use(middleware.Cors())
-	r.Use(middleware.Logger)
+	if cfg.HTTPLogging {
+		r.Use(middleware.Logger)
+	}
 	r.Use(system.RouteCounterMiddleware)
 	r.Use(middleware.ContractStatus)
 	system.NewTools(db, cfg.AppSecret).Register(r)

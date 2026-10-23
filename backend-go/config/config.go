@@ -28,6 +28,10 @@ type Config struct {
 	PanelBasePath   string
 	SubPublicDomain string
 	JWTLifetime     int
+	// HTTPLogging is IS_HTTP_LOGGING_ENABLED; like upstream it is off by
+	// default because every request, subscription fetches included, would
+	// otherwise reach the service log.
+	HTTPLogging bool
 
 	Notifications NotificationsConfig
 	Service       ServiceConfig
@@ -148,6 +152,7 @@ func Load() *Config {
 		PanelBasePath:   os.Getenv("PANEL_BASE_PATH"),
 		SubPublicDomain: subDomain,
 		JWTLifetime:     jwtLifetime,
+		HTTPLogging:     envBool("IS_HTTP_LOGGING_ENABLED"),
 		MetricsUser:     os.Getenv("METRICS_USER"),
 		MetricsPass:     os.Getenv("METRICS_PASS"),
 	}
