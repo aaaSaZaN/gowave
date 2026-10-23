@@ -31,7 +31,9 @@
     "lint:fix": "oxlint --fix",
     "check": "oxfmt --check && oxlint",
     "fix": "oxfmt && oxlint --fix",
-    "build": "vite build"
+    "build": "vite build",
+    "editor:download": "bun scripts/editor-assets.cjs download",
+    "editor:compress": "bun scripts/editor-assets.cjs compress"
   },
   "dependencies": {
     "@dnd-kit/abstract": "^0.5.0",

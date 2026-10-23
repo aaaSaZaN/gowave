@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html"
 	"math"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -248,7 +249,9 @@ func (n *Notifier) render(event Event) (string, []inlineKeyboard) {
 		message := "\n" + emoji("5330115548900501467", "🔑") + " " + mark + "\n" + separator + "\n" +
 			emoji("5256143829672672750", "👥") + " <code>" + f.s("loginAttempt", "username") + "</code>\n"
 		if !success {
-			message += emoji("5330115548900501467", "🔑") + " <b>Password:</b> <code>" + f.s("loginAttempt", "password") + "</code>\n"
+			// Never forward the typed password: an admin's near-miss of the real
+			// one would end up in the chat history.
+			message += emoji("5330115548900501467", "🔑") + " <b>Password:</b> <code>" + maskSecret(f.get("loginAttempt", "password")) + "</code>\n"
 		}
 		message += emoji("5447410659077661506", "🌐") + " <b>IP:</b> <code>" + f.s("loginAttempt", "ip") + "</code>\n" +
 			emoji("5460756166143405924", "💻") + " <b>User agent:</b> <code>" + f.s("loginAttempt", "userAgent") + "</code>\n" +
@@ -312,12 +315,21 @@ func (n *Notifier) render(event Event) (string, []inlineKeyboard) {
 			"</blockquote>",
 		}
 		var keyboard []inlineKeyboard
-		if n.panelDomain != "" {
-			keyboard = []inlineKeyboard{{URL: "https://" + n.panelDomain + "/dashboard/open/user/" + f.s("user", "id"), Text: "View user", CustomEmoji: "5282843764451195532", Style: "primary"}}
+		if n.dashboardURL != "" {
+			keyboard = []inlineKeyboard{{URL: n.dashboardURL + "dashboard/open/user/" + url.PathEscape(fmt.Sprint(f.get("user", "id"))), Text: "View user", CustomEmoji: "5282843764451195532", Style: "primary"}}
 		}
 		return strings.Join(lines, "\n"), keyboard
 	}
 	return "", nil
+}
+
+// maskSecret shows only the length of a submitted secret.
+func maskSecret(value interface{}) string {
+	secret, _ := value.(string)
+	if secret == "" {
+		return "-"
+	}
+	return fmt.Sprintf("hidden, %d chars", len([]rune(secret)))
 }
 
 func orDefault(value, fallback string) string {

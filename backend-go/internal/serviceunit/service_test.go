@@ -9,12 +9,29 @@ import (
 )
 
 func TestInstallerMigratesExistingUnitAndKeepsBoundary(t *testing.T) {
-	root := t.TempDir()
+	// The installer resolves symlinks (macOS keeps temp directories under /private).
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
 	dir, units, bin := filepath.Join(root, "install"), filepath.Join(root, "units"), filepath.Join(root, "bin")
-	for _, d := range []string{dir, units, bin} {
+	for _, d := range []string{dir, units, bin, filepath.Join(dir, "frontend", "dist")} {
 		if err := os.MkdirAll(d, 0755); err != nil {
 			t.Fatal(err)
 		}
+	}
+	// Layout left by the previous policy: everything writable by the service account,
+	// a leftover update binary and a link planted inside the dashboard files.
+	for name, body := range map[string]string{
+		"gowave-server": "bin", "gowave-server.new": "planted", ".env": "APP_SECRET=x",
+		"gowave.db": "", "gowave.db-wal": "", "frontend/dist/index.html": "<html>",
+	} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0666); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Symlink("/etc/passwd", filepath.Join(dir, "frontend", "dist", "leak")); err != nil {
+		t.Fatal(err)
 	}
 	// Ownership commands are observed; account lookup never touches system accounts.
 	mock := `#!/bin/sh
@@ -57,13 +74,67 @@ esac
 		t.Fatal("installer overwrote existing unit configuration")
 	}
 	calls, _ := os.ReadFile(events)
-	if !strings.Contains(string(calls), "chown -hR gowave:gowave "+dir) || !strings.Contains(string(calls), "systemctl daemon-reload") {
-		t.Fatalf("missing migration operations: %s", calls)
+	for _, call := range []string{
+		"chown root:gowave " + dir,
+		"chown -hR root:root " + dir + "/gowave-server",
+		"chown -hR root:root " + dir + "/frontend",
+		"chown root:gowave " + dir + "/.env",
+		"systemctl daemon-reload",
+		"systemctl enable --now gowave-update.path",
+	} {
+		if !strings.Contains(string(calls), call+"\n") {
+			t.Errorf("missing %q in %s", call, calls)
+		}
+	}
+	if strings.Contains(string(calls), "gowave:gowave "+dir+"\n") || strings.Contains(string(calls), "gowave:gowave "+dir+"/gowave-server") {
+		t.Fatalf("code handed to the service account: %s", calls)
+	}
+	for _, db := range []string{"/gowave.db", "/gowave.db-wal"} {
+		if !strings.Contains(string(calls), dir+db) {
+			t.Errorf("database file %s not given to the service account: %s", db, calls)
+		}
+	}
+	if info, err := os.Stat(dir); err != nil || info.Mode()&os.ModeSticky == 0 || info.Mode().Perm() != 0770 {
+		t.Fatalf("install dir mode: %v %v", info.Mode(), err)
+	}
+	for name, perm := range map[string]os.FileMode{"gowave-server": 0644, "frontend/dist/index.html": 0644, ".env": 0640} {
+		if info, err := os.Stat(filepath.Join(dir, name)); err != nil || info.Mode().Perm() != perm {
+			t.Errorf("%s mode %v, want %v (%v)", name, info.Mode().Perm(), perm, err)
+		}
+	}
+	for _, gone := range []string{"gowave-server.new", "frontend/dist/leak"} {
+		if _, err := os.Lstat(filepath.Join(dir, gone)); !os.IsNotExist(err) {
+			t.Errorf("%s was kept", gone)
+		}
+	}
+	helper, err := os.ReadFile(filepath.Join(units, "gowave-update.service"))
+	if err != nil || !strings.Contains(string(helper), "ExecStart="+dir+"/gowave-server update apply "+dir+"\n") {
+		t.Fatalf("update helper unit: %s %v", helper, err)
 	}
 	// A path pointing at the system binary directory must never be recursively chowned.
 	cmd := exec.Command("bash", "-s", "--", "/usr/local/bin", units)
 	cmd.Stdin = strings.NewReader(installer)
 	if err := cmd.Run(); err == nil {
 		t.Fatal("accepted a shared system directory")
+	}
+}
+
+func TestMigrationOnlyInsideGowaveUnit(t *testing.T) {
+	old := cgroupFile
+	t.Cleanup(func() { cgroupFile = old })
+	for content, want := range map[string]bool{
+		"0::/system.slice/gowave.service\n":                                     true,
+		"12:pids:/system.slice/gowave.service\n0::/system.slice/gowave.service": true,
+		"0::/system.slice/gowave-panel.service\n":                               false,
+		"0::/system.slice/my-gowave.service\n":                                  false,
+		"0::/user.slice/user-0.slice/session-1.scope\n":                         false,
+	} {
+		cgroupFile = filepath.Join(t.TempDir(), "cgroup")
+		if err := os.WriteFile(cgroupFile, []byte(content), 0600); err != nil {
+			t.Fatal(err)
+		}
+		if got := inUnit("gowave.service"); got != want {
+			t.Errorf("inUnit(%q) = %v, want %v", content, got, want)
+		}
 	}
 }

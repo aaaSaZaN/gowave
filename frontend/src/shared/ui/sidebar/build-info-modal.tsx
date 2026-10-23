@@ -27,6 +27,7 @@ interface BuildInfoModalProps {
 }
 
 interface IPanelUpdateCheck {
+    canAutoUpdate: boolean
     isDocker: boolean
     updateCommand?: string
 }
@@ -34,7 +35,8 @@ interface IPanelUpdateCheck {
 export function BuildInfoModal({ gowaveMetadata, isNewVersionAvailable }: BuildInfoModalProps) {
     const [isUpdating, setIsUpdating] = useState(false)
 
-    // Docker installs update with `docker compose pull`; the panel only shows the command.
+    // Docker installs and native installs without the root update helper are
+    // updated on the server; the panel only shows the command.
     const updateCheck = useQuery({
         queryKey: ['panel-update-check'],
         queryFn: async () => {
@@ -44,17 +46,19 @@ export function BuildInfoModal({ gowaveMetadata, isNewVersionAvailable }: BuildI
         enabled: isNewVersionAvailable,
         refetchOnWindowFocus: false
     })
-    const dockerUpdateCommand = updateCheck.data?.isDocker
-        ? updateCheck.data.updateCommand
-        : undefined
+    const serverUpdateCommand =
+        updateCheck.data && !updateCheck.data.canAutoUpdate
+            ? updateCheck.data.updateCommand
+            : undefined
 
     const handleUpdate = async () => {
         setIsUpdating(true)
         try {
+            // A root helper downloads and verifies the release, then restarts the panel.
             await instance.post('/api/system/updates/apply')
             setTimeout(() => {
                 window.location.reload()
-            }, 5000)
+            }, 30000)
         } catch {
             setIsUpdating(false)
         }
@@ -79,7 +83,7 @@ export function BuildInfoModal({ gowaveMetadata, isNewVersionAvailable }: BuildI
                             </Stack>
                         </Group>
 
-                        {!dockerUpdateCommand && (
+                        {!serverUpdateCommand && (
                             <Button
                                 color="teal"
                                 disabled={updateCheck.isLoading}
@@ -96,16 +100,18 @@ export function BuildInfoModal({ gowaveMetadata, isNewVersionAvailable }: BuildI
                         )}
                     </Group>
 
-                    {dockerUpdateCommand && (
+                    {serverUpdateCommand && (
                         <Stack gap={6} mt="sm">
                             <Text c="dimmed" size="xs">
-                                The panel runs in Docker. Update it on the server:
+                                {updateCheck.data?.isDocker
+                                    ? 'The panel runs in Docker. Update it on the server:'
+                                    : 'Update the panel on the server:'}
                             </Text>
                             <Group gap="xs" wrap="nowrap">
                                 <Code block style={{ flex: 1, whiteSpace: 'pre-wrap' }}>
-                                    {dockerUpdateCommand}
+                                    {serverUpdateCommand}
                                 </Code>
-                                <CopyButton timeout={2000} value={dockerUpdateCommand}>
+                                <CopyButton timeout={2000} value={serverUpdateCommand}>
                                     {({ copied, copy }) => (
                                         <Tooltip label={copied ? 'Copied' : 'Copy command'}>
                                             <ActionIcon

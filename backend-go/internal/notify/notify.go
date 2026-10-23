@@ -54,11 +54,13 @@ type eventConfig struct {
 
 // Notifier renders events into delivery jobs.
 type Notifier struct {
-	cfg         config.NotificationsConfig
-	panelDomain string
-	events      map[string]eventConfig
-	client      *http.Client
-	telegram    *http.Client
+	cfg config.NotificationsConfig
+	// dashboardURL is the public dashboard root for message buttons, or "" when
+	// the panel has no public domain (Telegram rejects local button URLs).
+	dashboardURL string
+	events       map[string]eventConfig
+	client       *http.Client
+	telegram     *http.Client
 }
 
 // ConfigPaths are searched in order for the per-event YAML file used by
@@ -72,11 +74,11 @@ var ConfigPaths = []string{
 // A missing file enables every event on every configured channel.
 func New(cfg *config.Config) (*Notifier, error) {
 	n := &Notifier{
-		cfg:         cfg.Notifications,
-		panelDomain: cfg.PanelDomain,
-		events:      map[string]eventConfig{},
-		client:      &http.Client{Timeout: 15 * time.Second},
-		telegram:    &http.Client{Timeout: 15 * time.Second},
+		cfg:          cfg.Notifications,
+		dashboardURL: dashboardURL(cfg.PanelDomain, cfg.PanelBasePath),
+		events:       map[string]eventConfig{},
+		client:       &http.Client{Timeout: 15 * time.Second},
+		telegram:     &http.Client{Timeout: 15 * time.Second},
 	}
 	if proxy := cfg.Notifications.TelegramProxy; proxy != "" {
 		proxyURL, err := url.Parse(proxy)
@@ -114,6 +116,26 @@ func New(cfg *config.Config) (*Notifier, error) {
 		break
 	}
 	return n, nil
+}
+
+// dashboardURL builds "https://<domain><base path>" from PANEL_DOMAIN and
+// PANEL_BASE_PATH. Local or dotless hosts are not reachable from Telegram.
+func dashboardURL(domain, basePath string) string {
+	domain = strings.TrimSpace(domain)
+	domain = strings.TrimPrefix(strings.TrimPrefix(domain, "https://"), "http://")
+	domain = strings.TrimRight(domain, "/")
+	host := domain
+	if parsed, err := url.Parse("https://" + domain); err == nil {
+		host = parsed.Hostname()
+	}
+	if host == "" || host == "localhost" || !strings.Contains(host, ".") || strings.HasPrefix(host, "127.") {
+		return ""
+	}
+	base, err := config.NormalizePanelBasePath(basePath)
+	if err != nil {
+		base = "/"
+	}
+	return "https://" + domain + base
 }
 
 func (n *Notifier) enabled(name, channel string) bool {
@@ -298,7 +320,13 @@ func (n *Notifier) deliverTelegram(ctx context.Context, job *database.Job) error
 		return &jobs.RetryAfterError{Err: fmt.Errorf("telegram rate limited"), Delay: time.Duration(reply.Parameters.RetryAfter) * time.Second}
 	}
 	if res.StatusCode >= 300 || !reply.OK {
-		return fmt.Errorf("telegram API %d: %s", res.StatusCode, reply.Description)
+		err := fmt.Errorf("telegram API %d: %s", res.StatusCode, reply.Description)
+		// A wrong chat, a blocked bot or a rejected message does not heal by retrying.
+		switch res.StatusCode {
+		case http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound:
+			return jobs.Permanent(err)
+		}
+		return err
 	}
 	return nil
 }

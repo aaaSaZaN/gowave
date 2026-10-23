@@ -1673,20 +1673,6 @@
       "providers": "服务商"
     }
   },
-  "prime-modal": {
-    "shared": {
-      "description": "支持项目并成为核心成员——更贴近团队、产品路线以及实际工作。",
-      "priority-support-title": "优先支持",
-      "priority-support-description": "跳过排队——你的问题将优先得到团队的直接解答。",
-      "private-community-title": "私密社群",
-      "private-community-description": "仅限 Prime 会员参与的专属社群",
-      "shape-the-roadmap-title": "参与路线规划",
-      "shape-the-roadmap-description": "投票决定下一个开发的内容，并帮助引导项目的发展方向。",
-      "direct-developer-access-title": "开发者直接访问",
-      "direct-developer-access-description": "直接联系开发者-没有工单，没有中间人。",
-      "join-button": "加入最棒的RW"
-    }
-  },
   "hosts-datatable": {
     "widget": {
       "reset-sort": "重置排序"

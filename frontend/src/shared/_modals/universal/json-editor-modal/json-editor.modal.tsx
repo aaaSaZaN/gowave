@@ -11,7 +11,6 @@ import {
     ThemeIconProps,
     Tooltip
 } from '@mantine/core'
-import { useMonaco } from '@monaco-editor/react'
 import clsx from 'clsx'
 import { ComponentType, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -25,6 +24,7 @@ import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui/fullscreen
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { forceMonacoRetokenize } from '@shared/utils/monaco/force-retokenize'
 import { formatFirstErrorMarker } from '@shared/utils/monaco/markers'
+import { useMonaco } from '@shared/utils/setup-monaco/load-monaco'
 
 import classes from './JsonEditorModal.module.css'
 

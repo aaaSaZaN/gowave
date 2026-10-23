@@ -4,7 +4,6 @@ import { MonacoSetupSnippetsFeature } from '@features/dashboard/config-profiles/
 import { Box, Button, Group, Paper, TextInput } from '@mantine/core'
 import { useForm, schemaResolver } from '@mantine/form'
 import { modals } from '@mantine/modals'
-import { useMonaco } from '@monaco-editor/react'
 import { CreateSnippetCommand } from '@remnawave/backend-contract'
 import clsx from 'clsx'
 import { useEffect, useRef } from 'react'
@@ -17,6 +16,7 @@ import { useModalEscapeGuard, usePseudoFullscreen } from '@shared/hooks'
 import { CodeEditor, editorClasses, EditorFooter, EditorStatusBar } from '@shared/ui/code-editor'
 import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui/fullscreen-toggle-button'
 import { forceMonacoRetokenize } from '@shared/utils/monaco/force-retokenize'
+import { useMonaco } from '@shared/utils/setup-monaco/load-monaco'
 
 import classes from './Snippets.module.css'
 

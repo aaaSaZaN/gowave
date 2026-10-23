@@ -17,6 +17,8 @@ GOWAVE_VERSION=${GOWAVE_VERSION:-latest}
 INSTALL_DIR=/opt/gowave
 DOCKER_DIR=/opt/gowave-docker
 UNIT_FILE=/etc/systemd/system/gowave.service
+UPDATE_PATH_UNIT=/etc/systemd/system/gowave-update.path
+UPDATE_SERVICE_UNIT=/etc/systemd/system/gowave-update.service
 CLI_PATH=/usr/local/bin/gowave
 CADDYFILE=/etc/caddy/Caddyfile
 CADDY_SITE=/etc/caddy/gowave.caddy
@@ -396,10 +398,66 @@ install_release() {
     mv -f "$INSTALL_DIR/gowave-server.new" "$INSTALL_DIR/gowave-server"
     rm -rf "$INSTALL_DIR/frontend/dist.new" "$INSTALL_DIR/frontend/dist.old"
     mkdir -p "$INSTALL_DIR/frontend/dist.new"
-    tar -xzf "$dir/gowave-frontend.tar.gz" -C "$INSTALL_DIR/frontend/dist.new"
+    tar --no-same-owner -xzf "$dir/gowave-frontend.tar.gz" -C "$INSTALL_DIR/frontend/dist.new"
     [ -d "$INSTALL_DIR/frontend/dist" ] && mv "$INSTALL_DIR/frontend/dist" "$INSTALL_DIR/frontend/dist.old"
     mv "$INSTALL_DIR/frontend/dist.new" "$INSTALL_DIR/frontend/dist"
     rm -rf "$INSTALL_DIR/frontend/dist.old"
+}
+
+# Notification settings that carry over from a migrated panel's .env.
+NOTIFY_KEYS='IS_TELEGRAM_NOTIFICATIONS_ENABLED TELEGRAM_BOT_TOKEN TELEGRAM_BOT_API_ROOT TELEGRAM_BOT_PROXY
+TELEGRAM_NOTIFY_USERS TELEGRAM_NOTIFY_NODES TELEGRAM_NOTIFY_CRM TELEGRAM_NOTIFY_SERVICE TELEGRAM_NOTIFY_TBLOCKER
+WEBHOOK_ENABLED WEBHOOK_URL WEBHOOK_SECRET_HEADER
+BANDWIDTH_USAGE_NOTIFICATIONS_ENABLED BANDWIDTH_USAGE_NOTIFICATIONS_THRESHOLD
+NOT_CONNECTED_USERS_NOTIFICATIONS_ENABLED NOT_CONNECTED_USERS_NOTIFICATIONS_AFTER_HOURS
+EXPIRATION_NOTIFICATIONS_ENABLED EXPIRATION_NOTIFICATIONS'
+
+# copy_notifications SRC DEST copies NOTIFY_KEYS lines from SRC into DEST,
+# replacing earlier values. Lines are copied as written and never printed: they
+# hold the bot token. Unedited "change_me" values are skipped, and a channel is
+# left disabled when its credentials would not pass the panel's validation.
+# Prints the number of copied settings.
+copy_notifications() {
+    local src=$1 dest=$2 key line token secret count=0 kept=$WORK/env.kept added=$WORK/env.added
+    token=$(env_get "$src" TELEGRAM_BOT_TOKEN)
+    secret=$(env_get "$src" WEBHOOK_SECRET_HEADER)
+    : >"$added"
+    for key in $NOTIFY_KEYS; do
+        line=$(grep "^$key=" "$src" | tail -n 1) || true
+        [ -n "$line" ] || continue
+        [ "$(env_get "$src" "$key")" != change_me ] || continue
+        case $key in
+            IS_TELEGRAM_NOTIFICATIONS_ENABLED)
+                if [ -z "$token" ] || [ "$token" = change_me ]; then line="$key=false"; fi ;;
+            WEBHOOK_ENABLED)
+                [[ $secret =~ ^[A-Za-z0-9]{32,}$ ]] || line="$key=false" ;;
+        esac
+        printf '%s\n' "$line" >>"$added"
+        count=$((count + 1))
+    done
+    if [ "$count" -gt 0 ]; then
+        grep -vE "^($(echo $NOTIFY_KEYS | tr ' ' '|'))=" "$dest" >"$kept" || true
+        # Rewrite in place so the file keeps its owner and mode.
+        { cat "$kept"; printf '# Notifications copied from %s\n' "$src"; cat "$added"; } >"$dest"
+    fi
+    rm -f "$kept" "$added"
+    echo "$count"
+}
+
+# import_notifications copies the old panel's Telegram and webhook settings into
+# an existing installation and restarts the panel.
+import_notifications() {
+    local src=$UPSTREAM_DIR/.env count
+    [ -f "$src" ] || { warn "$(t "Не найден $src." "$src not found.")"; return 0; }
+    count=$(copy_notifications "$src" "$ENV_FILE")
+    if [ "$count" -eq 0 ]; then
+        warn "$(t "В $src нет настроек уведомлений." "$src has no notification settings.")"
+        return 0
+    fi
+    info "$(t "Перенесено настроек уведомлений: $count. Перезапускаю панель" "Copied $count notification settings. Restarting the panel")"
+    restart_panel || die "$(t 'Панель не перезапустилась, проверьте значения в .env.' 'The panel did not restart; check the values in .env.')"
+    wait_healthy "$(env_get "$ENV_FILE" APP_PORT)" ||
+        die "$(t "Панель не запустилась с новыми настройками. Проверьте уведомления в $ENV_FILE." "The panel did not start with the new settings. Check the notification values in $ENV_FILE.")"
 }
 
 write_env() {
@@ -463,7 +521,19 @@ start_native() {
     }
 }
 
+# Root must never run a binary the gowave service account could have replaced:
+# installs made before the root-owned layout gave it the whole directory.
+require_trusted_binary() {
+    local bin=$INSTALL_DIR/gowave-server mode
+    mode=$(stat -c '%u %a' "$bin" 2>/dev/null) || die "$(t "Не найден $bin." "$bin not found.")"
+    if [ -L "$bin" ] || [ "${mode%% *}" != 0 ] || [ $((8#${mode#* } & 8#022)) -ne 0 ]; then
+        die "$(t "$bin может изменить сервисный пользователь, запускать его от root небезопасно. Выберите «Обновить» в меню: панель переустановится из проверенного релиза." \
+            "$bin can be modified by the service account, so it is unsafe to run as root. Choose Update in the menu to reinstall the panel from a verified release.")"
+    fi
+}
+
 gowave_cli() {
+    require_trusted_binary
     (cd "$INSTALL_DIR" && ./gowave-server "$@") </dev/null 2>&1 | tee -a "$LOG"
     return "${PIPESTATUS[0]}"
 }
@@ -539,6 +609,7 @@ configure_caddy() {
     cat >"$CADDY_SITE" <<EOF
 # Managed by GoWave install.sh
 $DOMAIN {
+	# Covers application/wasm; the Xray validator itself is already served gzip-compressed.
 	encode zstd gzip
 	reverse_proxy 127.0.0.1:$APP_PORT
 }
@@ -660,6 +731,8 @@ $http2
     gzip_proxied any;
     gzip_comp_level 6;
     gzip_min_length 256;
+    # application/wasm: the Xray validator. GoWave already sends it gzip-compressed,
+    # and Nginx passes such responses through without compressing them again.
     gzip_types application/javascript application/json application/manifest+json application/wasm application/xml image/svg+xml text/css text/javascript text/plain text/xml;
 
     location / {
@@ -857,6 +930,7 @@ panel_node_secret() {
     if [ "$MODE" = docker ]; then
         (cd "$DOCKER_DIR" && docker compose exec -T gowave /app/gowave rescue --print-secret-key-raw </dev/null)
     else
+        require_trusted_binary
         (cd "$INSTALL_DIR" && ./gowave-server rescue --print-secret-key-raw </dev/null)
     fi
 }
@@ -957,6 +1031,9 @@ fresh_install() {
     FRESH_ROLLBACK=true
     install_release
     write_env
+    if [ "$SOURCE" = upstream ] && [ -f "$UPSTREAM_DIR/.env" ]; then
+        info "$(t 'Переношу настройки уведомлений:' 'Copying notification settings:') $(copy_notifications "$UPSTREAM_DIR/.env" "$INSTALL_DIR/.env")"
+    fi
     if [ "$SOURCE" != none ]; then
         migrate_data
         stop_old_panel
@@ -989,7 +1066,8 @@ OLD_PANEL_STOPPED=false
 rollback_fresh_install() {
     warn "$(t 'Установка не завершена, убираю созданные файлы GoWave.' 'Installation did not finish, removing the GoWave files it created.')"
     systemctl disable --now gowave >/dev/null 2>&1 || true
-    rm -f "$UNIT_FILE" "${UNIT_FILE}.d/90-unprivileged.conf"
+    systemctl disable --now gowave-update.path >/dev/null 2>&1 || true
+    rm -f "$UNIT_FILE" "${UNIT_FILE}.d/90-unprivileged.conf" "$UPDATE_PATH_UNIT" "$UPDATE_SERVICE_UNIT"
     systemctl daemon-reload >/dev/null 2>&1 || true
     [ "$(readlink "$CLI_PATH" 2>/dev/null)" = "$INSTALL_DIR/gowave-server" ] && rm -f "$CLI_PATH"
     rm -rf "$INSTALL_DIR/gowave-server" "$INSTALL_DIR/frontend" "$INSTALL_DIR/.env" "$INSTALL_DIR"/gowave.db*
@@ -1053,7 +1131,11 @@ print_done() {
     else
         echo "$(t 'Конфигурация:  ' 'Configuration: ') $INSTALL_DIR/.env ($(t 'логи' 'logs'): journalctl -u gowave -f)"
     fi
-    echo "$(t 'Консоль:       ' 'Console:       ') gowave rescue"
+    if [ "$DB_MODE" = docker ]; then
+        echo "$(t 'Консоль:       ' 'Console:       ') gowave rescue"
+    else
+        echo "$(t 'Консоль:       ' 'Console:       ') cd $INSTALL_DIR && sudo -u gowave gowave rescue"
+    fi
     if [ "$SOURCE" != none ]; then
         echo "$(t "Старая панель остановлена и не запускается при загрузке. Её файлы остались в $SOURCE_DIR." \
             "The old panel is stopped and will not start on boot. Its files are still in $SOURCE_DIR.")"
@@ -1174,7 +1256,8 @@ uninstall_gowave() {
     fi
     rm -rf "$DOCKER_DIR"
     systemctl disable --now gowave >/dev/null 2>&1 || true
-    rm -f "$UNIT_FILE" "${UNIT_FILE}.d/90-unprivileged.conf"
+    systemctl disable --now gowave-update.path >/dev/null 2>&1 || true
+    rm -f "$UNIT_FILE" "${UNIT_FILE}.d/90-unprivileged.conf" "$UPDATE_PATH_UNIT" "$UPDATE_SERVICE_UNIT"
     systemctl daemon-reload
     rm -rf "$INSTALL_DIR"
     rm -f "$CLI_PATH"
@@ -1191,14 +1274,16 @@ manage_existing() {
         "$(t 'Настроить домен и HTTPS' 'Set up domain and HTTPS')" \
         "$(t 'Изменить путь панели' 'Change dashboard path')" \
         "$(t 'Установить или обновить локальную ноду' 'Install or update the local node')" \
+        "$(t 'Перенести уведомления Telegram и вебхуки из старой панели' 'Copy Telegram and webhook notifications from the old panel')" \
         "$(t 'Удалить GoWave' 'Uninstall GoWave')" \
         "$(t 'Выход' 'Exit')") in
     1) update_gowave ;;
     2) configure_domain ;;
     3) configure_panel_path ;;
     4) install_local_node ;;
-    5) uninstall_gowave ;;
-    6) exit 0 ;;
+    5) import_notifications ;;
+    6) uninstall_gowave ;;
+    7) exit 0 ;;
     esac
 }
 

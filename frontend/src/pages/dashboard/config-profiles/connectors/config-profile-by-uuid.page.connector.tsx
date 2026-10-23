@@ -7,6 +7,7 @@ import { useGetConfigProfile, useGetSnippets } from '@shared/api/hooks'
 import { ROUTES } from '@shared/constants'
 import { LoadingScreen } from '@shared/ui'
 import { fetchWithProgress } from '@shared/utils/fetch-with-progress'
+import { loadScript } from '@shared/utils/load-script'
 
 import { ConfigProfileByUuidPageComponent } from '../components/config-profile-by-uuid.page.component'
 
@@ -39,6 +40,8 @@ export function ConfigProfileByUuidPageConnector() {
         }
 
         try {
+            await loadScript(app.configEditor.wasmJsUrl)
+
             const go = new window.Go()
             const wasmInitialized = new Promise<void>((resolve) => {
                 window.onWasmInitialized = () => {

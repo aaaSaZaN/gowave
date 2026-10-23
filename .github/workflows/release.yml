@@ -39,7 +39,9 @@ jobs:
         working-directory: ./frontend
         run: |
           bun install --frozen-lockfile
+          bun run editor:download
           bun run build
+          bun run editor:compress
           tar -czf ../gowave-frontend.tar.gz -C dist .
 
       - name: Build Backend Binaries

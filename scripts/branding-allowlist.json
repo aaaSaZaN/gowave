@@ -201,10 +201,10 @@
       "count": 15,
       "sha256": "8f83412b82d82da5e43ba99a6b3a3cd3b45b8ad14014774e54d884dc513b0c89"
     },
-    "frontend/Makefile": {
+    "frontend/scripts/editor-assets.cjs": {
       "reason": "Existing external editor/template/help/geolocation resource dependency or upstream author identifier.",
       "count": 1,
-      "sha256": "899b8a9cf3831b7220e8d3cfa5d820908af86d307eb85007b143f787c2556ad2"
+      "sha256": "cea6f510bd5862422ba0aed529c0922f1ac98343a64c90e5c2c16dc060ed53b7"
     },
     "frontend/src/shared/_modals/nodes/node-geocheck-modal/geocheck-result.widget.tsx": {
       "reason": "Existing external editor/template/help/geolocation resource dependency or upstream author identifier.",

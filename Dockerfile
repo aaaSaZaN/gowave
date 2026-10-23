@@ -10,7 +10,8 @@ COPY frontend/package.json frontend/bun.lock ./
 RUN bun install --frozen-lockfile
 
 COPY frontend/ ./
-RUN bun run build
+# The Xray validator runtime is fetched (hash-pinned) and shipped precompressed.
+RUN bun run editor:download && bun run build && bun run editor:compress
 
 # Stage 2: Build Go backend (same entrypoint and version flag as release.yml).
 # Cross-compile natively instead of running the compiler under QEMU.

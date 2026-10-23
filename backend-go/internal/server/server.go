@@ -64,6 +64,35 @@ func ensureGlobalSymlink() {
 	_ = os.Symlink(exe, symlinkPath)
 }
 
+// refuseRoot stops the server when started as root. GOWAVE_ALLOW_ROOT=1 is an
+// explicit opt-out for custom setups that provide their own isolation.
+func refuseRoot() {
+	if os.Geteuid() != 0 || os.Getenv("GOWAVE_ALLOW_ROOT") == "1" {
+		return
+	}
+	fmt.Fprintln(os.Stderr, "Run the panel as an unprivileged user: install the native service, configure the container user, or set GOWAVE_ALLOW_ROOT=1.")
+	os.Exit(1)
+}
+
+// warnWritableExecutable flags installations whose binary the service account can
+// replace. Root runs the same file for CLI commands and updates, so a compromised
+// panel could escalate; the installer's update restores root ownership.
+func warnWritableExecutable() {
+	if os.Geteuid() == 0 || system.IsRunningInDocker() {
+		return
+	}
+	exe, err := os.Executable()
+	if err != nil {
+		return
+	}
+	if exe, err = filepath.EvalSymlinks(exe); err != nil {
+		return
+	}
+	if syscall.Access(exe, 2) == nil {
+		fmt.Fprintf(os.Stderr, "WARNING: %s is writable by the service account. Update with the installer to make the code root-owned: %s\n", exe, system.InstallerUpdateCommand)
+	}
+}
+
 func Run() {
 	// The panel keeps every timestamp in UTC like upstream's container; pgx and
 	// encoding/json would otherwise render the host's zone.
@@ -88,6 +117,17 @@ func Run() {
 		}
 		return
 	}
+	if len(args) >= 2 && args[0] == "update" && args[1] == "apply" {
+		if len(args) != 3 {
+			fmt.Fprintln(os.Stderr, "Usage: gowave update apply <directory>")
+			os.Exit(1)
+		}
+		if err := system.ApplyRelease(args[2]); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 	if len(args) == 0 && !system.IsRunningInDocker() {
 		if migrated, err := serviceunit.MigrateLegacy(); migrated {
 			if err != nil {
@@ -97,9 +137,8 @@ func Run() {
 			return
 		}
 	}
-	if len(args) == 0 && os.Geteuid() == 0 {
-		fmt.Fprintln(os.Stderr, "Run the panel as an unprivileged user; install the native service or configure the container user.")
-		os.Exit(1)
+	if len(args) == 0 {
+		refuseRoot()
 	}
 	cfg := config.Load()
 	if cli.IsPostgresToSQLiteMigrationCommand(args) {
@@ -135,10 +174,8 @@ func Run() {
 		}
 	}
 
-	if os.Geteuid() == 0 {
-		fmt.Fprintln(os.Stderr, "Run the panel as an unprivileged user.")
-		os.Exit(1)
-	}
+	refuseRoot()
+	warnWritableExecutable()
 	if err := cfg.Validate(); err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid configuration: %v\n", err)
 		os.Exit(1)

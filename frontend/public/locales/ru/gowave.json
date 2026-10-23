@@ -1686,20 +1686,6 @@
       "providers": "Провайдеры"
     }
   },
-  "prime-modal": {
-    "shared": {
-      "description": "Поддержите проект и станьте частью его ближнего круга — ближе к команде, роадмапу и самой работе.",
-      "priority-support-title": "Приоритетная поддержка",
-      "priority-support-description": "Без очереди — на ваши вопросы отвечает команда и отвечает первыми.",
-      "private-community-title": "Закрытое сообщество",
-      "private-community-description": "Закрытый круг участников Prime.",
-      "shape-the-roadmap-title": "Влияйте на роадмап",
-      "shape-the-roadmap-description": "Голосуйте за то, что будет сделано дальше, и задавайте направление проекта.",
-      "direct-developer-access-title": "Прямой доступ к разработчику",
-      "direct-developer-access-description": "Прямая линия с разработчиком — без тикетов и посредников.",
-      "join-button": "Вступить в RW Prime"
-    }
-  },
   "hosts-datatable": {
     "widget": {
       "reset-sort": "Сбросить сортировку"

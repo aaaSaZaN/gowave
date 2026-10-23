@@ -27,3 +27,12 @@ func TestLoadPanelBasePath(t *testing.T) {
 		t.Fatal(cfg.PanelBasePath)
 	}
 }
+
+func TestTelegramPlaceholderChatsAreUnset(t *testing.T) {
+	t.Setenv("TELEGRAM_NOTIFY_USERS", "change_me")
+	t.Setenv("TELEGRAM_NOTIFY_NODES", " -100123:7 ")
+	cfg := Load()
+	if cfg.Notifications.TelegramUsers != "" || cfg.Notifications.TelegramNodes != "-100123:7" {
+		t.Fatalf("targets: users %q nodes %q", cfg.Notifications.TelegramUsers, cfg.Notifications.TelegramNodes)
+	}
+}

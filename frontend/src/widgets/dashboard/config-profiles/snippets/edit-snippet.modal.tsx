@@ -4,7 +4,6 @@ import { MonacoSetupSnippetsFeature } from '@features/dashboard/config-profiles/
 import { Box, Button, Group, Paper } from '@mantine/core'
 import { useForm, schemaResolver } from '@mantine/form'
 import { modals } from '@mantine/modals'
-import { useMonaco } from '@monaco-editor/react'
 import { UpdateSnippetCommand } from '@remnawave/backend-contract'
 import clsx from 'clsx'
 import { t } from 'i18next'
@@ -19,6 +18,7 @@ import { CodeEditor, editorClasses, EditorFooter, EditorStatusBar } from '@share
 import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
 import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui/fullscreen-toggle-button'
 import { forceMonacoRetokenize } from '@shared/utils/monaco/force-retokenize'
+import { useMonaco } from '@shared/utils/setup-monaco/load-monaco'
 
 import { openConfirmSnippetSyncModal } from './confirm-snippet-sync.modal'
 import classes from './Snippets.module.css'

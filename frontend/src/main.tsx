@@ -3,11 +3,10 @@ import { createRoot } from 'react-dom/client'
 import { App } from './app'
 
 import '@shared/utils/setup-lottie/setup-lottie'
-import '@shared/utils/setup-monaco/setup-monaco'
 
 if (typeof window !== 'undefined') {
     if (!navigator.clipboard || !window.isSecureContext) {
-        (navigator as any).clipboard = {
+        ;(navigator as any).clipboard = {
             writeText: (text: string) => {
                 return new Promise<void>((resolve, reject) => {
                     try {

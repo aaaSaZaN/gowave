@@ -10,6 +10,7 @@ import { Fragment, ReactNode, useRef, useState } from 'react'
 import { BASE_MONACO_OPTIONS, MONACO_THEME_NAME } from '@shared/constants/monaco-theme'
 import { describeJsonPath } from '@shared/utils/monaco/json-path'
 import { RepairResult, repairJsonInEditor } from '@shared/utils/monaco/repair-json'
+import { useMonaco } from '@shared/utils/setup-monaco/load-monaco'
 
 import { LoaderModalShared } from '../loader-modal/loader-model.shared'
 import styles from './CodeEditor.module.css'
@@ -42,6 +43,7 @@ export function CodeEditor(props: Props) {
         ...rest
     } = props
 
+    const isMonacoReady = useMonaco() !== null
     const [jsonPath, setJsonPath] = useState<string[]>([])
     const documentTextRef = useRef('')
     const documentValueRef = useRef<unknown>(undefined)
@@ -142,19 +144,25 @@ export function CodeEditor(props: Props) {
                 </Box>
             )}
 
-            <Editor
-                defaultLanguage={defaultLanguage}
-                language={language}
-                loading={<LoaderModalShared mih="100%" />}
-                onMount={handleMount}
-                theme={MONACO_THEME_NAME}
-                {...rest}
-                options={{ ...BASE_MONACO_OPTIONS, ...options }}
-                wrapperProps={{
-                    ...wrapperProps,
-                    className: clsx(styles.editorWrapper, wrapperProps?.className)
-                }}
-            />
+            {isMonacoReady ? (
+                <Editor
+                    defaultLanguage={defaultLanguage}
+                    language={language}
+                    loading={<LoaderModalShared mih="100%" />}
+                    onMount={handleMount}
+                    theme={MONACO_THEME_NAME}
+                    {...rest}
+                    options={{ ...BASE_MONACO_OPTIONS, ...options }}
+                    wrapperProps={{
+                        ...wrapperProps,
+                        className: clsx(styles.editorWrapper, wrapperProps?.className)
+                    }}
+                />
+            ) : (
+                <Box className={clsx(styles.editorWrapper, wrapperProps?.className)}>
+                    <LoaderModalShared mih="100%" />
+                </Box>
+            )}
 
             {footer}
         </Box>

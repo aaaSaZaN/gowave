@@ -198,11 +198,20 @@ func (c *Config) loadOptional() {
 		n.TelegramAPIRoot = "https://api.telegram.org"
 	}
 	n.TelegramProxy = os.Getenv("TELEGRAM_BOT_PROXY")
-	n.TelegramUsers = os.Getenv("TELEGRAM_NOTIFY_USERS")
-	n.TelegramNodes = os.Getenv("TELEGRAM_NOTIFY_NODES")
-	n.TelegramCRM = os.Getenv("TELEGRAM_NOTIFY_CRM")
-	n.TelegramService = os.Getenv("TELEGRAM_NOTIFY_SERVICE")
-	n.TelegramTBlocker = os.Getenv("TELEGRAM_NOTIFY_TBLOCKER")
+	// Upstream's .env sample ships "change_me" for every chat; an unedited one
+	// means the scope is not configured, not a chat to retry sending to.
+	telegramTarget := func(key string) string {
+		value := strings.TrimSpace(os.Getenv(key))
+		if value == "change_me" {
+			return ""
+		}
+		return value
+	}
+	n.TelegramUsers = telegramTarget("TELEGRAM_NOTIFY_USERS")
+	n.TelegramNodes = telegramTarget("TELEGRAM_NOTIFY_NODES")
+	n.TelegramCRM = telegramTarget("TELEGRAM_NOTIFY_CRM")
+	n.TelegramService = telegramTarget("TELEGRAM_NOTIFY_SERVICE")
+	n.TelegramTBlocker = telegramTarget("TELEGRAM_NOTIFY_TBLOCKER")
 	if n.TelegramEnabled && (n.TelegramBotToken == "" || n.TelegramBotToken == "change_me") {
 		c.errors = append(c.errors, "TELEGRAM_BOT_TOKEN is required when IS_TELEGRAM_NOTIFICATIONS_ENABLED is true")
 	}

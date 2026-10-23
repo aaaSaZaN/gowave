@@ -6,8 +6,10 @@ export const fetchWithProgress = async (url: string, onProgress?: (progress: num
         const response = await axios.get(url, {
             onDownloadProgress: (progressEvent) => {
                 if (progressEvent.total) {
+                    // Precompressed responses report the encoded size as the total while
+                    // some browsers count decoded bytes as loaded.
                     const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-                    onProgress?.(progress)
+                    onProgress?.(Math.min(progress, 100))
                 } else {
                     onProgress?.(100)
                 }

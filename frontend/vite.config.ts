@@ -107,7 +107,7 @@ export default defineConfig({
                         },
                         {
                             name: 'monaco',
-                            test: /node_modules[\\/](monaco-editor|monaco-yaml|yaml)[\\/]/
+                            test: /node_modules[\\/](monaco-editor|monaco-yaml)[\\/]/
                         },
                         {
                             name: 'tanstack',

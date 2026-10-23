@@ -3,7 +3,6 @@ import type { editor } from 'monaco-editor'
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { MonacoSetupSharedListEditorFeature } from '@features/dashboard/config-profiles/monaco-setup'
 import { Box, Button, Group, Modal, Paper, Stack, Text, TextInput } from '@mantine/core'
-import { useMonaco } from '@monaco-editor/react'
 import { CreateSharedListCommand } from '@remnawave/backend-contract'
 import { SharedListConfigSchema } from '@remnawave/node-plugins'
 import clsx from 'clsx'
@@ -28,6 +27,7 @@ import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui/fullscreen
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { forceMonacoRetokenize } from '@shared/utils/monaco/force-retokenize'
+import { useMonaco } from '@shared/utils/setup-monaco/load-monaco'
 
 import classes from './SharedListEditor.module.css'
 

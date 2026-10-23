@@ -27,15 +27,25 @@ Whoever opens the panel first creates the admin, so open it right after installa
 
 Native services run as the dedicated `gowave` account with `ProtectSystem=strict`,
 `ProtectHome`, private devices and temporary directories, `NoNewPrivileges`, and
-`MemoryDenyWriteExecute`. Only `/opt/gowave` and the service runtime directory are
-writable. `CAP_NET_BIND_SERVICE` allows explicitly configured low ports. A stable
-account is required for SQLite ownership and in-panel updates, so `DynamicUser`
-is disabled. Installers reapply the policy on every update; an existing root
-systemd service also migrates automatically on the first upgraded startup.
-Run native database/rescue commands as `sudo -u gowave` from `/opt/gowave` so new
-files keep the service ownership. Custom writable paths require an administrator's
-systemd override. The Docker image runs as UID/GID 10001; the supplied Compose
-configuration also drops capabilities and uses a read-only root filesystem.
+`MemoryDenyWriteExecute`. `CAP_NET_BIND_SERVICE` allows explicitly configured low
+ports. The code is owned by root: `gowave-server` and `frontend/` cannot be changed
+by the service account, so a compromised panel cannot plant a binary that root
+later runs or persist in the dashboard files. `/opt/gowave` is `root:gowave` with
+the sticky bit, so the panel can create its SQLite files there but cannot replace
+root's files; `.env` is readable by the service and writable only by root.
+
+In-panel updates go through a root helper: the panel leaves a request in
+`/run/gowave`, `gowave-update.path` starts `gowave-update.service`, which downloads
+the latest release, checks it against `SHA256SUMS`, installs it root-owned and
+restarts the panel. Installers reapply the policy and the helper on every update.
+An existing root `gowave.service` migrates automatically on the first upgraded
+startup; older installs where the service account owns the binary are moved to the
+root-owned layout by updating with the installer, which also refuses to run such a
+binary as root. Run native database/rescue commands as `sudo -u gowave` from
+`/opt/gowave` so new files keep the service ownership. Custom writable paths require
+an administrator's systemd override. The server refuses to start as root unless
+`GOWAVE_ALLOW_ROOT=1` is set. The Docker image runs as UID/GID 10001; the supplied
+Compose configuration also drops capabilities and uses a read-only root filesystem.
 
 Yandex authentication is unavailable, including with previously saved OAuth
 settings. Its legacy API fields remain disabled for contract compatibility.

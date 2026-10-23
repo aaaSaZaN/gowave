@@ -1,6 +1,9 @@
 package server
 
 import (
+	"bytes"
+	"compress/gzip"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -85,6 +88,89 @@ func TestDashboardMount(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func gzipBytes(t *testing.T, body string) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	if _, err := zw.Write([]byte(body)); err != nil {
+		t.Fatal(err)
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return buf.Bytes()
+}
+
+func TestDashboardPrecompressedAssets(t *testing.T) {
+	dir := dashboardFixture(t)
+	// The build ships the validator runtime only as main.wasm.gz, in assets/ or the static root.
+	for name, body := range map[string][]byte{
+		"assets/main.wasm.gz":   gzipBytes(t, "xray-wasm"),
+		"xray.schema.json.gz":   gzipBytes(t, `{"schema":true}`),
+		"xray.schema.json":      []byte(`{"schema":true}`),
+		"assets/app.js.gz":      gzipBytes(t, "window.loaded=true"),
+		"assets/broken.wasm.gz": []byte("not gzip"),
+	} {
+		if err := os.WriteFile(filepath.Join(dir, name), body, 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Remove(filepath.Join(dir, "main.wasm")); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, base := range []string{"/", "/private/panel/"} {
+		h := dashboardHandler(dir, base)
+		for _, tc := range []struct {
+			path, accept, encoding, ctype, body string
+		}{
+			{"assets/main.wasm", "gzip, deflate, br", "gzip", "application/wasm", "xray-wasm"},
+			{"assets/main.wasm", "br;q=1, gzip;q=0.5", "gzip", "application/wasm", "xray-wasm"},
+			{"assets/main.wasm", "", "", "application/wasm", "xray-wasm"},
+			{"assets/main.wasm", "gzip;q=0", "", "application/wasm", "xray-wasm"},
+			{"assets/xray.schema.json", "gzip", "gzip", "application/json", `{"schema":true}`},
+			{"assets/xray.schema.json", "identity", "", "application/json", `{"schema":true}`},
+			{"assets/app.js", "gzip", "gzip", "text/javascript; charset=utf-8", "window.loaded=true"},
+			{"assets/app.js", "", "", "text/javascript; charset=utf-8", "window.loaded=true"},
+		} {
+			r := httptest.NewRequest("GET", base+tc.path, nil)
+			if tc.accept != "" {
+				r.Header.Set("Accept-Encoding", tc.accept)
+			}
+			w := httptest.NewRecorder()
+			h.ServeHTTP(w, r)
+			if w.Code != 200 || w.Header().Get("Content-Encoding") != tc.encoding ||
+				w.Header().Get("Content-Type") != tc.ctype || w.Header().Get("Vary") != "Accept-Encoding" {
+				t.Fatalf("%s%s (%q): %d %v", base, tc.path, tc.accept, w.Code, w.Header())
+			}
+			body := w.Body.Bytes()
+			if tc.encoding == "gzip" {
+				zr, err := gzip.NewReader(bytes.NewReader(body))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if body, err = io.ReadAll(zr); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if string(body) != tc.body {
+				t.Fatalf("%s%s (%q): body %q", base, tc.path, tc.accept, body)
+			}
+		}
+
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, httptest.NewRequest("GET", base+"assets/broken.wasm", nil))
+		if w.Code != http.StatusInternalServerError {
+			t.Fatalf("corrupt gzip: %d", w.Code)
+		}
+		w = httptest.NewRecorder()
+		h.ServeHTTP(w, httptest.NewRequest("GET", base+"assets/locales/missing.wasm", nil))
+		if w.Code != 404 {
+			t.Fatalf("missing wasm: %d", w.Code)
+		}
 	}
 }
 

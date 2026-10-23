@@ -1,3 +1,5 @@
+import type { MonacoYaml, MonacoYamlOptions, SchemasSettings } from 'monaco-yaml'
+
 import { Monaco } from '@monaco-editor/react'
 import {
     GetHostsCommand,
@@ -6,7 +8,6 @@ import {
 } from '@remnawave/backend-contract'
 import axios from 'axios'
 import consola from 'consola'
-import { configureMonacoYaml, MonacoYaml, MonacoYamlOptions, SchemasSettings } from 'monaco-yaml'
 import { app } from 'src/config'
 
 import { registerJsonSchema } from '@shared/utils/monaco/json-schema-registry'
@@ -32,17 +33,20 @@ const YAML_OPTIONS: MonacoYamlOptions = {
     }
 }
 
-let monacoYaml: MonacoYaml | undefined
+let monacoYaml: Promise<MonacoYaml> | undefined
 
+// monaco-yaml depends on monaco-editor, so it is imported lazily with the editor.
 const configureYaml = (monaco: Monaco, schemas?: SchemasSettings[]) => {
     const options: MonacoYamlOptions = { ...YAML_OPTIONS, schemas }
 
     if (monacoYaml) {
-        monacoYaml.update(options)
+        monacoYaml.then((instance) => instance.update(options))
         return
     }
 
-    monacoYaml = configureMonacoYaml(monaco, options)
+    monacoYaml = import('monaco-yaml').then(({ configureMonacoYaml }) =>
+        configureMonacoYaml(monaco, options)
+    )
 }
 
 const DOCS_URL = 'https://docs.rw/docs/learn/xray-json-advanced'

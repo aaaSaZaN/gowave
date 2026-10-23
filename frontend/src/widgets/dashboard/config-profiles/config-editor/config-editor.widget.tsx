@@ -5,7 +5,6 @@ import { ConfigValidationFeature } from '@features/dashboard/config-profiles/con
 import { MonacoSetupFeature } from '@features/dashboard/config-profiles/monaco-setup'
 import { Box, Button, Code, Group, Loader, Paper } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { useMonaco } from '@monaco-editor/react'
 import clsx from 'clsx'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -18,6 +17,7 @@ import { FullscreenToggleButton, fullscreenClasses } from '@shared/ui/fullscreen
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { preventBackScroll } from '@shared/utils/misc'
+import { useMonaco } from '@shared/utils/setup-monaco/load-monaco'
 
 import styles from './ConfigEditor.module.css'
 import { IProps } from './interfaces'

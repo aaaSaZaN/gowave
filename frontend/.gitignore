@@ -141,7 +141,7 @@ public/xray.schema.json
 public/main.wasm
 public/xray.schema.cn.json
 
-scripts
-scripts/**
+scripts/*
+!scripts/editor-assets.cjs
 
 public/assets/**

@@ -103,10 +103,13 @@ func TestWebhookDeliverySignsPayloadAndHonoursEventConfig(t *testing.T) {
 func TestTelegramTemplatesEscapeValues(t *testing.T) {
 	n := &Notifier{}
 	message, _ := n.render(Event{Name: "service.login_attempt_failed", Data: map[string]interface{}{
-		"loginAttempt": map[string]string{"username": "<script>", "password": "a&b", "ip": "1.2.3.4", "userAgent": "x", "description": "bad"},
+		"loginAttempt": map[string]string{"username": "<script>", "password": "hunter2-typo", "ip": "1.2.3.4", "userAgent": "a&b", "description": "bad"},
 	}})
 	if !strings.Contains(message, "&lt;script&gt;") || !strings.Contains(message, "a&amp;b") || strings.Contains(message, "<script>") {
 		t.Fatalf("values were not escaped: %s", message)
+	}
+	if strings.Contains(message, "hunter2") || !strings.Contains(message, "hidden, 12 chars") {
+		t.Fatalf("failed-login password reached Telegram: %s", message)
 	}
 	message, _ = n.render(Event{Name: "user.created", Data: map[string]interface{}{
 		"username": "bob", "trafficLimitBytes": 1073741824, "expireAt": "2026-03-04T05:06:00.000Z", "shortUuid": "abc",
@@ -128,5 +131,45 @@ func TestUnknownEventInConfigIsRejected(t *testing.T) {
 	t.Setenv("NOTIFICATIONS_CONFIG_PATH", path)
 	if _, err := New(&config.Config{}); err == nil {
 		t.Fatal("expected unknown event to fail validation")
+	}
+}
+
+func TestTorrentReportLinksIntoDashboard(t *testing.T) {
+	for _, tc := range []struct{ domain, base, want string }{
+		{"panel.example.com", "/secret/panel/", "https://panel.example.com/secret/panel/dashboard/open/user/42"},
+		{"https://panel.example.com/", "", "https://panel.example.com/dashboard/open/user/42"},
+		{"panel.example.com:8443", "/", "https://panel.example.com:8443/dashboard/open/user/42"},
+		{"localhost:3000", "/", ""},
+		{"127.0.0.1:3000", "/", ""},
+		{"", "/", ""},
+	} {
+		n := &Notifier{dashboardURL: dashboardURL(tc.domain, tc.base)}
+		_, keyboard := n.render(Event{Name: "torrent_blocker.report", Data: map[string]interface{}{
+			"user": map[string]interface{}{"id": 42, "username": "bob"},
+		}})
+		got := ""
+		if len(keyboard) == 1 {
+			got = keyboard[0].URL
+		}
+		if got != tc.want {
+			t.Errorf("domain %q base %q: button %q, want %q", tc.domain, tc.base, got, tc.want)
+		}
+	}
+}
+
+func TestTelegramRejectionsAreNotRetried(t *testing.T) {
+	for status, permanent := range map[int]bool{400: true, 403: true, 404: true, 500: false, 502: false} {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(status)
+			_, _ = w.Write([]byte(`{"ok":false,"description":"Bad Request: chat not found"}`))
+		}))
+		n := &Notifier{cfg: config.NotificationsConfig{TelegramAPIRoot: server.URL, TelegramBotToken: "t"}, telegram: server.Client()}
+		payload, _ := json.Marshal(telegramJob{ChatID: "1", Message: "hi"})
+		err := n.deliverTelegram(context.Background(), &database.Job{Payload: string(payload)})
+		server.Close()
+		var perm *jobs.PermanentError
+		if err == nil || errors.As(err, &perm) != permanent {
+			t.Errorf("status %d: err %v, permanent %v", status, err, permanent)
+		}
 	}
 }

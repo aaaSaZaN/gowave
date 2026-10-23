@@ -1673,20 +1673,6 @@
       "providers": "ارائه‌دهنده‌ها"
     }
   },
-  "prime-modal": {
-    "shared": {
-      "description": "Back the project and become part of its inner circle — closer to the team, the roadmap, and the work itself.",
-      "priority-support-title": "Priority support",
-      "priority-support-description": "Skip the queue — your questions are answered first, directly by the team.",
-      "private-community-title": "Private community",
-      "private-community-description": "A closed circle of Prime members.",
-      "shape-the-roadmap-title": "Shape the roadmap",
-      "shape-the-roadmap-description": "Vote on what gets built next and help steer where the project goes.",
-      "direct-developer-access-title": "Direct developer access",
-      "direct-developer-access-description": "A direct line to the developer — no tickets, no middlemen.",
-      "join-button": "Join RW Prime"
-    }
-  },
   "hosts-datatable": {
     "widget": {
       "reset-sort": "Reset sort"
