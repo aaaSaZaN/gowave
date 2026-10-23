@@ -38,13 +38,13 @@ In-panel updates go through a root helper: the panel leaves a request in
 `/run/gowave`, `gowave-update.path` starts `gowave-update.service`, which downloads
 the latest release, checks it against `SHA256SUMS`, installs it root-owned and
 restarts the panel. Installers reapply the policy and the helper on every update.
-An existing root `gowave.service` migrates automatically on the first upgraded
-startup; older installs where the service account owns the binary are moved to the
-root-owned layout by updating with the installer, which also refuses to run such a
-binary as root. Run native database/rescue commands as `sudo -u gowave` from
+A `gowave.service` you run as root keeps running as root, with a warning in the
+log, until you update with the installer; installs where the service account owns
+the binary are moved to the root-owned layout the same way, and the installer
+refuses to run such a binary as root. Run native database/rescue commands as `sudo -u gowave` from
 `/opt/gowave` so new files keep the service ownership. Custom writable paths require
-an administrator's systemd override. The server refuses to start as root unless
-`GOWAVE_ALLOW_ROOT=1` is set. The Docker image runs as UID/GID 10001; the supplied
+an administrator's systemd override. Running the server as root is allowed but logs a
+warning. The Docker image runs as UID/GID 10001; the supplied
 Compose configuration also drops capabilities and uses a read-only root filesystem.
 
 Yandex authentication is unavailable, including with previously saved OAuth

@@ -64,14 +64,13 @@ func ensureGlobalSymlink() {
 	_ = os.Symlink(exe, symlinkPath)
 }
 
-// refuseRoot stops the server when started as root. GOWAVE_ALLOW_ROOT=1 is an
-// explicit opt-out for custom setups that provide their own isolation.
-func refuseRoot() {
-	if os.Geteuid() != 0 || os.Getenv("GOWAVE_ALLOW_ROOT") == "1" {
+// warnIfRoot only warns: the installer's unprivileged service is recommended,
+// not enforced, so custom setups keep working.
+func warnIfRoot() {
+	if os.Geteuid() != 0 {
 		return
 	}
-	fmt.Fprintln(os.Stderr, "Run the panel as an unprivileged user: install the native service, configure the container user, or set GOWAVE_ALLOW_ROOT=1.")
-	os.Exit(1)
+	fmt.Fprintln(os.Stderr, "WARNING: GoWave is running as root. This is not recommended; install.sh sets up an unprivileged service.")
 }
 
 // warnWritableExecutable flags installations whose binary the service account can
@@ -128,18 +127,6 @@ func Run() {
 		}
 		return
 	}
-	if len(args) == 0 && !system.IsRunningInDocker() {
-		if migrated, err := serviceunit.MigrateLegacy(); migrated {
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
-			return
-		}
-	}
-	if len(args) == 0 {
-		refuseRoot()
-	}
 	cfg := config.Load()
 	if cli.IsPostgresToSQLiteMigrationCommand(args) {
 		cli.RunRescue(nil, cfg, args)
@@ -174,7 +161,7 @@ func Run() {
 		}
 	}
 
-	refuseRoot()
+	warnIfRoot()
 	warnWritableExecutable()
 	if err := cfg.Validate(); err != nil {
 		fmt.Fprintf(os.Stderr, "Invalid configuration: %v\n", err)

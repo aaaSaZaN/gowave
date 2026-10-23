@@ -118,23 +118,3 @@ esac
 		t.Fatal("accepted a shared system directory")
 	}
 }
-
-func TestMigrationOnlyInsideGowaveUnit(t *testing.T) {
-	old := cgroupFile
-	t.Cleanup(func() { cgroupFile = old })
-	for content, want := range map[string]bool{
-		"0::/system.slice/gowave.service\n":                                     true,
-		"12:pids:/system.slice/gowave.service\n0::/system.slice/gowave.service": true,
-		"0::/system.slice/gowave-panel.service\n":                               false,
-		"0::/system.slice/my-gowave.service\n":                                  false,
-		"0::/user.slice/user-0.slice/session-1.scope\n":                         false,
-	} {
-		cgroupFile = filepath.Join(t.TempDir(), "cgroup")
-		if err := os.WriteFile(cgroupFile, []byte(content), 0600); err != nil {
-			t.Fatal(err)
-		}
-		if got := inUnit("gowave.service"); got != want {
-			t.Errorf("inUnit(%q) = %v, want %v", content, got, want)
-		}
-	}
-}
