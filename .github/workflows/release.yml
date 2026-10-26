@@ -64,7 +64,7 @@ jobs:
         run: sha256sum gowave-frontend.tar.gz gowave-linux-amd64 gowave-linux-arm64 > SHA256SUMS
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           # v1.2.0-beta.1 becomes a pre-release, which releases/latest (and the updater) ignores
           prerelease: ${{ contains(github.ref_name, '-') }}
