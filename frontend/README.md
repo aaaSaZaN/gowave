@@ -36,6 +36,12 @@ bun run check
 bun run build
 ```
 
+Run `just` in this directory to list maintenance tasks. `just download-monaco-deps`
+fetches editor assets, and `just clean` removes them. `just bump-patch`,
+`just bump-minor` and `just bump-major` update the package version and lockfile.
+`just tag-release` creates a signed `v<package.json version>` tag and pushes the
+current branch and annotated tags to `origin`.
+
 The browser suite builds an isolated test page and uses Chromium's debugging
 protocol through native WebSocket, without a browser automation dependency. It
 covers layout, animation cleanup, error recovery, SVG detection, charts, progress,

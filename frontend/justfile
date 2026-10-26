@@ -1,0 +1,33 @@
+# List available frontend tasks.
+default:
+    @just --list
+
+# Download the hash-pinned Xray validator runtime and schemas.
+download-monaco-deps:
+    bun scripts/editor-assets.cjs download public/assets
+
+# Remove downloaded editor assets.
+clean:
+    rm -f public/assets/main.wasm public/assets/wasm_exec.js public/assets/xray.schema.json public/assets/xray.schema.cn.json
+
+bump-patch:
+    bun pm version patch --no-git-tag-version
+    bun install
+
+bump-minor:
+    bun pm version minor --no-git-tag-version
+    bun install
+
+bump-major:
+    bun pm version major --no-git-tag-version
+    bun install
+
+# Create a signed release tag and push the branch and annotated tags to origin.
+tag-release:
+    #!/usr/bin/env sh
+    set -eu
+    version=$(bun -p "require('./package.json').version")
+    printf 'Creating signed tag for version %s...\n' "$version"
+    git tag -s "v$version" -m "Release v$version"
+    git push origin --follow-tags
+    printf 'Signed tag v%s created and pushed\n' "$version"
