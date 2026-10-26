@@ -1,5 +1,4 @@
 import {
-    REMNAWAVE_BYPASS_HTTPS_RESTRCTIONS,
     REMNAWAVE_CLIENT_TYPE_BROWSER,
     REMNAWAVE_CLIENT_TYPE_HEADER
 } from '@remnawave/backend-contract'
@@ -31,17 +30,13 @@ export const instance = axios.create({
     headers: {
         'Content-type': 'application/json',
         Accept: 'application/json',
-        [REMNAWAVE_CLIENT_TYPE_HEADER]: REMNAWAVE_CLIENT_TYPE_BROWSER,
-        ...REMNAWAVE_BYPASS_HTTPS_RESTRCTIONS
+        [REMNAWAVE_CLIENT_TYPE_HEADER]: REMNAWAVE_CLIENT_TYPE_BROWSER
     }
 })
 
 instance.interceptors.request.use((config) => {
     config.headers.set('Authorization', `Bearer ${authorizationToken}`)
     config.headers.set(REMNAWAVE_CLIENT_TYPE_HEADER, REMNAWAVE_CLIENT_TYPE_BROWSER)
-    for (const [key, value] of Object.entries(REMNAWAVE_BYPASS_HTTPS_RESTRCTIONS)) {
-        config.headers.set(key, value)
-    }
     return config
 })
 
