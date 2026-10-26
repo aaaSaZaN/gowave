@@ -86,4 +86,48 @@ wait_healthy() { return 0; }
 curl() { printf '<!doctype html><html>old dashboard</html>' >"$WORK/dashboard-check.html"; }
 if verify_panel_path; then fail 'old bundle accepted for new configuration'; fi
 verify_panel_path --legacy || fail 'old bundle rejected during recovery'
+
+# Channel options: flags, environment and pinned versions resolve consistently.
+reset_channel() { GOWAVE_CHANNEL=''; GOWAVE_VERSION=latest; GOWAVE_ACTION=''; GOWAVE_LANG=''; }
+reset_channel; parse_args --dev
+[ "$GOWAVE_CHANNEL/$GOWAVE_VERSION" = dev/dev ] || fail '--dev'
+[ "$(panel_image)" = ghcr.io/aaasazan/gowave:dev ] || fail 'dev image'
+reset_channel; parse_args --channel=stable --update --lang en
+[ "$GOWAVE_CHANNEL/$GOWAVE_VERSION/$GOWAVE_ACTION/$GOWAVE_LANG" = stable/latest/update/en ] || fail '--channel=stable --update'
+reset_channel; GOWAVE_VERSION=v1.2.3; parse_args
+[ "$GOWAVE_CHANNEL" = stable ] && [ "$(panel_image)" = ghcr.io/aaasazan/gowave:1.2.3 ] || fail 'pinned version'
+reset_channel; GOWAVE_VERSION=dev; parse_args
+[ "$GOWAVE_CHANNEL" = dev ] || fail 'GOWAVE_VERSION=dev'
+for args in '--dev --version v1.2.3' '--channel nightly' '--version 1.2' '--lang de' '--bogus' '--channel'; do
+    reset_channel
+    # shellcheck disable=SC2086
+    if (parse_args $args) 2>/dev/null; then fail "accepted $args"; fi
+done
+reset_channel; GOWAVE_VERSION='v1;rm'
+if (parse_args) 2>/dev/null; then fail 'accepted an unsafe version'; fi
+
+# Enter keeps the installed channel; an explicit option skips the question.
+ask() { printf ''; }
+reset_channel; choose_channel dev 2>/dev/null
+[ "$GOWAVE_CHANNEL/$GOWAVE_VERSION" = dev/dev ] || fail 'Enter switched away from dev'
+reset_channel; choose_channel 2>/dev/null
+[ "$GOWAVE_CHANNEL/$GOWAVE_VERSION" = stable/latest ] || fail 'fresh install default'
+ask() { printf 2; }
+reset_channel; choose_channel dev 2>/dev/null
+[ "$GOWAVE_CHANNEL/$GOWAVE_VERSION" = stable/latest ] || fail 'switch from dev to stable'
+ask() { fail 'asked although the channel was given'; }
+reset_channel; GOWAVE_CHANNEL=dev; choose_channel stable
+
+# Docker: the channel is read from and written to GOWAVE_IMAGE; custom images stay.
+MODE=docker
+printf 'GOWAVE_IMAGE=ghcr.io/aaasazan/gowave:latest\n' >"$ENV_FILE"
+[ "$(installed_channel)" = stable ] || fail 'docker stable channel'
+reset_channel; GOWAVE_CHANNEL=dev; apply_channel; set_docker_image >/dev/null
+[ "$(env_get "$ENV_FILE" GOWAVE_IMAGE)" = ghcr.io/aaasazan/gowave:dev ] || fail 'docker switch to dev'
+[ "$(installed_channel)" = dev ] || fail 'docker dev channel'
+printf 'GOWAVE_IMAGE=registry.local/gowave:custom\n' >"$ENV_FILE"
+set_docker_image 2>/dev/null
+[ "$(env_get "$ENV_FILE" GOWAVE_IMAGE)" = registry.local/gowave:custom ] || fail 'custom image replaced'
+MODE=native
+
 echo 'Installer behavior checks passed.'

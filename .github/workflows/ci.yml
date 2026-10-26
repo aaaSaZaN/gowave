@@ -1,9 +1,9 @@
 name: CI
 
+# Pushes to main run these checks through dev.yml, which builds the dev channel
+# only after they pass; tags run them through release.yml.
 on:
   pull_request:
-  push:
-    branches: [main]
   workflow_call:
 
 permissions:

@@ -18,6 +18,9 @@ RUN bun run editor:download && bun run build && bun run editor:compress
 FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS backend
 
 ARG VERSION=dev
+# CHANNEL=dev marks builds of the dev channel (Docker tag "dev"); see dev.yml.
+ARG CHANNEL=stable
+ARG COMMIT_SHA=
 ARG TARGETOS TARGETARCH
 WORKDIR /src
 
@@ -26,7 +29,7 @@ RUN go mod download
 
 COPY backend-go/ ./
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath \
-    -ldflags="-s -w -X gowave/internal/system.AppVersion=${VERSION}" \
+    -ldflags="-s -w -X gowave/internal/system.AppVersion=${VERSION} -X gowave/internal/system.Channel=${CHANNEL} -X gowave/internal/system.CommitSha=${COMMIT_SHA}" \
     -o /out/gowave ./cmd/server
 
 # Stage 3: Minimal runtime

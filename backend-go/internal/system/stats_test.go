@@ -107,7 +107,7 @@ func TestReadProcMeminfo(t *testing.T) {
 
 func TestDockerUpdateCommandUsesComposeDir(t *testing.T) {
 	t.Setenv("GOWAVE_COMPOSE_DIR", "/opt/gowave-docker")
-	if got, want := DockerUpdateCommand(), "cd /opt/gowave-docker && docker compose pull && docker compose up -d"; got != want {
+	if got, want := DockerUpdateCommand(CurrentChannel()), "cd /opt/gowave-docker && docker compose pull && docker compose up -d"; got != want {
 		t.Errorf("DockerUpdateCommand() = %q, want %q", got, want)
 	}
 
