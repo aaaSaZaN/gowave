@@ -5,7 +5,8 @@ import { sha512 } from '@noble/hashes/sha2.js'
 import { utf8ToBytes } from '@noble/hashes/utils.js'
 import { generateMnemonic, mnemonicToSeed, validateMnemonic } from '@scure/bip39'
 import { wordlist } from '@scure/bip39/wordlists/english.js'
-import { decode as fromBase64, encode as toBase64 } from '@stablelib/base64'
+
+import { decode as fromBase64, encode as toBase64 } from '@shared/lib/base64'
 
 export const generateSeedPhrase = () => generateMnemonic(wordlist, 128)
 

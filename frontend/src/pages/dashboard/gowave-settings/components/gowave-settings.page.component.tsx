@@ -6,9 +6,9 @@ import { BackendToolsCardWidget } from '@widgets/gowave-settings/backend-tools-c
 import { BrandingSettingsCardWidget } from '@widgets/gowave-settings/branding-settings-card/branding-settings-card.widget'
 import { ExperimentalSettingsCardWidget } from '@widgets/gowave-settings/experimental-settings-card/experimental-settings-card.widget'
 import { useTranslation } from 'react-i18next'
-import Masonry from 'react-layout-masonry'
 
 import { LoadingScreen, Logo, Page, PageHeaderShared } from '@shared/ui'
+import Masonry from '@shared/ui/masonry'
 
 interface IProps {
     apiTokensData: GetApiTokensCommand.Response['response']

@@ -7,6 +7,7 @@ import {
     INTERNAL_SQUADS_MODE,
     SECURITY_LAYERS
 } from '@remnawave/backend-contract'
+import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiListChecks, PiEye } from 'react-icons/pi'
@@ -94,10 +95,14 @@ export const CreateHostDrawer = NiceModal.create(() => {
                 protocol: 'vless'
             })
             setPreviewContent(res.data.response?.previewContent || '')
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const responseMessage = isAxiosError<{ message?: string }>(err)
+                ? err.response?.data?.message
+                : undefined
             notifications.show({
                 title: 'Preview Error',
-                message: err.response?.data?.message || err.message || 'Failed to preview',
+                message:
+                    responseMessage || (err instanceof Error ? err.message : 'Failed to preview'),
                 color: 'red'
             })
         } finally {

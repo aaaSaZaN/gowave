@@ -4,7 +4,7 @@ import {
     SUBSCRIPTION_TEMPLATE_TYPE,
     TSubscriptionTemplateType
 } from '@remnawave/backend-contract'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbDeviceFloppy } from 'react-icons/tb'
 
@@ -66,7 +66,9 @@ export const ExternalSquadsTemplatesTabWidget = (props: IProps) => {
         )
     }, [templatesData?.templates])
 
-    useEffect(() => {
+    const [previousSquad, setPreviousSquad] = useState<typeof externalSquad | null>(null)
+    if (previousSquad !== externalSquad) {
+        setPreviousSquad(externalSquad)
         const initialTemplates: Record<TSubscriptionTemplateType, null | string> = {
             [SUBSCRIPTION_TEMPLATE_TYPE.CLASH]: null,
             [SUBSCRIPTION_TEMPLATE_TYPE.MIHOMO]: null,
@@ -83,7 +85,7 @@ export const ExternalSquadsTemplatesTabWidget = (props: IProps) => {
         }
 
         setSelectedTemplates(initialTemplates)
-    }, [externalSquad])
+    }
 
     const { mutate: updateExternalSquad, isPending: isUpdatingExternalSquad } =
         useUpdateExternalSquad({

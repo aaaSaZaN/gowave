@@ -4,7 +4,7 @@ import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
 import { GetExternalSquadByUuidCommand } from '@remnawave/backend-contract'
 import { RemarksManager } from '@widgets/dashboard/subscription-settings/settings/cards/managers/remarks-manager.widget'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiClockCountdown, PiClockUser, PiListChecks, PiProhibit } from 'react-icons/pi'
 import { TbDeviceFloppy, TbDevices2, TbListLetters, TbX } from 'react-icons/tb'
@@ -40,7 +40,9 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
         HWIDNotSupported: DEFAULT_REMARKS.HWIDNotSupported
     })
 
-    useEffect(() => {
+    const [previousSquad, setPreviousSquad] = useState<typeof externalSquad | null>(null)
+    if (previousSquad !== externalSquad) {
+        setPreviousSquad(externalSquad)
         const currentRemarks = externalSquad.customRemarks
         if (currentRemarks) {
             setIsOverrideEnabled(true)
@@ -74,7 +76,7 @@ export const ExternalSquadsCustomRemarksTabWidget = (props: IProps) => {
                 HWIDNotSupported: DEFAULT_REMARKS.HWIDNotSupported
             })
         }
-    }, [externalSquad])
+    }
 
     const updateExpiredRemarks = useCallback((newRemarks: string[]) => {
         setRemarks((prev) => ({ ...prev, expired: newRemarks }))

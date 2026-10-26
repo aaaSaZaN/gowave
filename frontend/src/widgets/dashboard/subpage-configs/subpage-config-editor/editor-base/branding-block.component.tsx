@@ -1,8 +1,8 @@
 import { Card, Divider, Stack, TextInput } from '@mantine/core'
 import { UseFormReturnType } from '@mantine/form'
 import { TSubscriptionPageRawConfig } from '@remnawave/subscription-page-types'
-import { IconPalette } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
+import { TbPalette } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
@@ -20,7 +20,7 @@ export function BrandingBlockComponent({ form }: IProps) {
             <Stack gap="md" h="100%">
                 <BaseOverlayHeader
                     iconColor="cyan"
-                    IconComponent={IconPalette}
+                    IconComponent={TbPalette}
                     iconSize={20}
                     iconVariant="soft"
                     subtitle={t('subpage-config-visual-editor.widget.brand-appearance')}

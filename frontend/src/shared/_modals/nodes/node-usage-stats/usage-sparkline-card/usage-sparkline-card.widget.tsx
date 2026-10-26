@@ -1,7 +1,7 @@
-import { Sparkline } from '@mantine/charts'
 import { Box, Card, SimpleGrid, Skeleton, Stack, Text } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 
+import { Sparkline } from '@shared/ui/sparkline'
 import { prettifyBytesUtil } from '@shared/utils/bytes'
 
 interface IProps {

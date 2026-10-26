@@ -6,9 +6,9 @@ import {
     TSubscriptionPageLanguageCode,
     TSubscriptionPageSvgLibrary
 } from '@remnawave/subscription-page-types'
-import { IconChevronRight, IconPlus, IconStar } from '@tabler/icons-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { TbChevronRight, TbPlus, TbStar } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
@@ -104,7 +104,7 @@ export function AppEditorDrawerContent(props: IProps) {
                         <Group gap="sm" justify="space-between">
                             <BaseOverlayHeader
                                 iconColor="cyan"
-                                IconComponent={IconStar}
+                                IconComponent={TbStar}
                                 iconSize={16}
                                 iconVariant="soft"
                                 title={t('app-editor-drawer-content.component.app-settings')}
@@ -146,7 +146,7 @@ export function AppEditorDrawerContent(props: IProps) {
                     <Stack gap="md">
                         <BaseOverlayHeader
                             iconColor="violet"
-                            IconComponent={IconChevronRight}
+                            IconComponent={TbChevronRight}
                             iconSize={16}
                             iconVariant="soft"
                             subtitle={`${app.blocks.length} blocks`}
@@ -173,7 +173,7 @@ export function AppEditorDrawerContent(props: IProps) {
                             <Button
                                 className={styles.addButton}
                                 fullWidth
-                                leftSection={<IconPlus size={14} />}
+                                leftSection={<TbPlus size={14} />}
                                 onClick={handleAddBlock}
                                 size="xs"
                                 variant="default"

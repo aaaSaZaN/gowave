@@ -6,7 +6,8 @@ import {
     numberToVarBytesBE
 } from '@noble/curves/utils.js'
 import { utf8ToBytes } from '@noble/hashes/utils.js'
-import { decodeURLSafe, encodeURLSafe } from '@stablelib/base64'
+
+import { decodeURLSafe, encodeURLSafe } from '@shared/lib/base64'
 
 import { fromBase64, toBase64 } from './ssh-crypto'
 

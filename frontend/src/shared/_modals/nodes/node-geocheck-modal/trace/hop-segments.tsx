@@ -1,8 +1,9 @@
 import type { IGeocheckHop } from './trace.types'
 
 import { Box, Stack, Text } from '@mantine/core'
-import ColorHash from 'color-hash'
 import { useMemo } from 'react'
+
+import ColorHash from '@shared/lib/color'
 
 import { HopRow } from './hop-row'
 import { TraceLink } from './trace-link'

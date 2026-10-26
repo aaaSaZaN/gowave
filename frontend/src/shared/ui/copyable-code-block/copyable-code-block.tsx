@@ -1,6 +1,7 @@
 import { ActionIcon, Box, CopyButton, Input, InputWrapperProps, MantineColor } from '@mantine/core'
-import clsx from 'clsx'
 import { PiCheck, PiCopy } from 'react-icons/pi'
+
+import clsx from '@shared/lib/classes'
 
 import styles from './copyable-code-block.module.css'
 

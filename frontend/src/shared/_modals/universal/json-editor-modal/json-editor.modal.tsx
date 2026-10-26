@@ -11,7 +11,6 @@ import {
     ThemeIconProps,
     Tooltip
 } from '@mantine/core'
-import clsx from 'clsx'
 import { ComponentType, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbArrowUp, TbBook, TbBraces } from 'react-icons/tb'
@@ -19,6 +18,7 @@ import { TbArrowUp, TbBook, TbBraces } from 'react-icons/tb'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { COMPACT_MONACO_OPTIONS } from '@shared/constants/monaco-theme'
 import { usePseudoFullscreen } from '@shared/hooks'
+import clsx from '@shared/lib/classes'
 import { CodeEditor, editorClasses, EditorFooter, EditorStatusBar } from '@shared/ui/code-editor'
 import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui/fullscreen-toggle-button'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'

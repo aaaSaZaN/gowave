@@ -23,6 +23,7 @@ interface IProps {
 
 export const BulkAccessSettingsCard = (props: IProps) => {
     const { t, i18n } = useTranslation()
+    const [minimumDate] = useState(() => new Date())
 
     const { cardVariants, externalSquads, motionWrapper, form } = props
 
@@ -56,9 +57,7 @@ export const BulkAccessSettingsCard = (props: IProps) => {
                             data={userStatusValues.filter(
                                 (status) => status.value !== 'EXPIRED' && status.value !== 'LIMITED'
                             )}
-                            description={t(
-                                'common.field.user-status'
-                            )}
+                            description={t('common.field.user-status')}
                             key={form.key('fields.status')}
                             label={t('common.field.status')}
                             leftSection={<TbStatusChange size="16px" />}
@@ -75,7 +74,7 @@ export const BulkAccessSettingsCard = (props: IProps) => {
                             key={form.key('fields.expireAt')}
                             label={t('create-user-modal.widget.expiry-date')}
                             locale={i18n.language}
-                            minDate={new Date()}
+                            minDate={minimumDate}
                             styles={{
                                 calendarHeaderLevel: {
                                     justifyContent: 'flex-start',

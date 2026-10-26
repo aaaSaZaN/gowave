@@ -11,12 +11,12 @@ import {
     Tooltip
 } from '@mantine/core'
 import { GetConfigProfilesCommand } from '@remnawave/backend-contract'
-import ReactCountryFlag from 'react-country-flag'
 import { useTranslation } from 'react-i18next'
 import { PiCheck, PiCopy, PiCpu } from 'react-icons/pi'
 import { TbCpu } from 'react-icons/tb'
 
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
+import ReactCountryFlag from '@shared/ui/country-flag'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
 interface IProps {

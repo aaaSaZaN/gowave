@@ -2,7 +2,7 @@ import { Stack } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { SrhInspectorMetrics } from '@widgets/dashboard/srh-inspector/srh-inspector-metrics'
 import { SrhInspectorTableWidget } from '@widgets/dashboard/srh-inspector/srh-inspector-table'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 
 import { Page } from '@shared/ui'

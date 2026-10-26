@@ -1,10 +1,10 @@
 import { Group, Text } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import clsx from 'clsx'
 import { useMemo } from 'react'
-import semver from 'semver'
 
 import { useGetGowaveMetadata } from '@shared/api/hooks'
+import clsx from '@shared/lib/classes'
+import semver from '@shared/lib/version'
 
 import { useGowaveInfo } from '@entities/dashboard/updates-store'
 

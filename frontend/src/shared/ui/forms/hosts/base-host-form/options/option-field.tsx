@@ -109,9 +109,7 @@ function OptionRow(props: IRowProps) {
             layout={kind}
             onReset={onRemove}
             resetLabel={
-                isBulkEdit
-                    ? t('base-host-form.leave-field-untouched')
-                    : t('common.action.remove')
+                isBulkEdit ? t('base-host-form.leave-field-untouched') : t('common.action.remove')
             }
         >
             <Component />

@@ -3,9 +3,9 @@ import { GetNodeCommand } from '@remnawave/backend-contract'
 import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbMapSearch } from 'react-icons/tb'
-import semver from 'semver'
 
 import { showModal } from '@shared/_modals/show-modal'
+import semver from '@shared/lib/version'
 
 const MIN_NODE_VERSION = '3.3.0'
 

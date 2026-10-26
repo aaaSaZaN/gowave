@@ -59,10 +59,7 @@ export const ConfigProfilesHeaderActionButtonsFeature = (props: IProps) => {
             </ActionIconGroup>
 
             <ActionIconGroup>
-                <Tooltip
-                    label={t('common.action.create')}
-                    withArrow
-                >
+                <Tooltip label={t('common.action.create')} withArrow>
                     <ActionIcon
                         color="teal"
                         onClick={() =>

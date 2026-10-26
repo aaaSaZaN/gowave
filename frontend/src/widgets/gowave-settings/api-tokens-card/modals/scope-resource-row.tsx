@@ -1,6 +1,7 @@
 import { Box, Collapse, Group, Stack, Text, ThemeIcon, UnstyledButton } from '@mantine/core'
-import clsx from 'clsx'
 import { TbChevronRight } from 'react-icons/tb'
+
+import clsx from '@shared/lib/classes'
 
 import classes from '../api-token-card.module.css'
 import { KindPill } from './kind-pill'

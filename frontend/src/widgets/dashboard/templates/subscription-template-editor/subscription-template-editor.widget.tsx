@@ -4,11 +4,11 @@ import { TemplateEditorActionsFeature } from '@features/dashboard/subscription-t
 import { Box, Paper } from '@mantine/core'
 import { Monaco } from '@monaco-editor/react'
 import { GetHostsCommand, GetSubscriptionTemplateCommand } from '@remnawave/backend-contract'
-import { decode } from '@stablelib/base64'
-import clsx from 'clsx'
 import { useLayoutEffect, useRef } from 'react'
 
 import { usePseudoFullscreen, useViewportFillHeight } from '@shared/hooks'
+import { decode } from '@shared/lib/base64'
+import clsx from '@shared/lib/classes'
 import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui'
 import { CodeEditor, editorClasses, EditorFooter } from '@shared/ui/code-editor'
 import { preventBackScroll } from '@shared/utils/misc'

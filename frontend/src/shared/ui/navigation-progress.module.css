@@ -1,0 +1,27 @@
+.bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10000;
+    width: 100%;
+    height: 3px;
+    transform-origin: left;
+    background: var(--mantine-primary-color-filled);
+    animation: progress 12s ease-out forwards;
+}
+
+@keyframes progress {
+    from {
+        transform: scaleX(0.03);
+    }
+    to {
+        transform: scaleX(0.95);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bar {
+        animation: none;
+        transform: scaleX(0.7);
+    }
+}

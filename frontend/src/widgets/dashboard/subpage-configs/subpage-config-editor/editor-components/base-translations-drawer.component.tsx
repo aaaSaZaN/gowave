@@ -6,8 +6,8 @@ import {
     TSubscriptionPageLanguageCode,
     TSubscriptionPageTranslateKeys
 } from '@remnawave/subscription-page-types'
-import { IconLanguage } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
+import { TbLanguage } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
@@ -48,7 +48,7 @@ export function BaseTranslationsDrawer(props: IProps) {
             title={
                 <BaseOverlayHeader
                     iconColor="violet"
-                    IconComponent={IconLanguage}
+                    IconComponent={TbLanguage}
                     iconVariant="soft"
                     subtitle={t('base-translations-drawer.component.completed', {
                         count: filledCount,

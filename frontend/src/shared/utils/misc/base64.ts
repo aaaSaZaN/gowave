@@ -1,4 +1,4 @@
-import { decode, decodeURLSafe, encode } from '@stablelib/base64'
+import { decode, decodeURLSafe, encode } from '@shared/lib/base64'
 
 export const decodeBase64 = (value: string): null | string => {
     const trimmed = value.trim()

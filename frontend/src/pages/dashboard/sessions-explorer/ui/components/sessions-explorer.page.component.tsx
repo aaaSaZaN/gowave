@@ -1,6 +1,6 @@
 import { Stack } from '@mantine/core'
 import { SessionsExplorerWidget } from '@widgets/dashboard/sessions-explorer/sessions-explorer-widget'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 
 import { Page } from '@shared/ui'

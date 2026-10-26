@@ -1,8 +1,8 @@
 import { Button, Card, Select, Stack, Text } from '@mantine/core'
 import { GetExternalSquadByUuidCommand } from '@remnawave/backend-contract'
-import { IconPalette } from '@tabler/icons-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { TbPalette } from 'react-icons/tb'
 import { TbDeviceFloppy } from 'react-icons/tb'
 
 import { queryClient } from '@shared/api'
@@ -69,7 +69,7 @@ export const ExternalSquadsSubpageConfigTabWidget = (props: IProps) => {
                     clearable
                     data={configOptions}
                     label={t('external-squads-subpage-config.tab.widget.subpage-config')}
-                    leftSection={<IconPalette size={16} />}
+                    leftSection={<TbPalette size={16} />}
                     onChange={setSelectedConfigUuid}
                     placeholder={t('external-squads-subpage-config.tab.widget.select-config')}
                     value={selectedConfigUuid}

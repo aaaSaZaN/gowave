@@ -2,8 +2,8 @@ import { Badge, Button, Card, Group } from '@mantine/core'
 import { UseFormReturnType } from '@mantine/form'
 import { useDisclosure } from '@mantine/hooks'
 import { TSubscriptionPageRawConfig } from '@remnawave/subscription-page-types'
-import { IconPhoto } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
+import { TbPhoto } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
@@ -31,7 +31,7 @@ export function SvgLibraryBlockComponent(props: IProps) {
                     <Group gap="sm" wrap="nowrap">
                         <BaseOverlayHeader
                             iconColor="violet"
-                            IconComponent={IconPhoto}
+                            IconComponent={TbPhoto}
                             iconSize={20}
                             iconVariant="soft"
                             title={t('svg-library-modal.component.svg-library')}
@@ -44,7 +44,7 @@ export function SvgLibraryBlockComponent(props: IProps) {
 
                     <Button
                         className={styles.saveButton}
-                        leftSection={<IconPhoto size={16} />}
+                        leftSection={<TbPhoto size={16} />}
                         onClick={openSvgLibrary}
                     >
                         {t('subpage-config-visual-editor.widget.open-svg-library')}

@@ -1,5 +1,6 @@
 import { AppShell, Box, Burger, Container, Group, ScrollArea } from '@mantine/core'
-import clsx from 'clsx'
+
+import clsx from '@shared/lib/classes'
 
 import { LayoutBrand, LayoutMain } from '../layout-shared'
 import classes from '../layout.module.css'

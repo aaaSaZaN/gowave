@@ -1,8 +1,9 @@
 import { Stack, Text } from '@mantine/core'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import { memo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiEmpty } from 'react-icons/pi'
+
+import { useVirtualList } from '@shared/hooks/use-virtual-list'
 
 import { InternalSquadCardShared } from '../internal-squad-card'
 import { IProps } from './interfaces'
@@ -14,7 +15,7 @@ export const InternalSquadsListSimpleWidgetShared = memo((props: IProps) => {
 
     const parentRef = useRef<HTMLDivElement>(null)
 
-    const virtualizer = useVirtualizer({
+    const virtualizer = useVirtualList({
         count: filteredInternalSquads.length,
         getScrollElement: () => parentRef.current,
         estimateSize: () => 60,
@@ -37,12 +38,12 @@ export const InternalSquadsListSimpleWidgetShared = memo((props: IProps) => {
             >
                 <div
                     style={{
-                        height: `${virtualizer.getTotalSize()}px`,
+                        height: `${virtualizer.totalSize}px`,
                         width: '100%',
                         position: 'relative'
                     }}
                 >
-                    {virtualizer.getVirtualItems().length === 0 && (
+                    {virtualizer.virtualItems.length === 0 && (
                         <div
                             key="no-squads-found"
                             style={{
@@ -62,7 +63,7 @@ export const InternalSquadsListSimpleWidgetShared = memo((props: IProps) => {
                         </div>
                     )}
 
-                    {virtualizer.getVirtualItems().map((virtualRow) => {
+                    {virtualizer.virtualItems.map((virtualRow) => {
                         const internalSquad = filteredInternalSquads[virtualRow.index]
                         return (
                             <div

@@ -208,8 +208,7 @@ export const NodeSystemCardWidget = memo((props: IProps) => {
                                             {interfaceData.rxSpeed}
                                         </Text>
                                         <Text c="dimmed" ff="monospace" size="10px">
-                                            {t('common.field.total')}:{' '}
-                                            {interfaceData.rxTotal}
+                                            {t('common.field.total')}: {interfaceData.rxTotal}
                                         </Text>
                                     </Stack>
                                     <Stack gap={0}>
@@ -226,8 +225,7 @@ export const NodeSystemCardWidget = memo((props: IProps) => {
                                             {interfaceData.txSpeed}
                                         </Text>
                                         <Text c="dimmed" ff="monospace" size="10px">
-                                            {t('common.field.total')}:{' '}
-                                            {interfaceData.txTotal}
+                                            {t('common.field.total')}: {interfaceData.txTotal}
                                         </Text>
                                     </Stack>
                                 </Group>
@@ -265,9 +263,17 @@ export const NodeSystemCardWidget = memo((props: IProps) => {
                                             OS
                                         </Group>
                                     </Text>
-                                    <Tooltip label={[info.platform, info.version].filter(Boolean).join(" ") || info.type}>
+                                    <Tooltip
+                                        label={
+                                            [info.platform, info.version]
+                                                .filter(Boolean)
+                                                .join(' ') || info.type
+                                        }
+                                    >
                                         <Text className={classes.statValue}>
-                                            {[info.platform, info.version].filter(Boolean).join(" ") || info.type}
+                                            {[info.platform, info.version]
+                                                .filter(Boolean)
+                                                .join(' ') || info.type}
                                         </Text>
                                     </Tooltip>
                                 </Stack>

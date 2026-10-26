@@ -12,7 +12,6 @@ import {
     Tooltip
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import clsx from 'clsx'
 import { githubDarkTheme, JsonEditor } from 'json-edit-react'
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -30,6 +29,7 @@ import {
 } from 'react-icons/tb'
 
 import { usePseudoFullscreen } from '@shared/hooks'
+import clsx from '@shared/lib/classes'
 import { fullscreenClasses } from '@shared/ui/fullscreen-toggle-button'
 import { ZoomableImage } from '@shared/ui/zoomable-image'
 import {

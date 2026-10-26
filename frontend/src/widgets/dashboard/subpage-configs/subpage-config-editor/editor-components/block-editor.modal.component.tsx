@@ -5,8 +5,8 @@ import {
     TSubscriptionPageLanguageCode,
     TSubscriptionPageSvgLibrary
 } from '@remnawave/subscription-page-types'
-import { IconChevronRight, IconPalette, IconPlus } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
+import { TbChevronRight, TbPalette, TbPlus } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
@@ -114,7 +114,7 @@ export function BlockEditorModal(props: IProps) {
             title={
                 <BaseOverlayHeader
                     iconColor="violet"
-                    IconComponent={IconChevronRight}
+                    IconComponent={TbChevronRight}
                     iconVariant="soft"
                     subtitle={blockTitle}
                     title={t('block-editor.modal.component.edit-block')}
@@ -127,7 +127,7 @@ export function BlockEditorModal(props: IProps) {
                         <Stack gap="md">
                             <BaseOverlayHeader
                                 iconColor="cyan"
-                                IconComponent={IconPalette}
+                                IconComponent={TbPalette}
                                 iconSize={16}
                                 iconVariant="soft"
                                 title={t('block-editor.modal.component.block-settings')}
@@ -180,7 +180,7 @@ export function BlockEditorModal(props: IProps) {
                         <Stack gap="md">
                             <BaseOverlayHeader
                                 iconColor="teal"
-                                IconComponent={IconPlus}
+                                IconComponent={TbPlus}
                                 iconSize={16}
                                 iconVariant="soft"
                                 subtitle={`${block.buttons.length} buttons`}
@@ -208,7 +208,7 @@ export function BlockEditorModal(props: IProps) {
                                 <Button
                                     className={styles.addButton}
                                     fullWidth
-                                    leftSection={<IconPlus size={14} />}
+                                    leftSection={<TbPlus size={14} />}
                                     onClick={handleAddButton}
                                     variant="default"
                                 >

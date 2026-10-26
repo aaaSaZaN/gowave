@@ -1,8 +1,8 @@
 import { Center, Loader, Stack, Text, Title, Transition } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import { TOAuth2ProvidersKeys } from '@remnawave/backend-contract'
-import { IconCheck } from '@tabler/icons-react'
 import { CSSProperties, useEffect } from 'react'
+import { TbCheck } from 'react-icons/tb'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 
 import { useOauth2Callback } from '@shared/api/hooks'
@@ -68,7 +68,7 @@ export const Oauth2CallbackPage = () => {
                                 {isPending ? (
                                     <Loader size="xl" variant="dots" />
                                 ) : (
-                                    <IconCheck color="teal" size={48} />
+                                    <TbCheck color="teal" size={48} />
                                 )}
                             </div>
                         )}

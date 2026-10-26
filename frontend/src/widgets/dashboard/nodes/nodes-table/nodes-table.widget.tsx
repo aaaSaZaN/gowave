@@ -10,7 +10,6 @@ import {
 import { Box, Container, Stack } from '@mantine/core'
 import { useListState } from '@mantine/hooks'
 import { GetNodesCommand } from '@remnawave/backend-contract'
-import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { TbCpu } from 'react-icons/tb'
 
@@ -18,6 +17,7 @@ import { showModal } from '@shared/_modals/show-modal'
 import { queryClient } from '@shared/api'
 import { nodesQueryKeys, useGetNodes, useReorderNodes } from '@shared/api/hooks'
 import { useIsMobile } from '@shared/hooks'
+import { useVirtualList } from '@shared/hooks/use-virtual-list'
 import { NO_TAG, TagFilterBar } from '@shared/ui'
 import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 import { sToMs } from '@shared/utils/time-utils'
@@ -61,7 +61,9 @@ export const NodesTableWidget = memo((props: IProps) => {
     const isDraggingRef = useRef(false)
     const dragSnapshotRef = useRef<typeof state | null>(null)
     const activeTagRef = useRef(activeTag)
-    activeTagRef.current = activeTag
+    useLayoutEffect(() => {
+        activeTagRef.current = activeTag
+    }, [activeTag])
     const isMobile = useIsMobile()
 
     useGetNodes({
@@ -82,7 +84,7 @@ export const NodesTableWidget = memo((props: IProps) => {
         }
     })
 
-    const virtualizer = useWindowVirtualizer({
+    const virtualizer = useVirtualList({
         count: state.length,
         estimateSize: () => (isMobile ? 190 : 90),
         overscan: 7,
@@ -235,14 +237,14 @@ export const NodesTableWidget = memo((props: IProps) => {
                 <div ref={listRef}>
                     <div
                         style={{
-                            height: `${virtualizer.getTotalSize()}px`,
+                            height: `${virtualizer.totalSize}px`,
                             width: '100%',
                             position: 'relative'
                         }}
                     >
                         <Container fluid>
                             <Stack gap={0}>
-                                {virtualizer.getVirtualItems().map((virtualItem) => {
+                                {virtualizer.virtualItems.map((virtualItem) => {
                                     const item = state[virtualItem.index]
                                     if (!item) return null
 
@@ -260,8 +262,7 @@ export const NodesTableWidget = memo((props: IProps) => {
                                                 left: 0,
                                                 right: 0,
                                                 transform: `translateY(${
-                                                    virtualItem.start -
-                                                    virtualizer.options.scrollMargin
+                                                    virtualItem.start - virtualizer.scrollMargin
                                                 }px)`,
                                                 willChange: 'transform'
                                             }}

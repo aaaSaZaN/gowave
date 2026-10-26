@@ -7,9 +7,9 @@ import {
     TSubscriptionPagePlatformSchema,
     TSubscriptionPageSvgLibrary
 } from '@remnawave/subscription-page-types'
-import { IconEdit, IconPlus, IconTrash } from '@tabler/icons-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { TbEdit, TbPlus, TbTrash } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
@@ -119,7 +119,7 @@ export function PlatformEditor(props: IProps) {
                         size="lg"
                         variant="subtle"
                     >
-                        <IconTrash size={18} />
+                        <TbTrash size={18} />
                     </ActionIcon>
                 </Center>
                 <Accordion.Panel>
@@ -164,7 +164,7 @@ export function PlatformEditor(props: IProps) {
                             <Button
                                 className={styles.addButton}
                                 fullWidth
-                                leftSection={<IconPlus size={14} />}
+                                leftSection={<TbPlus size={14} />}
                                 onClick={handleAddApp}
                                 variant="default"
                             >
@@ -184,7 +184,7 @@ export function PlatformEditor(props: IProps) {
                 title={
                     <BaseOverlayHeader
                         iconColor="cyan"
-                        IconComponent={IconEdit}
+                        IconComponent={TbEdit}
                         iconVariant="soft"
                         subtitle={editingApp?.name || t('platform-editor.component.unnamed-app')}
                         title={t('platform-editor.component.edit-app')}

@@ -5,8 +5,8 @@ import {
     TSubscriptionPagePlatformSchema,
     TSubscriptionPageRawConfig
 } from '@remnawave/subscription-page-types'
-import { IconDeviceDesktop, IconPlus } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
+import { TbDeviceDesktop, TbPlus } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
@@ -63,7 +63,7 @@ export function PlatformBlockComponent(props: IProps) {
                 <Group justify="space-between">
                     <BaseOverlayHeader
                         iconColor="violet"
-                        IconComponent={IconDeviceDesktop}
+                        IconComponent={TbDeviceDesktop}
                         iconSize={20}
                         iconVariant="soft"
                         subtitle={t(
@@ -78,7 +78,7 @@ export function PlatformBlockComponent(props: IProps) {
                             allowDeselect={false}
                             classNames={{ input: styles.selectDark }}
                             data={availablePlatformsToAdd}
-                            leftSection={<IconPlus size={20} />}
+                            leftSection={<TbPlus size={20} />}
                             onChange={(value) => {
                                 if (value) handleAddPlatform(value as TSubscriptionPagePlatformKey)
                             }}
@@ -93,7 +93,7 @@ export function PlatformBlockComponent(props: IProps) {
 
                 {existingPlatforms.length === 0 ? (
                     <div className={styles.emptyState}>
-                        <IconDeviceDesktop size={32} stroke={1.5} />
+                        <TbDeviceDesktop size={32} strokeWidth={1.5} />
                         <Text mt="sm" size="sm">
                             {t('subpage-config-visual-editor.widget.no-platforms-configured')}
                         </Text>

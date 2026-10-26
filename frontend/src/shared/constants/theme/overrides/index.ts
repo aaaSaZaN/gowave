@@ -2,7 +2,6 @@ import badge from './badge'
 import breadcrumbs from './breadcrumbs'
 import buttons from './buttons'
 import card from './card'
-import charts from './charts'
 import drawer from './drawer'
 import fieldset from './fieldset'
 import inputs from './inputs'
@@ -25,7 +24,6 @@ export default {
     ...badge,
     ...breadcrumbs,
     ...buttons,
-    ...charts,
     ...inputs,
     ...loadingOverlay,
     ...menu,

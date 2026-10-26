@@ -2,10 +2,10 @@ import { DataTable, type DataTableSortStatus, useDataTableColumns } from '@kasto
 import { Anchor, Text } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
 import { GetUserSubscriptionRequestHistoryCommand } from '@remnawave/backend-contract'
-import get from 'lodash/get'
 import { ReactNode, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import get from '@shared/lib/object-path'
 import {
     CopyableCell,
     DataTableControls,

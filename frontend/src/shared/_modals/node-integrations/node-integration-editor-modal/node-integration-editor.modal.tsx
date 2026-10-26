@@ -6,7 +6,6 @@ import {
     CreateNodeIntegrationCommand,
     UpdateNodeIntegrationCommand
 } from '@remnawave/backend-contract'
-import clsx from 'clsx'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbPlugConnected } from 'react-icons/tb'
@@ -23,6 +22,7 @@ import {
 } from '@shared/api/hooks'
 import { COMPACT_MONACO_OPTIONS } from '@shared/constants/monaco-theme'
 import { usePseudoFullscreen } from '@shared/hooks'
+import clsx from '@shared/lib/classes'
 import { CodeEditor, editorClasses, EditorFooter, EditorStatusBar } from '@shared/ui/code-editor'
 import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui/fullscreen-toggle-button'
 import { LoaderModalShared } from '@shared/ui/loader-modal'

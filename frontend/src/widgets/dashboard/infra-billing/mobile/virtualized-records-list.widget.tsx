@@ -1,9 +1,9 @@
 import { Box, Center, Loader, MantineStyleProp, Stack, Text, ThemeIcon } from '@mantine/core'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbCreditCard } from 'react-icons/tb'
 
+import { useVirtualList } from '@shared/hooks/use-virtual-list'
 import { SectionCard } from '@shared/ui/section-card'
 
 import styles from './fade-mask.module.css'
@@ -59,8 +59,7 @@ export function VirtualizedRecordsList(props: IProps) {
     const scrollRef = useRef<HTMLDivElement>(null)
     const [fade, setFade] = useState({ bottom: false, top: false })
 
-    // eslint-disable-next-line react-hooks/incompatible-library
-    const virtualizer = useVirtualizer({
+    const virtualizer = useVirtualList({
         count: rows.length,
         getScrollElement: () => scrollRef.current,
         getItemKey: (index) => rows[index].key,
@@ -127,10 +126,8 @@ export function VirtualizedRecordsList(props: IProps) {
             ref={scrollRef}
             style={{ height, overflowX: 'hidden', overflowY: 'auto', ...style }}
         >
-            <Box
-                style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}
-            >
-                {virtualizer.getVirtualItems().map((virtualItem) => {
+            <Box style={{ height: virtualizer.totalSize, position: 'relative', width: '100%' }}>
+                {virtualizer.virtualItems.map((virtualItem) => {
                     const row = rows[virtualItem.index]
 
                     return (

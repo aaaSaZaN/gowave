@@ -32,6 +32,7 @@ const DEFAULT_TOP_NODES_LIMIT = 20
 
 export const StatisticNodesPage = () => {
     const { t, i18n } = useTranslation()
+    const [maximumDate] = useState(() => new Date())
     const defaultRange = getDefaultDateRange()
 
     const [rawRange, setRawRange] = useState<[null | string, null | string]>([
@@ -99,7 +100,7 @@ export const StatisticNodesPage = () => {
                             headerControlsOrder={['previous', 'next', 'level']}
                             leftSection={<TbCalendar size="24px" />}
                             locale={i18n.language}
-                            maxDate={new Date()}
+                            maxDate={maximumDate}
                             onChange={handleDateRangeChange}
                             presets={[
                                 {

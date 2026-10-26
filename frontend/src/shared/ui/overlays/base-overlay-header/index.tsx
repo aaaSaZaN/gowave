@@ -1,10 +1,10 @@
 import { Group, Stack, Text, ThemeIcon, ThemeIconProps, Title, TitleProps } from '@mantine/core'
 import { useClipboard } from '@mantine/hooks'
 import { ReactNode } from 'react'
-import ReactCountryFlag from 'react-country-flag'
 
 import { TOpenEntity } from '@shared/constants'
 import { CopyEntityLinkButton } from '@shared/ui/copy-entity-link-button'
+import ReactCountryFlag from '@shared/ui/country-flag'
 
 type IProps = {
     countryCode?: string

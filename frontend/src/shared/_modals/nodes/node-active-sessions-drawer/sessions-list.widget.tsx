@@ -1,7 +1,8 @@
 import { Box } from '@mantine/core'
-import clsx from 'clsx'
 import { useState } from 'react'
 import { Virtuoso } from 'react-virtuoso'
+
+import clsx from '@shared/lib/classes'
 
 import { NodeActiveSessionItem } from './node-active-session.item.widget'
 import classes from './node-active-sessions.module.css'

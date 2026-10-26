@@ -1,6 +1,6 @@
-import { createQueryKeys } from '@lukemorales/query-key-factory'
 import { GetNodeIntegrationCommand, GetNodeIntegrationsCommand } from '@remnawave/backend-contract'
 
+import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'

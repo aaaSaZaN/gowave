@@ -1,5 +1,4 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
-import { colorFromId } from '@kastov/uuid-color'
 import { ActionIcon, Group, Stack } from '@mantine/core'
 import { DatePickerInput, DatesRangeValue } from '@mantine/dates'
 import { useDebouncedState } from '@mantine/hooks'
@@ -12,6 +11,7 @@ import { TbCalendar, TbChartArcs, TbChartLine, TbQuestionMark, TbRefresh } from 
 import { showModal } from '@shared/_modals/show-modal'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { useGetInternalSquadUsageInfinite } from '@shared/api/hooks'
+import { colorFromId } from '@shared/lib/color'
 import { CompoundDrawerShared } from '@shared/ui/compound-drawer/compound-drawer.shared'
 import { TrafficLimitInput } from '@shared/ui/forms/traffic-limit-input/traffic-limit-input'
 import { ITopLeaderboardItem, TopLeaderboardCardShared } from '@shared/ui/leaderboard-item-card'

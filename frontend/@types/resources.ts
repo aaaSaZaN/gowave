@@ -1,7 +1,7 @@
-import gowave from '../public/locales/en/gowave.json'
+import locale0 from '../public/locales/en/gowave.json'
 
 const resources = {
-    gowave
+    gowave: locale0
 } as const
 
 export default resources

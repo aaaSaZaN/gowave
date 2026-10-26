@@ -1,9 +1,9 @@
 import { ActionIcon, Box, Group, Stack, Text } from '@mantine/core'
-import cx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import { TbAlertTriangle, TbChevronRight } from 'react-icons/tb'
 
 import { showModal } from '@shared/_modals/show-modal'
+import cx from '@shared/lib/classes'
 import { XrayLogo } from '@shared/ui/logos'
 
 import classes from './host-select-inbound.module.css'

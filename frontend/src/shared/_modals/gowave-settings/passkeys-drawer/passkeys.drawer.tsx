@@ -17,7 +17,6 @@ import {
     type PublicKeyCredentialCreationOptionsJSON,
     startRegistration
 } from '@simplewebauthn/browser'
-import consola from 'consola/browser'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiPencil, PiTrash } from 'react-icons/pi'
@@ -33,6 +32,7 @@ import {
     usePasskeyRegistrationOptions,
     usePasskeyRegistrationVerify
 } from '@shared/api/hooks'
+import consola from '@shared/lib/logger'
 import { CompoundDrawerShared } from '@shared/ui/compound-drawer/compound-drawer.shared'
 import { CopyableDataListItem } from '@shared/ui/copyable-field/copyable-data-list-item'
 import { LoaderModalShared } from '@shared/ui/loader-modal'

@@ -3,9 +3,7 @@ import { useSortable } from '@dnd-kit/react/sortable'
 import { Avatar, Badge, Box, Flex, Progress, Stack, Text, Tooltip } from '@mantine/core'
 import { useClipboard } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
-import clsx from 'clsx'
 import { CSSProperties, memo, useMemo } from 'react'
-import ReactCountryFlag from 'react-country-flag'
 import { useTranslation } from 'react-i18next'
 import {
     PiArrowDownDuotone,
@@ -20,10 +18,13 @@ import {
 import { TbAlertCircle, TbPackage, TbPlugConnected } from 'react-icons/tb'
 
 import { useGetNodesTrafficSummary } from '@shared/api/hooks'
+import clsx from '@shared/lib/classes'
+import ReactCountryFlag from '@shared/ui/country-flag'
 import { Logo } from '@shared/ui/logo'
 import { XrayLogo } from '@shared/ui/logos'
 import { prettifyBytesUtil, prettySiRealtimeBytesUtil } from '@shared/utils/bytes'
 import { faviconResolver, hasNodeStatusMessage, isNodeConfigRejected } from '@shared/utils/misc'
+import { isCustomXrayVersion } from '@shared/utils/misc/node-versions'
 import { getNodeResetDaysUtil, getXrayUptimeUtil } from '@shared/utils/time-utils'
 
 import { NodeStatusBadgeWidget } from '../node-status-badge'
@@ -531,28 +532,14 @@ export const NodeCardWidget = memo((props: IProps) => {
                             <Flex align="center" gap={4}>
                                 <XrayLogo
                                     color={
-                                        Boolean(
-                                            (node.versions as any)?.isCustom ||
-                                            (node.versions as any)?.isCustomXray ||
-                                            node.versions?.xray?.toLowerCase().includes('custom') ||
-                                            node.versions?.xray?.toLowerCase().includes('mod')
-                                        )
+                                        isCustomXrayVersion(node.versions)
                                             ? 'var(--mantine-color-blue-5)'
                                             : 'var(--mantine-color-dimmed)'
                                     }
                                     size={12}
                                 />
                                 <Text
-                                    c={
-                                        Boolean(
-                                            (node.versions as any)?.isCustom ||
-                                            (node.versions as any)?.isCustomXray ||
-                                            node.versions?.xray?.toLowerCase().includes('custom') ||
-                                            node.versions?.xray?.toLowerCase().includes('mod')
-                                        )
-                                            ? 'blue.4'
-                                            : 'dimmed'
-                                    }
+                                    c={isCustomXrayVersion(node.versions) ? 'blue.4' : 'dimmed'}
                                     ff="monospace"
                                     size="xs"
                                 >

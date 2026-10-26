@@ -7,9 +7,9 @@ import {
     TSubscriptionTemplateType
 } from '@remnawave/backend-contract'
 import axios from 'axios'
-import consola from 'consola'
 import { app } from 'src/config'
 
+import consola from '@shared/lib/logger'
 import { registerJsonSchema } from '@shared/utils/monaco/json-schema-registry'
 
 type Host = GetHostsCommand.Response['response'][number]

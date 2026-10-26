@@ -1,7 +1,7 @@
 import { useContext } from 'react'
-import invariant from 'tiny-invariant'
 
 import { AuthContext } from '@shared/hocs/auth-provider'
+import invariant from '@shared/lib/invariant'
 
 export function useAuth() {
     const context = useContext(AuthContext)

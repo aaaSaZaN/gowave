@@ -1,5 +1,6 @@
 import { Group, Text } from '@mantine/core'
-import ReactCountryFlag from 'react-country-flag'
+
+import ReactCountryFlag from '@shared/ui/country-flag'
 
 import { IProps } from './interface'
 

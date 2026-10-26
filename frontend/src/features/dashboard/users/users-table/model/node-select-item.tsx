@@ -1,6 +1,7 @@
 import { ComboboxItem, Group, Text } from '@mantine/core'
 import { forwardRef } from 'react'
-import ReactCountryFlag from 'react-country-flag'
+
+import ReactCountryFlag from '@shared/ui/country-flag'
 
 export interface NodeSelectItemProps extends ComboboxItem {
     countryCode?: null | string

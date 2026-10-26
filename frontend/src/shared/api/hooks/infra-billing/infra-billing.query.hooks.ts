@@ -1,4 +1,3 @@
-import { createQueryKeys } from '@lukemorales/query-key-factory'
 import {
     GetInfraBillingRecordsCommand,
     GetInfraBillingNodesCommand,
@@ -7,6 +6,7 @@ import {
 } from '@remnawave/backend-contract'
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 
+import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
 
 import { instance } from '../../axios'

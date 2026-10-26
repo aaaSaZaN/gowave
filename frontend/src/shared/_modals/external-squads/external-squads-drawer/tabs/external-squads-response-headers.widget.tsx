@@ -1,4 +1,3 @@
-import { useAutoAnimate } from '@formkit/auto-animate/react'
 import {
     ActionIcon,
     Alert,
@@ -12,7 +11,7 @@ import {
     TextInput
 } from '@mantine/core'
 import { GetExternalSquadByUuidCommand } from '@remnawave/backend-contract'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiInfo, PiPlus, PiTrash } from 'react-icons/pi'
 import { TbDeviceFloppy, TbPrescription } from 'react-icons/tb'
@@ -20,6 +19,7 @@ import { TbDeviceFloppy, TbPrescription } from 'react-icons/tb'
 import { HelpActionIconShared } from '@shared/_modals/universal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useGetSubscriptionSettings, useUpdateExternalSquad } from '@shared/api/hooks'
+import { useAutoAnimate } from '@shared/hooks/use-auto-animate'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers/template-info-popover/template-info-popover.shared'
 import { SectionCard } from '@shared/ui/section-card'
@@ -55,7 +55,9 @@ export const ExternalSquadsResponseHeadersTabWidget = (props: IProps) => {
         disrespectUserMotionPreference: false
     })
 
-    useEffect(() => {
+    const [previousSquad, setPreviousSquad] = useState<typeof externalSquad | null>(null)
+    if (previousSquad !== externalSquad) {
+        setPreviousSquad(externalSquad)
         setAddHeaders(
             sortResponseHeadersByPriority(
                 Object.entries(externalSquad.responseHeadersAdd ?? {}).map(([key, value]) => ({
@@ -65,7 +67,7 @@ export const ExternalSquadsResponseHeadersTabWidget = (props: IProps) => {
             )
         )
         setRemoveKeys(externalSquad.responseHeadersRemove ?? [])
-    }, [externalSquad])
+    }
 
     const { mutate: updateExternalSquad, isPending: isUpdatingExternalSquad } =
         useUpdateExternalSquad({

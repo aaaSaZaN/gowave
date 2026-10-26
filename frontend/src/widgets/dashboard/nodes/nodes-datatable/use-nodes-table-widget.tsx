@@ -7,8 +7,6 @@ import {
     GetNodePluginsCommand
 } from '@remnawave/backend-contract'
 import { TFunction } from 'i18next'
-import sortBy from 'lodash/sortBy'
-import ReactCountryFlag from 'react-country-flag'
 import {
     PiCloudArrowUpDuotone,
     PiProhibitDuotone,
@@ -18,6 +16,7 @@ import {
 } from 'react-icons/pi'
 import { TbEdit, TbSearch, TbX } from 'react-icons/tb'
 
+import ReactCountryFlag from '@shared/ui/country-flag'
 import { NodeIpsCompactView } from '@shared/ui/node-ips'
 import {
     prettifyBytesUtil,
@@ -260,7 +259,8 @@ export function getNodesTableColumns(
             filtering: filters.selectedInbounds.length > 0,
             title: t('common.field.inbounds'),
             render: ({ configProfile: { activeInbounds } }) =>
-                sortBy(activeInbounds, 'tag')
+                [...activeInbounds]
+                    .sort((a, b) => (a.tag < b.tag ? -1 : a.tag > b.tag ? 1 : 0))
                     .map((inbound) => inbound.tag)
                     .join(', ')
         },

@@ -1,4 +1,3 @@
-import { createQueryKeys } from '@lukemorales/query-key-factory'
 import {
     GetNodeMetadataCommand,
     GetNodeCommand,
@@ -9,6 +8,7 @@ import {
 import { keepPreviousData } from '@tanstack/react-query'
 import { z } from 'zod'
 
+import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'

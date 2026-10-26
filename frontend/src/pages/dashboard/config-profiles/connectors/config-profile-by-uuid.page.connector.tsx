@@ -1,10 +1,10 @@
-import { consola } from 'consola/browser'
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { Navigate, useParams } from 'react-router'
 import { app } from 'src/config'
 
 import { useGetConfigProfile, useGetSnippets } from '@shared/api/hooks'
 import { ROUTES } from '@shared/constants'
+import { consola } from '@shared/lib/logger'
 import { LoadingScreen } from '@shared/ui'
 import { fetchWithProgress } from '@shared/utils/fetch-with-progress'
 import { loadScript } from '@shared/utils/load-script'
@@ -30,58 +30,60 @@ export function ConfigProfileByUuidPageConnector() {
 
     const { data: snippets, isLoading: isSnippetsLoading } = useGetSnippets({})
 
-    const initWasm = useCallback(async (isRestart = false) => {
-        if (isRestart) {
-            setIsWasmRestarting(true)
-            setIsWasmCrashed(false)
-        } else {
-            setIsLoading(true)
-            setDownloadProgress(0)
-        }
+    const initWasm = useCallback(
+        () =>
+            loadScript(app.configEditor.wasmJsUrl)
+                .then(async () => {
+                    const go = new window.Go()
+                    const wasmInitialized = new Promise<void>((resolve) => {
+                        window.onWasmInitialized = () => {
+                            consola.info('WASM module initialized')
+                            resolve()
+                        }
+                    })
 
-        try {
-            await loadScript(app.configEditor.wasmJsUrl)
+                    let wasmBytes: ArrayBuffer
+                    if (wasmBytesCache.current) {
+                        wasmBytes = wasmBytesCache.current
+                    } else {
+                        wasmBytes = await fetchWithProgress(
+                            app.configEditor.wasmUrl,
+                            setDownloadProgress
+                        )
+                        wasmBytesCache.current = wasmBytes
+                    }
 
-            const go = new window.Go()
-            const wasmInitialized = new Promise<void>((resolve) => {
-                window.onWasmInitialized = () => {
-                    consola.info('WASM module initialized')
-                    resolve()
-                }
-            })
+                    const { instance } = await WebAssembly.instantiate(wasmBytes, go.importObject)
 
-            let wasmBytes: ArrayBuffer
-            if (wasmBytesCache.current) {
-                wasmBytes = wasmBytesCache.current
-            } else {
-                wasmBytes = await fetchWithProgress(app.configEditor.wasmUrl, setDownloadProgress)
-                wasmBytesCache.current = wasmBytes
-            }
+                    go.run(instance).then(() => {
+                        consola.warn('WASM module exited unexpectedly')
+                        setIsWasmCrashed(true)
+                    })
 
-            const { instance } = await WebAssembly.instantiate(wasmBytes, go.importObject)
+                    await wasmInitialized
 
-            go.run(instance).then(() => {
-                consola.warn('WASM module exited unexpectedly')
-                setIsWasmCrashed(true)
-            })
-
-            await wasmInitialized
-
-            if (typeof window.XrayParseConfig === 'function') {
-                setIsLoading(false)
-                setIsWasmRestarting(false)
-            } else {
-                throw new Error('XrayParseConfig not initialized')
-            }
-        } catch (err: unknown) {
-            consola.error('WASM initialization error:', err)
-            setIsLoading(false)
-            setIsWasmRestarting(false)
-        }
-    }, [])
+                    if (typeof window.XrayParseConfig !== 'function') {
+                        throw new Error('XrayParseConfig not initialized')
+                    }
+                })
+                .then(
+                    () => {
+                        setIsLoading(false)
+                        setIsWasmRestarting(false)
+                    },
+                    (err: unknown) => {
+                        consola.error('WASM initialization error:', err)
+                        setIsLoading(false)
+                        setIsWasmRestarting(false)
+                    }
+                ),
+        []
+    )
 
     const restartWasm = useCallback(() => {
-        initWasm(true)
+        setIsWasmRestarting(true)
+        setIsWasmCrashed(false)
+        void initWasm()
     }, [initWasm])
 
     useLayoutEffect(() => {

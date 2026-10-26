@@ -1,4 +1,4 @@
-import ReactCountryFlag from 'react-country-flag'
+import ReactCountryFlag from '@shared/ui/country-flag'
 
 interface IProps {
     className?: string

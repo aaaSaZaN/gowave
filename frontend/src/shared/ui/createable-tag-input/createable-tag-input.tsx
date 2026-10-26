@@ -1,7 +1,7 @@
 import type { IProps } from './interfaces/props.interface'
 
 import { CloseButton, Combobox, InputBase, useCombobox } from '@mantine/core'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { PiTagDuotone } from 'react-icons/pi'
 
 export function CreateableTagInputShared(props: IProps) {
@@ -24,13 +24,17 @@ export function CreateableTagInputShared(props: IProps) {
         return null
     }
 
-    useEffect(() => {
+    const [previousTags, setPreviousTags] = useState(tags)
+    if (previousTags !== tags) {
+        setPreviousTags(tags)
         setData(tags)
-    }, [tags])
+    }
 
-    useEffect(() => {
+    const [previousValue, setPreviousValue] = useState(value)
+    if (previousValue !== value) {
+        setPreviousValue(value)
         setSearch(value?.toString() || '')
-    }, [value])
+    }
 
     const exactOptionMatch = data.some((item) => item === search)
     const filteredOptions = exactOptionMatch

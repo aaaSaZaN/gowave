@@ -1,8 +1,9 @@
-import { createQueryKeys } from '@lukemorales/query-key-factory'
 import {
     GetPasskeysCommand,
     GetPasskeyRegistrationOptionsCommand
 } from '@remnawave/backend-contract'
+
+import { createQueryKeys } from '@shared/api/query-keys'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'
 

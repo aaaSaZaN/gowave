@@ -89,7 +89,11 @@ export const SnippetsOverlay = (props: IProps) => {
                             titleOrder={5}
                         />
 
-                        <CloseButton aria-label={t('common.action.close')} ml="auto" onClick={onClose} />
+                        <CloseButton
+                            aria-label={t('common.action.close')}
+                            ml="auto"
+                            onClick={onClose}
+                        />
                     </Group>
                 </SectionCard.Section>
 

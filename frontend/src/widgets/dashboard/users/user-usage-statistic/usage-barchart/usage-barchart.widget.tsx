@@ -1,4 +1,3 @@
-import { Chart } from '@highcharts/react'
 import {
     alpha,
     Box,
@@ -17,6 +16,7 @@ import { useTranslation } from 'react-i18next'
 import { PiEmpty } from 'react-icons/pi'
 import { TbChartBar } from 'react-icons/tb'
 
+import { Chart } from '@shared/ui/chart'
 import { CountryFlag } from '@shared/ui/get-country-flag'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { prettifyBytesUtil } from '@shared/utils/bytes'

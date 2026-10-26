@@ -2,7 +2,6 @@ import { DataTable, type DataTableSortStatus, useDataTableColumns } from '@kasto
 import { ActionIcon, Anchor, Group, Text, ThemeIcon } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
 import { GetUserHwidDevicesCommand } from '@remnawave/backend-contract'
-import get from 'lodash/get'
 import { ReactNode, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiDeviceMobile, PiLinuxLogo } from 'react-icons/pi'
@@ -14,6 +13,7 @@ import {
     TbTrash
 } from 'react-icons/tb'
 
+import get from '@shared/lib/object-path'
 import {
     CopyableCell,
     DataTableControls,

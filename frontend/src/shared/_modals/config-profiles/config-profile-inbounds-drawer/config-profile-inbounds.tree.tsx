@@ -15,13 +15,13 @@ import {
     GetInboundsByProfileUuidCommand,
     GetInternalSquadsCommand
 } from '@remnawave/backend-contract'
-import ColorHash from 'color-hash'
 import { githubDarkTheme, JsonEditor } from 'json-edit-react'
 import { useMemo } from 'react'
 import { PiCheck, PiCopy, PiTag, PiUsers } from 'react-icons/pi'
 import { TbChevronRight, TbCirclesRelation, TbTag } from 'react-icons/tb'
 
 import { showModal } from '@shared/_modals/show-modal'
+import ColorHash from '@shared/lib/color'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { formatInt } from '@shared/utils/misc'

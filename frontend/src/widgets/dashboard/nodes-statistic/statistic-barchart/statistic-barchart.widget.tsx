@@ -1,4 +1,3 @@
-import { Chart } from '@highcharts/react'
 /* eslint-disable @stylistic/indent */
 import {
     alpha,
@@ -18,6 +17,7 @@ import { useTranslation } from 'react-i18next'
 import { PiEmpty } from 'react-icons/pi'
 import { TbChartBar } from 'react-icons/tb'
 
+import { Chart } from '@shared/ui/chart'
 import { CountryFlag } from '@shared/ui/get-country-flag'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { prettifyBytesUtil } from '@shared/utils/bytes'
@@ -45,9 +45,7 @@ export const NodesStatisticBarchartWidget = (props: IProps) => {
                     <Stack align="center" gap={8}>
                         <PiEmpty size="2rem" />
                         <Text c="dimmed">
-                            {t(
-                                'common.message.no-data-available-for-the-selected-period'
-                            )}
+                            {t('common.message.no-data-available-for-the-selected-period')}
                         </Text>
                     </Stack>
                 </Center>

@@ -1,4 +1,4 @@
-import consola from 'consola/browser'
+import consola from '@shared/lib/logger'
 
 export const parseJsonField = (value: unknown): null | object | string => {
     if (value === '') return null

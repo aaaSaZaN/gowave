@@ -5,8 +5,8 @@ import {
     SUBSCRIPTION_INFO_BLOCK_VARIANTS_VALUES,
     TSubscriptionPageRawConfig
 } from '@remnawave/subscription-page-types'
-import { IconPalette } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
+import { TbPalette } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
@@ -24,7 +24,7 @@ export function UiConfigBlockComponent({ form }: IProps) {
             <Stack gap="md">
                 <BaseOverlayHeader
                     iconColor="yellow"
-                    IconComponent={IconPalette}
+                    IconComponent={TbPalette}
                     iconSize={20}
                     iconVariant="soft"
                     title={t('subpage-config-visual-editor.widget.ui-configuration')}

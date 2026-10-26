@@ -37,14 +37,15 @@ CI provides PostgreSQL 18. `internal/testdb.Open` creates a separate schema for 
 bun install --frozen-lockfile
 bun run start:dev
 bun run typecheck
+bun run test
 bun run build
 bun run check
 ```
 
 - Commit dependency changes together with `bun.lock`; use `bun install` to update it. Package scripts use each tool's declared runtime; Oxfmt's HTML formatter requires Node.js.
 - `build` runs only `vite build`; it does **not** typecheck. CI runs `typecheck` separately. `start:build` runs TypeScript followed by the production build.
-- `check` runs oxfmt and oxlint. `format:fix` and `lint:fix` apply their respective fixes. CI currently runs typecheck/build/contract checks, not this lint/format command.
-- No frontend test script is defined. Backend tests and schema probes cover API compatibility.
+- `check` runs oxfmt and oxlint. `format:fix` and `lint:fix` apply their respective fixes. CI currently runs unit tests and typecheck/build/contract checks, not this lint/format command.
+- `bun run test` runs frontend unit and crypto interoperability tests with Bun's built-in test runner. `bun run test:browser` runs UI smoke checks using a local Chromium executable (`CHROMIUM_BIN` overrides its path). Backend tests and schema probes cover API compatibility.
 - Vite listens on `0.0.0.0:3333` with `strictPort`; `/api` proxies to `127.0.0.1:3000`. `start:preview` also uses port 3333.
 - `bun run editor:download` (or `make download-monaco-deps`) fetches the hash-pinned Xray validator WASM, `wasm_exec.js`, and Xray schemas into `public/assets/`; `bun run editor:compress` writes `.gz` siblings into `dist` and keeps `main.wasm` only as `main.wasm.gz`. Release and Docker builds run both. Monaco and the validator load lazily in the administrator's browser, never at startup. See the asset-serving caveat below before changing their paths.
 

@@ -1,8 +1,8 @@
 import { modals } from '@mantine/modals'
-import ColorHash from 'color-hash'
 import { useTranslation } from 'react-i18next'
 import { PiAppWindowDuotone } from 'react-icons/pi'
 
+import ColorHash from '@shared/lib/color'
 import { TopLeaderboardCardShared } from '@shared/ui/leaderboard-item-card'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 

@@ -1,9 +1,10 @@
 import type { editor } from 'monaco-editor'
 
 import { GetSnippetsCommand } from '@remnawave/backend-contract'
-import consola from 'consola/browser'
 import dayjs from 'dayjs'
 import { RefObject } from 'react'
+
+import consola from '@shared/lib/logger'
 
 const PROTECTED_ROOT_KEYS = new Set(['api', 'inbounds', 'metrics', 'snippets', 'stats'])
 

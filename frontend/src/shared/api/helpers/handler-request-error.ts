@@ -1,6 +1,7 @@
 import { isAxiosError } from 'axios'
-import { consola } from 'consola/browser'
 import { ZodError } from 'zod'
+
+import { consola } from '@shared/lib/logger'
 
 /** Handle request errors */
 export function handleRequestError(error: unknown): never {

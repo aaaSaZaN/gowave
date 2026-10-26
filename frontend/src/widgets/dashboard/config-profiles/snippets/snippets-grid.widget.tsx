@@ -1,11 +1,11 @@
 import { ActionIcon, CopyButton, Tooltip } from '@mantine/core'
 import { GetSnippetsCommand } from '@remnawave/backend-contract'
-import cx from 'clsx'
 import { t } from 'i18next'
 import { useMemo } from 'react'
 import { PiCheck, PiCopy } from 'react-icons/pi'
 import { TbBraces, TbCode, TbFolder, TbPencil, TbTrash } from 'react-icons/tb'
 
+import cx from '@shared/lib/classes'
 import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 import { buildTree, ITreeNode, ITreeRowContent, TreeBrowser } from '@shared/ui/tree-browser'
 

@@ -7,9 +7,9 @@ import {
 } from '@remnawave/backend-contract'
 import { NodePluginEditorSchema, SharedListConfigSchema } from '@remnawave/node-plugins'
 import axios from 'axios'
-import consola from 'consola'
 import { app } from 'src/config'
 
+import consola from '@shared/lib/logger'
 import { registerJsonSchema } from '@shared/utils/monaco/json-schema-registry'
 
 interface ISchemaNode {
@@ -520,7 +520,7 @@ const injectSharedListNames = (node: unknown, sharedLists: TSharedLists): void =
 export const MonacoSetupNodePluginEditorFeature = {
     setup: async (sharedLists: TSharedLists = []) => {
         try {
-            const schema = NodePluginEditorSchema.toJSONSchema() as any
+            const schema = NodePluginEditorSchema.toJSONSchema()
             if (schema && typeof schema === 'object') {
                 schema.additionalProperties = true
                 if (schema.properties) {

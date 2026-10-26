@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiInfo } from 'react-icons/pi'
 import { TbListLetters, TbPrescription } from 'react-icons/tb'
-import Masonry from 'react-layout-masonry'
+
+import Masonry from '@shared/ui/masonry'
 
 import { SubscriptionAdditionalOptionsWidget } from './cards/subscription-additional-options.widget'
 import { SubscriptionHwidSettingsWidget } from './cards/subscription-hwid-settings.widget'

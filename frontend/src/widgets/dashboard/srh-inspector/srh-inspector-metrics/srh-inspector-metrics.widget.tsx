@@ -1,12 +1,12 @@
-import { Chart } from '@highcharts/react'
 import { Box, Card, Center, Group, Loader, SimpleGrid, Stack, Text, ThemeIcon } from '@mantine/core'
-import ColorHash from 'color-hash'
 import dayjs from 'dayjs'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiAppWindowDuotone, PiChartBar } from 'react-icons/pi'
 
 import { useGetSubscriptionRequestHistoryStats } from '@shared/api/hooks'
+import ColorHash from '@shared/lib/color'
+import { Chart } from '@shared/ui/chart'
 import { TopLeaderboardCardShared } from '@shared/ui/leaderboard-item-card'
 import { formatInt } from '@shared/utils/misc'
 

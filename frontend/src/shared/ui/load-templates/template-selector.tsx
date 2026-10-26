@@ -10,12 +10,12 @@ import {
     TextInput,
     UnstyledButton
 } from '@mantine/core'
-import { IconSearch } from '@tabler/icons-react'
-import ColorHash from 'color-hash'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { TbSearch } from 'react-icons/tb'
 
 import { IDownloadableSubscriptionTemplate } from '@shared/constants/templates'
+import ColorHash from '@shared/lib/color'
 
 import { TemplateSelectorProps } from './interfaces'
 
@@ -65,7 +65,7 @@ export const TemplateSelector = (props: TemplateSelectorProps) => {
                 </Button>
             </Group>
             <TextInput
-                leftSection={<IconSearch size={16} />}
+                leftSection={<TbSearch size={16} />}
                 onChange={(event) => setSearchQuery(event.currentTarget.value)}
                 placeholder={t('template-selector.search-templates')}
                 value={searchQuery}

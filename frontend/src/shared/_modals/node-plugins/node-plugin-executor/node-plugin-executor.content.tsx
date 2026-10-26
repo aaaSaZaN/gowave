@@ -13,7 +13,6 @@ import {
 } from '@mantine/core'
 import { GetNodesCommand } from '@remnawave/backend-contract'
 import { useCallback, useState } from 'react'
-import ReactCountryFlag from 'react-country-flag'
 import { useTranslation } from 'react-i18next'
 import {
     TbAlertTriangle,
@@ -28,6 +27,7 @@ import { z } from 'zod'
 
 import { useNodePluginExecutor } from '@shared/api/hooks'
 import { ActionCardShared } from '@shared/ui/action-card'
+import ReactCountryFlag from '@shared/ui/country-flag'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 

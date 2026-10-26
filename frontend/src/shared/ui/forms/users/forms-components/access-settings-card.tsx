@@ -33,6 +33,7 @@ export const AccessSettingsCard = <
     props: IProps<T>
 ) => {
     const { t, i18n } = useTranslation()
+    const [minimumDate] = useState(() => new Date())
 
     const { cardVariants, motionWrapper, form, internalSquads, externalSquads } = props
 
@@ -78,7 +79,7 @@ export const AccessSettingsCard = <
                             key={form.key('expireAt')}
                             label={t('create-user-modal.widget.expiry-date')}
                             locale={i18n.language}
-                            minDate={new Date()}
+                            minDate={minimumDate}
                             modalProps={{
                                 centered: true
                             }}

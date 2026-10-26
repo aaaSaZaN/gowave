@@ -2,7 +2,7 @@ import { Stack } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { UsersMetrics } from '@widgets/dashboard/users/users-metrics'
 import { UserTableWidget } from '@widgets/dashboard/users/users-table'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 

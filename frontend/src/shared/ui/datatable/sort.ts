@@ -1,5 +1,6 @@
 import { type DataTableSortStatus } from '@kastov/mantine-datatable'
-import get from 'lodash/get'
+
+import get from '@shared/lib/object-path'
 
 type SortStatus<T> = Pick<DataTableSortStatus<T>, 'columnAccessor' | 'direction'>
 
@@ -17,10 +18,10 @@ export function sortRecords<T>(records: T[], sortStatus: SortStatus<T>): T[] {
         let result: number
         if (typeof aVal === 'string' && typeof bVal === 'string') {
             result = aVal.toLowerCase().localeCompare(bVal.toLowerCase())
-        } else if (aVal < bVal) {
+        } else if ((aVal as string | number) < (bVal as string | number)) {
             result = -1
         } else {
-            result = aVal > bVal ? 1 : 0
+            result = (aVal as string | number) > (bVal as string | number) ? 1 : 0
         }
         return isDesc ? -result : result
     })

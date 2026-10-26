@@ -47,6 +47,7 @@ import { XrayLogo } from '@shared/ui/logos'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { prettifyBytesUtil } from '@shared/utils/bytes'
+import { isGoNodeVersion, isCustomXrayVersion } from '@shared/utils/misc/node-versions'
 import { getNodeResetDaysUtil, getXrayUptimeUtil } from '@shared/utils/time-utils'
 
 interface IProps {
@@ -431,15 +432,8 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
 
                         {node.versions &&
                             (() => {
-                                const isGoNode =
-                                    (node.versions as any)?.nodeType === 'go' ||
-                                    node.versions.node?.includes('(Go)')
-                                const isCustomXray = Boolean(
-                                    (node.versions as any)?.isCustom ||
-                                    (node.versions as any)?.isCustomXray ||
-                                    node.versions.xray?.toLowerCase().includes('custom') ||
-                                    node.versions.xray?.toLowerCase().includes('mod')
-                                )
+                                const isGoNode = isGoNodeVersion(node.versions)
+                                const isCustomXray = isCustomXrayVersion(node.versions)
                                 return (
                                     <Paper
                                         p="xs"
@@ -565,8 +559,7 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                             >
                                 <Tooltip
                                     label={
-                                        (node as any)?.versions?.nodeType === 'go' ||
-                                        node.versions.node?.includes('(Go)')
+                                        isGoNodeVersion(node.versions)
                                             ? 'Версия ноды, gowave-node'
                                             : t('node-details-card.widget.gowave-node-version')
                                     }

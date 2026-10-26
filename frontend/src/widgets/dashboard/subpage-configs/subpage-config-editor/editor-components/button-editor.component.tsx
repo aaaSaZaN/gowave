@@ -18,8 +18,8 @@ import {
     TSubscriptionPageLanguageCode,
     TSubscriptionPageSvgLibrary
 } from '@remnawave/subscription-page-types'
-import { IconArrowDown, IconArrowUp, IconChevronRight, IconTrash } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
+import { TbArrowDown, TbArrowUp, TbChevronRight, TbTrash } from 'react-icons/tb'
 import { TbExternalLink } from 'react-icons/tb'
 
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers'
@@ -70,7 +70,7 @@ export function ButtonEditor(props: IProps) {
                     wrap="nowrap"
                 >
                     <Group gap="xs">
-                        <IconChevronRight
+                        <TbChevronRight
                             className={`${styles.chevron} ${opened ? styles.chevronOpen : ''}`}
                             size={16}
                         />
@@ -96,7 +96,7 @@ export function ButtonEditor(props: IProps) {
                             size="sm"
                             variant="subtle"
                         >
-                            <IconArrowUp size={14} />
+                            <TbArrowUp size={14} />
                         </ActionIcon>
                         <ActionIcon
                             color="gray"
@@ -108,7 +108,7 @@ export function ButtonEditor(props: IProps) {
                             size="sm"
                             variant="subtle"
                         >
-                            <IconArrowDown size={14} />
+                            <TbArrowDown size={14} />
                         </ActionIcon>
                         <ActionIcon
                             className={styles.deleteButton}
@@ -120,7 +120,7 @@ export function ButtonEditor(props: IProps) {
                             size="sm"
                             variant="subtle"
                         >
-                            <IconTrash size={14} />
+                            <TbTrash size={14} />
                         </ActionIcon>
                     </Group>
                 </Group>

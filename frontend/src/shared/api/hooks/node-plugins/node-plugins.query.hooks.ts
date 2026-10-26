@@ -1,4 +1,3 @@
-import { createQueryKeys } from '@lukemorales/query-key-factory'
 import {
     GetNodePluginCommand,
     GetNodePluginsCommand,
@@ -10,6 +9,7 @@ import {
 } from '@remnawave/backend-contract'
 import { keepPreviousData } from '@tanstack/react-query'
 
+import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'

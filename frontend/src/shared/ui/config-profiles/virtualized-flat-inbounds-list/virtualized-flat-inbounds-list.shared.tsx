@@ -1,9 +1,10 @@
 import type { IProps } from './interfaces/props.interface'
 
 import { Box, Center, Checkbox, Text } from '@mantine/core'
-import { useVirtualizer } from '@tanstack/react-virtual'
-import { memo, useEffect, useMemo, useRef } from 'react'
+import { memo, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+
+import { useVirtualList } from '@shared/hooks/use-virtual-list'
 
 import { FlatInboundCheckboxCardShared } from '../flat-inbound-checkbox-card/flat-inbound-checkbox-card.shared'
 
@@ -26,19 +27,12 @@ export const VirtualizedFlatInboundsListShared = memo((props: IProps) => {
 
     const parentRef = useRef<HTMLDivElement>(null)
 
-    const virtualizer = useVirtualizer({
+    const virtualizer = useVirtualList({
         count: filteredInbounds.length,
         getScrollElement: () => parentRef.current,
         estimateSize: () => INBOUND_HEIGHT,
         overscan: 5
     })
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            virtualizer.measure()
-        }, 0)
-        return () => clearTimeout(timer)
-    }, [virtualizer])
 
     if (filteredInbounds.length === 0) {
         return (
@@ -63,13 +57,13 @@ export const VirtualizedFlatInboundsListShared = memo((props: IProps) => {
         >
             <Box
                 style={{
-                    height: `${virtualizer.getTotalSize()}px`,
+                    height: `${virtualizer.totalSize}px`,
                     width: '100%',
                     position: 'relative'
                 }}
             >
                 <Checkbox.Group>
-                    {virtualizer.getVirtualItems().map((virtualItem) => {
+                    {virtualizer.virtualItems.map((virtualItem) => {
                         const { inbound, profileName } = filteredInbounds[virtualItem.index]
                         const isSelected = selectedInbounds.has(inbound.uuid)
 

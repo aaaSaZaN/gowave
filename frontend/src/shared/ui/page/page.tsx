@@ -1,10 +1,10 @@
 import { Box, BoxProps } from '@mantine/core'
-import { nprogress } from '@mantine/nprogress'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'motion/react'
 import { forwardRef, ReactNode, useEffect, useMemo } from 'react'
 import { app } from 'src/config'
 
 import { useGetAuthStatus } from '@shared/api/hooks/auth/auth.query.hooks'
+import { nprogress } from '@shared/ui/navigation-progress'
 import { parseColoredTextUtil } from '@shared/utils/misc'
 
 interface PageProps extends BoxProps {

@@ -40,6 +40,6 @@
       "@shared/*": ["./src/shared/*"]
     }
   },
-  "include": ["src/**/*", "@types/**/*"],
+  "include": ["src/**/*", "@types/**/*", "tests/**/*.tsx"],
   "exclude": ["node_modules", "dist", "build"]
 }

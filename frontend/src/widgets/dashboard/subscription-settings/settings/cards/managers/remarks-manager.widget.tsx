@@ -1,4 +1,3 @@
-import { useAutoAnimate } from '@formkit/auto-animate/react'
 import {
     ActionIcon,
     Button,
@@ -16,10 +15,13 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiPlus, PiTrash } from 'react-icons/pi'
 
+import { useAutoAnimate } from '@shared/hooks/use-auto-animate'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers/template-info-popover/template-info-popover.shared'
 
+const EMPTY_REMARKS = ['']
+
 export const RemarksManager = ({
-    initialRemarks = [''],
+    initialRemarks = EMPTY_REMARKS,
     title,
     onChange,
     icon,
@@ -59,9 +61,11 @@ export const RemarksManager = ({
         })
     })
 
-    useEffect(() => {
+    const [previousRemarks, setPreviousRemarks] = useState(initialRemarks)
+    if (previousRemarks !== initialRemarks) {
+        setPreviousRemarks(initialRemarks)
         setLocalRemarks(initialRemarks)
-    }, [initialRemarks])
+    }
 
     useEffect(() => {
         onChange(debouncedRemarks)

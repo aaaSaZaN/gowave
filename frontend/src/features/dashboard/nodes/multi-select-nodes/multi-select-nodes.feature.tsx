@@ -94,10 +94,15 @@ export const MultiSelectNodesFeature = (props: IProps) => {
                             <Stack gap="sm">
                                 <Group justify="space-between">
                                     <Badge color="shaded-gray" size="lg" variant="soft">
-                                        {t('common.message.selected', { count: selectedRecords.length })}
+                                        {t('common.message.selected', {
+                                            count: selectedRecords.length
+                                        })}
                                     </Badge>
                                     <Group gap={0} justify="flex-end">
-                                        <Tooltip label={t('common.action.clear-selection')} withArrow>
+                                        <Tooltip
+                                            label={t('common.action.clear-selection')}
+                                            withArrow
+                                        >
                                             <CloseButton onClick={() => setSelectedRecords([])} />
                                         </Tooltip>
                                     </Group>

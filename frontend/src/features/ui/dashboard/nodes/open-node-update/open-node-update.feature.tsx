@@ -4,6 +4,7 @@ import { memo } from 'react'
 import { TbCloudDownload } from 'react-icons/tb'
 
 import { showModal } from '@shared/_modals/show-modal'
+import { isGoNodeVersion } from '@shared/utils/misc/node-versions'
 
 interface IProps {
     node: GetNodeCommand.Response['response']
@@ -12,9 +13,7 @@ interface IProps {
 const OpenNodeUpdateFeatureComponent = (props: IProps) => {
     const { node } = props
 
-    const isGoNode =
-        (node as any)?.versions?.nodeType === 'go' ||
-        (node as any)?.versions?.node?.includes('(Go)')
+    const isGoNode = isGoNodeVersion(node.versions)
 
     if (!isGoNode) {
         return null

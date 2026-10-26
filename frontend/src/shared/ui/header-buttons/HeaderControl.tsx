@@ -1,5 +1,6 @@
 import { BoxProps, createPolymorphicComponent, UnstyledButton } from '@mantine/core'
-import cx from 'clsx'
+
+import cx from '@shared/lib/classes'
 
 import classes from './HeaderControl.module.css'
 

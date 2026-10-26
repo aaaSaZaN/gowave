@@ -1,5 +1,17 @@
 /* eslint-disable no-param-reassign */
-import xbytes from 'xbytes'
+function formatBytes(value: number, iec: boolean, bits: boolean = false): string {
+    if (Number.isNaN(value)) return 'null'
+    const base = iec ? 1024 : 1000
+    const amount = bits ? value * 8 : value
+    const units = iec
+        ? ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi']
+        : ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
+    const index =
+        Number.isFinite(amount) && Math.abs(amount) >= 1
+            ? Math.min(Math.floor(Math.log(Math.abs(amount)) / Math.log(base)), units.length - 1)
+            : 0
+    return `${(amount / base ** index).toFixed(2)} ${units[index]}${bits ? 'b' : 'B'}`
+}
 
 export function prettifyBytesUtil(
     bytesInput: null | number | string | undefined,
@@ -20,7 +32,7 @@ export function prettifyBytesUtil(
         bytesInput = Number(bytesInput)
     }
 
-    return xbytes(bytesInput, { iec: true })
+    return formatBytes(bytesInput, true)
 }
 
 export function prettySiBytesUtil(
@@ -34,7 +46,7 @@ export function prettySiBytesUtil(
         bytesInput = Number(bytesInput)
     }
 
-    return xbytes(bytesInput, { iec: false })
+    return formatBytes(bytesInput, false)
 }
 
 export function prettySiRealtimeBytesUtil(
@@ -49,7 +61,7 @@ export function prettySiRealtimeBytesUtil(
         bytesInput = Number(bytesInput)
     }
 
-    const res = xbytes(bytesInput, { iec: false, bits: true })
+    const res = formatBytes(bytesInput, false, true)
 
     return `${res}${withSeconds ? '/s' : ''}`
 }

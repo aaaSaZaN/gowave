@@ -16,11 +16,11 @@ import {
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { TSubscriptionPageSvgLibrary } from '@remnawave/subscription-page-types'
-import { IconBulb, IconPhoto, IconPlus, IconTrash } from '@tabler/icons-react'
-import isSvg from 'is-svg'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { TbBulb, TbPhoto, TbPlus, TbTrash } from 'react-icons/tb'
 
+import isSvg from '@shared/lib/is-svg'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { sanitizeSvg } from '@shared/utils/misc'
 
@@ -106,7 +106,7 @@ export function SvgLibraryModal(props: IProps) {
                 title={
                     <BaseOverlayHeader
                         iconColor="violet"
-                        IconComponent={IconPhoto}
+                        IconComponent={TbPhoto}
                         iconVariant="soft"
                         subtitle={`${libraryEntries.length} icons`}
                         title={t('svg-library-modal.component.svg-library')}
@@ -117,7 +117,7 @@ export function SvgLibraryModal(props: IProps) {
                     <Alert
                         bg="linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%)"
                         color="violet.4"
-                        icon={<IconBulb size={20} />}
+                        icon={<TbBulb size={20} />}
                         radius="md"
                         styles={{
                             root: {
@@ -146,7 +146,7 @@ export function SvgLibraryModal(props: IProps) {
                     <Button
                         className={styles.addButton}
                         fullWidth
-                        leftSection={<IconPlus size={20} />}
+                        leftSection={<TbPlus size={20} />}
                         onClick={handleOpenAdd}
                         size="md"
                         variant="default"
@@ -156,7 +156,7 @@ export function SvgLibraryModal(props: IProps) {
 
                     {libraryEntries.length === 0 ? (
                         <div className={styles.emptyState}>
-                            <IconPhoto size={32} stroke={1.5} />
+                            <TbPhoto size={32} strokeWidth={1.5} />
                             <Text mt="sm" size="sm">
                                 {t('svg-icon-select.component.no-icons-in-library')}
                             </Text>
@@ -209,7 +209,7 @@ export function SvgLibraryModal(props: IProps) {
                                                         />
                                                     </ThemeIcon>
                                                 ) : (
-                                                    <IconPhoto
+                                                    <TbPhoto
                                                         color="var(--mantine-color-dimmed)"
                                                         size={24}
                                                     />
@@ -233,7 +233,7 @@ export function SvgLibraryModal(props: IProps) {
                                             size="sm"
                                             variant="subtle"
                                         >
-                                            <IconTrash size={14} />
+                                            <TbTrash size={14} />
                                         </ActionIcon>
                                     </Group>
                                 </Card>
@@ -252,7 +252,7 @@ export function SvgLibraryModal(props: IProps) {
                 title={
                     <BaseOverlayHeader
                         iconColor="cyan"
-                        IconComponent={editingKey ? IconPhoto : IconPlus}
+                        IconComponent={editingKey ? TbPhoto : TbPlus}
                         iconVariant="soft"
                         title={
                             editingKey
@@ -321,7 +321,7 @@ export function SvgLibraryModal(props: IProps) {
                                                 />
                                             </ThemeIcon>
                                         ) : (
-                                            <IconPhoto
+                                            <TbPhoto
                                                 color="var(--mantine-color-dimmed)"
                                                 size={24}
                                             />

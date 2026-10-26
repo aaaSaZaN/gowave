@@ -1,4 +1,4 @@
-import consola from 'consola/browser'
+import consola from '@shared/lib/logger'
 
 type Listener = () => void
 type Unsubscribe = () => void

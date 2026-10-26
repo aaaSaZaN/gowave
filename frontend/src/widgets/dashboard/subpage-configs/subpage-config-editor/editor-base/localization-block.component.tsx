@@ -5,8 +5,8 @@ import {
     TSubscriptionPageLanguageCode,
     TSubscriptionPageRawConfig
 } from '@remnawave/subscription-page-types'
-import { IconGlobe } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
+import { TbGlobe } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
@@ -42,7 +42,7 @@ export function LocalizationBlockComponent({ form }: IProps) {
                 <Group gap="sm" justify="space-between">
                     <BaseOverlayHeader
                         iconColor="teal"
-                        IconComponent={IconGlobe}
+                        IconComponent={TbGlobe}
                         iconSize={20}
                         iconVariant="soft"
                         subtitle={t('subpage-config-visual-editor.widget.additional-languages')}

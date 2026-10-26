@@ -15,8 +15,8 @@ import {
     TSubscriptionPageLanguageCode,
     TSubscriptionPageLocalizedText
 } from '@remnawave/subscription-page-types'
-import { IconLanguage } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
+import { TbLanguage } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
@@ -44,15 +44,14 @@ export function LocalizedTextEditor(props: IProps) {
 
     const filledCount = enabledLocales.filter((locale) => value[locale]?.trim()).length
     const previewLocale = enabledLocales[0]
-    const previewText =
-        (previewLocale && value[previewLocale]) || t('common.message.not-set')
+    const previewText = (previewLocale && value[previewLocale]) || t('common.message.not-set')
 
     return (
         <>
             <UnstyledButton className={styles.localizedTextButton} onClick={open} w="100%">
                 <Group gap="sm" justify="space-between" wrap="nowrap">
                     <Group gap="xs" style={{ flex: 1, minWidth: 0 }} wrap="nowrap">
-                        <IconLanguage
+                        <TbLanguage
                             className={styles.localizedTextIcon}
                             size={16}
                             style={{ flexShrink: 0 }}
@@ -86,7 +85,7 @@ export function LocalizedTextEditor(props: IProps) {
                 size="lg"
                 title={
                     <BaseOverlayHeader
-                        IconComponent={IconLanguage}
+                        IconComponent={TbLanguage}
                         iconSize={18}
                         iconVariant="default"
                         title={label}

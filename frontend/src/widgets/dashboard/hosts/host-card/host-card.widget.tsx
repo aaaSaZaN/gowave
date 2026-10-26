@@ -20,8 +20,6 @@ import {
     INTERNAL_SQUADS_MODE,
     SUBSCRIPTION_TEMPLATE_TYPE
 } from '@remnawave/backend-contract'
-import cx from 'clsx'
-import ColorHash from 'color-hash'
 import { githubDarkTheme, JsonEditor } from 'json-edit-react'
 import { CSSProperties, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -41,6 +39,8 @@ import { generatePath } from 'react-router'
 import { showModal } from '@shared/_modals/show-modal'
 import { ROUTES } from '@shared/constants'
 import { useIsMobile } from '@shared/hooks'
+import cx from '@shared/lib/classes'
+import ColorHash from '@shared/lib/color'
 import { XrayLogo } from '@shared/ui/logos'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SingleRowOverflowList } from '@shared/ui/single-row-overflow-list'

@@ -2,10 +2,10 @@ import type { IProps } from './interfaces/props.interface'
 
 import { ComboboxItem, Group, Select, Text } from '@mantine/core'
 import { forwardRef, useState } from 'react'
-import ReactCountryFlag from 'react-country-flag'
 import { useTranslation } from 'react-i18next'
 
 import { useGetInfraBillingNodes } from '@shared/api/hooks'
+import ReactCountryFlag from '@shared/ui/country-flag'
 import { LoadingScreen } from '@shared/ui/loading-screen'
 
 interface ItemProps extends ComboboxItem {

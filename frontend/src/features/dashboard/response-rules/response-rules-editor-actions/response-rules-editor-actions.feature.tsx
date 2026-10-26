@@ -18,7 +18,6 @@ import {
     TestSrrMatcherCommand,
     UpdateSubscriptionSettingsCommand
 } from '@remnawave/backend-contract'
-import consola from 'consola/browser'
 import { useTranslation } from 'react-i18next'
 import { PiCheck, PiCheckSquareOffset, PiCopy, PiFloppyDisk } from 'react-icons/pi'
 import {
@@ -34,6 +33,7 @@ import {
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateSubscriptionSettings } from '@shared/api/hooks'
 import { useIsMobile } from '@shared/hooks'
+import consola from '@shared/lib/logger'
 import { useDownloadTemplate } from '@shared/ui/load-templates/use-download-template'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 

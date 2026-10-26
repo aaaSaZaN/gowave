@@ -143,5 +143,6 @@ public/xray.schema.cn.json
 
 scripts/*
 !scripts/editor-assets.cjs
+!scripts/translation-resources.mjs
 
 public/assets/**

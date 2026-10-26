@@ -1,9 +1,10 @@
 import type { IGeocheckConnectivity } from './trace.types'
 
 import { Box, Center, Text } from '@mantine/core'
-import clsx from 'clsx'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
+import clsx from '@shared/lib/classes'
 
 import { TargetDetail } from './target-detail'
 import { TargetList } from './target-list'

@@ -1,7 +1,7 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Modal } from '@mantine/core'
-import { IconUser } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
+import { TbUser } from 'react-icons/tb'
 
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { queryClient } from '@shared/api'
@@ -47,7 +47,7 @@ export const ViewUserModal = NiceModal.create((props: IProps) => {
             title={
                 <BaseOverlayHeader
                     iconColor="cyan"
-                    IconComponent={IconUser}
+                    IconComponent={TbUser}
                     iconVariant="soft"
                     openEntity={{ entity: OPEN_ENTITY.USER, id: userId }}
                     title={user?.username ?? t('view-user-modal.widget.edit-user-headline')}

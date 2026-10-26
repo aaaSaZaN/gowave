@@ -7,7 +7,7 @@ import {
     TSubscriptionPageLanguageCode,
     TSubscriptionPageRawConfig
 } from '@remnawave/subscription-page-types'
-import { IconLanguage } from '@tabler/icons-react'
+import { TbLanguage } from 'react-icons/tb'
 
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
@@ -49,7 +49,7 @@ export function BaseTranslationsBlockComponent({ form }: IProps) {
                     <Group gap="sm" wrap="nowrap">
                         <BaseOverlayHeader
                             iconColor="violet"
-                            IconComponent={IconLanguage}
+                            IconComponent={TbLanguage}
                             iconSize={20}
                             iconVariant="soft"
                             title="Base Translations"
@@ -66,7 +66,7 @@ export function BaseTranslationsBlockComponent({ form }: IProps) {
 
                     <Button
                         className={styles.saveButton}
-                        leftSection={<IconLanguage size={16} />}
+                        leftSection={<TbLanguage size={16} />}
                         onClick={openDrawer}
                     >
                         Configure
