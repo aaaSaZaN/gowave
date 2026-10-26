@@ -1,3 +1,4 @@
+import { githubDarkTheme } from '@json-edit-react/themes'
 import { Badge, Box, CopyButton, Divider, Group, Loader, Menu, Text, Tooltip } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
@@ -12,7 +13,7 @@ import { EntityCardShared } from '@shared/ui/entity-card'
 import { XrayLogo } from '@shared/ui/logos'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { formatInt } from '@shared/utils/misc'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
 import { useTranslation } from 'react-i18next'
 import { PiCheck, PiCopy, PiCpu, PiPencil, PiTag, PiTrashDuotone } from 'react-icons/pi'
 import { TbCheck, TbCpu2, TbDownload, TbEye, TbTags } from 'react-icons/tb'
@@ -90,13 +91,14 @@ export function ConfigProfileCardWidget(props: IProps) {
                             )}
                         </Text>
                         <Divider my="md" />
-                        <JsonEditor
+                        <JsonViewer
+                            collapse={false}
                             data={computedConfigProfile.data.config as object}
                             indent={4}
                             maxWidth="100%"
                             rootName=""
+                            showCollectionCount
                             theme={githubDarkTheme}
-                            viewOnly
                         />
                     </>
                 ),
@@ -219,14 +221,14 @@ export function ConfigProfileCardWidget(props: IProps) {
                                 modals.open({
                                     children: (
                                         <Box>
-                                            <JsonEditor
+                                            <JsonViewer
                                                 collapse={3}
                                                 data={configProfile.config as object}
                                                 indent={4}
                                                 maxWidth="100%"
                                                 rootName=""
+                                                showCollectionCount
                                                 theme={githubDarkTheme}
-                                                viewOnly
                                             />
                                         </Box>
                                     ),

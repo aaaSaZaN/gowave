@@ -2,6 +2,7 @@ import {
     useTbReportsTableStore,
     useTbReportsTableStoreActions
 } from '@entities/dashboard/torrent-blocker-reports/tb-reports-table-store'
+import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     MantineReactTable,
     type MRT_ColumnFilterFnsState,
@@ -25,7 +26,7 @@ import { runAsync } from '@shared/lib/run-async'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { DataTableShared } from '@shared/ui/table'
 import { sToMs } from '@shared/utils/time-utils'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiUserCircle } from 'react-icons/pi'
@@ -193,14 +194,14 @@ export function TorrentBlockerReportsTableWidget() {
                         modals.open({
                             children: (
                                 <Box>
-                                    <JsonEditor
+                                    <JsonViewer
                                         collapse={3}
                                         data={JSON.parse(JSON.stringify(row.original.report))}
                                         indent={2}
                                         maxWidth="100%"
                                         rootName=""
+                                        showCollectionCount
                                         theme={githubDarkTheme}
-                                        viewOnly
                                     />
                                 </Box>
                             ),

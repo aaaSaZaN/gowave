@@ -1,3 +1,4 @@
+import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     Accordion,
     type AccordionControlProps,
@@ -11,7 +12,7 @@ import { modals } from '@mantine/modals'
 import type { GetConfigProfilesCommand } from '@remnawave/backend-contract'
 import { XrayLogo } from '@shared/ui/logos'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
 import { PiCheckBold, PiXBold } from 'react-icons/pi'
 
 interface IProps extends AccordionControlProps {
@@ -32,14 +33,14 @@ export const AccordionControlShared = (props: IProps) => {
         modals.open({
             children: (
                 <Box>
-                    <JsonEditor
+                    <JsonViewer
                         collapse={3}
                         data={profile.config as object}
                         indent={4}
                         maxWidth="100%"
                         rootName=""
+                        showCollectionCount
                         theme={githubDarkTheme}
-                        viewOnly
                     />
                 </Box>
             ),

@@ -1,4 +1,5 @@
 import { MantineProvider } from '@mantine/core'
+import { ModalsProvider, modals } from '@mantine/modals'
 import { Notifications } from '@mantine/notifications'
 import { requireValue } from '@shared/lib/invariant'
 import { runAsync } from '@shared/lib/run-async'
@@ -17,6 +18,7 @@ import { useTime } from '../src/shared/hooks/use-time'
 import { useVirtualList } from '../src/shared/hooks/use-virtual-list'
 import isSvg from '../src/shared/lib/is-svg'
 import { Chart } from '../src/shared/ui/chart'
+import { InboundCheckboxCardShared } from '../src/shared/ui/config-profiles/inbound-checkbox-card/inbound-checkbox-card.shared'
 import CountryFlag from '../src/shared/ui/country-flag'
 import { CreateableTagInputShared } from '../src/shared/ui/createable-tag-input/createable-tag-input'
 import Masonry from '../src/shared/ui/masonry'
@@ -149,6 +151,55 @@ function AuthStatus() {
 }
 
 async function run() {
+    flushSync(() =>
+        root.render(
+            <MantineProvider>
+                <ModalsProvider>
+                    <InboundCheckboxCardShared
+                        inbound={{
+                            uuid: 'inbound-id',
+                            profileUuid: 'profile-id',
+                            tag: 'browser-inbound',
+                            type: 'vless',
+                            network: null,
+                            security: null,
+                            port: 443,
+                            rawInbound: { protocol: 'vless', port: 443 }
+                        }}
+                        isSelected={false}
+                        onInboundToggle={() => undefined}
+                    />
+                </ModalsProvider>
+            </MantineProvider>
+        )
+    )
+    const showInbound = requireValue(
+        container.querySelector('a'),
+        'Show inbound configuration action is missing'
+    )
+    flushSync(() => showInbound.click())
+    await wait()
+    const jsonViewer = requireValue(
+        document.querySelector('.jer-editor-container'),
+        'Inbound JSON viewer is missing'
+    )
+    const inboundProtocol = requireValue(
+        jsonViewer.querySelector('.jer-value-string'),
+        'Inbound protocol value is missing'
+    )
+    assert(inboundProtocol.textContent?.includes('vless'), 'JSON viewer renders inbound values')
+    inboundProtocol.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
+    await wait()
+    assert(
+        !jsonViewer.querySelector('input, textarea, [contenteditable="true"]'),
+        'Inbound JSON remains read-only after interaction'
+    )
+    assert(
+        !jsonViewer.querySelector('[aria-label="Edit"], [aria-label="Delete"], [aria-label="Add"]'),
+        'Inbound JSON viewer hides mutation controls'
+    )
+    flushSync(() => modals.closeAll())
+
     flushSync(() => root.render(<VirtualListFixture count={100} />))
     await wait()
     const viewport = container.firstElementChild as HTMLDivElement

@@ -1,3 +1,4 @@
+import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     ActionIcon,
     Anchor,
@@ -18,7 +19,7 @@ import {
     copyImageScreenshotToClipboard,
     downloadImageScreenshot
 } from '@shared/utils/copy-screenshot.util'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -216,14 +217,14 @@ export const GeocheckResultWidget = (props: IProps) => {
                 )}
 
                 <Box display={view === 'json' ? 'block' : 'none'} p="xs">
-                    <JsonEditor
+                    <JsonViewer
                         collapse={2}
                         data={result.rawReport ?? {}}
                         indent={4}
                         maxWidth="100%"
                         rootName=""
+                        showCollectionCount
                         theme={githubDarkTheme}
-                        viewOnly
                     />
                 </Box>
             </Box>

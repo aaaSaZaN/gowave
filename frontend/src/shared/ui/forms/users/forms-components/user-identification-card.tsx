@@ -1,3 +1,4 @@
+import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     ActionIcon,
     Box,
@@ -26,7 +27,7 @@ import { resolveCountryCode } from '@shared/utils/misc/resolve-country-code'
 import { formatRelativeDateUtil, formatTimeUtil, getTimeAgoUtil } from '@shared/utils/time-utils'
 import { UserStatusBadge } from '@widgets/dashboard/users/user-status-badge'
 import dayjs from 'dayjs'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
 import type { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -216,14 +217,14 @@ export const UserIdentificationCard = memo((props: IProps) => {
                                             ),
                                             children: (
                                                 <Box>
-                                                    <JsonEditor
+                                                    <JsonViewer
                                                         collapse={3}
                                                         data={metadata.metadata as object}
                                                         indent={4}
                                                         maxWidth="100%"
                                                         rootName=""
+                                                        showCollectionCount
                                                         theme={githubDarkTheme}
-                                                        viewOnly
                                                     />
                                                 </Box>
                                             )

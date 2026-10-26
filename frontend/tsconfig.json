@@ -3,13 +3,14 @@
   "compilerOptions": {
     "target": "ES2020",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "types": ["node"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
-    "baseUrl": ".",
     "paths": {
+      "src/*": ["./src/*"],
       "@entities/*": ["./src/entities/*"],
       "@features/*": ["./src/features/*"],
       "@pages/*": ["./src/pages/*"],
