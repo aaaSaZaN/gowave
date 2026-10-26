@@ -1,8 +1,7 @@
+import { sToMs } from '@shared/utils/time-utils'
 import axios from 'axios'
 import { create } from 'zustand'
 import { createJSONStorage, devtools, persist } from 'zustand/middleware'
-
-import { sToMs } from '@shared/utils/time-utils'
 
 const CACHE_TIME = sToMs(24 * 60 * 60)
 

@@ -1,5 +1,12 @@
 import { ActionIcon, Badge, Box, Group, Stack, Text, Tooltip } from '@mantine/core'
-import { ConnectionsByNodeResultCommand } from '@remnawave/backend-contract'
+import type { ConnectionsByNodeResultCommand } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import { runAsync } from '@shared/lib/run-async'
+import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
+import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
+import { formatRelativeDateUtil, formatTimeUtil } from '@shared/utils/time-utils'
 import { useTranslation } from 'react-i18next'
 import { PiEmptyDuotone, PiUserCircle } from 'react-icons/pi'
 import {
@@ -9,13 +16,6 @@ import {
     TbExternalLink,
     TbId
 } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
-import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
-import { formatRelativeDateUtil, formatTimeUtil } from '@shared/utils/time-utils'
 
 interface IProps {
     user: NonNullable<
@@ -37,9 +37,11 @@ export const NodeActiveSessionItem = (props: IProps) => {
     const { t, i18n } = useTranslation()
 
     const handleViewUser = () => {
-        showModal('users_viewUserModal', {
-            userId: user.userId
-        })
+        runAsync(
+            showModal('users_viewUserModal', {
+                userId: user.userId
+            })
+        )
     }
 
     return (

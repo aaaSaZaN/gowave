@@ -1,13 +1,12 @@
 import { InternalSquadsHeaderActionButtonsFeature } from '@features/ui/dashboard/internal-squads/header-action-buttons'
+import { Page } from '@shared/ui/page'
+import { PageHeaderShared } from '@shared/ui/page-header/page-header.shared'
 import { InternalSquadsGridWidget } from '@widgets/dashboard/internal-squads/internal-squads-grid/internal-squads-grid.widget'
 import { InternalSquadsSpotlightWidget } from '@widgets/dashboard/internal-squads/internal-squads-spotlight/internal-squads-spotlight'
 import { useTranslation } from 'react-i18next'
 import { TbCirclesRelation } from 'react-icons/tb'
 
-import { Page } from '@shared/ui/page'
-import { PageHeaderShared } from '@shared/ui/page-header/page-header.shared'
-
-import { Props } from './interfaces'
+import type { Props } from './interfaces'
 
 export const InternalSquadsPageComponent = (props: Props) => {
     const { t } = useTranslation()

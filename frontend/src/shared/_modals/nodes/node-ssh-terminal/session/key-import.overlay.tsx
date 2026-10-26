@@ -1,12 +1,10 @@
+import { SshKeyError } from '@entities/ssh-vault'
 import { Button, Group, Stack, Textarea } from '@mantine/core'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbKey, TbUpload } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
-
-import { SshKeyError } from '@entities/ssh-vault'
 
 import { TerminalOverlay } from '../window/terminal-overlay'
 

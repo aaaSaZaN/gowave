@@ -1,13 +1,14 @@
 import { Badge, CopyButton, Group, Menu, Tooltip } from '@mantine/core'
-import { GetExternalSquadsCommand } from '@remnawave/backend-contract'
+import type { GetExternalSquadsCommand } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import { WithDndSortable } from '@shared/hocs/with-dnd-sortable'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
+import { EntityCardShared } from '@shared/ui/entity-card'
+import { formatInt } from '@shared/utils/misc'
 import { useTranslation } from 'react-i18next'
 import { PiCheck, PiCopy, PiPencil, PiTrashDuotone, PiUsers } from 'react-icons/pi'
 import { TbCopy, TbTags, TbUsersMinus, TbUsersPlus, TbWebhook } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { WithDndSortable } from '@shared/hocs/with-dnd-sortable'
-import { EntityCardShared } from '@shared/ui/entity-card'
-import { formatInt } from '@shared/utils/misc'
 
 interface IProps {
     disableReordering?: boolean
@@ -33,11 +34,13 @@ export function ExternalSquadCardWidget(props: IProps) {
     const { t } = useTranslation()
 
     const handleRename = () => {
-        showModal('renameModal', {
-            renameFrom: 'externalSquad',
-            name: externalSquad.name,
-            uuid: externalSquad.uuid
-        })
+        runAsync(
+            showModal('renameModal', {
+                renameFrom: 'externalSquad',
+                name: externalSquad.name,
+                uuid: externalSquad.uuid
+            })
+        )
     }
 
     const { membersCount } = externalSquad.info
@@ -101,7 +104,7 @@ export function ExternalSquadCardWidget(props: IProps) {
                         <CopyButton timeout={2000} value={externalSquad.uuid}>
                             {({ copied, copy }) => (
                                 <Menu.Item
-                                    color={copied ? 'teal' : undefined}
+                                    {...optionalProp('color', copied ? 'teal' : undefined)}
                                     leftSection={
                                         copied ? <PiCheck size={18} /> : <PiCopy size={18} />
                                     }
@@ -118,15 +121,16 @@ export function ExternalSquadCardWidget(props: IProps) {
 
                         <Menu.Item
                             leftSection={<TbTags size={18} />}
-
                             onClick={() => {
-                                showModal('editTagsModal', {
-                                    editTagsFrom: 'externalSquad',
+                                runAsync(
+                                    showModal('editTagsModal', {
+                                        editTagsFrom: 'externalSquad',
 
-                                    tags: externalSquad.tags,
+                                        tags: externalSquad.tags,
 
-                                    uuid: externalSquad.uuid
-                                })
+                                        uuid: externalSquad.uuid
+                                    })
+                                )
                             }}
                         >
                             {t('common.field.tags')}

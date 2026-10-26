@@ -1,8 +1,7 @@
+import { useMiscStoreActions, useSrrAdvancedModalClosed } from '@entities/dashboard/misc-store'
 import { Button, Center, List, Modal, Stack, Text, ThemeIcon, Title } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import { TbAlertTriangle, TbCheck } from 'react-icons/tb'
-
-import { useMiscStoreActions, useSrrAdvancedModalClosed } from '@entities/dashboard/misc-store'
 
 export function SrrAdvancedWarningOverlay() {
     const { t } = useTranslation()

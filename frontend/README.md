@@ -7,8 +7,8 @@ Upstream copyright notices are preserved in [LICENCE](LICENCE).
 Dependencies are pinned to exact versions in `package.json`; `bun.lock` locks the
 transitive graph. Install with Bun 1.4.2 using `bun install --frozen-lockfile`.
 Keep both files together when deliberately updating a dependency.
-The reduction removes 49 direct dependencies (122 to 73) and 157 locked package
-entries (677 to 520).
+The initial dependency reduction removed 49 direct dependencies (122 to 73).
+Biome replaces the former Oxfmt/Oxlint toolchain and its React hook plugin.
 
 The dependency reduction replaces utility packages, query-key construction,
 locale loading/detection, table path access and sorting, progress, error handling,
@@ -42,3 +42,31 @@ covers layout, animation cleanup, error recovery, SVG detection, charts, progres
 flags, locale loading, virtual scrolling and form resets. Unit tests also check
 Base64 compatibility, vault blobs, native X25519 key import, query invalidation
 keys, sorting, virtual row layouts, node metadata and release comparison.
+
+Biome 2.6.3 handles linting, formatting and import organization through
+`biome.json`. `bun run check` fails on warnings and runs in CI. Use `bun run fix`
+for safe fixes, or `format:fix` and `lint:fix` separately. Existing exclusions for
+Persian, Russian and Chinese translation files remain in place. Generated editor
+assets and build output are excluded. YAML and Markdown retain two-space indentation; the experimental HTML formatter
+is left disabled.
+
+`tsconfig.base.json` shares strict checks between application code and Vite:
+unchecked indexed access, exact optional properties, override/return/unused checks,
+index-signature bracket access, side-effect import resolution and type-only imports.
+Biome also checks React hooks/compiler rules, exhaustive switches, unhandled or
+misused promises, unsafe returns, implicit/explicit `any` and non-null assertions.
+Optional JSX properties are omitted when undefined through `optionalProp`, rather
+than relaxing exact optional-property checking at third-party component boundaries.
+
+`skipLibCheck` remains enabled because the pinned dependencies have incompatible
+declarations, including legacy React JSX references, missing optional peer types,
+and Highcharts optional-property conflicts. Application code, tests and Vite
+configuration still undergo strict checking. `useLiteralKeys` is disabled because
+it conflicts with `noPropertyAccessFromIndexSignature`. Local lint exceptions explain
+JSON Schema's standard `then` keyword, fixed positional UI slots and necessary
+overrides of third-party component styling.
+
+CSS modules have exact generated `*.module.d.css.ts` declarations. After changing
+class names, run `bun run css:types` and commit the declarations alongside the CSS.
+`bun run typecheck` first checks for stale or orphaned declarations, then runs both
+TypeScript configurations. The generator uses the existing PostCSS dependency.

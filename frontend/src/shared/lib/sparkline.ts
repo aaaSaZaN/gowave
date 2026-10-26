@@ -8,14 +8,17 @@ export function sparklinePaths(data: number[], curved: boolean) {
         x: values.length === 1 ? 500 : (index * 1000) / (values.length - 1),
         y: 98 - ((value - minimum) * 96) / range
     }))
-    let line = `M${points[0].x},${points[0].y}`
-    for (let index = 1; index < points.length; index++) {
-        const point = points[index]
-        const previous = points[index - 1]
+    const first = points[0]
+    if (!first) return { line: '', area: '' }
+    let last = first
+    let line = `M${first.x},${first.y}`
+    for (const point of points.slice(1)) {
+        const previous = last
         const middle = (previous.x + point.x) / 2
         line += curved
             ? ` C${middle},${previous.y} ${middle},${point.y} ${point.x},${point.y}`
             : ` L${point.x},${point.y}`
+        last = point
     }
-    return { line, area: `${line} L${points.at(-1)!.x},100 L${points[0].x},100 Z` }
+    return { line, area: `${line} L${last.x},100 L${first.x},100 Z` }
 }

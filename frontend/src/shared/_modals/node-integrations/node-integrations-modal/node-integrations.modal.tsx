@@ -1,9 +1,5 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { ActionIcon, Box, Group, Modal, Stack, Tooltip } from '@mantine/core'
-import { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbPlugConnected, TbPlus, TbRefresh } from 'react-icons/tb'
-
 import { showModal } from '@shared/_modals/show-modal'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { useGetNodeIntegrations } from '@shared/api/hooks'
@@ -11,8 +7,11 @@ import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { buildTree, TreeBrowser } from '@shared/ui/tree-browser'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbPlugConnected, TbPlus, TbRefresh } from 'react-icons/tb'
 
-import { nodeIntegrationRow, TNodeIntegration } from './node-integration-row'
+import { nodeIntegrationRow, type TNodeIntegration } from './node-integration-row'
 import { useNodeIntegrationActions } from './use-node-integration-actions'
 
 const getName = (integration: TNodeIntegration) => integration.name
@@ -27,7 +26,7 @@ export const NodeIntegrationsModal = NiceModal.create(() => {
 
     const integrations = nodeIntegrations?.nodeIntegrations ?? []
 
-    const tree = useMemo(() => buildTree(integrations, getName), [nodeIntegrations])
+    const tree = useMemo(() => buildTree(integrations, getName), [integrations])
 
     const { deletingUuid, handleDelete } = useNodeIntegrationActions()
 

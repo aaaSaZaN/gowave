@@ -1,12 +1,10 @@
+import { generateSeedPhrase } from '@entities/ssh-vault'
 import { Box, Button, CopyButton, Group, SimpleGrid, Stack, Text } from '@mantine/core'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbArrowRight, TbCheck, TbCopy, TbLock, TbShieldLock } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
-
-import { generateSeedPhrase } from '@entities/ssh-vault'
 
 import classes from '../NodeSshTerminal.module.css'
 import { PasscodeForm } from './passcode-form'
@@ -54,6 +52,7 @@ export const VaultSetupScreen = (props: IProps) => {
                     <Stack gap="md">
                         <SimpleGrid cols={{ base: 2, sm: 3 }} spacing={8}>
                             {words.map((word, index) => (
+                                // biome-ignore lint/suspicious/noArrayIndexKey: Recovery words have positional identity and may repeat.
                                 <Box className={classes.wordChip} key={`${word}-${index}`}>
                                     <Text c="dimmed" ff="monospace" size="xs" w={14}>
                                         {index + 1}

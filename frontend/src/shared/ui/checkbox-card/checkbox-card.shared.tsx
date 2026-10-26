@@ -1,4 +1,5 @@
-import { Checkbox, CheckboxCardProps, CheckboxProps, Group, Text } from '@mantine/core'
+import { Checkbox, type CheckboxCardProps, type CheckboxProps, Group, Text } from '@mantine/core'
+import { optionalProp } from '@shared/lib/optional-prop'
 
 import classes from './CheckboxCard.module.css'
 
@@ -12,7 +13,7 @@ export const CheckboxCardShared = ({
 }: CheckboxCardProps & CheckboxProps) => {
     return (
         <Checkbox.Card
-            checked={checked}
+            {...optionalProp('checked', checked)}
             className={[classes.root, className].filter(Boolean).join(' ')}
             radius="md"
             {...rest}

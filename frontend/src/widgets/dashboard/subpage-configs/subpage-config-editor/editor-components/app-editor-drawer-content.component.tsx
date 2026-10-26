@@ -1,16 +1,17 @@
 import { Button, Card, Group, Stack, Switch, TextInput } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import {
+import type {
     TSubscriptionPageAppConfig,
     TSubscriptionPageBlockConfig,
     TSubscriptionPageLanguageCode,
     TSubscriptionPageSvgLibrary
 } from '@remnawave/subscription-page-types'
+import { useListKeys } from '@shared/hooks/use-list-keys'
+import { swapItems } from '@shared/lib/swap-items'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbChevronRight, TbPlus, TbStar } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
 import styles from '../subpage-config-visual-editor.module.css'
 import { BlockCard } from './block-card.component'
@@ -27,13 +28,14 @@ interface IProps {
 export function AppEditorDrawerContent(props: IProps) {
     const { app, enabledLocales, onChange, svgLibrary } = props
     const { t } = useTranslation()
+    const blockKeys = useListKeys(app.blocks)
 
     const [blockModalOpened, { close: closeBlockModal, open: openBlockModal }] =
         useDisclosure(false)
     const [editingBlockIndex, setEditingBlockIndex] = useState<null | number>(null)
 
     const handleAddBlock = () => {
-        const firstLocale = enabledLocales[0]
+        const firstLocale = enabledLocales[0] ?? 'en'
         const emptyLocalizedText = firstLocale ? { [firstLocale]: '' } : {}
 
         const newBlock: TSubscriptionPageBlockConfig = {
@@ -63,21 +65,13 @@ export function AppEditorDrawerContent(props: IProps) {
 
     const handleBlockMoveUp = (blockIndex: number) => {
         if (blockIndex === 0) return
-        const newBlocks = [...app.blocks]
-        ;[newBlocks[blockIndex - 1], newBlocks[blockIndex]] = [
-            newBlocks[blockIndex],
-            newBlocks[blockIndex - 1]
-        ]
+        const newBlocks = swapItems(app.blocks, blockIndex, blockIndex - 1)
         onChange({ ...app, blocks: newBlocks })
     }
 
     const handleBlockMoveDown = (blockIndex: number) => {
         if (blockIndex >= app.blocks.length - 1) return
-        const newBlocks = [...app.blocks]
-        ;[newBlocks[blockIndex], newBlocks[blockIndex + 1]] = [
-            newBlocks[blockIndex + 1],
-            newBlocks[blockIndex]
-        ]
+        const newBlocks = swapItems(app.blocks, blockIndex, blockIndex + 1)
         onChange({ ...app, blocks: newBlocks })
     }
 
@@ -94,7 +88,7 @@ export function AppEditorDrawerContent(props: IProps) {
         setEditingBlockIndex(null)
     }
 
-    const editingBlock = editingBlockIndex !== null ? app.blocks[editingBlockIndex] : null
+    const editingBlock = editingBlockIndex !== null ? (app.blocks[editingBlockIndex] ?? null) : null
 
     return (
         <>
@@ -160,9 +154,9 @@ export function AppEditorDrawerContent(props: IProps) {
                                     block={block}
                                     canMoveDown={blockIndex < app.blocks.length - 1}
                                     canMoveUp={blockIndex > 0}
-                                    firstLocale={enabledLocales[0]}
+                                    firstLocale={enabledLocales[0] ?? 'en'}
                                     index={blockIndex}
-                                    key={blockIndex}
+                                    key={blockKeys[blockIndex]}
                                     onDelete={() => handleBlockDelete(blockIndex)}
                                     onEdit={() => handleEditBlock(blockIndex)}
                                     onMoveDown={() => handleBlockMoveDown(blockIndex)}

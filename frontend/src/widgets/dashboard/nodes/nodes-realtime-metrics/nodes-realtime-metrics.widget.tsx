@@ -1,13 +1,13 @@
 import { SimpleGrid } from '@mantine/core'
-import { GetNodesCommand } from '@remnawave/backend-contract'
+import type { GetNodesCommand } from '@remnawave/backend-contract'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { type IMetricCardProps, MetricCardShared } from '@shared/ui/metrics/metric-card'
+import { prettySiRealtimeBytesUtil } from '@shared/utils/bytes'
 import { motion } from 'motion/react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiArrowDownDuotone, PiArrowUpDuotone, PiPulse } from 'react-icons/pi'
 import { TbUsers } from 'react-icons/tb'
-
-import { IMetricCardProps, MetricCardShared } from '@shared/ui/metrics/metric-card'
-import { prettySiRealtimeBytesUtil } from '@shared/utils/bytes'
 
 interface IProps {
     isLoading: boolean
@@ -80,7 +80,7 @@ export function NodesRealtimeUsageMetrics(props: IProps) {
                         IconComponent={card.IconComponent}
                         iconVariant={card.iconVariant}
                         isLoading={isLoading}
-                        subtitle={card.subtitle}
+                        {...optionalProp('subtitle', card.subtitle)}
                         title={card.title}
                         value={card.value}
                     />

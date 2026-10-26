@@ -1,8 +1,8 @@
 import { CodeHighlight } from '@mantine/code-highlight'
 import { Box, Button, Container, Group, Title } from '@mantine/core'
+import type { ErrorBoundaryFallbackProps } from '@shared/hocs/error-boundary'
+import { runAsync } from '@shared/lib/run-async'
 import { useNavigate } from 'react-router'
-
-import { ErrorBoundaryFallbackProps } from '@shared/hocs/error-boundary'
 
 import classes from './ServerError.module.css'
 
@@ -10,7 +10,7 @@ export function ErrorPageComponent({ componentStack, error }: Partial<ErrorBound
     const navigate = useNavigate()
 
     const handleRefresh = () => {
-        navigate(0)
+        runAsync(navigate(0))
     }
 
     const details = [

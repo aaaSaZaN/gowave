@@ -1,13 +1,13 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
-import { Navigate, useParams } from 'react-router'
-import { app } from 'src/config'
-
 import { useGetConfigProfile, useGetSnippets } from '@shared/api/hooks'
 import { ROUTES } from '@shared/constants'
 import { consola } from '@shared/lib/logger'
+import { runAsync } from '@shared/lib/run-async'
 import { LoadingScreen } from '@shared/ui'
 import { fetchWithProgress } from '@shared/utils/fetch-with-progress'
 import { loadScript } from '@shared/utils/load-script'
+import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { Navigate, useParams } from 'react-router'
+import { app } from 'src/config'
 
 import { ConfigProfileByUuidPageComponent } from '../components/config-profile-by-uuid.page.component'
 
@@ -21,7 +21,7 @@ export function ConfigProfileByUuidPageConnector() {
     const wasmBytesCache = useRef<ArrayBuffer | null>(null)
 
     const { data: configProfile, isLoading: isConfigProfileLoading } = useGetConfigProfile({
-        route: { uuid: uuid! },
+        route: { uuid: uuid ?? '' },
         rQueryParams: {
             enabled: !!uuid,
             refetchOnWindowFocus: false
@@ -34,7 +34,9 @@ export function ConfigProfileByUuidPageConnector() {
         () =>
             loadScript(app.configEditor.wasmJsUrl)
                 .then(async () => {
-                    const go = new window.Go()
+                    const Go = window.Go
+                    if (!Go) throw new Error('WASM runtime is not initialized')
+                    const go = new Go()
                     const wasmInitialized = new Promise<void>((resolve) => {
                         window.onWasmInitialized = () => {
                             consola.info('WASM module initialized')
@@ -87,12 +89,12 @@ export function ConfigProfileByUuidPageConnector() {
     }, [initWasm])
 
     useLayoutEffect(() => {
-        initWasm()
+        runAsync(initWasm())
 
         return () => {
             delete window.onWasmInitialized
         }
-    }, [])
+    }, [initWasm])
 
     if (!uuid) {
         return <Navigate to={ROUTES.DASHBOARD.MANAGEMENT.CONFIG_PROFILES} />

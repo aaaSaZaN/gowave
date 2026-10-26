@@ -1,7 +1,6 @@
 import { Box, Group } from '@mantine/core'
-import { ReactNode } from 'react'
-
 import { useIsMobile } from '@shared/hooks'
+import type { ReactNode } from 'react'
 
 import styles from './DrawerFooter.module.css'
 

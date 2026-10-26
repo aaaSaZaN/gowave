@@ -40,16 +40,34 @@ export default function Masonry({ children, columns, gap = 0 }: MasonryProps) {
                 item.style.gridRowEnd = `span ${Math.max(1, Math.ceil(content.getBoundingClientRect().height))}`
         }
         const observer = new ResizeObserver((entries) =>
-            entries.forEach((entry) => measure(entry.target))
+            entries.forEach((entry) => {
+                measure(entry.target)
+            })
         )
-        for (const item of container.children) {
-            if (item.firstElementChild) {
-                measure(item.firstElementChild)
-                observer.observe(item.firstElementChild)
+        const observed = new Set<Element>()
+        const observeChildren = () => {
+            for (const content of observed) {
+                if (!container.contains(content)) {
+                    observer.unobserve(content)
+                    observed.delete(content)
+                }
+            }
+            for (const item of container.children) {
+                if (item.firstElementChild) {
+                    measure(item.firstElementChild)
+                    observer.observe(item.firstElementChild)
+                    observed.add(item.firstElementChild)
+                }
             }
         }
-        return () => observer.disconnect()
-    }, [children])
+        observeChildren()
+        const mutations = new MutationObserver(observeChildren)
+        mutations.observe(container, { childList: true })
+        return () => {
+            observer.disconnect()
+            mutations.disconnect()
+        }
+    }, [])
 
     return (
         <div ref={root} style={{ display: 'grid', gridAutoRows: '1px', columnGap: gap }}>

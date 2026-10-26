@@ -1,16 +1,20 @@
 import { ActionIcon, CopyButton, Tooltip } from '@mantine/core'
-import { GetSnippetsCommand } from '@remnawave/backend-contract'
+import type { GetSnippetsCommand } from '@remnawave/backend-contract'
+import cx from '@shared/lib/classes'
+import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
+import {
+    buildTree,
+    type ITreeNode,
+    type ITreeRowContent,
+    TreeBrowser
+} from '@shared/ui/tree-browser'
 import { t } from 'i18next'
 import { useMemo } from 'react'
 import { PiCheck, PiCopy } from 'react-icons/pi'
 import { TbBraces, TbCode, TbFolder, TbPencil, TbTrash } from 'react-icons/tb'
 
-import cx from '@shared/lib/classes'
-import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
-import { buildTree, ITreeNode, ITreeRowContent, TreeBrowser } from '@shared/ui/tree-browser'
-
 import classes from './Snippets.module.css'
-import { TSnippet } from './types'
+import type { TSnippet } from './types'
 import { useSnippetActions } from './use-snippet-actions'
 
 const countItems = (snippet: unknown) => (Array.isArray(snippet) ? snippet.length : 0)

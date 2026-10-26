@@ -1,8 +1,7 @@
 import { Breadcrumbs, UnstyledButton } from '@mantine/core'
-import { ReactNode } from 'react'
-import { TbChevronRight } from 'react-icons/tb'
-
 import cx from '@shared/lib/classes'
+import type { ReactNode } from 'react'
+import { TbChevronRight } from 'react-icons/tb'
 
 import classes from './TreeBrowser.module.css'
 

@@ -1,11 +1,11 @@
 import { Checkbox, Stack, Text, TextInput } from '@mantine/core'
-import { GetInternalSquadsCommand } from '@remnawave/backend-contract'
-import { Key, memo, useRef } from 'react'
+import type { GetInternalSquadsCommand } from '@remnawave/backend-contract'
+import { useVirtualList } from '@shared/hooks/use-virtual-list'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { type Key, memo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiEmpty } from 'react-icons/pi'
 import { TbCirclesRelation } from 'react-icons/tb'
-
-import { useVirtualList } from '@shared/hooks/use-virtual-list'
 
 import { InternalSquadCheckboxCard } from '../internal-squad-checkbox-card'
 
@@ -97,6 +97,7 @@ export const InternalSquadsListWidget = memo((props: IProps) => {
 
                         {virtualizer.virtualItems.map((virtualRow) => {
                             const internalSquad = filteredInternalSquads[virtualRow.index]
+                            if (!internalSquad) return null
                             return (
                                 <div
                                     key={internalSquad.uuid}
@@ -111,7 +112,7 @@ export const InternalSquadsListWidget = memo((props: IProps) => {
                                     }}
                                 >
                                     <InternalSquadCheckboxCard
-                                        hideEditButton={hideEditButton}
+                                        {...optionalProp('hideEditButton', hideEditButton)}
                                         internalSquad={internalSquad}
                                     />
                                 </div>

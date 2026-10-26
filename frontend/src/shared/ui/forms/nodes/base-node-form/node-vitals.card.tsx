@@ -1,6 +1,7 @@
+import { useExperimentalFeature } from '@entities/dashboard/view-preferences-store'
 import {
     CheckIcon,
-    ComboboxItem,
+    type ComboboxItem,
     Group,
     MultiSelect,
     NumberInput,
@@ -9,15 +10,20 @@ import {
     Text,
     TextInput
 } from '@mantine/core'
-import { UseFormReturnType } from '@mantine/form'
-import {
+import type { UseFormReturnType } from '@mantine/form'
+import type {
     CreateNodeCommand,
     GetNodeIntegrationsCommand,
     GetNodePluginsCommand,
     GetNodeSecretKeyCommand,
     UpdateNodeCommand
 } from '@remnawave/backend-contract'
-import { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
+import { TagInputPill } from '@shared/ui/tag-input-pill'
+import type { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { HiOutlineServer } from 'react-icons/hi'
 import {
@@ -29,13 +35,6 @@ import {
     TbUserCheck,
     TbWorld
 } from 'react-icons/tb'
-
-import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
-import { TagInputPill } from '@shared/ui/tag-input-pill'
-
-import { useExperimentalFeature } from '@entities/dashboard/view-preferences-store'
 
 import { COUNTRIES } from './constants'
 import integrationsClasses from './integrations-select.module.css'
@@ -218,7 +217,7 @@ export const NodeVitalsCard = <
                                 }}
                                 renderPill={({ option, value, onRemove }) => (
                                     <TagInputPill
-                                        onRemove={onRemove}
+                                        {...optionalProp('onRemove', onRemove)}
                                         value={option?.label ?? value}
                                     />
                                 )}

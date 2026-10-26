@@ -1,21 +1,23 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { ActionIcon, Group, NativeSelect, Stack } from '@mantine/core'
-import { DatePickerInput, DatesRangeValue } from '@mantine/dates'
-import dayjs from 'dayjs'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbChartArcs } from 'react-icons/tb'
-import { TbCalendar, TbRefresh, TbUsers } from 'react-icons/tb'
-
+import { DatePickerInput, type DatesRangeValue } from '@mantine/dates'
 import { NodeUsersSparklineCardWidget } from '@shared/_modals/nodes/node-usage-stats/usage-sparkline-card'
 import { showModal } from '@shared/_modals/show-modal'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { useGetStatsNodesUsersUsage, useResolveUser } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
 import { CompoundDrawerShared } from '@shared/ui/compound-drawer/compound-drawer.shared'
-import { ITopLeaderboardItem, TopLeaderboardCardShared } from '@shared/ui/leaderboard-item-card'
+import {
+    type ITopLeaderboardItem,
+    TopLeaderboardCardShared
+} from '@shared/ui/leaderboard-item-card'
 import { nprogress } from '@shared/ui/navigation-progress'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { getDefaultDateRange } from '@shared/utils/time-utils'
+import dayjs from 'dayjs'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbCalendar, TbChartArcs, TbRefresh, TbUsers } from 'react-icons/tb'
 
 interface IProps {
     nodeUuids: string[]
@@ -77,9 +79,11 @@ export const NodesUsageStatsModal = NiceModal.create((props: IProps) => {
             })
 
             if (result.id) {
-                showModal('users_viewUserModal', {
-                    userId: result.id
-                })
+                runAsync(
+                    showModal('users_viewUserModal', {
+                        userId: result.id
+                    })
+                )
             }
         } finally {
             nprogress.complete()
@@ -243,7 +247,7 @@ export const NodesUsageStatsModal = NiceModal.create((props: IProps) => {
                     }))}
                     maxHeight={500}
                     onItemClick={(user) => {
-                        handleViewUser(user)
+                        runAsync(handleViewUser(user))
                     }}
                     skeletonCount={11}
                 />

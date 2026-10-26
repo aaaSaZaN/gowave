@@ -1,21 +1,21 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { ActionIcon, Group, NativeSelect, SimpleGrid, Stack } from '@mantine/core'
-import { DatePickerInput, DatesRangeValue } from '@mantine/dates'
+import { DatePickerInput, type DatesRangeValue } from '@mantine/dates'
+import { showModal } from '@shared/_modals/show-modal'
+import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
+import { useGetStatsUserUsage } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
+import { CompoundDrawerShared } from '@shared/ui/compound-drawer/compound-drawer.shared'
+import { CountryFlag } from '@shared/ui/get-country-flag'
+import { TopLeaderboardCardShared } from '@shared/ui/leaderboard-item-card'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { getDefaultDateRange } from '@shared/utils/time-utils'
 import { UserUsageBarchartWidget } from '@widgets/dashboard/users/user-usage-statistic/usage-barchart'
 import { UserUsageSparklineCardWidget } from '@widgets/dashboard/users/user-usage-statistic/usage-sparkline-card'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbCalendar, TbChartArcs, TbRefresh, TbServer2 } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
-import { useGetStatsUserUsage } from '@shared/api/hooks'
-import { CompoundDrawerShared } from '@shared/ui/compound-drawer/compound-drawer.shared'
-import { CountryFlag } from '@shared/ui/get-country-flag'
-import { TopLeaderboardCardShared } from '@shared/ui/leaderboard-item-card'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { getDefaultDateRange } from '@shared/utils/time-utils'
 
 const TOP_NODES_LIMIT_OPTIONS = [
     { value: '5', label: 'Top 5' },
@@ -97,7 +97,7 @@ export const UserUsageModal = NiceModal.create((props: IProps) => {
     })
 
     const handleNodeClick = (nodeUuid: string) => {
-        showModal('nodes_editNodeModal', { nodeUuid })
+        runAsync(showModal('nodes_editNodeModal', { nodeUuid }))
     }
 
     return (

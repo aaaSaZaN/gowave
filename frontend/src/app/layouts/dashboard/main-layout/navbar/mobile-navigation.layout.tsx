@@ -1,4 +1,5 @@
 import { Box, Divider, NavLink, Stack, Title } from '@mantine/core'
+import { optionalProp } from '@shared/lib/optional-prop'
 import { PiArrowRight } from 'react-icons/pi'
 import { NavLink as RouterLink, useLocation } from 'react-router'
 
@@ -50,7 +51,7 @@ export const MobileNavigation = (props: IProps) => {
                                                     <PiArrowRight />
                                                 )
                                             }
-                                            onClick={onClose}
+                                            {...optionalProp('onClick', onClose)}
                                             to={dropdownItem.href}
                                             variant="subtle"
                                         />
@@ -64,7 +65,7 @@ export const MobileNavigation = (props: IProps) => {
                                     key={subItem.id}
                                     label={subItem.name}
                                     leftSection={subItem.icon && <subItem.icon />}
-                                    onClick={onClose}
+                                    {...optionalProp('onClick', onClose)}
                                     to={subItem.href}
                                     variant="subtle"
                                     {...(subItem.newTab

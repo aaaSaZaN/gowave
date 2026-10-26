@@ -1,12 +1,11 @@
 import { ActionIcon, Badge, Box, Card, Group, Text } from '@mantine/core'
-import {
+import type {
     TSubscriptionPageAppConfig,
     TSubscriptionPageSvgLibrary
 } from '@remnawave/subscription-page-types'
-import { TbArrowDown, TbArrowUp, TbCopy, TbPhoto, TbStar, TbTrash } from 'react-icons/tb'
-
 import isSvg from '@shared/lib/is-svg'
-import { sanitizeSvg } from '@shared/utils/misc'
+import { SafeSvg } from '@shared/ui/safe-svg'
+import { TbArrowDown, TbArrowUp, TbCopy, TbPhoto, TbStar, TbTrash } from 'react-icons/tb'
 
 import styles from '../subpage-config-visual-editor.module.css'
 
@@ -46,10 +45,7 @@ export function AppCard(props: IProps) {
                 <Group gap="sm" wrap="nowrap">
                     <Box className={styles.appIconPreview} visibleFrom="sm">
                         {hasValidIcon ? (
-                            <Box
-                                className={styles.appIconSvg}
-                                dangerouslySetInnerHTML={{ __html: sanitizeSvg(svgContent) }}
-                            />
+                            <SafeSvg className={styles.appIconSvg} svg={svgContent} />
                         ) : (
                             <TbPhoto color="var(--mantine-color-dimmed)" size={18} />
                         )}

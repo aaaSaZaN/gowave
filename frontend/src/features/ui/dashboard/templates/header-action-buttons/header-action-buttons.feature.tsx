@@ -1,13 +1,12 @@
 import { ActionIcon, ActionIconGroup, Group, Tooltip } from '@mantine/core'
-import { TSubscriptionTemplateType } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
-import { TbPlus, TbRefresh } from 'react-icons/tb'
-import { useNavigate } from 'react-router'
-
+import type { TSubscriptionTemplateType } from '@remnawave/backend-contract'
 import { showModal } from '@shared/_modals/show-modal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useGetSubscriptionTemplates } from '@shared/api/hooks'
 import { UniversalSpotlightActionIconShared } from '@shared/ui/universal-spotlight'
+import { useTranslation } from 'react-i18next'
+import { TbPlus, TbRefresh } from 'react-icons/tb'
+import { useNavigate } from 'react-router'
 
 interface IProps {
     templateType: TSubscriptionTemplateType

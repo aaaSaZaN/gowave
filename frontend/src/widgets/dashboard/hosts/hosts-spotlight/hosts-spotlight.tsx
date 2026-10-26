@@ -1,11 +1,11 @@
 import { Group, Stack, Text, ThemeIcon } from '@mantine/core'
-import { GetHostsCommand, GetConfigProfilesCommand } from '@remnawave/backend-contract'
-import { PiProhibit, PiPulse } from 'react-icons/pi'
-import { TbEyeOff } from 'react-icons/tb'
-
+import type { GetConfigProfilesCommand, GetHostsCommand } from '@remnawave/backend-contract'
 import { showModal } from '@shared/_modals/show-modal'
+import { runAsync } from '@shared/lib/run-async'
 import { XrayLogo } from '@shared/ui/logos'
 import { UniversalSpotlightContentShared } from '@shared/ui/universal-spotlight'
+import { PiProhibit, PiPulse } from 'react-icons/pi'
+import { TbEyeOff } from 'react-icons/tb'
 
 interface IProps {
     configProfiles: GetConfigProfilesCommand.Response['response']['configProfiles']
@@ -16,9 +16,11 @@ export const HostsSpotlightWidget = (props: IProps) => {
     const { configProfiles, hosts } = props
 
     const handleViewHost = (hostUuid: string) => {
-        showModal('hosts_editHostDrawer', {
-            hostUuid: hosts.find((host) => host.uuid === hostUuid)!.uuid
-        })
+        runAsync(
+            showModal('hosts_editHostDrawer', {
+                hostUuid: hostUuid
+            })
+        )
     }
 
     const getHostIcon = (isDisabled: boolean, isHidden: boolean) => {

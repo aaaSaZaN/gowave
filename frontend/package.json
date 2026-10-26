@@ -20,22 +20,24 @@
     "start:preview": "vite preview --port 3333",
     "serve": "NODE_ENV=production tsc && vite build && vite preview --port 3333",
     "serve:dev": "tsc && vite build && vite preview --port 3333",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun run css:types:check && tsc --noEmit && tsc --project tsconfig.node.json",
     "generate-pwa-assets": "pwa-assets-generator --preset minimal-2023 public/favicons/logo.svg",
-    "toc": "bun scripts/translation-resources.mjs && oxfmt @types/resources.ts",
+    "toc": "bun scripts/translation-resources.mjs && biome format --write @types/resources.ts",
     "crowdin:download": "crowdin download translations --language=af --branch=dev",
     "crowdin:upload": "crowdin upload sources --branch=dev",
-    "format": "oxfmt --check",
-    "format:fix": "oxfmt",
-    "lint": "oxlint --format=stylish",
-    "lint:fix": "oxlint --fix",
-    "check": "oxfmt --check && oxlint",
-    "fix": "oxfmt && oxlint --fix",
+    "format": "biome format . --error-on-warnings",
+    "format:fix": "biome format --write .",
+    "lint": "biome lint . --error-on-warnings",
+    "lint:fix": "biome lint --write .",
+    "check": "biome check . --error-on-warnings",
+    "fix": "biome check --write .",
     "build": "vite build",
     "editor:download": "bun scripts/editor-assets.cjs download",
     "editor:compress": "bun scripts/editor-assets.cjs compress",
     "test": "bun test ./src",
-    "test:browser": "bun tests/run-browser.mjs"
+    "test:browser": "bun tests/run-browser.mjs",
+    "css:types": "bun scripts/css-types.mjs",
+    "css:types:check": "bun scripts/css-types.mjs --check"
   },
   "dependencies": {
     "@dnd-kit/abstract": "0.5.0",
@@ -100,24 +102,17 @@
     "zustand": "5.0.15"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.3",
     "@crowdin/cli": "4.15.1",
     "@types/node": "25.9.9",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.0",
-    "eslint-plugin-react-hooks": "7.1.1",
-    "oxfmt": "0.64.0",
-    "oxlint": "1.86.0",
     "postcss": "8.5.28",
     "postcss-preset-mantine": "1.18.0",
     "typescript": "5.9.3",
     "vite": "8.2.2",
     "vite-plugin-webfont-dl": "3.13.1"
-  },
-  "overrides": {
-    "eslint-plugin-react-hooks": {
-      "zod-validation-error": "4.0.2"
-    }
   },
   "commitlint": {
     "extends": [

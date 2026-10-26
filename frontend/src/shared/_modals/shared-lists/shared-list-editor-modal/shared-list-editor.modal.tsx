@@ -1,14 +1,8 @@
-import type { editor } from 'monaco-editor'
-
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { MonacoSetupSharedListEditorFeature } from '@features/dashboard/config-profiles/monaco-setup'
 import { Box, Button, Group, Modal, Paper, Stack, Text, TextInput } from '@mantine/core'
 import { CreateSharedListCommand } from '@remnawave/backend-contract'
 import { SharedListConfigSchema } from '@remnawave/node-plugins'
-import { useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbList } from 'react-icons/tb'
-
 import { openApplyToNodesModal } from '@shared/_modals/universal'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { queryClient } from '@shared/api'
@@ -22,12 +16,17 @@ import {
 import { COMPACT_MONACO_OPTIONS } from '@shared/constants/monaco-theme'
 import { usePseudoFullscreen } from '@shared/hooks'
 import clsx from '@shared/lib/classes'
-import { CodeEditor, editorClasses, EditorFooter, EditorStatusBar } from '@shared/ui/code-editor'
-import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui/fullscreen-toggle-button'
+import { runAsync } from '@shared/lib/run-async'
+import { CodeEditor, EditorFooter, EditorStatusBar, editorClasses } from '@shared/ui/code-editor'
+import { FullscreenToggleButton, fullscreenClasses } from '@shared/ui/fullscreen-toggle-button'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { forceMonacoRetokenize } from '@shared/utils/monaco/force-retokenize'
 import { useMonaco } from '@shared/utils/setup-monaco/load-monaco'
+import type { editor } from 'monaco-editor'
+import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbList } from 'react-icons/tb'
 
 import classes from './SharedListEditor.module.css'
 
@@ -69,14 +68,18 @@ export const SharedListEditorModal = NiceModal.create((props: IProps) => {
     const initialValue = sharedList ? JSON.stringify(sharedList.config, null, 2) : EMPTY_CONFIG
 
     const invalidateSharedLists = () => {
-        queryClient.refetchQueries({
-            queryKey: QueryKeys.nodePlugins.getSharedLists.queryKey
-        })
+        runAsync(
+            queryClient.refetchQueries({
+                queryKey: QueryKeys.nodePlugins.getSharedLists.queryKey
+            })
+        )
 
         if (name) {
-            queryClient.refetchQueries({
-                queryKey: QueryKeys.nodePlugins.getSharedList({ name }).queryKey
-            })
+            runAsync(
+                queryClient.refetchQueries({
+                    queryKey: QueryKeys.nodePlugins.getSharedList({ name }).queryKey
+                })
+            )
         }
     }
 
@@ -123,7 +126,7 @@ export const SharedListEditorModal = NiceModal.create((props: IProps) => {
         )
 
         if (!parsedName.success) {
-            setNameError(parsedName.error.issues[0].message)
+            setNameError(parsedName.error.issues[0]?.message ?? 'Invalid name')
             return
         }
 
@@ -142,7 +145,7 @@ export const SharedListEditorModal = NiceModal.create((props: IProps) => {
 
         if (!result.success) {
             const issue = result.error.issues[0]
-            setError(`${issue.path.join('.') || 'config'}: ${issue.message}`)
+            setError(`${issue?.path.join('.') || 'config'}: ${issue?.message ?? 'Invalid config'}`)
             return
         }
 
@@ -209,7 +212,6 @@ export const SharedListEditorModal = NiceModal.create((props: IProps) => {
                                     : '1px solid var(--mantine-color-dark-4)',
                                 overflow: 'hidden'
                             }}
-
                             className={clsx(
                                 classes.editorWrapper,
                                 editorClasses.editorAttached,

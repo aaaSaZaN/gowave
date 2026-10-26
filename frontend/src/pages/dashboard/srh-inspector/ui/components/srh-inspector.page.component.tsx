@@ -1,12 +1,11 @@
 import { Stack } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
+import { Page } from '@shared/ui'
+import { MobileWarningOverlay } from '@shared/ui/mobile-warning-overlay/mobile-warning-overlay'
 import { SrhInspectorMetrics } from '@widgets/dashboard/srh-inspector/srh-inspector-metrics'
 import { SrhInspectorTableWidget } from '@widgets/dashboard/srh-inspector/srh-inspector-table'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-
-import { Page } from '@shared/ui'
-import { MobileWarningOverlay } from '@shared/ui/mobile-warning-overlay/mobile-warning-overlay'
 
 export default function SrhInspectorPageComponent() {
     const { t } = useTranslation()

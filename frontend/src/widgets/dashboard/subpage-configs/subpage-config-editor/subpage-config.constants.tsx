@@ -1,4 +1,4 @@
-import { TSubscriptionPagePlatformKey } from '@remnawave/subscription-page-types'
+import type { TSubscriptionPagePlatformKey } from '@remnawave/subscription-page-types'
 import {
     TbBrandAndroid,
     TbBrandApple,

@@ -1,13 +1,12 @@
 import { Stack } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
+import { Page } from '@shared/ui'
+import { MobileWarningOverlay } from '@shared/ui/mobile-warning-overlay/mobile-warning-overlay'
 import { HwidInspectorLeaderboardWidget } from '@widgets/dashboard/hwid-inspector/hwid-inspector-leaderboard'
 import { HwidInspectorMetrics } from '@widgets/dashboard/hwid-inspector/hwid-inspector-metrics'
 import { HwidInspectorTableWidget } from '@widgets/dashboard/hwid-inspector/hwid-inspector-table'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-
-import { Page } from '@shared/ui'
-import { MobileWarningOverlay } from '@shared/ui/mobile-warning-overlay/mobile-warning-overlay'
 
 export default function HwidInspectorPageComponent() {
     const { t } = useTranslation()

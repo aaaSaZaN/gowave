@@ -2,7 +2,7 @@
     min-width: 0;
 }
 
-:global([data-orientation='vertical']) .itemValue {
+:global([data-orientation="vertical"]) .itemValue {
     width: 100%;
 }
 

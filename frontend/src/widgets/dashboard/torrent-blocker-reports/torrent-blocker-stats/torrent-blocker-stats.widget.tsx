@@ -1,16 +1,17 @@
 import { SimpleGrid } from '@mantine/core'
-import { motion } from 'motion/react'
-import { useTranslation } from 'react-i18next'
-import { TbClockHour2, TbFileReport, TbServer, TbUsers } from 'react-icons/tb'
-
 import { showModal } from '@shared/_modals/show-modal'
 import { useGetTorrentBlockerStats } from '@shared/api/hooks'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
 import { CountryFlag } from '@shared/ui/get-country-flag'
 import { TopLeaderboardCardShared } from '@shared/ui/leaderboard-item-card'
-import { IMetricCardProps, MetricCardShared } from '@shared/ui/metrics/metric-card'
+import { type IMetricCardProps, MetricCardShared } from '@shared/ui/metrics/metric-card'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { formatInt } from '@shared/utils/misc'
+import { motion } from 'motion/react'
+import { useTranslation } from 'react-i18next'
+import { TbClockHour2, TbFileReport, TbServer, TbUsers } from 'react-icons/tb'
 
 export function TorrentBlockerStatsWidget() {
     const { t } = useTranslation()
@@ -66,7 +67,7 @@ export function TorrentBlockerStatsWidget() {
                             IconComponent={card.IconComponent}
                             iconVariant={card.iconVariant}
                             isLoading={isStatsLoading}
-                            subtitle={card.subtitle}
+                            {...optionalProp('subtitle', card.subtitle)}
                             title={card.title}
                             value={card.value}
                         />
@@ -86,7 +87,7 @@ export function TorrentBlockerStatsWidget() {
                     }))}
                     maxHeight={230}
                     onItemClick={(user) => {
-                        showModal('users_viewUserModal', { userId: user.userId })
+                        runAsync(showModal('users_viewUserModal', { userId: user.userId }))
                     }}
                     wrapper={(children) => (
                         <SectionCard.Root>

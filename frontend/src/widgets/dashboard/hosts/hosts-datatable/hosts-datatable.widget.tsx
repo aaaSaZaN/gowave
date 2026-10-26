@@ -1,13 +1,10 @@
 import { DataTable, type DataTableSortStatus, useDataTableColumns } from '@kastov/mantine-datatable'
 import { useDebouncedValue } from '@mantine/hooks'
-import {
+import type {
+    GetConfigProfilesCommand,
     GetHostsCommand,
-    GetHostsTagsCommand,
-    GetConfigProfilesCommand
+    GetHostsTagsCommand
 } from '@remnawave/backend-contract'
-import { memo, useCallback, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-
 import { showModal } from '@shared/_modals/show-modal'
 import {
     useGetHosts,
@@ -16,8 +13,11 @@ import {
     useGetSubscriptionTemplates
 } from '@shared/api/hooks'
 import { usePreventTableBackScroll } from '@shared/hooks'
+import { runAsync } from '@shared/lib/run-async'
 import { DataTableControls, LoadingScreen, sortRecords } from '@shared/ui'
 import { sToMs } from '@shared/utils/time-utils'
+import { memo, useCallback, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import {
     type BooleanFilterValue,
@@ -26,8 +26,8 @@ import {
     HOST_BOOLEAN_FIELDS,
     HOST_SELECT_FIELDS,
     HOST_TEXT_FIELDS,
-    type HostsTableFilters,
     type HostStatusFilter,
+    type HostsTableFilters,
     type HostType
 } from './use-hosts-table-widget'
 
@@ -83,9 +83,11 @@ export const HostsDataTableWidget = memo((props: IProps) => {
 
     const handleViewHost = (hostUuid: string) => {
         if (!hosts) return
-        showModal('hosts_editHostDrawer', {
-            hostUuid: hosts.find((host) => host.uuid === hostUuid)!.uuid
-        })
+        runAsync(
+            showModal('hosts_editHostDrawer', {
+                hostUuid: hostUuid
+            })
+        )
     }
 
     const selectedRecords = useMemo(() => {

@@ -1,21 +1,20 @@
-import { Card, Stack, Text, Title } from '@mantine/core'
-import { modals } from '@mantine/modals'
-import { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
-
-import { QueryKeys, useDeleteConfigProfile, useReorderConfigProfiles } from '@shared/api/hooks'
-import { queryClient } from '@shared/api/query-client'
-import { filterByTag, TagFilterBar } from '@shared/ui'
-import { XrayLogo } from '@shared/ui/logos'
-import { VirtualizedDndGrid } from '@shared/ui/virtualized-dnd-grid'
-
 import {
     useSectionActiveTag,
     useViewPreferencesStoreActions
 } from '@entities/dashboard/view-preferences-store'
+import { Card, Stack, Text, Title } from '@mantine/core'
+import { modals } from '@mantine/modals'
+import { QueryKeys, useDeleteConfigProfile, useReorderConfigProfiles } from '@shared/api/hooks'
+import { queryClient } from '@shared/api/query-client'
+import { runAsync } from '@shared/lib/run-async'
+import { filterByTag, TagFilterBar } from '@shared/ui'
+import { XrayLogo } from '@shared/ui/logos'
+import { VirtualizedDndGrid } from '@shared/ui/virtualized-dnd-grid'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { ConfigProfileCardWidget } from '../config-profile-card/config-profile-card.widget'
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export function ConfigProfilesGridWidget(props: IProps) {
     const { configProfiles } = props
@@ -40,9 +39,11 @@ export function ConfigProfilesGridWidget(props: IProps) {
     const { mutate: deleteConfigProfile } = useDeleteConfigProfile({
         mutationFns: {
             onSuccess: () => {
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.configProfiles.getConfigProfiles.queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.configProfiles.getConfigProfiles.queryKey
+                    })
+                )
             }
         }
     })

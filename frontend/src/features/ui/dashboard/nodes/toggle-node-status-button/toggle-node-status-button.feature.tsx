@@ -1,10 +1,9 @@
 import { Loader, Menu } from '@mantine/core'
+import { useDisableNode, useEnableNode } from '@shared/api/hooks'
 import { useTranslation } from 'react-i18next'
 import { PiCellSignalFullDuotone, PiCellSignalSlashDuotone, PiTrashDuotone } from 'react-icons/pi'
 
-import { useDisableNode, useEnableNode } from '@shared/api/hooks'
-
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export function ToggleNodeStatusButtonFeature(props: IProps) {
     const { t } = useTranslation()
@@ -16,7 +15,7 @@ export function ToggleNodeStatusButtonFeature(props: IProps) {
             uuid: node.uuid
         },
         mutationFns: {
-            onSuccess: async () => {
+            onSuccess: () => {
                 handleClose()
             }
         }
@@ -41,7 +40,7 @@ export function ToggleNodeStatusButtonFeature(props: IProps) {
         icon = <PiCellSignalSlashDuotone size="16px" />
     }
 
-    const handleToggleUserStatus = async () => {
+    const handleToggleUserStatus = () => {
         if (node.isDisabled) {
             enableNode({})
         } else {

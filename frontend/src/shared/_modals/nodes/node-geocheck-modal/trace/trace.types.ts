@@ -58,13 +58,13 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
     typeof value === 'object' && value !== null
 
 const hasTargets = (value: unknown): value is IGeocheckConnectivity =>
-    isRecord(value) && Array.isArray(value.targets) && value.targets.every(isRecord)
+    isRecord(value) && Array.isArray(value['targets']) && value['targets'].every(isRecord)
 
 export const resolveConnectivity = (rawReport: unknown): IGeocheckConnectivity | null => {
     if (hasTargets(rawReport)) return rawReport
 
-    if (isRecord(rawReport) && hasTargets(rawReport.connectivity)) {
-        return rawReport.connectivity
+    if (isRecord(rawReport) && hasTargets(rawReport['connectivity'])) {
+        return rawReport['connectivity']
     }
 
     return null

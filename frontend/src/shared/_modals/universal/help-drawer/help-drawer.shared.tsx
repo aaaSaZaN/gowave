@@ -1,5 +1,8 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Box, Center, Code, Drawer, Stack, Title, Typography } from '@mantine/core'
+import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
+import { LoaderModalShared } from '@shared/ui/loader-modal'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbAlertCircle, TbQuestionMark } from 'react-icons/tb'
@@ -7,17 +10,13 @@ import ReactMarkdown from 'react-markdown'
 import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
 
-import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
-import { LoaderModalShared } from '@shared/ui/loader-modal'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-
 import classes from './help-drawer.module.css'
-import { THelpDrawerAvailableScreen } from './help-drawer.types'
+import type { THelpDrawerAvailableScreen } from './help-drawer.types'
 
 const SUPPORTED_LANGUAGES = new Set(['en', 'fa', 'ru', 'zh'])
 
 const resolveDocsUrl = (screen: THelpDrawerAvailableScreen, language: string) => {
-    const lang = language.split('-')[0]
+    const lang = language.split('-')[0] ?? 'en'
     const safeLang = SUPPORTED_LANGUAGES.has(lang) ? lang : 'en'
     return `https://raw.githubusercontent.com/remnawave/panel/refs/heads/main/_panel-docs/help-articles/${safeLang}/${screen}.md`
 }
@@ -60,7 +59,7 @@ export const HelpDrawerShared = NiceModal.create((props: IProps) => {
                     setShowContent(true)
                 }, 300)
             })
-    }, [screen])
+    }, [screen, t, i18n.language])
 
     return (
         <Drawer

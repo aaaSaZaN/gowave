@@ -1,11 +1,10 @@
 import { Container } from '@mantine/core'
+import { LoadingScreen, Page, PageHeaderShared } from '@shared/ui'
 import { SubscriptionSettingsTabsWidget } from '@widgets/dashboard/subscription-settings/settings/subscription-tabs.widget'
 import { useTranslation } from 'react-i18next'
 import { TbHexagon } from 'react-icons/tb'
 
-import { LoadingScreen, Page, PageHeaderShared } from '@shared/ui'
-
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export const SubscriptionSettingsPageComponent = (props: IProps) => {
     const { t } = useTranslation()

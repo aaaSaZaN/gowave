@@ -1,15 +1,14 @@
 import { Badge, Button, Card, Group } from '@mantine/core'
-import { UseFormReturnType } from '@mantine/form'
+import type { UseFormReturnType } from '@mantine/form'
 import { useDisclosure } from '@mantine/hooks'
 import {
     BASE_TRANSLATION_LABELS,
-    TSubscriptionPageBaseTranslationKeys,
-    TSubscriptionPageLanguageCode,
-    TSubscriptionPageRawConfig
+    type TSubscriptionPageBaseTranslationKeys,
+    type TSubscriptionPageLanguageCode,
+    type TSubscriptionPageRawConfig
 } from '@remnawave/subscription-page-types'
-import { TbLanguage } from 'react-icons/tb'
-
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { TbLanguage } from 'react-icons/tb'
 
 import { BaseTranslationsDrawer } from '../editor-components/base-translations-drawer.component'
 import styles from '../subpage-config-visual-editor.module.css'

@@ -1,13 +1,11 @@
+import { useUsersTableStoreActions } from '@entities/dashboard/users/users-table-store'
 import { ActionIcon, ActionIconGroup, Group, Tooltip } from '@mantine/core'
+import { showModal } from '@shared/_modals/show-modal'
 import { useTranslation } from 'react-i18next'
 import { TbFilterOff, TbPlus, TbRefresh, TbRestore } from 'react-icons/tb'
 
-import { showModal } from '@shared/_modals/show-modal'
-
-import { useUsersTableStoreActions } from '@entities/dashboard/users/users-table-store'
-
 import { UsersTableTemplatesFeature } from '../users-table-templates/users-table-templates.feature'
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export const UserActionGroupFeature = (props: IProps) => {
     const { t } = useTranslation()

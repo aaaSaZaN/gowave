@@ -1,5 +1,4 @@
-/* eslint-disable camelcase */
-import {
+import type {
     MRT_ColumnFilterFnsState,
     MRT_ColumnFiltersState,
     MRT_ColumnOrderState,

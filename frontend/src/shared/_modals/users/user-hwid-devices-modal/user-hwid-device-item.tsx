@@ -1,5 +1,8 @@
 import { ActionIcon, Box, Divider, Group, Stack, Text, ThemeIcon } from '@mantine/core'
-import { GetUserHwidDevicesCommand } from '@remnawave/backend-contract'
+import type { GetUserHwidDevicesCommand } from '@remnawave/backend-contract'
+import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
+import { SettingsCardShared } from '@shared/ui/settings-card'
+import { formatTimeUtil } from '@shared/utils/time-utils'
 import { useTranslation } from 'react-i18next'
 import {
     PiAndroidLogo,
@@ -10,10 +13,6 @@ import {
     PiWindowsLogo
 } from 'react-icons/pi'
 import { TbExternalLink } from 'react-icons/tb'
-
-import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
-import { SettingsCardShared } from '@shared/ui/settings-card'
-import { formatTimeUtil } from '@shared/utils/time-utils'
 
 interface IProps {
     device: GetUserHwidDevicesCommand.Response['response']['devices'][number]

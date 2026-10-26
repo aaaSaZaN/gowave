@@ -1,17 +1,12 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
-import { Drawer, Button, Modal, Group, Stack, TextInput, Textarea, CopyButton } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { Button, CopyButton, Drawer, Group, Modal, Stack, Textarea, TextInput } from '@mantine/core'
+import { schemaResolver, useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import {
     CreateHostCommand,
     INTERNAL_SQUADS_MODE,
     SECURITY_LAYERS
 } from '@remnawave/backend-contract'
-import { isAxiosError } from 'axios'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { PiListChecks, PiEye } from 'react-icons/pi'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { queryClient } from '@shared/api'
 import { instance } from '@shared/api/axios'
@@ -24,10 +19,15 @@ import {
     useGetNodes,
     useGetSubscriptionTemplates
 } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
 import { LoadingScreen } from '@shared/ui'
 import { BaseHostForm } from '@shared/ui/forms/hosts/base-host-form'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { parseJsonField } from '@shared/utils/misc'
+import { isAxiosError } from 'axios'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { PiEye, PiListChecks } from 'react-icons/pi'
 
 export const CreateHostDrawer = NiceModal.create(() => {
     const { t } = useTranslation()
@@ -126,7 +126,7 @@ export const CreateHostDrawer = NiceModal.create(() => {
         }
     })
 
-    const handleSubmit = form.onSubmit(async (values) => {
+    const handleSubmit = form.onSubmit((values) => {
         if (!values.inbound.configProfileInboundUuid || !values.inbound.configProfileUuid) {
             notifications.show({
                 title: t('common.message.error'),
@@ -134,7 +134,7 @@ export const CreateHostDrawer = NiceModal.create(() => {
                 color: 'red'
             })
 
-            return null
+            return
         }
 
         createHost({
@@ -151,7 +151,7 @@ export const CreateHostDrawer = NiceModal.create(() => {
             }
         })
 
-        return null
+        return
     })
 
     form.watch('inbound.configProfileInboundUuid', ({ value }) => {
@@ -193,7 +193,7 @@ export const CreateHostDrawer = NiceModal.create(() => {
                             leftSection={<PiEye size={16} />}
                             onClick={() => {
                                 setPreviewOpen(true)
-                                handlePreview()
+                                runAsync(handlePreview())
                             }}
                         >
                             Preview Config

@@ -43,7 +43,7 @@ export function FadeScrollArea(props: FadeScrollAreaProps) {
         }
 
         return () => observer.disconnect()
-    }, [updateFade, height])
+    }, [updateFade])
 
     const viewportClassName =
         [fade.top && styles.fadeTop, fade.bottom && styles.fadeBottom].filter(Boolean).join(' ') ||

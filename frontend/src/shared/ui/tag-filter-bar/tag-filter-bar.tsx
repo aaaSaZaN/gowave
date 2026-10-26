@@ -63,7 +63,9 @@ export function TagFilterBar(props: IProps) {
                 untagged += 1
                 return
             }
-            itemTags.forEach((tag) => countMap.set(tag, (countMap.get(tag) ?? 0) + 1))
+            itemTags.forEach((tag) => {
+                countMap.set(tag, (countMap.get(tag) ?? 0) + 1)
+            })
         })
 
         return {

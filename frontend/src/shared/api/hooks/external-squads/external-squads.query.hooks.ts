@@ -3,10 +3,9 @@ import {
     GetExternalSquadsCommand,
     GetExternalSquadsTagsCommand
 } from '@remnawave/backend-contract'
-import { keepPreviousData } from '@tanstack/react-query'
-
 import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
+import { keepPreviousData } from '@tanstack/react-query'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'
 
@@ -39,7 +38,10 @@ export const useGetExternalSquad = createGetQueryHook({
     endpoint: GetExternalSquadByUuidCommand.TSQ_url,
     responseSchema: GetExternalSquadByUuidCommand.ResponseSchema,
     routeParamsSchema: GetExternalSquadByUuidCommand.RequestParamSchema,
-    getQueryKey: ({ route }) => externalSquadsQueryKeys.getExternalSquad(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? externalSquadsQueryKeys.getExternalSquad(route).queryKey
+            : externalSquadsQueryKeys.getExternalSquad._def,
     rQueryParams: {
         refetchOnMount: false,
         staleTime: sToMs(30)

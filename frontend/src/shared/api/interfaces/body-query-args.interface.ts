@@ -1,7 +1,5 @@
-/* eslint-disable perfectionist/sort-interfaces */
-
-import { UndefinedInitialDataOptions } from '@tanstack/react-query'
-import { z } from 'zod'
+import type { UndefinedInitialDataOptions } from '@tanstack/react-query'
+import type { z } from 'zod'
 
 /**
  * Arguments for creating a query hook that issues a request with a body

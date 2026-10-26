@@ -12,8 +12,8 @@ import { HwidInspectorPageConnector } from '@pages/dashboard/hwid-inspector/ui/c
 import { InternalSquadsPageConnector } from '@pages/dashboard/internal-squads/connectors/internal-squads.page.connector'
 import { NodePluginEditorPageConnector } from '@pages/dashboard/node-plugins/ui/connectors/node-plugin-editor-page.connector'
 import { NodePluginsBasePageConnector } from '@pages/dashboard/node-plugins/ui/connectors/node-plugins-base-page.connector'
-import { NodesMetricsPageConnector } from '@pages/dashboard/nodes-metrics/ui/connectors'
 import { NodesPageConnector } from '@pages/dashboard/nodes/ui/connectors'
+import { NodesMetricsPageConnector } from '@pages/dashboard/nodes-metrics/ui/connectors'
 import { OpenEntityPage } from '@pages/dashboard/open-entity'
 import { QuickOpenPage } from '@pages/dashboard/quick-open'
 import { ResponseRulesPageConnector } from '@pages/dashboard/response-rules/connectors/response-rules.page.connector'
@@ -29,6 +29,9 @@ import { TorrentBlockerReportsPageConnector } from '@pages/dashboard/torrent-blo
 import { UsersPageConnector } from '@pages/dashboard/users/ui/connectors'
 import { NotFoundPageComponent } from '@pages/errors/4xx-error'
 import { ErrorPageComponent } from '@pages/errors/5xx-error'
+import { ErrorBoundaryHoc } from '@shared/hocs/error-boundary'
+import { AuthGuard } from '@shared/hocs/guards/auth-guard'
+import { panelBasePath } from '@shared/lib/panel-path'
 import {
     createBrowserRouter,
     createRoutesFromElements,
@@ -36,10 +39,6 @@ import {
     Route,
     RouterProvider
 } from 'react-router'
-
-import { ErrorBoundaryHoc } from '@shared/hocs/error-boundary'
-import { AuthGuard } from '@shared/hocs/guards/auth-guard'
-import { panelBasePath } from '@shared/lib/panel-path'
 
 import { ROUTES } from '../../shared/constants'
 import { AuthLayout } from '../layouts/auth'

@@ -1,5 +1,6 @@
-import { type DataTableColumnToggle } from '@kastov/mantine-datatable'
+import type { DataTableColumnToggle } from '@kastov/mantine-datatable'
 import { Button, Group, Menu } from '@mantine/core'
+import { optionalProp } from '@shared/lib/optional-prop'
 import { useTranslation } from 'react-i18next'
 import { TbChevronDown, TbRestore } from 'react-icons/tb'
 
@@ -46,7 +47,7 @@ export function DataTableControls(props: IProps) {
                 <Menu.Dropdown>
                     {onResetSort && (
                         <Menu.Item
-                            disabled={sortResetDisabled}
+                            {...optionalProp('disabled', sortResetDisabled)}
                             leftSection={<TbRestore size={14} />}
                             onClick={onResetSort}
                         >

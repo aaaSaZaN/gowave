@@ -1,13 +1,12 @@
-import type { editor } from 'monaco-editor'
-
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
-import { TSubscriptionTemplateType } from '@remnawave/backend-contract'
-import { RefObject } from 'react'
+import type { TSubscriptionTemplateType } from '@remnawave/backend-contract'
+import type { IDownloadableSubscriptionTemplate } from '@shared/constants/templates'
+import { runAsync } from '@shared/lib/run-async'
+import type { editor } from 'monaco-editor'
+import type { RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbDownload } from 'react-icons/tb'
-
-import { IDownloadableSubscriptionTemplate } from '@shared/constants/templates'
 
 import { BaseOverlayHeader } from '../overlays/base-overlay-header'
 import { TemplateDownloadModal } from './template-selector.modal'
@@ -15,7 +14,7 @@ import { TemplateDownloadModal } from './template-selector.modal'
 interface IProps {
     editorRef?: RefObject<editor.IStandaloneCodeEditor | null>
     editorType: 'NODE_PLUGIN' | 'SRR' | 'SUBPAGE_CONFIG' | 'SUBSCRIPTION' | 'XRAY_CORE'
-    onLoadTemplate?: (content: string) => Promise<void>
+    onLoadTemplate?: (content: string) => void | Promise<void>
     templateType: 'NODE_PLUGIN' | 'SRR' | 'SUBPAGE_CONFIG' | TSubscriptionTemplateType
 }
 
@@ -33,9 +32,9 @@ export const useDownloadTemplate = (props: IProps) => {
 
             const content = await response.text()
 
-            if (editorRef && editorRef.current) {
+            if (editorRef?.current) {
                 editorRef.current.setValue(content)
-                editorRef.current.getAction('editor.action.formatDocument')?.run()
+                runAsync(editorRef.current.getAction('editor.action.formatDocument')?.run())
             } else if (onLoadTemplate) {
                 await onLoadTemplate(content)
             }

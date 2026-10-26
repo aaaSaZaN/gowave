@@ -8,7 +8,7 @@ i18n.use(initReactI18next)
     .use(localeBackend)
     .init({
         fallbackLng: 'en',
-        debug: process.env.NODE_ENV === 'development',
+        debug: process.env['NODE_ENV'] === 'development',
         defaultNS: ['gowave'],
         ns: ['gowave'],
         load: 'languageOnly',

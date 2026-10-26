@@ -1,9 +1,8 @@
 import { ActionIcon, Text, Tooltip } from '@mantine/core'
-import { GetNodeIntegrationsCommand } from '@remnawave/backend-contract'
+import type { GetNodeIntegrationsCommand } from '@remnawave/backend-contract'
+import type { ITreeNode, ITreeRowContent } from '@shared/ui/tree-browser'
 import { t } from 'i18next'
 import { TbTrash } from 'react-icons/tb'
-
-import { ITreeNode, ITreeRowContent } from '@shared/ui/tree-browser'
 
 import classes from './node-integrations.module.css'
 

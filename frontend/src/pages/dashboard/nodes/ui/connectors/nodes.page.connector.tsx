@@ -1,10 +1,10 @@
 import {
     useGetConfigProfiles,
+    useGetNodeIntegrations,
     useGetNodePlugins,
-    useGetNodes,
-    useGetNodesTags,
     useGetNodeSecretKey,
-    useGetNodeIntegrations
+    useGetNodes,
+    useGetNodesTags
 } from '@shared/api/hooks'
 
 import NodesPageComponent from '../components/nodes.page.component'

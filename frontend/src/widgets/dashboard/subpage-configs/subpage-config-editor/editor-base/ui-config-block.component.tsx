@@ -1,14 +1,13 @@
 import { Card, Divider, Select, SimpleGrid, Stack } from '@mantine/core'
-import { UseFormReturnType } from '@mantine/form'
+import type { UseFormReturnType } from '@mantine/form'
 import {
     INSTALLATION_GUIDE_BLOCKS_VARIANTS_VALUES,
     SUBSCRIPTION_INFO_BLOCK_VARIANTS_VALUES,
-    TSubscriptionPageRawConfig
+    type TSubscriptionPageRawConfig
 } from '@remnawave/subscription-page-types'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { useTranslation } from 'react-i18next'
 import { TbPalette } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
 import styles from '../subpage-config-visual-editor.module.css'
 

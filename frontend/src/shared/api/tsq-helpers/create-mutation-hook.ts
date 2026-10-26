@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { z } from 'zod'
+import type { z } from 'zod'
 
 import { instance } from '../axios'
 import { createUrl, handleRequestError } from '../helpers'
-import { CreateMutationHookArgs, MutationResponse } from '../interfaces'
+import type { CreateMutationHookArgs, MutationResponse } from '../interfaces'
 
 export function createMutationHook<
     RouteParamsSchema extends z.ZodType<Record<string, unknown>>,
@@ -30,7 +30,7 @@ export function createMutationHook<
         const validatedQuery = requestQuerySchema?.parse({ ...queryParams, ...params?.query })
         const baseUrl = createUrl(endpoint, validatedQuery, params?.route ?? routeParams)
 
-        const mutationFn = async ({
+        const mutationFn = ({
             variables,
             route,
             query

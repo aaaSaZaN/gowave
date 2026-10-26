@@ -1,9 +1,8 @@
-import { ActionIcon, ActionIconProps, Tooltip } from '@mantine/core'
+import { ActionIcon, type ActionIconProps, Tooltip } from '@mantine/core'
 import { useClipboard } from '@mantine/hooks'
+import { buildOpenEntityUrl, type TOpenEntity } from '@shared/constants'
 import { useTranslation } from 'react-i18next'
 import { TbCheck, TbLink } from 'react-icons/tb'
-
-import { buildOpenEntityUrl, TOpenEntity } from '@shared/constants'
 
 interface IProps extends ActionIconProps {
     entity: TOpenEntity

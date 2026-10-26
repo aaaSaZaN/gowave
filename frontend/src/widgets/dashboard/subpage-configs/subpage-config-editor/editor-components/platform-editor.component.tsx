@@ -1,20 +1,20 @@
 import { Accordion, ActionIcon, Button, Center, Divider, Drawer, Group, Stack } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import {
+import type {
     TSubscriptionPageAppConfig,
     TSubscriptionPageLanguageCode,
     TSubscriptionPagePlatformKey,
     TSubscriptionPagePlatformSchema,
     TSubscriptionPageSvgLibrary
 } from '@remnawave/subscription-page-types'
+import { useListKeys } from '@shared/hooks/use-list-keys'
+import { swapItems } from '@shared/lib/swap-items'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbEdit, TbPlus, TbTrash } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-
-import styles from '../subpage-config-visual-editor.module.css'
 import { PLATFORM_ICONS, PLATFORM_LABELS } from '../subpage-config.constants'
+import styles from '../subpage-config-visual-editor.module.css'
 import { AppCard } from './app-card.component'
 import { AppEditorDrawerContent } from './app-editor-drawer-content.component'
 import { LocalizedTextEditor } from './localized-text-editor.component'
@@ -32,6 +32,7 @@ interface IProps {
 export function PlatformEditor(props: IProps) {
     const { enabledLocales, onChange, onDelete, platform, platformKey, svgLibrary } = props
     const { t } = useTranslation()
+    const appKeys = useListKeys(platform.apps)
 
     const [drawerOpened, { close: closeDrawer, open: openDrawer }] = useDisclosure(false)
     const [editingAppIndex, setEditingAppIndex] = useState<null | number>(null)
@@ -62,6 +63,7 @@ export function PlatformEditor(props: IProps) {
 
     const handleAppClone = (appIndex: number) => {
         const appToClone = platform.apps[appIndex]
+        if (!appToClone) return
         const clonedApp: TSubscriptionPageAppConfig = structuredClone(appToClone)
         clonedApp.name = `${clonedApp.name} (copy)`
         const newApps = [...platform.apps]
@@ -71,15 +73,13 @@ export function PlatformEditor(props: IProps) {
 
     const handleAppMoveUp = (appIndex: number) => {
         if (appIndex === 0) return
-        const newApps = [...platform.apps]
-        ;[newApps[appIndex - 1], newApps[appIndex]] = [newApps[appIndex], newApps[appIndex - 1]]
+        const newApps = swapItems(platform.apps, appIndex, appIndex - 1)
         onChange({ ...platform, apps: newApps })
     }
 
     const handleAppMoveDown = (appIndex: number) => {
         if (appIndex >= platform.apps.length - 1) return
-        const newApps = [...platform.apps]
-        ;[newApps[appIndex], newApps[appIndex + 1]] = [newApps[appIndex + 1], newApps[appIndex]]
+        const newApps = swapItems(platform.apps, appIndex, appIndex + 1)
         onChange({ ...platform, apps: newApps })
     }
 
@@ -151,7 +151,7 @@ export function PlatformEditor(props: IProps) {
                                     canMoveDown={appIndex < platform.apps.length - 1}
                                     canMoveUp={appIndex > 0}
                                     index={appIndex}
-                                    key={appIndex}
+                                    key={appKeys[appIndex]}
                                     onClone={() => handleAppClone(appIndex)}
                                     onDelete={() => handleAppDelete(appIndex)}
                                     onEdit={() => handleEditApp(appIndex)}

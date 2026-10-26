@@ -1,12 +1,11 @@
 import { Stack, Text } from '@mantine/core'
+import { useVirtualList } from '@shared/hooks/use-virtual-list'
 import { memo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiEmpty } from 'react-icons/pi'
 
-import { useVirtualList } from '@shared/hooks/use-virtual-list'
-
 import { InternalSquadCardShared } from '../internal-squad-card'
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export const InternalSquadsListSimpleWidgetShared = memo((props: IProps) => {
     const { filteredInternalSquads } = props
@@ -65,6 +64,7 @@ export const InternalSquadsListSimpleWidgetShared = memo((props: IProps) => {
 
                     {virtualizer.virtualItems.map((virtualRow) => {
                         const internalSquad = filteredInternalSquads[virtualRow.index]
+                        if (!internalSquad) return null
                         return (
                             <div
                                 key={internalSquad.uuid}

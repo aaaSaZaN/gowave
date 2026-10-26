@@ -1,8 +1,7 @@
+import NiceModal from '@ebay/nice-modal-react'
 import type { ComponentProps } from 'react'
 
-import NiceModal from '@ebay/nice-modal-react'
-
-import { ConfigProfileInboundsDrawer, ActiveNodesModal } from './config-profiles'
+import { ActiveNodesModal, ConfigProfileInboundsDrawer } from './config-profiles'
 import { ExternalSquadsDrawer } from './external-squads'
 import { PasskeysDrawer } from './gowave-settings'
 import {
@@ -31,13 +30,13 @@ import {
     EditNodeModal,
     LinkedHostsDrawer,
     NodeActiveSessionsDrawer,
+    NodeGeocheckModal,
+    NodeInboundsHostsDrawer,
+    NodeLogsModal,
+    NodeSshTerminalWindow,
     NodesConfigProfilesDrawer,
     NodesUsageStatsModal,
-    NodeInboundsHostsDrawer,
     NodeUsageStatsDrawer,
-    NodeGeocheckModal,
-    NodeSshTerminalWindow,
-    NodeLogsModal,
     UpdateNodeModal
 } from './nodes'
 import { SharedListEditorModal, SharedListsModal } from './shared-lists'
@@ -45,28 +44,28 @@ import { SnippetsModal } from './snippets'
 import {
     Base64EditorModal,
     CreateModal,
+    EditTagsModalShared,
     HelpDrawerShared,
     JsonEditorModal,
-    EditTagsModalShared,
     QuickLinksModalShared,
     RenameModalShared
 } from './universal'
 import {
-    DetailedUserInfoDrawer,
-    ViewUserModal,
-    UserAccessibleNodesModal,
-    CreateUserModal,
-    UserUsageModal,
-    UserTorrentBlockerReportsModal,
-    SubscriptionQrCodeModal,
-    ConnectionKeysDrawer,
-    UserSubscriptionRequestsModal,
-    UserHwidDevicesModal,
-    UserActiveSessionDrawer,
+    BulkAllUsersActionsModal,
+    BulkAllUsersUpdateModal,
     BulkManyUsersActionsModal,
     BulkManyUsersUpdateModal,
-    BulkAllUsersActionsModal,
-    BulkAllUsersUpdateModal
+    ConnectionKeysDrawer,
+    CreateUserModal,
+    DetailedUserInfoDrawer,
+    SubscriptionQrCodeModal,
+    UserAccessibleNodesModal,
+    UserActiveSessionDrawer,
+    UserHwidDevicesModal,
+    UserSubscriptionRequestsModal,
+    UserTorrentBlockerReportsModal,
+    UserUsageModal,
+    ViewUserModal
 } from './users'
 
 export const MODAL_REGISTRY = {
@@ -141,7 +140,9 @@ export const MODAL_REGISTRY = {
     rwSettings_passkeysDrawer: PasskeysDrawer
 } as const
 
-Object.entries(MODAL_REGISTRY).forEach(([id, Cmp]) => NiceModal.register(id, Cmp))
+Object.entries(MODAL_REGISTRY).forEach(([id, Cmp]) => {
+    NiceModal.register(id, Cmp)
+})
 
 type Registry = typeof MODAL_REGISTRY
 export type ModalId = keyof Registry

@@ -1,12 +1,9 @@
-import type { IProps } from './interfaces/props.interface'
-
 import { Box, Center, Checkbox, Text } from '@mantine/core'
+import { useVirtualList } from '@shared/hooks/use-virtual-list'
 import { memo, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-
-import { useVirtualList } from '@shared/hooks/use-virtual-list'
-
 import { FlatInboundCheckboxCardShared } from '../flat-inbound-checkbox-card/flat-inbound-checkbox-card.shared'
+import type { IProps } from './interfaces/props.interface'
 
 const INBOUND_HEIGHT = 60
 
@@ -64,7 +61,9 @@ export const VirtualizedFlatInboundsListShared = memo((props: IProps) => {
             >
                 <Checkbox.Group>
                     {virtualizer.virtualItems.map((virtualItem) => {
-                        const { inbound, profileName } = filteredInbounds[virtualItem.index]
+                        const item = filteredInbounds[virtualItem.index]
+                        if (!item) return null
+                        const { inbound, profileName } = item
                         const isSelected = selectedInbounds.has(inbound.uuid)
 
                         return (

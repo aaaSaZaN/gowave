@@ -1,9 +1,9 @@
 import { Stack, Text } from '@mantine/core'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { ReactNode, useRef } from 'react'
-import { useTranslation } from 'react-i18next'
-
+import { optionalProp } from '@shared/lib/optional-prop'
 import { SettingsRow, settingsRowClasses } from '@shared/ui/settings-row'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { type ReactNode, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { DimmedText, DocsHelp, HelpPopover } from './fields/help'
 import { HOST_OPTION_FIELD_BY_NAME } from './host-option-fields'
@@ -91,7 +91,7 @@ function OptionRow(props: IRowProps) {
         help = <Help />
     } else if (helpKey) {
         help = (
-            <HelpPopover docsUrl={helpDocsUrl}>
+            <HelpPopover {...optionalProp('docsUrl', helpDocsUrl)}>
                 <DimmedText>{t(helpKey)}</DimmedText>
             </HelpPopover>
         )

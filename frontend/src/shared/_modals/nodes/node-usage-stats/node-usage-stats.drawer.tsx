@@ -1,19 +1,22 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { ActionIcon, Group, NativeSelect, Stack } from '@mantine/core'
-import { DatePickerInput, DatesRangeValue } from '@mantine/dates'
+import { DatePickerInput, type DatesRangeValue } from '@mantine/dates'
+import { showModal } from '@shared/_modals/show-modal'
+import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
+import { useGetStatsNodeUsersUsage, useResolveUser } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
+import { CompoundDrawerShared } from '@shared/ui/compound-drawer/compound-drawer.shared'
+import {
+    type ITopLeaderboardItem,
+    TopLeaderboardCardShared
+} from '@shared/ui/leaderboard-item-card'
+import { nprogress } from '@shared/ui/navigation-progress'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { getDefaultDateRange } from '@shared/utils/time-utils'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbCalendar, TbChartArcs, TbRefresh, TbUsers } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
-import { useGetStatsNodeUsersUsage, useResolveUser } from '@shared/api/hooks'
-import { CompoundDrawerShared } from '@shared/ui/compound-drawer/compound-drawer.shared'
-import { ITopLeaderboardItem, TopLeaderboardCardShared } from '@shared/ui/leaderboard-item-card'
-import { nprogress } from '@shared/ui/navigation-progress'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { getDefaultDateRange } from '@shared/utils/time-utils'
 
 import { NodeUsersSparklineCardWidget } from './usage-sparkline-card'
 
@@ -102,7 +105,7 @@ export const NodeUsageStatsDrawer = NiceModal.create((props: IProps) => {
         try {
             const result = await resolveUser({ variables: { username: user.name } })
             if (result.id) {
-                showModal('users_viewUserModal', { userId: result.id })
+                runAsync(showModal('users_viewUserModal', { userId: result.id }))
             }
         } finally {
             nprogress.complete()
@@ -248,7 +251,7 @@ export const NodeUsageStatsDrawer = NiceModal.create((props: IProps) => {
                         total: user.total
                     }))}
                     onItemClick={(user) => {
-                        handleViewUser(user)
+                        runAsync(handleViewUser(user))
                     }}
                     maxHeight={500}
                     skeletonCount={11}

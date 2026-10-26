@@ -1,11 +1,11 @@
 import { ActionIcon, Tooltip } from '@mantine/core'
+import { showModal } from '@shared/_modals/show-modal'
+import { runAsync } from '@shared/lib/run-async'
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbServerCog } from 'react-icons/tb'
 
-import { showModal } from '@shared/_modals/show-modal'
-
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 const GetNodeLinkedHostsFeatureComponent = (props: IProps) => {
     const { nodeUuid } = props
@@ -16,9 +16,11 @@ const GetNodeLinkedHostsFeatureComponent = (props: IProps) => {
             <ActionIcon
                 color="cyan"
                 onClick={() => {
-                    showModal('nodes_linkedHostsDrawer', {
-                        nodeUuid
-                    })
+                    runAsync(
+                        showModal('nodes_linkedHostsDrawer', {
+                            nodeUuid
+                        })
+                    )
                 }}
                 size="lg"
                 variant="soft"

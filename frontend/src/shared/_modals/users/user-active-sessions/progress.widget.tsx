@@ -1,8 +1,7 @@
 import { Box, Group, Progress, Stack, Text } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-
 import { LottieGlobeShared } from '@shared/ui/lotties/globe'
 import { SectionCard } from '@shared/ui/section-card'
+import { useTranslation } from 'react-i18next'
 
 interface IProps {
     completed: number

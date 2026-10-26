@@ -1,21 +1,19 @@
 import { ShowConfigProfilesWithInboundsFeature } from '@features/ui/dashboard/nodes/show-config-profiles-with-inbounds'
 import { Button, Group, Skeleton, Stack } from '@mantine/core'
-import { UseFormReturnType } from '@mantine/form'
-import { CreateNodeCommand } from '@remnawave/backend-contract'
+import type { UseFormReturnType } from '@mantine/form'
+import type { CreateNodeCommand } from '@remnawave/backend-contract'
+import { useGetConfigProfiles } from '@shared/api/hooks'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
 import { useTranslation } from 'react-i18next'
 import { PiArrowLeft } from 'react-icons/pi'
 import { SiSecurityscorecard } from 'react-icons/si'
 import { TbCheck } from 'react-icons/tb'
 
-import { useGetConfigProfiles } from '@shared/api/hooks'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
-
 import { CopyNodeInstallCommandWidget } from './copy-node-install-command.widget'
 
 interface IProps {
-    // oxlint-disable-next-line
-    form: UseFormReturnType<CreateNodeCommand.RequestBody, any>
+    form: UseFormReturnType<CreateNodeCommand.RequestBody>
     isCreating: boolean
     onCreateNode: () => void
     onPrev: () => void
@@ -97,7 +95,7 @@ export const CreateNodeStep2ConfigProfiles = ({
                                 form.getValues().configProfile?.activeConfigProfileUuid
                             }
                             configProfiles={configProfiles.configProfiles}
-                            errors={form.errors.configProfile}
+                            errors={form.errors['configProfile']}
                             onSaveInbounds={saveInbounds}
                         />
                     )}

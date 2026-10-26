@@ -1,8 +1,7 @@
-import { UseFormReturnType } from '@mantine/form'
-import { CreateNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
-import { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
-
+import type { UseFormReturnType } from '@mantine/form'
+import type { CreateNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
 import { NodeIpsEditor } from '@shared/ui/node-ips'
+import type { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
 
 interface IProps<T extends CreateNodeCommand.RequestBody | UpdateNodeCommand.RequestBody> {
     cardVariants: Variants

@@ -1,5 +1,5 @@
 import { Anchor } from '@mantine/core'
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 import { resolveIpInfoUrl } from './ipinfo'
 import classes from './Trace.module.css'

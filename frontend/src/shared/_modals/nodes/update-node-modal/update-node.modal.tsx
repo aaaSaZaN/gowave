@@ -14,14 +14,13 @@ import {
     Text,
     TextInput
 } from '@mantine/core'
-import { GetNodeCommand } from '@remnawave/backend-contract'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
-import { TbAlertTriangle, TbArrowRight, TbCheck, TbCloudDownload, TbCpu } from 'react-icons/tb'
-
+import type { GetNodeCommand } from '@remnawave/backend-contract'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { instance } from '@shared/api/axios'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { useEffect, useMemo, useState } from 'react'
+import { TbAlertTriangle, TbArrowRight, TbCheck, TbCloudDownload, TbCpu } from 'react-icons/tb'
 
 interface IProps {
     node: GetNodeCommand.Response['response']
@@ -546,7 +545,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                                     applyMutation.isPending ||
                                     Boolean(
                                         queryError &&
-                                        (activeTab === 'node' || !coreDownloadUrl.trim())
+                                            (activeTab === 'node' || !coreDownloadUrl.trim())
                                     )
                                 }
                                 leftSection={<TbCloudDownload size={16} />}

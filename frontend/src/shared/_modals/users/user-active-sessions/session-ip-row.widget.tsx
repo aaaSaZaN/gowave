@@ -1,4 +1,6 @@
 import { ActionIcon, Box, Group, Stack, Text, Tooltip } from '@mantine/core'
+import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
+import { formatRelativeDateUtil, formatTimeUtil } from '@shared/utils/time-utils'
 import { useTranslation } from 'react-i18next'
 import {
     TbClockCheck,
@@ -8,10 +10,7 @@ import {
     TbUnlink
 } from 'react-icons/tb'
 
-import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
-import { formatRelativeDateUtil, formatTimeUtil } from '@shared/utils/time-utils'
-
-import { ActiveSessionNode } from './use-user-active-sessions'
+import type { ActiveSessionNode } from './use-user-active-sessions'
 
 const getLastSeenIndicator = (lastSeen: Date | string) => {
     const diffMs = Date.now() - new Date(lastSeen).getTime()

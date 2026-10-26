@@ -1,14 +1,13 @@
 import { Box, Card, Center, Group, Loader, SimpleGrid, Stack, Text, ThemeIcon } from '@mantine/core'
-import dayjs from 'dayjs'
-import { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
-import { PiAppWindowDuotone, PiChartBar } from 'react-icons/pi'
-
 import { useGetSubscriptionRequestHistoryStats } from '@shared/api/hooks'
 import ColorHash from '@shared/lib/color'
 import { Chart } from '@shared/ui/chart'
 import { TopLeaderboardCardShared } from '@shared/ui/leaderboard-item-card'
 import { formatInt } from '@shared/utils/misc'
+import dayjs from 'dayjs'
+import { useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import { PiAppWindowDuotone, PiChartBar } from 'react-icons/pi'
 
 export function SrhInspectorMetrics() {
     const { t } = useTranslation()
@@ -17,7 +16,7 @@ export function SrhInspectorMetrics() {
 
     const ch = new ColorHash({ lightness: [0.65, 0.65, 0.65] })
 
-    const getBarChartConfig = () => {
+    const getBarChartConfig = useCallback(() => {
         return {
             chart: {
                 type: 'column',
@@ -103,7 +102,7 @@ export function SrhInspectorMetrics() {
                 enabled: false
             }
         }
-    }
+    }, [t])
 
     const hourlyChartOptions = useMemo(() => {
         if (!stats?.hourlyRequestStats || stats.hourlyRequestStats.length === 0) return {}
@@ -123,7 +122,7 @@ export function SrhInspectorMetrics() {
                 }
             ]
         }
-    }, [stats?.hourlyRequestStats, t])
+    }, [stats, t, getBarChartConfig])
 
     const loaderCard = (
         <Center h={300}>

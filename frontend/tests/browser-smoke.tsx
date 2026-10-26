@@ -1,10 +1,16 @@
 import { MantineProvider } from '@mantine/core'
+import { Notifications } from '@mantine/notifications'
+import { requireValue } from '@shared/lib/invariant'
+import { runAsync } from '@shared/lib/run-async'
 import Highcharts from 'highcharts'
-import { useRef, useState } from 'react'
+import { use, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { createRoot } from 'react-dom/client'
 
 import { languageDetector, localeBackend } from '../src/app/i18n/plugins'
+import { removeToken, setToken } from '../src/entities/auth'
+import { logoutEvents } from '../src/shared/emitters'
+import { AuthContext, AuthProvider } from '../src/shared/hocs/auth-provider/auth-provider'
 import { ErrorBoundary } from '../src/shared/hocs/error-boundary/error-boundary-hoc'
 import { useAutoAnimate } from '../src/shared/hooks/use-auto-animate'
 import { useTime } from '../src/shared/hooks/use-time'
@@ -15,6 +21,7 @@ import CountryFlag from '../src/shared/ui/country-flag'
 import { CreateableTagInputShared } from '../src/shared/ui/createable-tag-input/createable-tag-input'
 import Masonry from '../src/shared/ui/masonry'
 import { NavigationProgress, nprogress } from '../src/shared/ui/navigation-progress'
+import { SafeSvg } from '../src/shared/ui/safe-svg'
 import { Sparkline } from '../src/shared/ui/sparkline'
 import { RemarksManager } from '../src/widgets/dashboard/subscription-settings/settings/cards/managers/remarks-manager.widget'
 
@@ -92,6 +99,55 @@ function WindowListFixture() {
     )
 }
 
+function ClockFixture() {
+    return <span>{useTime(20)}</span>
+}
+function AnimatedList() {
+    const [items, setItems] = useState(['one', 'two'])
+    const [parent] = useAutoAnimate({ duration: 30 })
+    return (
+        <>
+            <button type="button" onClick={() => setItems(['two', 'three'])}>
+                Update
+            </button>
+            <div ref={parent}>
+                {items.map((item) => (
+                    <div key={item}>{item}</div>
+                ))}
+            </div>
+        </>
+    )
+}
+function Fails({ failing }: { failing: boolean }): null {
+    if (failing) throw new Error('Expected test failure')
+    return null
+}
+function ErrorBoundaryFixture() {
+    const [failing, setFailing] = useState(true)
+    return (
+        <ErrorBoundary
+            FallbackComponent={({ error, resetErrorBoundary }) => (
+                <button
+                    type="button"
+                    onClick={() => {
+                        setFailing(false)
+                        resetErrorBoundary()
+                    }}
+                >
+                    {String(error)}
+                </button>
+            )}
+        >
+            <Fails failing={failing} />
+        </ErrorBoundary>
+    )
+}
+
+function AuthStatus() {
+    const auth = requireValue(use(AuthContext), 'Auth context is missing')
+    return <output>{`${auth.isInitialized}:${auth.isAuthenticated}`}</output>
+}
+
 async function run() {
     flushSync(() => root.render(<VirtualListFixture count={100} />))
     await wait()
@@ -105,12 +161,15 @@ async function run() {
     viewport.dispatchEvent(new Event('scroll'))
     await wait()
     assert(!container.querySelector('[data-index="0"]'), 'virtual list drops rows outside viewport')
-    const visibleRow = container.querySelector<HTMLElement>('[data-index]')!
-    const beforeResize = Number(viewport.dataset.totalSize)
+    const visibleRow = requireValue(
+        container.querySelector<HTMLElement>('[data-index]'),
+        'Visible row is missing'
+    )
+    const beforeResize = Number(viewport.dataset['totalSize'])
     visibleRow.style.height = '120px'
     await wait()
     assert(
-        Number(viewport.dataset.totalSize) > beforeResize,
+        Number(viewport.dataset['totalSize']) > beforeResize,
         'virtual list observes variable row heights'
     )
     flushSync(() => root.render(<VirtualListFixture count={2} />))
@@ -151,6 +210,28 @@ async function run() {
         )
     )
     assert(container.querySelector('input')?.value === 'First', 'remarks initialize from props')
+    const initialRemarkInput = requireValue(
+        container.querySelector('input'),
+        'Initial remark input missing'
+    )
+    const addRemark = requireValue(container.querySelector('button'), 'Add remark button missing')
+    flushSync(() => addRemark.click())
+    const secondRemarkInput = requireValue(
+        container.querySelectorAll('input').item(1),
+        'Second remark input missing'
+    )
+    secondRemarkInput.focus()
+    const removeFirst = requireValue(
+        container.querySelector<HTMLButtonElement>('button[aria-label="common.action.delete"]'),
+        'Remove remark button missing'
+    )
+    flushSync(() => removeFirst.click())
+    assert(
+        container.querySelector('input') === secondRemarkInput &&
+            document.activeElement === secondRemarkInput,
+        'removing a remark preserves surviving input identity'
+    )
+    assert(!initialRemarkInput.isConnected, 'removed remark input detaches')
     flushSync(() =>
         root.render(
             <MantineProvider>
@@ -200,9 +281,6 @@ async function run() {
         )
     )
     assert(container.querySelector('input')?.value === 'TWO', 'tag input follows changed values')
-    function ClockFixture() {
-        return <span>{useTime(20)}</span>
-    }
     flushSync(() => root.render(<ClockFixture />))
     const firstTime = Number(container.textContent)
     await wait(60)
@@ -215,6 +293,54 @@ async function run() {
     assert(isSvg('<!-- icon --><svg />'), 'SVG with comments')
     assert(!isSvg('<svg><path></svg>'), 'reject malformed SVG')
     assert(!isSvg('<html><svg /></html>'), 'reject non-SVG root')
+
+    const unsafeSvg =
+        '<svg onload="window.svgExecuted=true"><script>window.svgExecuted=true</script><foreignObject><div>unsafe</div></foreignObject><path d="M0 0L1 1"/></svg>'
+    flushSync(() => root.render(<SafeSvg svg={unsafeSvg} />))
+    assert(container.querySelector('svg path'), 'SVG without xmlns retains SVG namespace')
+    assert(!container.querySelector('script, foreignObject, [onload]'), 'SVG strips active content')
+    flushSync(() => root.render(<SafeSvg svg="<div>unexpected HTML</div>" />))
+    assert(container.firstElementChild?.children.length === 0, 'non-SVG roots are rejected')
+
+    removeToken()
+    flushSync(() =>
+        root.render(
+            <AuthProvider>
+                <AuthStatus />
+            </AuthProvider>
+        )
+    )
+    await wait()
+    assert(container.textContent === 'true:false', 'auth initializes without token')
+    flushSync(() => setToken({ token: 'browser-token' }))
+    assert(container.textContent === 'true:true', 'auth reacts to token changes')
+    flushSync(() => logoutEvents.emit())
+    assert(container.textContent === 'true:false', 'logout updates context and removes token')
+    flushSync(() => logoutEvents.emit())
+    assert(container.textContent === 'true:false', 'repeated logout remains safe')
+
+    flushSync(() =>
+        root.render(
+            <MantineProvider>
+                <Notifications />
+            </MantineProvider>
+        )
+    )
+    let unhandledRejections = 0
+    const onUnhandledRejection = () => {
+        unhandledRejections++
+    }
+    window.addEventListener('unhandledrejection', onUnhandledRejection)
+    runAsync(Promise.reject(new Error('Expected async failure')))
+    runAsync(Promise.resolve())
+    runAsync(undefined)
+    await wait()
+    assert(unhandledRejections === 0, 'UI operations observe rejected promises')
+    assert(
+        document.body.textContent?.includes('Expected async failure'),
+        'UI operations surface asynchronous errors'
+    )
+    window.removeEventListener('unhandledrejection', onUnhandledRejection)
 
     flushSync(() => root.render(<CountryFlag countryCode="us" />))
     assert(container.textContent === '🇺🇸', 'country flag Unicode')
@@ -238,34 +364,46 @@ async function run() {
         )
     )
     await wait()
-    const items = container.firstElementChild!.children
-    assert(items[0].getBoundingClientRect().height >= 116, 'masonry measures card height')
+    const items = requireValue(container.firstElementChild, 'Masonry root is missing').children
     assert(
-        items[1].getBoundingClientRect().left > items[0].getBoundingClientRect().left,
+        requireValue(items.item(0), 'Masonry item 0 is missing').getBoundingClientRect().height >=
+            116,
+        'masonry measures card height'
+    )
+    assert(
+        requireValue(items.item(1), 'Masonry item 1 is missing').getBoundingClientRect().left >
+            requireValue(items.item(0), 'Masonry item 0 is missing').getBoundingClientRect().left,
         'masonry columns'
     )
     assert(
-        items[2].getBoundingClientRect().top >= items[0].getBoundingClientRect().bottom,
+        requireValue(items.item(2), 'Masonry item 2 is missing').getBoundingClientRect().top >=
+            requireValue(items.item(0), 'Masonry item 0 is missing').getBoundingClientRect().bottom,
         'masonry avoids overlaps'
     )
 
-    function AnimatedList() {
-        const [items, setItems] = useState(['one', 'two'])
-        const [parent] = useAutoAnimate({ duration: 30 })
-        return (
-            <>
-                <button onClick={() => setItems(['two', 'three'])}>Update</button>
-                <div ref={parent}>
-                    {items.map((item) => (
-                        <div key={item}>{item}</div>
-                    ))}
-                </div>
-            </>
+    flushSync(() =>
+        root.render(
+            <Masonry columns={2} gap={16}>
+                <div style={{ height: 100 }}>A</div>
+                <div style={{ height: 160 }}>B</div>
+                <div style={{ height: 70 }}>C</div>
+                <div style={{ height: 230 }}>D</div>
+            </Masonry>
         )
-    }
+    )
+    await wait()
+    const addedMasonryItem = requireValue(
+        container.firstElementChild?.children.item(3),
+        'New masonry item is missing'
+    )
+    assert(
+        addedMasonryItem.getBoundingClientRect().height >= 246,
+        'masonry measures added children'
+    )
+
     flushSync(() => root.render(<AnimatedList />))
     await wait()
-    container.querySelector('button')!.click()
+    requireValue(container.querySelector('button'), 'Expected button').click()
     await wait(200)
     assert(container.textContent === 'Updatetwothree', 'animated list updates')
     assert(!document.querySelector('[aria-hidden="true"][inert]'), 'exit animation cleans up')
@@ -300,47 +438,27 @@ async function run() {
     assert(Highcharts.charts.filter(Boolean).length === 0, 'chart cleans up')
     assert(container.querySelectorAll('path').length === 2, 'sparkline renders line and area')
 
-    let failing = true
-    function Fails(): null {
-        if (failing) throw new Error('Expected test failure')
-        return null
-    }
-    flushSync(() =>
-        root.render(
-            <ErrorBoundary
-                FallbackComponent={({ error, resetErrorBoundary }) => (
-                    <button
-                        onClick={() => {
-                            failing = false
-                            resetErrorBoundary()
-                        }}
-                    >
-                        {String(error)}
-                    </button>
-                )}
-            >
-                <Fails />
-            </ErrorBoundary>
-        )
-    )
+    flushSync(() => root.render(<ErrorBoundaryFixture />))
     await wait()
     assert(container.textContent?.includes('Expected test failure'), 'error boundary catches')
-    container.querySelector('button')!.click()
+    requireValue(container.querySelector('button'), 'Expected button').click()
     await wait()
     assert(!container.textContent, 'error boundary retries children')
 
     const originalFetch = window.fetch
     let request = ''
-    window.fetch = async (input) => {
+    window.fetch = (input) => {
         request = String(input)
-        return new Response('{"hello":"world"}', {
-            headers: { 'Content-Type': 'application/json' }
-        })
+        return Promise.resolve(
+            new Response('{"hello":"world"}', {
+                headers: { 'Content-Type': 'application/json' }
+            })
+        )
     }
     await new Promise<void>((resolve, reject) =>
         localeBackend.read('en', 'gowave', (error, data) => {
             if (error) return reject(error)
-            assert(typeof data === 'object' && data?.hello === 'world', 'locale JSON')
+            assert(typeof data === 'object' && data?.['hello'] === 'world', 'locale JSON')
             resolve()
         })
     )
@@ -362,9 +480,7 @@ async function run() {
             resolve()
         })
     )
-    window.fetch = async () => {
-        throw new TypeError('Offline')
-    }
+    window.fetch = () => Promise.reject(new TypeError('Offline'))
     await new Promise<void>((resolve) =>
         localeBackend.read('en', 'gowave', (error, retry) => {
             assert(error && retry === true, 'network failures allow retry')
@@ -378,6 +494,13 @@ async function run() {
             resolve()
         })
     )
+    window.fetch = () => Promise.resolve(new Response('42'))
+    await new Promise<void>((resolve) =>
+        localeBackend.read('en', 'gowave', (error, retry) => {
+            assert(error && retry === false, 'scalar locale resource fails without retry')
+            resolve()
+        })
+    )
     window.fetch = originalFetch
     languageDetector.cacheUserLanguage?.('ru-RU')
     assert(languageDetector.detect()?.[0] === 'ru', 'language cache and regional normalization')
@@ -386,10 +509,10 @@ async function run() {
 
 run()
     .then(() => {
-        document.body.dataset.result = 'passed'
+        document.body.dataset['result'] = 'passed'
         document.body.textContent = 'Browser smoke tests passed'
     })
     .catch((error: unknown) => {
-        document.body.dataset.result = 'failed'
+        document.body.dataset['result'] = 'failed'
         document.body.textContent = String(error)
     })

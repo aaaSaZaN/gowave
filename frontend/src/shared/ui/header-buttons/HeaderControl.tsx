@@ -1,4 +1,4 @@
-import { BoxProps, createPolymorphicComponent, UnstyledButton } from '@mantine/core'
+import { type BoxProps, createPolymorphicComponent, UnstyledButton } from '@mantine/core'
 
 import cx from '@shared/lib/classes'
 

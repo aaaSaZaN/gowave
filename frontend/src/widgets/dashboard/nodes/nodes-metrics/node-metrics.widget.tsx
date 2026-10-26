@@ -13,7 +13,12 @@ import {
     Text,
     ThemeIcon
 } from '@mantine/core'
-import { GetNodesMetricsCommand } from '@remnawave/backend-contract'
+import type { GetNodesMetricsCommand } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import { useGetNodesMetrics } from '@shared/api/hooks'
+import { useIsMobile } from '@shared/hooks'
+import { runAsync } from '@shared/lib/run-async'
+import { MetricCardShared } from '@shared/ui/metrics/metric-card'
 import { VirtuosoMasonry } from '@virtuoso.dev/masonry'
 import { useCallback, useMemo } from 'react'
 import {
@@ -24,21 +29,34 @@ import {
     PiUsersDuotone
 } from 'react-icons/pi'
 import { TbServer } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { useGetNodesMetrics } from '@shared/api/hooks'
-import { useIsMobile } from '@shared/hooks'
-import { MetricCardShared } from '@shared/ui/metrics/metric-card'
-
-import { NodeDetailsCard } from './node-details-card'
 import styles from './NodeDetails.module.css'
+import { NodeDetailsCard } from './node-details-card'
+
+const NodeMetricItem: React.FC<{
+    context: { handleNodeClick: (uuid: string) => void }
+    data: GetNodesMetricsCommand.Response['response']['nodes'][number]
+    index: number
+}> = ({ data, context: { handleNodeClick } }) => {
+    return (
+        <div
+            className={styles.itemFadeIn}
+            key={data.nodeUuid}
+            style={{
+                padding: 5,
+                margin: '0'
+            }}
+        >
+            <NodeDetailsCard handleNodeClick={handleNodeClick} node={data} />
+        </div>
+    )
+}
 
 export const NodeMetricsWidget = () => {
     const { data: nodeMetrics, isLoading } = useGetNodesMetrics()
     const isMobile = useIsMobile()
 
     const handleNodeClick = useCallback((nodeUuid: string) => {
-        showModal('nodes_editNodeModal', { nodeUuid })
+        runAsync(showModal('nodes_editNodeModal', { nodeUuid }))
     }, [])
 
     const overallStats = useMemo(() => {
@@ -82,25 +100,6 @@ export const NodeMetricsWidget = () => {
                     </Stack>
                 </Center>
             </Card>
-        )
-    }
-
-    const Item: React.FC<{
-        context: unknown
-        data: GetNodesMetricsCommand.Response['response']['nodes'][number]
-        index: number
-    }> = ({ data }) => {
-        return (
-            <div
-                className={styles.itemFadeIn}
-                key={data.nodeUuid}
-                style={{
-                    padding: 5,
-                    margin: '0'
-                }}
-            >
-                <NodeDetailsCard handleNodeClick={handleNodeClick} node={data} />
-            </div>
         )
     }
 
@@ -207,7 +206,8 @@ export const NodeMetricsWidget = () => {
                 <VirtuosoMasonry
                     columnCount={isMobile ? 1 : 2}
                     data={nodeMetrics?.nodes}
-                    ItemContent={Item}
+                    ItemContent={NodeMetricItem}
+                    context={{ handleNodeClick }}
                     style={{
                         height: '100%'
                     }}

@@ -1,8 +1,7 @@
 import { Badge, Stack, Tooltip } from '@mantine/core'
-import { TbTag } from 'react-icons/tb'
-
 import ColorHash from '@shared/lib/color'
 import { SingleRowOverflowList } from '@shared/ui/single-row-overflow-list'
+import { TbTag } from 'react-icons/tb'
 
 const ch = new ColorHash({ lightness: [0.65, 0.65, 0.65] })
 

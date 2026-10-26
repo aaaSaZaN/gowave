@@ -1,5 +1,5 @@
-import { FormErrors } from '@mantine/form'
-import { NodeIpSchema, TNodeIps } from '@remnawave/backend-contract'
+import type { FormErrors } from '@mantine/form'
+import { NodeIpSchema, type TNodeIps } from '@remnawave/backend-contract'
 import { t } from 'i18next'
 
 export const MAX_NODE_IPS = 64
@@ -27,7 +27,7 @@ export const getNodeIpsErrors = (ips: null | TNodeIps | undefined): FormErrors =
     })
 
     if (ips.length > MAX_NODE_IPS) {
-        errors.ips = t('node-ips.max-ips-reached', { max: MAX_NODE_IPS })
+        errors['ips'] = t('node-ips.max-ips-reached', { max: MAX_NODE_IPS })
     }
 
     return errors

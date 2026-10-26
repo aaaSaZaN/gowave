@@ -1,14 +1,13 @@
 import { ExternalSquadsHeaderActionButtonsFeature } from '@features/ui/dashboard/external-squads/header-action-buttons'
+import { Page } from '@shared/ui/page'
+import { PageHeaderShared } from '@shared/ui/page-header/page-header.shared'
 import { ExternalSquadsGridWidget } from '@widgets/dashboard/external-squads/external-squads-grid/external-squads-grid.widget'
 import { ExternalSquadsSpotlightWidget } from '@widgets/dashboard/external-squads/external-squads-spotlight/external-squads-spotlight'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { TbWebhook } from 'react-icons/tb'
 
-import { Page } from '@shared/ui/page'
-import { PageHeaderShared } from '@shared/ui/page-header/page-header.shared'
-
-import { Props } from './interfaces'
+import type { Props } from './interfaces'
 
 export const ExternalSquadsPageComponent = (props: Props) => {
     const { t } = useTranslation()

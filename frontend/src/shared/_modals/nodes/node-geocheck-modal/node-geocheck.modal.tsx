@@ -1,11 +1,10 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Modal } from '@mantine/core'
-import { GetNodeCommand } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
-import { TbMapSearch } from 'react-icons/tb'
-
+import type { GetNodeCommand } from '@remnawave/backend-contract'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useTranslation } from 'react-i18next'
+import { TbMapSearch } from 'react-icons/tb'
 
 import { GeocheckFailedWidget } from './geocheck-failed.widget'
 import { GeocheckFormWidget } from './geocheck-form.widget'

@@ -12,13 +12,13 @@ import {
 import { useDisclosure } from '@mantine/hooks'
 import {
     getLanguageName,
-    TSubscriptionPageLanguageCode,
-    TSubscriptionPageLocalizedText
+    type TSubscriptionPageLanguageCode,
+    type TSubscriptionPageLocalizedText
 } from '@remnawave/subscription-page-types'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { useTranslation } from 'react-i18next'
 import { TbLanguage } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
 import styles from '../subpage-config-visual-editor.module.css'
 
@@ -102,7 +102,7 @@ export function LocalizedTextEditor(props: IProps) {
                             description={index === 0 ? 'Primary language' : undefined}
                             key={locale}
                             label={getLanguageName(locale)}
-                            minRows={multiline ? 3 : undefined}
+                            {...optionalProp('minRows', multiline ? 3 : undefined)}
                             onChange={(e) => handleChange(locale, e.target.value)}
                             placeholder={`Enter ${label.toLowerCase()}...`}
                             resize={multiline ? 'vertical' : undefined}

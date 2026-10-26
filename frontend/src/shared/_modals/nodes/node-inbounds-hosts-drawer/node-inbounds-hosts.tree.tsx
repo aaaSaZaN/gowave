@@ -1,27 +1,28 @@
 import {
     Badge,
-    getTreeExpandedState,
     Group,
-    RenderTreeNodePayload,
+    getTreeExpandedState,
+    type RenderTreeNodePayload,
     Text,
     Tree,
-    TreeNodeData,
+    type TreeNodeData,
     useTree
 } from '@mantine/core'
-import {
+import type {
     GetConfigProfilesCommand,
     GetHostsCommand,
     GetNodesCommand
 } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
+import { CountryFlag } from '@shared/ui/get-country-flag'
+import { XrayLogo } from '@shared/ui/logos'
+import { SectionCard } from '@shared/ui/section-card'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiListChecks, PiTag } from 'react-icons/pi'
 import { TbChevronRight, TbLink, TbLock } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { CountryFlag } from '@shared/ui/get-country-flag'
-import { XrayLogo } from '@shared/ui/logos'
-import { SectionCard } from '@shared/ui/section-card'
 
 type TopologyConfigProfile = GetConfigProfilesCommand.Response['response']['configProfiles'][number]
 type TopologyHost = GetHostsCommand.Response['response'][number]
@@ -141,7 +142,9 @@ export function NodeInboundsHostsTree(props: IProps) {
                     meta?.kind === 'host'
                         ? (event) => {
                               event.stopPropagation()
-                              showModal('hosts_editHostDrawer', { hostUuid: meta.host.uuid })
+                              runAsync(
+                                  showModal('hosts_editHostDrawer', { hostUuid: meta.host.uuid })
+                              )
                           }
                         : elementProps.onClick
                 }
@@ -190,8 +193,8 @@ export function NodeInboundsHostsTree(props: IProps) {
                 )}
 
                 <Text
-                    c={isInactiveInbound ? 'dimmed' : undefined}
-                    ff={meta?.kind === 'inbound' ? 'monospace' : undefined}
+                    {...optionalProp('c', isInactiveInbound ? 'dimmed' : undefined)}
+                    {...optionalProp('ff', meta?.kind === 'inbound' ? 'monospace' : undefined)}
                     fw={meta?.kind === 'node' ? 600 : undefined}
                     size="sm"
                     truncate="end"

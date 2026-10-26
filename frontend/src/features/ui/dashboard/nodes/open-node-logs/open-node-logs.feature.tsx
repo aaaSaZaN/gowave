@@ -1,9 +1,9 @@
 import { ActionIcon, Tooltip } from '@mantine/core'
-import { GetNodeCommand } from '@remnawave/backend-contract'
+import type { GetNodeCommand } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import { runAsync } from '@shared/lib/run-async'
 import { memo } from 'react'
 import { TbTerminal2 } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
 
 interface IProps {
     node: GetNodeCommand.Response['response']
@@ -17,7 +17,7 @@ const OpenNodeLogsFeatureComponent = (props: IProps) => {
             <ActionIcon
                 color="cyan"
                 onClick={() => {
-                    showModal('nodes_nodeLogsModal', { node })
+                    runAsync(showModal('nodes_nodeLogsModal', { node }))
                 }}
                 size="lg"
                 variant="soft"

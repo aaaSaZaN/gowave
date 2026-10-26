@@ -1,5 +1,3 @@
-import type { editor } from 'monaco-editor'
-
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import {
     ActionIcon,
@@ -8,23 +6,24 @@ import {
     Group,
     Modal,
     Paper,
-    ThemeIconProps,
+    type ThemeIconProps,
     Tooltip
 } from '@mantine/core'
-import { ComponentType, useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbArrowUp, TbBook, TbBraces } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { COMPACT_MONACO_OPTIONS } from '@shared/constants/monaco-theme'
 import { usePseudoFullscreen } from '@shared/hooks'
 import clsx from '@shared/lib/classes'
-import { CodeEditor, editorClasses, EditorFooter, EditorStatusBar } from '@shared/ui/code-editor'
-import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui/fullscreen-toggle-button'
+import { runAsync } from '@shared/lib/run-async'
+import { CodeEditor, EditorFooter, EditorStatusBar, editorClasses } from '@shared/ui/code-editor'
+import { FullscreenToggleButton, fullscreenClasses } from '@shared/ui/fullscreen-toggle-button'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { forceMonacoRetokenize } from '@shared/utils/monaco/force-retokenize'
 import { formatFirstErrorMarker } from '@shared/utils/monaco/markers'
 import { useMonaco } from '@shared/utils/setup-monaco/load-monaco'
+import type { editor } from 'monaco-editor'
+import { type ComponentType, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbArrowUp, TbBook, TbBraces } from 'react-icons/tb'
 
 import classes from './JsonEditorModal.module.css'
 
@@ -67,8 +66,8 @@ export const JsonEditorModal = NiceModal.create((props: IJsonEditorModalProps) =
     useEffect(() => {
         if (!monaco || !setupSchema) return
 
-        setupSchema()
-    }, [monaco])
+        runAsync(setupSchema())
+    }, [monaco, setupSchema])
 
     const handleSave = () => {
         const currentValue = editorRef.current?.getValue().trim() ?? ''

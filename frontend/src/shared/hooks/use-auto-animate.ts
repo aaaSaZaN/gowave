@@ -23,7 +23,7 @@ export function useAutoAnimate<T extends HTMLElement = HTMLDivElement>(
     )
 
     useEffect(() => {
-        if (!element || !element.animate) return
+        if (!element?.animate) return
         const preference = window.matchMedia('(prefers-reduced-motion: reduce)')
         let rectangles = new Map<Element, { rect: DOMRect; font: string; color: string }>()
         const animations = new Set<Animation>()
@@ -110,7 +110,7 @@ export function useAutoAnimate<T extends HTMLElement = HTMLDivElement>(
             for (const animation of animations) animation.cancel()
             for (const ghost of ghosts) ghost.remove()
         }
-    }, [element, duration, easing, ignorePreference])
+    }, [element, ignorePreference])
 
     return [setElement] as const
 }

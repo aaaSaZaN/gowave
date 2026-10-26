@@ -1,6 +1,6 @@
 import { Text } from '@mantine/core'
-import { ParseKeys } from 'i18next'
-import { ComponentType } from 'react'
+import type { ParseKeys } from 'i18next'
+import type { ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import * as Controls from './fields'

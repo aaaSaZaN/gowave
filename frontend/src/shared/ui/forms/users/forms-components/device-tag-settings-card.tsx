@@ -1,17 +1,17 @@
 import { Anchor, Checkbox, Code, Input, NumberInput, Stack, Text, Textarea } from '@mantine/core'
-import { UseFormReturnType } from '@mantine/form'
-import {
+import type { UseFormReturnType } from '@mantine/form'
+import type {
     CreateUserCommand,
     GetUsersTagsCommand,
     UpdateUserCommand
 } from '@remnawave/backend-contract'
-import { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
-import { Trans, useTranslation } from 'react-i18next'
-import { TbDevices2, TbSettings } from 'react-icons/tb'
-
+import { optionalProp } from '@shared/lib/optional-prop'
 import { CreateableTagInputShared } from '@shared/ui/createable-tag-input/createable-tag-input'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
+import type { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
+import { Trans, useTranslation } from 'react-i18next'
+import { TbDevices2, TbSettings } from 'react-icons/tb'
 
 interface IProps<T extends CreateUserCommand.RequestBody | UpdateUserCommand.RequestBody> {
     cardVariants: Variants
@@ -50,37 +50,35 @@ export function DeviceTagSettingsCard<
                                 {t('create-user-modal.widget.hwid-device-limit')}
                             </Input.Label>
                             <Input.Description component="div">
-                                <>
-                                    <Text c="dimmed" size="0.75rem">
-                                        <Trans
-                                            components={{
-                                                highlight: <Code />,
-                                                anchor: (
-                                                    <Anchor
-                                                        href="https://docs.rw/docs/features/hwid-device-limit"
-                                                        rel="noopener noreferrer"
-                                                        target="_blank"
-                                                    />
-                                                )
-                                            }}
-                                            i18nKey="create-user-modal.widget.hwid-user-limit-description"
-                                        />
-                                    </Text>
-                                    <Checkbox
-                                        checked={form.getValues().hwidDeviceLimit === 0}
-                                        label={t('create-user-modal.widget.disable-hwid-limit')}
-                                        mb="xs"
-                                        mt="xs"
-                                        onChange={(event) => {
-                                            const { checked } = event.currentTarget
-                                            form.setFieldValue(
-                                                'hwidDeviceLimit',
-                                                // @ts-expect-error TODO: fix this
-                                                checked ? 0 : null
+                                <Text c="dimmed" size="0.75rem">
+                                    <Trans
+                                        components={{
+                                            highlight: <Code />,
+                                            anchor: (
+                                                <Anchor
+                                                    href="https://docs.rw/docs/features/hwid-device-limit"
+                                                    rel="noopener noreferrer"
+                                                    target="_blank"
+                                                />
                                             )
                                         }}
+                                        i18nKey="create-user-modal.widget.hwid-user-limit-description"
                                     />
-                                </>
+                                </Text>
+                                <Checkbox
+                                    checked={form.getValues().hwidDeviceLimit === 0}
+                                    label={t('create-user-modal.widget.disable-hwid-limit')}
+                                    mb="xs"
+                                    mt="xs"
+                                    onChange={(event) => {
+                                        const { checked } = event.currentTarget
+                                        form.setFieldValue(
+                                            'hwidDeviceLimit',
+                                            // @ts-expect-error TODO: fix this
+                                            checked ? 0 : null
+                                        )
+                                    }}
+                                />
                             </Input.Description>
 
                             <NumberInput
@@ -99,7 +97,7 @@ export function DeviceTagSettingsCard<
                             key={form.key('tag')}
                             {...form.getInputProps('tag')}
                             tags={tags?.tags ?? []}
-                            value={form.getValues().tag}
+                            {...optionalProp('value', form.getValues().tag)}
                         />
 
                         <Textarea

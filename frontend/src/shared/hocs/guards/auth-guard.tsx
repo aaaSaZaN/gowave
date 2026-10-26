@@ -1,13 +1,11 @@
-import { useLayoutEffect } from 'react'
-import { Navigate, Outlet, useLocation } from 'react-router'
-
+import { useUpdatesStoreActions } from '@entities/dashboard/updates-store'
 import { useGetAuthStatus } from '@shared/api/hooks'
 import { ROUTES } from '@shared/constants/routes'
 import { useAuth } from '@shared/hooks'
 import { LoadingProgress } from '@shared/ui/loading-screen'
 import { consumeReturnTo, saveReturnTo } from '@shared/utils/return-to.util'
-
-import { useUpdatesStoreActions } from '@entities/dashboard/updates-store'
+import { useLayoutEffect } from 'react'
+import { Navigate, Outlet, useLocation } from 'react-router'
 
 export function AuthGuard() {
     const location = useLocation()
@@ -19,7 +17,7 @@ export function AuthGuard() {
 
     useLayoutEffect(() => {
         updatesStoreActions.getGowaveInfo()
-    }, [])
+    }, [updatesStoreActions.getGowaveInfo])
 
     if (!isInitialized || isLoading) {
         return <LoadingProgress />

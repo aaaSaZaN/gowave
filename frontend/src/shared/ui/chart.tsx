@@ -1,3 +1,4 @@
+import { optionalProp } from '@shared/lib/optional-prop'
 import Highcharts from 'highcharts'
 import { useEffect, useRef } from 'react'
 
@@ -21,7 +22,10 @@ export function Chart({ options, title }: ChartProps) {
 
     useEffect(() => {
         chart.current?.update(
-            { ...options, title: title === undefined ? options.title : { text: title } },
+            {
+                ...options,
+                ...optionalProp('title', title === undefined ? options.title : { text: title })
+            },
             true,
             true
         )

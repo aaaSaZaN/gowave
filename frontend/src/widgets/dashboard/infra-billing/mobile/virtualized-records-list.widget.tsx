@@ -1,13 +1,12 @@
-import { Box, Center, Loader, MantineStyleProp, Stack, Text, ThemeIcon } from '@mantine/core'
+import { Box, Center, Loader, type MantineStyleProp, Stack, Text, ThemeIcon } from '@mantine/core'
+import { useVirtualList } from '@shared/hooks/use-virtual-list'
+import { SectionCard } from '@shared/ui/section-card'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbCreditCard } from 'react-icons/tb'
 
-import { useVirtualList } from '@shared/hooks/use-virtual-list'
-import { SectionCard } from '@shared/ui/section-card'
-
 import styles from './fade-mask.module.css'
-import { BillingRecord, groupRecordsByMonth } from './group-records-by-month'
+import { type BillingRecord, groupRecordsByMonth } from './group-records-by-month'
 import { MonthDivider } from './month-divider'
 import { RecordCard } from './record-card'
 import { useDeleteBillingRecord } from './use-delete-billing-record'
@@ -62,9 +61,9 @@ export function VirtualizedRecordsList(props: IProps) {
     const virtualizer = useVirtualList({
         count: rows.length,
         getScrollElement: () => scrollRef.current,
-        getItemKey: (index) => rows[index].key,
+        getItemKey: (index) => rows[index]?.key ?? index,
         estimateSize: (index) =>
-            rows[index].type === 'divider' ? DIVIDER_ESTIMATE : RECORD_ESTIMATE,
+            rows[index]?.type === 'divider' ? DIVIDER_ESTIMATE : RECORD_ESTIMATE,
         overscan: 8
     })
 
@@ -88,6 +87,7 @@ export function VirtualizedRecordsList(props: IProps) {
     }, [onReachBottom])
 
     useEffect(() => {
+        if (rows.length === 0) return
         updateFade()
     }, [updateFade, rows.length])
 
@@ -129,6 +129,7 @@ export function VirtualizedRecordsList(props: IProps) {
             <Box style={{ height: virtualizer.totalSize, position: 'relative', width: '100%' }}>
                 {virtualizer.virtualItems.map((virtualItem) => {
                     const row = rows[virtualItem.index]
+                    if (!row) return null
 
                     return (
                         <Box

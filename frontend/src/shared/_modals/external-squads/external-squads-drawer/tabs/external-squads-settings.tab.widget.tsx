@@ -1,10 +1,10 @@
 import {
     ExternalSquadSubscriptionSettingsSchema,
-    GetExternalSquadByUuidCommand
+    type GetExternalSquadByUuidCommand
 } from '@remnawave/backend-contract'
 import { resolveSubscriptionSetting } from '@widgets/dashboard/subscription-settings/settings/resolve-settings'
 import { useTranslation } from 'react-i18next'
-import z from 'zod'
+import type z from 'zod'
 
 import { ExternalSquadOverridesTab } from './external-squad-overrides-tab.widget'
 

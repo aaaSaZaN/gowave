@@ -1,24 +1,22 @@
-import type { editor } from 'monaco-editor'
-
 import { MonacoSetupNodePluginEditorFeature } from '@features/dashboard/config-profiles/monaco-setup'
 import { NodePluginsEditorActionsFeature } from '@features/dashboard/node-plugins/node-plugins-editor-actions'
 import { Box, Paper } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { Monaco } from '@monaco-editor/react'
-import { GetNodePluginCommand } from '@remnawave/backend-contract'
+import type { Monaco } from '@monaco-editor/react'
+import type { GetNodePluginCommand } from '@remnawave/backend-contract'
+import { useGetSharedLists } from '@shared/api/hooks'
+import { usePseudoFullscreen, useViewportFillHeight } from '@shared/hooks'
+import clsx from '@shared/lib/classes'
+import { CodeEditor, EditorFooter, EditorStatusBar, editorClasses } from '@shared/ui/code-editor'
+import { FullscreenToggleButton, fullscreenClasses } from '@shared/ui/fullscreen-toggle-button'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { preventBackScroll } from '@shared/utils/misc'
+import { setupSuggestWidget } from '@shared/utils/setup-monaco/setup-suggest-monaco'
+import type { editor } from 'monaco-editor'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbAlertTriangle } from 'react-icons/tb'
 import { useBlocker } from 'react-router'
-
-import { useGetSharedLists } from '@shared/api/hooks'
-import { usePseudoFullscreen, useViewportFillHeight } from '@shared/hooks'
-import clsx from '@shared/lib/classes'
-import { CodeEditor, editorClasses, EditorFooter, EditorStatusBar } from '@shared/ui/code-editor'
-import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui/fullscreen-toggle-button'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { preventBackScroll } from '@shared/utils/misc'
-import { setupSuggestWidget } from '@shared/utils/setup-monaco/setup-suggest-monaco'
 
 import styles from './NodePluginEditor.module.css'
 
@@ -92,7 +90,7 @@ export function NodePluginEditorWidget(props: IProps) {
                 closeOnCancel: true
             })
         }
-    }, [blocker])
+    }, [blocker, t])
 
     const sharedListsData = useMemo(() => sharedLists?.sharedLists ?? [], [sharedLists])
 

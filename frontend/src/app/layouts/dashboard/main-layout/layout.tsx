@@ -1,11 +1,10 @@
+import { useGowaveInfo, useIsLoadingGowaveUpdates } from '@entities/dashboard/updates-store'
+import { useExperimentalFeature } from '@entities/dashboard/view-preferences-store'
 import { useMediaQuery } from '@mantine/hooks'
-
 import { useIsMobile } from '@shared/hooks'
+import { optionalProp } from '@shared/lib/optional-prop'
 import { HeaderControls } from '@shared/ui/header-buttons'
 import { QuickLauncher } from '@shared/ui/quick-launcher'
-
-import { useIsLoadingGowaveUpdates, useGowaveInfo } from '@entities/dashboard/updates-store'
-import { useExperimentalFeature } from '@entities/dashboard/view-preferences-store'
 
 import { DASHBOARD_LINKS } from './layout-shared'
 import { CompactLayout } from './layout-variants/compact.layout'
@@ -32,7 +31,7 @@ export function MainLayout() {
         <HeaderControls
             {...DASHBOARD_LINKS}
             isGithubLoading={isLoadingUpdates}
-            stars={gowaveInfo.starsCount || undefined}
+            {...optionalProp('stars', gowaveInfo.starsCount || undefined)}
             withGithub={!isMobile}
             withRecap={!isMobile}
         />

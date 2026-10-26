@@ -2,7 +2,7 @@ import { Group, Text } from '@mantine/core'
 
 import ReactCountryFlag from '@shared/ui/country-flag'
 
-import { IProps } from './interface'
+import type { IProps } from './interface'
 
 export function ConnectedNodeColumnEntity(props: IProps) {
     const { node } = props

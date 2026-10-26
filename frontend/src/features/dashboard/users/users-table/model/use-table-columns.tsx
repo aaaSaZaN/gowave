@@ -1,24 +1,30 @@
-import { MRT_ColumnDef } from '@kastov/mantine-react-table-open'
-import { Badge, ComboboxItem, Group, SelectProps, Stack, Text, Tooltip } from '@mantine/core'
-import {
-    GetNodesCommand,
-    GetUsersCommand,
-    GetExternalSquadsCommand,
-    GetInternalSquadsCommand
-} from '@remnawave/backend-contract'
-import { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
-
-import { prettifyBytesUtil } from '@shared/utils/bytes'
-import { formatInt } from '@shared/utils/misc'
-import { formatTimeUtil } from '@shared/utils/time-utils'
-
 import { DataUsageColumnEntity } from '@entities/dashboard/users/ui'
 import { ConnectedNodeColumnEntity } from '@entities/dashboard/users/ui/table-columns/connected-node'
 import { StatusColumnEntity } from '@entities/dashboard/users/ui/table-columns/status'
 import { UsernameColumnEntity } from '@entities/dashboard/users/ui/table-columns/username'
+import type { MRT_ColumnDef } from '@kastov/mantine-react-table-open'
+import {
+    Badge,
+    type ComboboxItem,
+    Group,
+    type SelectProps,
+    Stack,
+    Text,
+    Tooltip
+} from '@mantine/core'
+import type {
+    GetExternalSquadsCommand,
+    GetInternalSquadsCommand,
+    GetNodesCommand,
+    GetUsersCommand
+} from '@remnawave/backend-contract'
+import { prettifyBytesUtil } from '@shared/utils/bytes'
+import { formatInt } from '@shared/utils/misc'
+import { formatTimeUtil } from '@shared/utils/time-utils'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
-import { NodeSelectItem, NodeSelectItemProps } from './node-select-item'
+import { NodeSelectItem, type NodeSelectItemProps } from './node-select-item'
 import { TrafficLimitRangeFilter } from './traffic-limit-range-filter'
 
 const renderSelectOption: SelectProps['renderOption'] = ({ option }) => {
@@ -42,12 +48,122 @@ export const useUserTableColumns = (
 ) => {
     const { t, i18n } = useTranslation()
 
-    return useMemo<MRT_ColumnDef<GetUsersCommand.Response['response']['users'][number]>[]>(
-        () => [
+    return useMemo<MRT_ColumnDef<GetUsersCommand.Response['response']['users'][number]>[]>(() => {
+        const renderCell0: NonNullable<
+            MRT_ColumnDef<GetUsersCommand.Response['response']['users'][number]>['Cell']
+        > = ({ cell }) => <UsernameColumnEntity user={cell.row.original} />
+        const renderCell1: NonNullable<
+            MRT_ColumnDef<GetUsersCommand.Response['response']['users'][number]>['Cell']
+        > = ({ cell }) => <StatusColumnEntity need="badge" user={cell.row.original} />
+        const renderCell2: NonNullable<
+            MRT_ColumnDef<GetUsersCommand.Response['response']['users'][number]>['Cell']
+        > = ({ cell }) => (
+            <ConnectedNodeColumnEntity
+                node={
+                    nodes?.find(
+                        (node) => node.uuid === cell.row.original.userTraffic.lastConnectedNodeUuid
+                    ) ?? undefined
+                }
+            />
+        )
+        const renderCell3: NonNullable<
+            MRT_ColumnDef<GetUsersCommand.Response['response']['users'][number]>['Cell']
+        > = ({ cell }) => <StatusColumnEntity need="date" user={cell.row.original} />
+        const renderCell4: NonNullable<
+            MRT_ColumnDef<GetUsersCommand.Response['response']['users'][number]>['Cell']
+        > = ({ cell }) => <DataUsageColumnEntity user={cell.row.original} />
+        const renderCell5: NonNullable<
+            MRT_ColumnDef<GetUsersCommand.Response['response']['users'][number]>['Cell']
+        > = ({ cell }) => {
+            const { usedTrafficBytes } = cell.row.original.userTraffic ?? {}
+            const limit = cell.row.original.trafficLimitBytes ?? 0
+
+            let percentage = 0
+            if (limit > 0 && typeof usedTrafficBytes === 'number') {
+                percentage = (usedTrafficBytes * 100) / limit
+            }
+
+            return <Text fw={600}>{percentage.toFixed(2)}%</Text>
+        }
+        const renderCell6: NonNullable<
+            MRT_ColumnDef<GetUsersCommand.Response['response']['users'][number]>['Cell']
+        > = ({ cell }) => {
+            const limitBytes = cell.row.original.trafficLimitBytes ?? 0
+            return limitBytes === 0 ? '∞' : prettifyBytesUtil(limitBytes) || '0 B'
+        }
+        const renderFilter7: NonNullable<
+            MRT_ColumnDef<GetUsersCommand.Response['response']['users'][number]>['Filter']
+        > = ({ column, rangeFilterIndex }) =>
+            rangeFilterIndex === 0 ? <TrafficLimitRangeFilter column={column} /> : null
+        const renderCell8: NonNullable<
+            MRT_ColumnDef<GetUsersCommand.Response['response']['users'][number]>['Cell']
+        > = ({ cell }) => (
+            <Text ff="monospace" fw={500} size="md">
+                {cell.row.original.tag || '–'}
+            </Text>
+        )
+        const renderCell9: NonNullable<
+            MRT_ColumnDef<GetUsersCommand.Response['response']['users'][number]>['Cell']
+        > = ({ cell }) => {
+            const squads = cell.row.original.activeInternalSquads
+
+            if (squads.length === 0) {
+                return <Text c="dimmed">–</Text>
+            }
+
+            const visibleSquads = squads.slice(0, 1)
+            const hiddenSquads = squads.slice(1)
+
+            return (
+                <Group gap="xs" wrap="nowrap">
+                    {visibleSquads.map((squad) => (
+                        <Badge key={squad.uuid} variant="soft">
+                            {squad.name}
+                        </Badge>
+                    ))}
+
+                    {hiddenSquads.length > 0 && (
+                        <Tooltip
+                            label={
+                                <Stack gap="xs">
+                                    {hiddenSquads.map((squad) => (
+                                        <Badge fullWidth key={squad.uuid} variant="soft">
+                                            {squad.name}
+                                        </Badge>
+                                    ))}
+                                </Stack>
+                            }
+                            multiline
+                            position="top"
+                        >
+                            <Badge color="violet" style={{ cursor: 'help' }} variant="soft">
+                                +{hiddenSquads.length}
+                            </Badge>
+                        </Tooltip>
+                    )}
+                </Group>
+            )
+        }
+        const renderCell10: NonNullable<
+            MRT_ColumnDef<GetUsersCommand.Response['response']['users'][number]>['Cell']
+        > = ({ cell }) => {
+            const userSquad = cell.row.original.externalSquadUuid
+
+            if (!userSquad) {
+                return <Text c="dimmed">–</Text>
+            }
+
+            const squadName = externalSquads?.externalSquads.find(
+                (squad) => userSquad === squad.uuid
+            )?.name
+
+            return squadName || '–'
+        }
+        return [
             {
                 accessorKey: 'username',
                 header: t('common.field.username'),
-                Cell: ({ cell }) => <UsernameColumnEntity user={cell.row.original} />,
+                Cell: renderCell0,
                 mantineTableBodyCellProps: {
                     align: 'left'
                 },
@@ -68,7 +184,7 @@ export const useUserTableColumns = (
             {
                 accessorKey: 'status',
                 header: t('common.field.status'),
-                Cell: ({ cell }) => <StatusColumnEntity need="badge" user={cell.row.original} />,
+                Cell: renderCell1,
                 filterVariant: 'select',
                 enableColumnFilterModes: false,
                 enableSorting: false,
@@ -79,17 +195,7 @@ export const useUserTableColumns = (
             {
                 accessorKey: 'nodeName',
                 header: t('use-table-columns.last-connected-node'),
-                Cell: ({ cell }) => (
-                    <ConnectedNodeColumnEntity
-                        node={
-                            nodes?.find(
-                                (node) =>
-                                    node.uuid ===
-                                    cell.row.original.userTraffic.lastConnectedNodeUuid
-                            ) ?? undefined
-                        }
-                    />
-                ),
+                Cell: renderCell2,
                 filterVariant: 'select',
                 mantineFilterSelectProps: {
                     comboboxProps: {
@@ -118,7 +224,7 @@ export const useUserTableColumns = (
             {
                 accessorKey: 'expireAt',
                 header: t('use-table-columns.expire-at'),
-                Cell: ({ cell }) => <StatusColumnEntity need="date" user={cell.row.original} />,
+                Cell: renderCell3,
                 enableColumnFilterModes: false,
                 enableColumnFilter: false,
                 enableClickToCopy: false,
@@ -129,7 +235,7 @@ export const useUserTableColumns = (
             {
                 accessorKey: 'usedTrafficBytes',
                 header: t('use-table-columns.data-usage'),
-                Cell: ({ cell }) => <DataUsageColumnEntity user={cell.row.original} />,
+                Cell: renderCell4,
                 mantineTableBodyCellProps: {
                     align: 'center'
                 },
@@ -142,17 +248,7 @@ export const useUserTableColumns = (
             {
                 accessorKey: 'usedTrafficPercentage',
                 header: t('use-table-columns.used-traffic'),
-                Cell: ({ cell }) => {
-                    const { usedTrafficBytes } = cell.row.original.userTraffic ?? {}
-                    const limit = cell.row.original.trafficLimitBytes ?? 0
-
-                    let percentage = 0
-                    if (limit > 0 && typeof usedTrafficBytes === 'number') {
-                        percentage = (usedTrafficBytes * 100) / limit
-                    }
-
-                    return <Text fw={600}>{percentage.toFixed(2)}%</Text>
-                },
+                Cell: renderCell5,
                 mantineTableBodyCellProps: {
                     align: 'center'
                 },
@@ -165,16 +261,12 @@ export const useUserTableColumns = (
             {
                 accessorKey: 'trafficLimitBytes',
                 header: t('traffic-limits-card.traffic-limit'),
-                Cell: ({ cell }) => {
-                    const limitBytes = cell.row.original.trafficLimitBytes ?? 0
-                    return limitBytes === 0 ? '∞' : prettifyBytesUtil(limitBytes) || '0 B'
-                },
+                Cell: renderCell6,
                 mantineTableBodyCellProps: {
                     align: 'center'
                 },
                 filterVariant: 'range',
-                Filter: ({ column, rangeFilterIndex }) =>
-                    rangeFilterIndex === 0 ? <TrafficLimitRangeFilter column={column} /> : null,
+                Filter: renderFilter7,
                 minSize: 230,
                 enableColumnFilterModes: false,
                 enableColumnFilter: true,
@@ -220,11 +312,7 @@ export const useUserTableColumns = (
             {
                 accessorKey: 'tag',
                 header: t('common.field.tag'),
-                Cell: ({ cell }) => (
-                    <Text ff="monospace" fw={500} size="md">
-                        {cell.row.original.tag || '–'}
-                    </Text>
-                ),
+                Cell: renderCell8,
 
                 mantineTableBodyCellProps: {
                     align: 'center'
@@ -261,46 +349,7 @@ export const useUserTableColumns = (
                         })) ?? [],
                     renderOption: renderSelectOption
                 },
-                Cell: ({ cell }) => {
-                    const squads = cell.row.original.activeInternalSquads
-
-                    if (squads.length === 0) {
-                        return <Text c="dimmed">–</Text>
-                    }
-
-                    const visibleSquads = squads.slice(0, 1)
-                    const hiddenSquads = squads.slice(1)
-
-                    return (
-                        <Group gap="xs" wrap="nowrap">
-                            {visibleSquads.map((squad) => (
-                                <Badge key={squad.uuid} variant="soft">
-                                    {squad.name}
-                                </Badge>
-                            ))}
-
-                            {hiddenSquads.length > 0 && (
-                                <Tooltip
-                                    label={
-                                        <Stack gap="xs">
-                                            {hiddenSquads.map((squad) => (
-                                                <Badge fullWidth key={squad.uuid} variant="soft">
-                                                    {squad.name}
-                                                </Badge>
-                                            ))}
-                                        </Stack>
-                                    }
-                                    multiline
-                                    position="top"
-                                >
-                                    <Badge color="violet" style={{ cursor: 'help' }} variant="soft">
-                                        +{hiddenSquads.length}
-                                    </Badge>
-                                </Tooltip>
-                            )}
-                        </Group>
-                    )
-                }
+                Cell: renderCell9
             },
 
             {
@@ -317,19 +366,7 @@ export const useUserTableColumns = (
                             value: squad.uuid
                         })) ?? []
                 },
-                Cell: ({ cell }) => {
-                    const userSquad = cell.row.original.externalSquadUuid
-
-                    if (!userSquad) {
-                        return <Text c="dimmed">–</Text>
-                    }
-
-                    const squadName = externalSquads?.externalSquads.find(
-                        (squad) => userSquad === squad.uuid
-                    )?.name
-
-                    return squadName || '–'
-                }
+                Cell: renderCell10
             },
 
             {
@@ -348,7 +385,7 @@ export const useUserTableColumns = (
                 accessorKey: 'userTraffic.firstConnectedAt',
                 header: t('common.field.first-connected-at'),
                 accessorFn: (originalRow) => {
-                    if (originalRow.userTraffic && originalRow.userTraffic.firstConnectedAt) {
+                    if (originalRow.userTraffic?.firstConnectedAt) {
                         return formatTimeUtil({
                             time: originalRow.userTraffic.firstConnectedAt,
                             template: 'TIME_FIRST_DATETIME',
@@ -393,7 +430,7 @@ export const useUserTableColumns = (
                 accessorKey: 'userTraffic.onlineAt',
                 header: t('use-table-columns.online-at'),
                 accessorFn: (originalRow) =>
-                    originalRow.userTraffic && originalRow.userTraffic.onlineAt
+                    originalRow.userTraffic?.onlineAt
                         ? formatTimeUtil({
                               time: originalRow.userTraffic.onlineAt,
                               template: 'TIME_FIRST_DATETIME',
@@ -414,7 +451,7 @@ export const useUserTableColumns = (
                 accessorKey: 'userTraffic.lifetimeUsedTrafficBytes',
                 header: t('use-table-columns.lifetime-used'),
                 accessorFn: (originalRow) =>
-                    originalRow.userTraffic && originalRow.userTraffic.lifetimeUsedTrafficBytes
+                    originalRow.userTraffic?.lifetimeUsedTrafficBytes
                         ? prettifyBytesUtil(originalRow.userTraffic.lifetimeUsedTrafficBytes)
                         : '–',
                 minSize: 170,
@@ -506,7 +543,6 @@ export const useUserTableColumns = (
                     max: 9_999
                 }
             }
-        ],
-        [t, nodes, internalSquads, externalSquads, i18n.language]
-    )
+        ]
+    }, [t, nodes, internalSquads, externalSquads, i18n.language])
 }

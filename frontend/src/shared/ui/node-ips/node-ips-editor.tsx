@@ -1,31 +1,30 @@
 import { RestrictToVerticalAxis } from '@dnd-kit/abstract/modifiers'
 import { move } from '@dnd-kit/helpers'
-import { DragDropProvider, DragEndEvent } from '@dnd-kit/react'
+import { DragDropProvider, type DragEndEvent } from '@dnd-kit/react'
 import {
     ActionIcon,
     Alert,
     Center,
     Group,
-    MantineSize,
+    type MantineSize,
     ScrollArea,
     Stack,
     Text,
     ThemeIcon,
     Tooltip
 } from '@mantine/core'
-import { UseFormReturnType } from '@mantine/form'
-import {
+import type { UseFormReturnType } from '@mantine/form'
+import type {
     CreateNodeCommand,
-    TNodeIps,
     TNodeIpStatus,
+    TNodeIps,
     UpdateNodeCommand
 } from '@remnawave/backend-contract'
-import { ReactNode, useCallback, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbNetwork, TbPlus } from 'react-icons/tb'
-
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
+import { type ReactNode, useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbNetwork, TbPlus } from 'react-icons/tb'
 
 import { NodeIpRow } from './node-ip-row'
 import { isValidNodeIp, MAX_NODE_IPS } from './validate-node-ips'
@@ -203,9 +202,9 @@ export const NodeIpsEditor = <
                         </DragDropProvider>
                     )}
 
-                    {typeof form.errors.ips === 'string' && (
+                    {typeof form.errors['ips'] === 'string' && (
                         <Alert color="red" p="xs" radius="md">
-                            {form.errors.ips}
+                            {form.errors['ips']}
                         </Alert>
                     )}
                 </Stack>

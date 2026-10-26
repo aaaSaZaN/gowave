@@ -1,4 +1,5 @@
 import { ActionIcon, Badge } from '@mantine/core'
+import { hasNodeStatusMessage, isNodeConfigRejected } from '@shared/utils/misc'
 import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -8,9 +9,7 @@ import {
     PiWarningCircle
 } from 'react-icons/pi'
 
-import { hasNodeStatusMessage, isNodeConfigRejected } from '@shared/utils/misc'
-
-import { IProps } from './interface'
+import type { IProps } from './interface'
 
 export const NodeStatusBadgeWidget = memo(
     ({ node, fetchedNode, withText = true, ...rest }: IProps) => {
@@ -59,14 +58,7 @@ export const NodeStatusBadgeWidget = memo(
             }
 
             return { icon, color, status }
-        }, [
-            nodeData.isConnected,
-            nodeData.isConnecting,
-            nodeData.isDisabled,
-            nodeData.lastStatusMessage,
-            nodeData.xrayUptime,
-            t
-        ])
+        }, [nodeData, t])
 
         if (!withText) {
             return (

@@ -1,9 +1,8 @@
 import { modals } from '@mantine/modals'
-import { t } from 'i18next'
-import { useState } from 'react'
-
 import { queryClient } from '@shared/api'
 import { QueryKeys, useDeleteSharedList } from '@shared/api/hooks'
+import { t } from 'i18next'
+import { useState } from 'react'
 
 export function useSharedListActions() {
     const [deletingName, setDeletingName] = useState<null | string>(null)

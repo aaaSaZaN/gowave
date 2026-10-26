@@ -14,8 +14,8 @@ export function isCustomXrayVersion(versions: NodeVersions | null | undefined): 
     const version = versions?.xray?.toLowerCase()
     return Boolean(
         versions?.isCustom ||
-        versions?.isCustomXray ||
-        version?.includes('custom') ||
-        version?.includes('mod')
+            versions?.isCustomXray ||
+            version?.includes('custom') ||
+            version?.includes('mod')
     )
 }

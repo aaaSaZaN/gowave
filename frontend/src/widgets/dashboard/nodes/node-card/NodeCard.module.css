@@ -13,6 +13,7 @@
 }
 
 .nodeRow:hover {
+    /* biome-ignore lint/complexity/noImportantStyles: Override inline component styling during hover and drag states. */
     border-color: light-dark(var(--mantine-color-blue-3), var(--mantine-color-blue-5)) !important;
 }
 
@@ -39,10 +40,6 @@
     justify-content: center;
 }
 
-.nodeRow:hover .dragHandle {
-    opacity: 1;
-}
-
 .dragHandle:hover {
     color: var(--mantine-color-gray-7);
     background: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-5));
@@ -55,12 +52,13 @@
 .dragHandleActive {
     color: var(--mantine-color-gray-7);
     background: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-5));
+    /* biome-ignore lint/complexity/noImportantStyles: Override inline component styling during hover and drag states. */
     opacity: 1 !important;
     cursor: grabbing;
 }
 
 /* DragOverlay styles */
-.nodeRow[data-drag-overlay='true'] {
+.nodeRow[data-drag-overlay="true"] {
     box-shadow: 0 12px 32px rgb(0, 0, 0, 0.2);
     border-color: light-dark(var(--mantine-color-blue-4), var(--mantine-color-blue-4));
     z-index: 9999;
@@ -101,6 +99,7 @@
 }
 
 .addressText:hover {
+    /* biome-ignore lint/complexity/noImportantStyles: Override inline component styling during hover and drag states. */
     color: var(--mantine-color-blue-6) !important;
 }
 
@@ -113,35 +112,39 @@
     color: var(--mantine-color-teal-6);
 }
 
-[data-mantine-color-scheme='dark'] .nodeRowDragging {
+[data-mantine-color-scheme="dark"] .nodeRowDragging {
     border-color: var(--mantine-color-blue-4);
     box-shadow: 0 8px 24px rgb(0, 0, 0, 0.4);
 }
 
-[data-mantine-color-scheme='dark'] .dragHandle {
+[data-mantine-color-scheme="dark"] .dragHandle {
     color: var(--mantine-color-dark-2);
 }
 
-[data-mantine-color-scheme='dark'] .dragHandle:hover {
+[data-mantine-color-scheme="dark"] .dragHandle:hover {
     color: var(--mantine-color-gray-3);
     background: var(--mantine-color-dark-5);
 }
 
-[data-mantine-color-scheme='dark'] .dragHandleActive {
+[data-mantine-color-scheme="dark"] .dragHandleActive {
     color: var(--mantine-color-gray-3);
 }
 
-[data-mantine-color-scheme='dark'] .nodeRow[data-drag-overlay='true'] {
+[data-mantine-color-scheme="dark"] .nodeRow[data-drag-overlay="true"] {
     border-color: var(--mantine-color-blue-4);
     box-shadow: 0 12px 32px rgb(0, 0, 0, 0.4);
     background: var(--mantine-color-dark-6);
 }
 
-[data-mantine-color-scheme='dark'] .iconActive {
+[data-mantine-color-scheme="dark"] .iconActive {
     color: var(--mantine-color-teal-4);
 }
 
 /* Mobile Layout */
+.nodeRow:hover .dragHandle {
+    opacity: 1;
+}
+
 @media (max-width: 48em) {
     .desktopGrid {
         display: none;
@@ -163,6 +166,7 @@
     }
 
     .dragHandleActive {
+        /* biome-ignore lint/complexity/noImportantStyles: Override inline component styling during hover and drag states. */
         opacity: 1 !important;
     }
 

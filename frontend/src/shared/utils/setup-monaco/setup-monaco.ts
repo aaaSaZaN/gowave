@@ -1,6 +1,5 @@
-// oxlint-disable
-
 import { loader } from '@monaco-editor/react'
+import { runAsync } from '@shared/lib/run-async'
 import * as monaco from 'monaco-editor/editor'
 import editorWorker from 'monaco-editor/editor/editor.worker?worker'
 import 'monaco-editor/features/register.all'
@@ -9,6 +8,7 @@ import {
     language as yamlLanguage
 } from 'monaco-editor/languages/definitions/yaml/yaml'
 import jsonWorker from 'monaco-editor/languages/features/json/json.worker?worker'
+
 export { jsonDefaults } from 'monaco-editor/languages/features/json/register'
 
 import { MONACO_THEME_NAME, monacoTheme } from '@shared/constants/monaco-theme'
@@ -80,6 +80,8 @@ monaco.editor.defineTheme(MONACO_THEME_NAME, {
     base: 'vs-dark'
 })
 
-loader.init().then(() => {
-    monaco.editor.createModel('{}', 'json').dispose()
-})
+runAsync(
+    loader.init().then(() => {
+        monaco.editor.createModel('{}', 'json').dispose()
+    })
+)

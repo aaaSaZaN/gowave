@@ -4,27 +4,27 @@ import {
     Box,
     CopyButton,
     Group,
-    RenderTreeNodePayload,
+    type RenderTreeNodePayload,
     Text,
     Tooltip,
     Tree,
-    TreeNodeData
+    type TreeNodeData
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import {
+import type {
     GetInboundsByProfileUuidCommand,
     GetInternalSquadsCommand
 } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import ColorHash from '@shared/lib/color'
+import { runAsync } from '@shared/lib/run-async'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
+import { formatInt } from '@shared/utils/misc'
 import { githubDarkTheme, JsonEditor } from 'json-edit-react'
 import { useMemo } from 'react'
 import { PiCheck, PiCopy, PiTag, PiUsers } from 'react-icons/pi'
 import { TbChevronRight, TbCirclesRelation, TbTag } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import ColorHash from '@shared/lib/color'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
-import { formatInt } from '@shared/utils/misc'
 
 type ProfileInbound = GetInboundsByProfileUuidCommand.Response['response']['inbounds'][number]
 type InternalSquad = GetInternalSquadsCommand.Response['response']['internalSquads'][number]
@@ -123,9 +123,11 @@ export function ConfigProfileInboundsTree(props: IProps) {
                     meta?.kind === 'squad'
                         ? (event) => {
                               event.stopPropagation()
-                              showModal('internalSquads_internalSquadsInboundsDrawer', {
-                                  squadUuid: meta.squadUuid
-                              })
+                              runAsync(
+                                  showModal('internalSquads_internalSquadsInboundsDrawer', {
+                                      squadUuid: meta.squadUuid
+                                  })
+                              )
                           }
                         : elementProps.onClick
                 }

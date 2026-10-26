@@ -1,7 +1,7 @@
 import { Box, Collapse, Group, Stack, Text, ThemeIcon, UnstyledButton } from '@mantine/core'
-import { TbChevronRight } from 'react-icons/tb'
-
 import clsx from '@shared/lib/classes'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { TbChevronRight } from 'react-icons/tb'
 
 import classes from '../api-token-card.module.css'
 import { KindPill } from './kind-pill'
@@ -13,8 +13,8 @@ import {
     getWriteKeys,
     humanizeResource,
     renderResourceIcon,
-    ScopeEndpoint,
-    ScopeResource
+    type ScopeEndpoint,
+    type ScopeResource
 } from './scopes.utils'
 
 interface IProps {
@@ -76,7 +76,7 @@ export const ScopeResourceRow = (props: IProps) => {
                     <KindPill
                         label="Read"
                         onClick={() => onToggleKind?.('read')}
-                        readOnly={readOnly}
+                        {...optionalProp('readOnly', readOnly)}
                         state={readState}
                     />
                 )}
@@ -84,7 +84,7 @@ export const ScopeResourceRow = (props: IProps) => {
                     <KindPill
                         label="Write"
                         onClick={() => onToggleKind?.('write')}
-                        readOnly={readOnly}
+                        {...optionalProp('readOnly', readOnly)}
                         state={writeState}
                     />
                 )}
@@ -97,8 +97,8 @@ export const ScopeResourceRow = (props: IProps) => {
                             checked={selectedEndpoints.has(endpoint.key)}
                             endpoint={endpoint}
                             key={endpoint.key}
-                            onToggle={onToggleEndpoint}
-                            readOnly={readOnly}
+                            {...optionalProp('onToggle', onToggleEndpoint)}
+                            {...optionalProp('readOnly', readOnly)}
                         />
                     ))}
                 </Stack>

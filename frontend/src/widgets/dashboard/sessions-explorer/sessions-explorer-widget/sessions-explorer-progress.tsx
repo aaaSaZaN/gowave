@@ -1,15 +1,12 @@
-import type { ExplorerProgress } from './use-sessions-explorer'
-
 import { Badge, Box, Group, Progress, Stack, Text } from '@mantine/core'
-import { AnimatePresence, motion } from 'motion/react'
-import { FC, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-
 import { CountryFlag } from '@shared/ui/get-country-flag'
 import { LottieDuckProgressShared, LottieGlobeShared, LottieJailShared } from '@shared/ui/lotties'
 import { SectionCard } from '@shared/ui/section-card'
-
+import { AnimatePresence, motion } from 'motion/react'
+import { type FC, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import styles from './sessions-explorer.module.css'
+import type { ExplorerProgress } from './use-sessions-explorer'
 
 const PROGRESS_LOTTIES: FC[] = [LottieDuckProgressShared, LottieGlobeShared, LottieJailShared]
 

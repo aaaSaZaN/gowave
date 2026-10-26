@@ -1,8 +1,7 @@
 import { Button, CopyButton, Group, Skeleton } from '@mantine/core'
+import { useGetNodeSecretKey } from '@shared/api/hooks'
 import { useTranslation } from 'react-i18next'
 import { PiCheck, PiTerminal } from 'react-icons/pi'
-
-import { useGetNodeSecretKey } from '@shared/api/hooks'
 
 interface IProps {
     port?: number

@@ -50,7 +50,7 @@
 }
 
 .navItemActive::after {
-    content: '';
+    content: "";
     position: absolute;
     inset-inline: 8px;
     bottom: 0;

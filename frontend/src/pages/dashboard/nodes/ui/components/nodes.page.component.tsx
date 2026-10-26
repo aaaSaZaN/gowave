@@ -1,27 +1,25 @@
-import { MultiSelectNodesFeature } from '@features/dashboard/nodes/multi-select-nodes/multi-select-nodes.feature'
-import { NodesHeaderActionButtonsFeature } from '@features/ui/dashboard/nodes/nodes-header-action-buttons'
-import { Grid, Stack } from '@mantine/core'
-/* eslint-disable no-nested-ternary */
-import { GetNodesCommand } from '@remnawave/backend-contract'
-import { NodesDataTableWidget } from '@widgets/dashboard/nodes/nodes-datatable/nodes-datatable.widget'
-import { NodesRealtimeUsageMetrics } from '@widgets/dashboard/nodes/nodes-realtime-metrics'
-import { NodesTableWidget } from '@widgets/dashboard/nodes/nodes-table'
-import { motion } from 'motion/react'
-import { useCallback, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { HiServer } from 'react-icons/hi'
-
-import { queryClient } from '@shared/api'
-import { nodesQueryKeys, useReorderNodes } from '@shared/api/hooks'
-import { LoadingScreen, Page, PageHeaderShared } from '@shared/ui'
-
 import {
     NODES_VIEW_MODE,
     useNodesViewMode,
     useViewPreferencesStoreActions
 } from '@entities/dashboard/view-preferences-store'
+import { MultiSelectNodesFeature } from '@features/dashboard/nodes/multi-select-nodes/multi-select-nodes.feature'
+import { NodesHeaderActionButtonsFeature } from '@features/ui/dashboard/nodes/nodes-header-action-buttons'
+import { Grid, Stack } from '@mantine/core'
+import type { GetNodesCommand } from '@remnawave/backend-contract'
+import { queryClient } from '@shared/api'
+import { nodesQueryKeys, useReorderNodes } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
+import { LoadingScreen, Page, PageHeaderShared } from '@shared/ui'
+import { NodesDataTableWidget } from '@widgets/dashboard/nodes/nodes-datatable/nodes-datatable.widget'
+import { NodesRealtimeUsageMetrics } from '@widgets/dashboard/nodes/nodes-realtime-metrics'
+import { NodesTableWidget } from '@widgets/dashboard/nodes/nodes-table'
+import { motion } from 'motion/react'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { HiServer } from 'react-icons/hi'
 
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export default function NodesPageComponent(props: IProps) {
     const { nodes, isLoading, nodePlugins, nodeIntegrations } = props
@@ -40,48 +38,55 @@ export default function NodesPageComponent(props: IProps) {
                 queryClient.setQueryData(nodesQueryKeys.getAllNodes.queryKey, data)
             },
             onError: () => {
-                queryClient.invalidateQueries({ queryKey: nodesQueryKeys.getAllNodes.queryKey })
+                runAsync(
+                    queryClient.invalidateQueries({ queryKey: nodesQueryKeys.getAllNodes.queryKey })
+                )
             }
         }
     })
 
-    const moveSelected = useCallback(
-        (mode: 'bottom' | 'down' | 'top' | 'up') => {
-            if (!nodes || selectedRecords.length === 0) return
-            const selected = new Set(selectedRecords.map((record) => record.uuid))
+    const moveSelected = (mode: 'bottom' | 'down' | 'top' | 'up') => {
+        if (!nodes || selectedRecords.length === 0) return
+        const selected = new Set(selectedRecords.map((record) => record.uuid))
 
-            let next: typeof nodes
-            if (mode === 'top' || mode === 'bottom') {
-                const sel = nodes.filter((node) => selected.has(node.uuid))
-                const rest = nodes.filter((node) => !selected.has(node.uuid))
-                next = mode === 'top' ? [...sel, ...rest] : [...rest, ...sel]
-            } else {
-                next = [...nodes]
-                const offset = mode === 'up' ? -1 : 1
-                const start = mode === 'up' ? 1 : next.length - 2
-                const end = mode === 'up' ? next.length : -1
-                const step = mode === 'up' ? 1 : -1
+        let next: typeof nodes
+        if (mode === 'top' || mode === 'bottom') {
+            const sel = nodes.filter((node) => selected.has(node.uuid))
+            const rest = nodes.filter((node) => !selected.has(node.uuid))
+            next = mode === 'top' ? [...sel, ...rest] : [...rest, ...sel]
+        } else {
+            next = [...nodes]
+            const offset = mode === 'up' ? -1 : 1
+            const start = mode === 'up' ? 1 : next.length - 2
+            const end = mode === 'up' ? next.length : -1
+            const step = mode === 'up' ? 1 : -1
 
-                for (let i = start; i !== end; i += step) {
-                    const j = i + offset
-                    if (selected.has(next[i].uuid) && !selected.has(next[j].uuid)) {
-                        ;[next[i], next[j]] = [next[j], next[i]]
-                    }
+            for (let i = start; i !== end; i += step) {
+                const j = i + offset
+                const currentItem = next[i]
+                const adjacentItem = next[j]
+                if (
+                    currentItem &&
+                    adjacentItem &&
+                    selected.has(currentItem.uuid) &&
+                    !selected.has(adjacentItem.uuid)
+                ) {
+                    next[i] = adjacentItem
+                    next[j] = currentItem
                 }
             }
+        }
 
-            const hasOrderChanged = nodes.some((node, index) => node.uuid !== next[index].uuid)
-            if (!hasOrderChanged) return
+        const hasOrderChanged = nodes.some((node, index) => node.uuid !== next[index]?.uuid)
+        if (!hasOrderChanged) return
 
-            queryClient.setQueryData(nodesQueryKeys.getAllNodes.queryKey, next)
-            reorderNodes({
-                variables: {
-                    nodes: next.map((node, index) => ({ uuid: node.uuid, viewPosition: index }))
-                }
-            })
-        },
-        [nodes, selectedRecords, reorderNodes]
-    )
+        queryClient.setQueryData(nodesQueryKeys.getAllNodes.queryKey, next)
+        reorderNodes({
+            variables: {
+                nodes: next.map((node, index) => ({ uuid: node.uuid, viewPosition: index }))
+            }
+        })
+    }
 
     return (
         <Page title={t('constants.nodes')}>

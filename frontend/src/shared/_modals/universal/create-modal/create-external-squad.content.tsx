@@ -1,12 +1,12 @@
-import { Stack, TextInput, Group, Button } from '@mantine/core'
+import { Button, Group, Stack, TextInput } from '@mantine/core'
 import { useField } from '@mantine/form'
 import { CreateExternalSquadCommand } from '@remnawave/backend-contract'
-import { t } from 'i18next'
-
 import { showModal } from '@shared/_modals/show-modal'
 import { queryClient } from '@shared/api'
 import { useCreateExternalSquad } from '@shared/api/hooks/external-squads/external-squads.mutation.hooks'
 import { QueryKeys } from '@shared/api/hooks/keys-factory'
+import { runAsync } from '@shared/lib/run-async'
+import { t } from 'i18next'
 
 interface IProps {
     onClose: () => void
@@ -35,11 +35,13 @@ export const CreateExternalSquadContent = (props: IProps) => {
             onSuccess: (data) => {
                 onClose()
 
-                handleUpdate()
+                runAsync(handleUpdate())
 
-                showModal('externalSquads_externalSquadsDrawer', {
-                    uuid: data.uuid
-                })
+                runAsync(
+                    showModal('externalSquads_externalSquadsDrawer', {
+                        uuid: data.uuid
+                    })
+                )
             },
             onError: (error) => {
                 nameField.setError(error.message)

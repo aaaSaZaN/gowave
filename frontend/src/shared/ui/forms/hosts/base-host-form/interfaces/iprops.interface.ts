@@ -1,10 +1,10 @@
-import { UseFormReturnType } from '@mantine/form'
-import {
+import type { UseFormReturnType } from '@mantine/form'
+import type {
     CreateHostCommand,
-    GetHostsTagsCommand,
-    GetNodesCommand,
     GetConfigProfilesCommand,
+    GetHostsTagsCommand,
     GetInternalSquadsCommand,
+    GetNodesCommand,
     GetSubscriptionTemplatesCommand,
     UpdateHostCommand,
     UpdateManyHostsCommand

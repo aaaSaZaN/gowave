@@ -2,7 +2,7 @@ import {
     ActionIcon,
     Button,
     Card,
-    DefaultMantineColor,
+    type DefaultMantineColor,
     Divider,
     Group,
     Stack,
@@ -11,14 +11,15 @@ import {
     ThemeIcon
 } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
+import { useAutoAnimate } from '@shared/hooks/use-auto-animate'
+import { TemplateInfoPopoverShared } from '@shared/ui/popovers/template-info-popover/template-info-popover.shared'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiPlus, PiTrash } from 'react-icons/pi'
 
-import { useAutoAnimate } from '@shared/hooks/use-auto-animate'
-import { TemplateInfoPopoverShared } from '@shared/ui/popovers/template-info-popover/template-info-popover.shared'
-
 const EMPTY_REMARKS = ['']
+const remarkRows = (values: string[]) =>
+    values.map((value, index) => ({ id: `initial:${index}`, value }))
 
 export const RemarksManager = ({
     initialRemarks = EMPTY_REMARKS,
@@ -33,7 +34,7 @@ export const RemarksManager = ({
     onChange: (remarks: string[]) => void
     title: string
 }) => {
-    const [localRemarks, setLocalRemarks] = useState<string[]>(initialRemarks)
+    const [localRemarks, setLocalRemarks] = useState(() => remarkRows(initialRemarks))
     const [debouncedRemarks] = useDebouncedValue(localRemarks, 300)
     const { t } = useTranslation()
 
@@ -64,22 +65,22 @@ export const RemarksManager = ({
     const [previousRemarks, setPreviousRemarks] = useState(initialRemarks)
     if (previousRemarks !== initialRemarks) {
         setPreviousRemarks(initialRemarks)
-        setLocalRemarks(initialRemarks)
+        setLocalRemarks(remarkRows(initialRemarks))
     }
 
     useEffect(() => {
-        onChange(debouncedRemarks)
-    }, [debouncedRemarks])
+        onChange(debouncedRemarks.map((remark) => remark.value))
+    }, [debouncedRemarks, onChange])
 
     const addLocalRemark = () => {
-        setLocalRemarks((prev) => [...prev, ''])
+        setLocalRemarks((prev) => [...prev, { id: crypto.randomUUID(), value: '' }])
     }
 
     const removeLocalRemark = (index: number) => {
         setLocalRemarks((prev) => {
             const newRemarks = [...prev]
             newRemarks.splice(index, 1)
-            if (newRemarks.length === 0) newRemarks.push('')
+            if (newRemarks.length === 0) newRemarks.push({ id: crypto.randomUUID(), value: '' })
             return newRemarks
         })
     }
@@ -87,7 +88,9 @@ export const RemarksManager = ({
     const updateLocalRemark = (index: number, value: string) => {
         setLocalRemarks((prev) => {
             const newRemarks = [...prev]
-            newRemarks[index] = value
+            const current = newRemarks[index]
+            if (!current) return prev
+            newRemarks[index] = { ...current, value }
             return newRemarks
         })
     }
@@ -119,15 +122,16 @@ export const RemarksManager = ({
 
                 <Stack gap="xs" ref={parent}>
                     {localRemarks.map((remark, index) => (
-                        <Group align="flex-start" gap="sm" key={index}>
+                        <Group align="flex-start" gap="sm" key={remark.id}>
                             <TextInput
                                 leftSection={<TemplateInfoPopoverShared />}
                                 onChange={(e) => updateLocalRemark(index, e.target.value)}
                                 placeholder={t('remarks-manager.widget.enter-remark')}
                                 style={{ flex: 1 }}
-                                value={remark}
+                                value={remark.value}
                             />
                             <ActionIcon
+                                aria-label={t('common.action.delete')}
                                 color="red"
                                 disabled={localRemarks.length === 1}
                                 onClick={() => removeLocalRemark(index)}

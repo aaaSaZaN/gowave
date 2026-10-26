@@ -2,9 +2,6 @@ import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { DeleteAllUsersByStatusFeature } from '@features/ui/dashboard/users/delete-all-users-by-status'
 import { Button, Modal, NumberInput, Stack } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { useTranslation } from 'react-i18next'
-import { TbBolt, TbCalendarUp, TbRefresh, TbTrash, TbUsersMinus } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import {
     QueryKeys,
@@ -12,8 +9,11 @@ import {
     useBulkAllResetTrafficUsers
 } from '@shared/api/hooks'
 import { queryClient } from '@shared/api/query-client'
+import { runAsync } from '@shared/lib/run-async'
 import { ActionCardShared } from '@shared/ui'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useTranslation } from 'react-i18next'
+import { TbBolt, TbCalendarUp, TbRefresh, TbTrash, TbUsersMinus } from 'react-icons/tb'
 
 export const BulkAllUsersActionsModal = NiceModal.create(() => {
     const { t } = useTranslation()
@@ -22,8 +22,10 @@ export const BulkAllUsersActionsModal = NiceModal.create(() => {
     const { modalProps } = useNiceMantineModal({
         modal,
         onClose: () => {
-            queryClient.refetchQueries({ queryKey: QueryKeys.users.getAllUsers._def })
-            queryClient.refetchQueries({ queryKey: QueryKeys.system.getSystemStats.queryKey })
+            runAsync(queryClient.refetchQueries({ queryKey: QueryKeys.users.getAllUsers._def }))
+            runAsync(
+                queryClient.refetchQueries({ queryKey: QueryKeys.system.getSystemStats.queryKey })
+            )
         }
     })
 

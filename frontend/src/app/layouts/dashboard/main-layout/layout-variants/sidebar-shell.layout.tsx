@@ -1,9 +1,8 @@
 import { AppShell, Box, Burger, Container, Group, ScrollArea } from '@mantine/core'
-
 import clsx from '@shared/lib/classes'
-
-import { LayoutBrand, LayoutMain } from '../layout-shared'
+import { optionalProp } from '@shared/lib/optional-prop'
 import classes from '../layout.module.css'
+import { LayoutBrand, LayoutMain } from '../layout-shared'
 import { MobileNavigation } from '../navbar/mobile-navigation.layout'
 
 interface IProps {
@@ -84,7 +83,7 @@ export const SidebarShellLayout = (props: IProps) => {
                     flex={1}
                     scrollbarSize="0.2rem"
                 >
-                    <MobileNavigation onClose={onNavClose} />
+                    <MobileNavigation {...optionalProp('onClose', onNavClose)} />
                 </AppShell.Section>
 
                 {footer && (

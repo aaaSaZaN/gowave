@@ -1,5 +1,5 @@
-import { TNodeIpStatus } from '@remnawave/backend-contract'
-import { IconType } from 'react-icons'
+import type { TNodeIpStatus } from '@remnawave/backend-contract'
+import type { IconType } from 'react-icons'
 import {
     TbActivityHeartbeat,
     TbAlertTriangle,

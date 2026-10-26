@@ -9,14 +9,14 @@ import {
     TextInput,
     ThemeIcon
 } from '@mantine/core'
+import { OPEN_ENTITY_TARGETS } from '@shared/_modals/open-entity-targets'
+import { ROUTES, type TOpenEntity } from '@shared/constants'
+import { runAsync } from '@shared/lib/run-async'
+import { CopyEntityLinkButton, Page, PageHeaderShared } from '@shared/ui'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbArrowRight, TbLink } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
-
-import { OPEN_ENTITY_TARGETS } from '@shared/_modals/open-entity-targets'
-import { ROUTES, TOpenEntity } from '@shared/constants'
-import { CopyEntityLinkButton, Page, PageHeaderShared } from '@shared/ui'
 
 import classes from './quick-open.module.css'
 
@@ -47,10 +47,12 @@ export function QuickOpenPage() {
                     const open = () => {
                         if (!isValid) return
 
-                        navigate(
-                            ROUTES.DASHBOARD.OPEN_ENTITY.replace(':entity', entity).replace(
-                                ':id',
-                                id
+                        runAsync(
+                            navigate(
+                                ROUTES.DASHBOARD.OPEN_ENTITY.replace(':entity', entity).replace(
+                                    ':id',
+                                    id
+                                )
                             )
                         )
                     }

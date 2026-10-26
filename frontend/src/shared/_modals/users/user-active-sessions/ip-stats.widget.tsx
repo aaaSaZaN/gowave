@@ -1,11 +1,10 @@
 import { Group, Paper, Text } from '@mantine/core'
+import { useTime } from '@shared/hooks/use-time'
+import { formatInt } from '@shared/utils/misc'
 import { useMemo } from 'react'
 import { TbClockCheck, TbClockExclamation, TbClockPause } from 'react-icons/tb'
 
-import { useTime } from '@shared/hooks/use-time'
-import { formatInt } from '@shared/utils/misc'
-
-import { ActiveSessionNode } from './use-user-active-sessions'
+import type { ActiveSessionNode } from './use-user-active-sessions'
 
 interface IProps {
     nodes: ActiveSessionNode[]

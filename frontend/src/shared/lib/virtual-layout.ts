@@ -37,12 +37,16 @@ export function virtualLayout(
     let upper = items.length - 1
     while (lower < upper) {
         const middle = Math.floor((lower + upper) / 2)
-        if (items[middle].end <= viewport.offset) lower = middle + 1
+        const item = items[middle]
+        if (item && item.end <= viewport.offset) lower = middle + 1
         else upper = middle
     }
     const first = Math.max(0, lower - overscan)
     let last = lower
-    while (last + 1 < items.length && items[last + 1].start < viewport.offset + viewport.height)
+    while (
+        last + 1 < items.length &&
+        (items[last + 1]?.start ?? Infinity) < viewport.offset + viewport.height
+    )
         last++
     last = Math.min(items.length - 1, last + overscan)
     return { totalSize, virtualItems: items.slice(first, last + 1) }

@@ -5,36 +5,38 @@ import {
     ActionIcon,
     Button,
     Group,
-    Popover,
     NumberInput,
+    Popover,
     Stack,
     Text,
     TextInput
 } from '@mantine/core'
 import {
-    CreateHostCommand,
-    UpdateHostCommand,
-    UpdateManyHostsCommand
+    type CreateHostCommand,
+    INTERNAL_SQUADS_MODE,
+    SECURITY_LAYERS,
+    type UpdateHostCommand,
+    type UpdateManyHostsCommand
 } from '@remnawave/backend-contract'
-import { INTERNAL_SQUADS_MODE, SECURITY_LAYERS } from '@remnawave/backend-contract'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
+import { DrawerFooter } from '@shared/ui/drawer-footer'
+import { TemplateInfoPopoverShared } from '@shared/ui/popovers'
+import { PopoverWithInfoShared } from '@shared/ui/popovers/popover-with-info'
+import { SectionCard } from '@shared/ui/section-card'
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HiQuestionMarkCircle } from 'react-icons/hi'
 import { PiFloppyDiskDuotone } from 'react-icons/pi'
 
-import { DrawerFooter } from '@shared/ui/drawer-footer'
-import { TemplateInfoPopoverShared } from '@shared/ui/popovers'
-import { PopoverWithInfoShared } from '@shared/ui/popovers/popover-with-info'
-import { SectionCard } from '@shared/ui/section-card'
-
 import { HostVisibility } from './host-visibility'
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 import { getHostJsonFields } from './json-fields'
 import {
     HostFormDataProvider,
     HostOptionsProvider,
     HostOptionsSection,
-    IHostFormData
+    type IHostFormData
 } from './options'
 
 export const BaseHostForm = <
@@ -209,7 +211,8 @@ export const BaseHostForm = <
                 Object.entries(errors).filter(([key]) => key !== 'tags' && !key.startsWith('tags.'))
             )
         )
-        form.validateField('tags')
+        const validation = form.validateField('tags')
+        if (validation instanceof Promise) runAsync(validation)
     }
 
     const hostFormData: IHostFormData = {
@@ -233,7 +236,7 @@ export const BaseHostForm = <
     return (
         <form onSubmit={handleSubmit}>
             <HostFormDataProvider value={hostFormData}>
-                <HostOptionsProvider form={form} isBulkEdit={isBulkEdit}>
+                <HostOptionsProvider form={form} {...optionalProp('isBulkEdit', isBulkEdit)}>
                     <Stack>
                         <SectionCard.Root>
                             <SectionCard.Section>

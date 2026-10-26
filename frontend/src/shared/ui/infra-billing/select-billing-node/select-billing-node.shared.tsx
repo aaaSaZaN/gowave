@@ -1,12 +1,10 @@
-import type { IProps } from './interfaces/props.interface'
-
-import { ComboboxItem, Group, Select, Text } from '@mantine/core'
-import { forwardRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-
+import { type ComboboxItem, Group, Select, Text } from '@mantine/core'
 import { useGetInfraBillingNodes } from '@shared/api/hooks'
 import ReactCountryFlag from '@shared/ui/country-flag'
 import { LoadingScreen } from '@shared/ui/loading-screen'
+import { forwardRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { IProps } from './interfaces/props.interface'
 
 interface ItemProps extends ComboboxItem {
     countryCode: null | string
@@ -81,12 +79,8 @@ export const SelectBillingNodeShared = (props: IProps) => {
         )
     }
 
-    let leftSection
-    if (
-        selectedBillingNode &&
-        selectedBillingNode.countryCode &&
-        selectedBillingNode.countryCode !== 'XX'
-    ) {
+    let leftSection: React.ReactNode
+    if (selectedBillingNode?.countryCode && selectedBillingNode.countryCode !== 'XX') {
         leftSection = (
             <ReactCountryFlag
                 countryCode={selectedBillingNode.countryCode}

@@ -1,4 +1,5 @@
-import { BoxProps, Group } from '@mantine/core'
+import { type BoxProps, Group } from '@mantine/core'
+import { optionalProp } from '@shared/lib/optional-prop'
 
 import { GithubControl } from './GithubControl'
 import { LanguageControl } from './LanguageControl'
@@ -31,8 +32,12 @@ export function HeaderControls({
     return (
         <Group gap="xs" {...others}>
             {withVersion && <VersionControl />}
-            {withGithub && (
-                <GithubControl isLoading={isGithubLoading} link={githubLink!} stars={stars} />
+            {withGithub && githubLink && (
+                <GithubControl
+                    {...optionalProp('isLoading', isGithubLoading)}
+                    link={githubLink}
+                    {...optionalProp('stars', stars)}
+                />
             )}
             {withRecap && <RecapControl />}
             {withLanguage && <LanguageControl />}

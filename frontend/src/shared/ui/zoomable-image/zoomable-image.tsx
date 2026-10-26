@@ -1,12 +1,10 @@
-import type { Ref } from 'react'
-import type { ReactZoomPanPinchRef } from 'react-zoom-pan-pinch'
-
 import { UnstyledButton } from '@mantine/core'
+import clsx from '@shared/lib/classes'
+import type { Ref } from 'react'
 import { useEffect, useRef } from 'react'
 import { TbRestore, TbZoomIn, TbZoomOut } from 'react-icons/tb'
+import type { ReactZoomPanPinchRef } from 'react-zoom-pan-pinch'
 import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
-
-import clsx from '@shared/lib/classes'
 
 import classes from './zoomable-image.module.css'
 

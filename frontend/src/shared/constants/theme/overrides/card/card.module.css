@@ -3,7 +3,7 @@
     animation: fadeIn 200ms linear both;
 }
 
-.root[data-with-border='true'] {
+.root[data-with-border="true"] {
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 

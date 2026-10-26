@@ -1,7 +1,6 @@
 import { Box, getThemeColor, useMantineTheme } from '@mantine/core'
-import { useId } from 'react'
-
 import { sparklinePaths } from '@shared/lib/sparkline'
+import { useId } from 'react'
 
 interface SparklineProps {
     curveType?: 'bump' | 'linear'

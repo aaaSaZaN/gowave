@@ -1,12 +1,12 @@
-import { Stack, TextInput, Group, Button } from '@mantine/core'
+import { Button, Group, Stack, TextInput } from '@mantine/core'
 import { useField } from '@mantine/form'
 import { CreateInternalSquadCommand } from '@remnawave/backend-contract'
-import { t } from 'i18next'
-
 import { showModal } from '@shared/_modals/show-modal'
 import { queryClient } from '@shared/api'
 import { useCreateInternalSquad } from '@shared/api/hooks/internal-squads/internal-squads.mutation.hooks'
 import { QueryKeys } from '@shared/api/hooks/keys-factory'
+import { runAsync } from '@shared/lib/run-async'
+import { t } from 'i18next'
 
 interface IProps {
     onClose: () => void
@@ -36,11 +36,13 @@ export const CreateInternalSquadContent = (props: IProps) => {
             onSuccess: (data) => {
                 onClose()
 
-                handleUpdate()
+                runAsync(handleUpdate())
 
-                showModal('internalSquads_internalSquadsInboundsDrawer', {
-                    squadUuid: data.uuid
-                })
+                runAsync(
+                    showModal('internalSquads_internalSquadsInboundsDrawer', {
+                        squadUuid: data.uuid
+                    })
+                )
             },
 
             onError: (error) => {

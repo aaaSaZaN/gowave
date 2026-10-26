@@ -1,12 +1,11 @@
+import { useGowaveInfo } from '@entities/dashboard/updates-store'
 import { Group, Text } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { useMemo } from 'react'
 
 import { useGetGowaveMetadata } from '@shared/api/hooks'
 import clsx from '@shared/lib/classes'
 import semver from '@shared/lib/version'
-
-import { useGowaveInfo } from '@entities/dashboard/updates-store'
+import { useMemo } from 'react'
 
 import { Logo } from '../logo'
 import { BaseOverlayHeader } from '../overlays/base-overlay-header'
@@ -27,10 +26,10 @@ export function VersionControl() {
 
         const hasUpdate = Boolean(
             latest &&
-            currentVersion &&
-            semver.valid(latest) &&
-            semver.valid(currentVersion) &&
-            semver.gt(latest, currentVersion)
+                currentVersion &&
+                semver.valid(latest) &&
+                semver.valid(currentVersion) &&
+                semver.gt(latest, currentVersion)
         )
 
         return [hasUpdate, gowaveMetadata.git?.backend?.branch !== 'main']

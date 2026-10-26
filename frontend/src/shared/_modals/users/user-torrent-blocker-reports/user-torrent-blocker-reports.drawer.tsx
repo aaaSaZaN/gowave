@@ -11,15 +11,14 @@ import {
     Tooltip,
     Transition
 } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { TbFlame, TbRefresh } from 'react-icons/tb'
-import { Virtuoso } from 'react-virtuoso'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { useGetTorrentBlockerReports } from '@shared/api/hooks'
 import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useTranslation } from 'react-i18next'
+import { TbFlame, TbRefresh } from 'react-icons/tb'
+import { Virtuoso } from 'react-virtuoso'
 
 import { UserTorrentBlockerReportItem } from './user-torrent-blocker-report-item'
 import classes from './user-torrent-blocker-reports.module.css'

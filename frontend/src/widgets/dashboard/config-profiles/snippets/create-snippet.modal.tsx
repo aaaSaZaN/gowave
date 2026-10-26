@@ -1,22 +1,21 @@
-import type { editor } from 'monaco-editor'
-
 import { MonacoSetupSnippetsFeature } from '@features/dashboard/config-profiles/monaco-setup'
 import { Box, Button, Group, Paper, TextInput } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { modals } from '@mantine/modals'
 import { CreateSnippetCommand } from '@remnawave/backend-contract'
-import { useEffect, useRef } from 'react'
-import { useTranslation } from 'react-i18next'
-
 import { queryClient } from '@shared/api'
 import { QueryKeys } from '@shared/api/hooks/keys-factory'
 import { useCreateSnippet } from '@shared/api/hooks/snippets/snippets.mutation.hooks'
 import { useModalEscapeGuard, usePseudoFullscreen } from '@shared/hooks'
 import clsx from '@shared/lib/classes'
-import { CodeEditor, editorClasses, EditorFooter, EditorStatusBar } from '@shared/ui/code-editor'
-import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui/fullscreen-toggle-button'
+import { runAsync } from '@shared/lib/run-async'
+import { CodeEditor, EditorFooter, EditorStatusBar, editorClasses } from '@shared/ui/code-editor'
+import { FullscreenToggleButton, fullscreenClasses } from '@shared/ui/fullscreen-toggle-button'
 import { forceMonacoRetokenize } from '@shared/utils/monaco/force-retokenize'
 import { useMonaco } from '@shared/utils/setup-monaco/load-monaco'
+import type { editor } from 'monaco-editor'
+import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import classes from './Snippets.module.css'
 
@@ -45,13 +44,17 @@ export const CreateSnippetModal = () => {
     useEffect(() => {
         if (!monaco) return
 
-        MonacoSetupSnippetsFeature.setup(i18n.language)
+        runAsync(MonacoSetupSnippetsFeature.setup(i18n.language))
     }, [i18n.language, monaco])
 
     const { mutate: createSnippet, isPending: isCreating } = useCreateSnippet({
         mutationFns: {
             onSuccess: () => {
-                queryClient.refetchQueries({ queryKey: QueryKeys.snippets.getSnippets.queryKey })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.snippets.getSnippets.queryKey
+                    })
+                )
 
                 modals.close(CREATE_SNIPPET_MODAL_ID)
             }

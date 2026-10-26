@@ -10,7 +10,7 @@
     border-radius: var(--drawer-radius, var(--mantine-radius-md));
 }
 
-@media (max-width: $mantine-breakpoint-sm) {
+@media (max-width: 40em) {
     .drawerContent {
         border-radius: 0;
     }

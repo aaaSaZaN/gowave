@@ -1,9 +1,8 @@
 import { Badge, Group, RollingNumber, Text } from '@mantine/core'
-import { GetHttpStatsCommand } from '@remnawave/backend-contract'
+import type { GetHttpStatsCommand } from '@remnawave/backend-contract'
 import { memo } from 'react'
-
-import classes from './http-stats-table.module.css'
 import { getMethodColor } from './http-stats.utils'
+import classes from './http-stats-table.module.css'
 
 interface HttpStatRowProps {
     percentOfTotal: number

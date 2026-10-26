@@ -1,23 +1,23 @@
 import { Select, Stack } from '@mantine/core'
 import { DateTimePicker, getTimeRange } from '@mantine/dates'
-import { UseFormReturnType } from '@mantine/form'
+import type { UseFormReturnType } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
-import {
+import type {
     CreateUserCommand,
     GetExternalSquadsCommand,
     GetInternalSquadsCommand,
     UpdateUserCommand
 } from '@remnawave/backend-contract'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
 import { InternalSquadsListWidget } from '@widgets/dashboard/users/internal-squads-list'
 import dayjs from 'dayjs'
-import { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
+import type { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiCalendarDuotone } from 'react-icons/pi'
 import { TbShield, TbWebhook } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
 
 interface IProps<T extends CreateUserCommand.RequestBody | UpdateUserCommand.RequestBody> {
     cardVariants: Variants
@@ -175,10 +175,13 @@ export const AccessSettingsCard = <
                         <Select
                             allowDeselect={true}
                             clearable
-                            data={externalSquads?.externalSquads.map((externalSquad) => ({
-                                label: externalSquad.name,
-                                value: externalSquad.uuid
-                            }))}
+                            {...optionalProp(
+                                'data',
+                                externalSquads?.externalSquads.map((externalSquad) => ({
+                                    label: externalSquad.name,
+                                    value: externalSquad.uuid
+                                }))
+                            )}
                             limit={100}
                             defaultValue={form.values.externalSquadUuid}
                             description={t(

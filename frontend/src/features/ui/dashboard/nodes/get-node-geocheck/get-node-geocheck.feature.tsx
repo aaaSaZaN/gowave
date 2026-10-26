@@ -1,11 +1,11 @@
 import { ActionIcon, Tooltip } from '@mantine/core'
-import { GetNodeCommand } from '@remnawave/backend-contract'
+import type { GetNodeCommand } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import { runAsync } from '@shared/lib/run-async'
+import semver from '@shared/lib/version'
 import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbMapSearch } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import semver from '@shared/lib/version'
 
 const MIN_NODE_VERSION = '3.3.0'
 
@@ -43,7 +43,7 @@ const GetNodeGeocheckFeatureComponent = (props: IProps) => {
                 disabled={!isSupported}
                 color="indigo"
                 onClick={() => {
-                    showModal('nodes_nodeGeocheckModal', { node })
+                    runAsync(showModal('nodes_nodeGeocheckModal', { node }))
                 }}
                 size="lg"
                 variant="soft"

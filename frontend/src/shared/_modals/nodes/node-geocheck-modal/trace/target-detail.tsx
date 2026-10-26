@@ -1,12 +1,11 @@
-import type { IGeocheckTarget } from './trace.types'
-
 import { Badge, Group, Stack, Text } from '@mantine/core'
+import { optionalProp } from '@shared/lib/optional-prop'
 import { useMemo } from 'react'
-
 import { HopSegments } from './hop-segments'
+import type { IGeocheckTarget } from './trace.types'
+import { isTimedOutHop, resolveVerdictColor } from './trace.types'
 import { TraceLink } from './trace-link'
 import { TraceStat } from './trace-stat'
-import { isTimedOutHop, resolveVerdictColor } from './trace.types'
 
 const EXCESS_WARN_MS = 20
 
@@ -69,13 +68,16 @@ export const TargetDetail = (props: IProps) => {
             <Group gap="xl" wrap="wrap">
                 <TraceStat label="rtt" value={`${formatMs(target.rtt_ms)} ms`} />
                 <TraceStat
-                    color={target.excess_ms > EXCESS_WARN_MS ? 'orange' : undefined}
+                    {...optionalProp(
+                        'color',
+                        target.excess_ms > EXCESS_WARN_MS ? 'orange' : undefined
+                    )}
                     label="excess"
                     value={`+${formatMs(target.excess_ms)} ms`}
                 />
                 <TraceStat label="jitter" value={`${formatMs(target.jitter_ms)} ms`} />
                 <TraceStat
-                    color={target.loss > 0 ? 'yellow' : undefined}
+                    {...optionalProp('color', target.loss > 0 ? 'yellow' : undefined)}
                     label="loss"
                     value={formatLoss(target.loss)}
                 />

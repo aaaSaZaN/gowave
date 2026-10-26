@@ -1,6 +1,6 @@
 import {
-    GetPasskeysCommand,
-    GetPasskeyRegistrationOptionsCommand
+    GetPasskeyRegistrationOptionsCommand,
+    GetPasskeysCommand
 } from '@remnawave/backend-contract'
 
 import { createQueryKeys } from '@shared/api/query-keys'

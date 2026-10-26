@@ -1,13 +1,12 @@
 import { notifications } from '@mantine/notifications'
-import { ConnectionsByUserResultCommand } from '@remnawave/backend-contract'
+import type { ConnectionsByUserResultCommand } from '@remnawave/backend-contract'
+import {
+    useConnectionsByUser,
+    useConnectionsByUserResult,
+    useDropConnections
+} from '@shared/api/hooks'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-
-import {
-    useDropConnections,
-    useConnectionsByUser,
-    useConnectionsByUserResult
-} from '@shared/api/hooks'
 
 export type ActiveSessionNode = NonNullable<
     ConnectionsByUserResultCommand.Response['response']['result']
@@ -53,22 +52,24 @@ export const useUserActiveSessions = (userId: number) => {
         }
     })
 
+    const failedResult = Boolean(
+        connectionsByUserResult &&
+            (connectionsByUserResult.isFailed ||
+                (connectionsByUserResult.isCompleted && !connectionsByUserResult.result?.success))
+    )
+    const [previousResult, setPreviousResult] = useState(connectionsByUserResult)
+    if (previousResult !== connectionsByUserResult) {
+        setPreviousResult(connectionsByUserResult)
+        if (failedResult) setIsFailed(true)
+    }
     useEffect(() => {
-        if (!connectionsByUserResult) return undefined
-        if (
-            connectionsByUserResult.isFailed ||
-            (connectionsByUserResult.isCompleted && !connectionsByUserResult.result?.success)
-        ) {
-            // oxlint-disable-next-line
-            setIsFailed(true)
-            return undefined
-        }
+        if (!connectionsByUserResult || failedResult) return undefined
         if (connectionsByUserResult.isCompleted) {
             const timer = setTimeout(() => setIsCompleted(true), 500)
             return () => clearTimeout(timer)
         }
         return undefined
-    }, [connectionsByUserResult])
+    }, [connectionsByUserResult, failedResult])
 
     const refresh = useCallback(() => {
         setJobId(null)
@@ -79,7 +80,7 @@ export const useUserActiveSessions = (userId: number) => {
 
     useEffect(() => {
         connectionsByUser({})
-    }, [])
+    }, [connectionsByUser])
 
     const dropAll = useCallback(
         () =>

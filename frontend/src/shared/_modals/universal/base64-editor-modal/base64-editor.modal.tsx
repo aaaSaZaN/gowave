@@ -1,20 +1,18 @@
-import type { editor } from 'monaco-editor'
-
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Box, Button, Modal, Paper, SegmentedControl } from '@mantine/core'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbBinary } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { COMPACT_MONACO_OPTIONS } from '@shared/constants/monaco-theme'
 import { usePseudoFullscreen } from '@shared/hooks'
 import clsx from '@shared/lib/classes'
-import { CodeEditor, editorClasses, EditorFooter, EditorStatusBar } from '@shared/ui/code-editor'
-import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui/fullscreen-toggle-button'
+import { CodeEditor, EditorFooter, EditorStatusBar, editorClasses } from '@shared/ui/code-editor'
+import { FullscreenToggleButton, fullscreenClasses } from '@shared/ui/fullscreen-toggle-button'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { decodeBase64, encodeBase64 } from '@shared/utils/misc/base64'
 import { forceMonacoRetokenize } from '@shared/utils/monaco/force-retokenize'
+import type { editor } from 'monaco-editor'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbBinary } from 'react-icons/tb'
 
 import classes from './Base64EditorModal.module.css'
 

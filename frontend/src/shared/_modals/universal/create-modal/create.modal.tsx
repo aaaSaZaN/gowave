@@ -1,12 +1,12 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Modal } from '@mantine/core'
-import { TSubscriptionTemplateType } from '@remnawave/backend-contract'
+import type { TSubscriptionTemplateType } from '@remnawave/backend-contract'
+import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
+import { requireValue } from '@shared/lib/invariant'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { useTranslation } from 'react-i18next'
 import { TbNewSection } from 'react-icons/tb'
-import { NavigateFunction } from 'react-router'
-
-import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import type { NavigateFunction } from 'react-router'
 
 import { CreateExternalSquadContent } from './create-external-squad.content'
 import { CreateInternalSquadContent } from './create-internal-squad.content'
@@ -54,19 +54,40 @@ export const CreateModal = NiceModal.create((props: IProps) => {
                 <CreateTemplateContent
                     templateType={contentOptions.templateType}
                     onClose={hide}
-                    navigate={contentOptions.navigate!}
+                    navigate={requireValue(
+                        contentOptions.navigate,
+                        'Navigation is required for this modal'
+                    )}
                 />
             )}
             {createFrom === 'internalSquad' && <CreateInternalSquadContent onClose={hide} />}
             {createFrom === 'subpageConfig' && (
-                <CreateSubpageConfigContent onClose={hide} navigate={contentOptions.navigate!} />
+                <CreateSubpageConfigContent
+                    onClose={hide}
+                    navigate={requireValue(
+                        contentOptions.navigate,
+                        'Navigation is required for this modal'
+                    )}
+                />
             )}
             {createFrom === 'externalSquad' && <CreateExternalSquadContent onClose={hide} />}
             {createFrom === 'configProfile' && (
-                <CreateConfigProfileContent onClose={hide} navigate={contentOptions.navigate!} />
+                <CreateConfigProfileContent
+                    onClose={hide}
+                    navigate={requireValue(
+                        contentOptions.navigate,
+                        'Navigation is required for this modal'
+                    )}
+                />
             )}
             {createFrom === 'nodePlugin' && (
-                <CreateNodePluginContent onClose={hide} navigate={contentOptions.navigate!} />
+                <CreateNodePluginContent
+                    onClose={hide}
+                    navigate={requireValue(
+                        contentOptions.navigate,
+                        'Navigation is required for this modal'
+                    )}
+                />
             )}
         </Modal>
     )

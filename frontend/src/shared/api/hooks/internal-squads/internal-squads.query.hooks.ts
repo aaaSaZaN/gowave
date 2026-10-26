@@ -4,10 +4,9 @@ import {
     GetInternalSquadsCommand,
     GetInternalSquadsTagsCommand
 } from '@remnawave/backend-contract'
-import { keepPreviousData } from '@tanstack/react-query'
-
 import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
+import { keepPreviousData } from '@tanstack/react-query'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'
 
@@ -45,7 +44,10 @@ export const useGetInternalSquad = createGetQueryHook({
     endpoint: GetInternalSquadCommand.TSQ_url,
     responseSchema: GetInternalSquadCommand.ResponseSchema,
     routeParamsSchema: GetInternalSquadCommand.RequestParamSchema,
-    getQueryKey: ({ route }) => internalSquadsQueryKeys.getInternalSquad(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? internalSquadsQueryKeys.getInternalSquad(route).queryKey
+            : internalSquadsQueryKeys.getInternalSquad._def,
     rQueryParams: {
         refetchOnMount: true,
         staleTime: sToMs(30)
@@ -58,7 +60,9 @@ export const useGetInternalSquadAccessibleNodes = createGetQueryHook({
     responseSchema: GetInternalSquadAccessibleNodesCommand.ResponseSchema,
     routeParamsSchema: GetInternalSquadAccessibleNodesCommand.RequestParamSchema,
     getQueryKey: ({ route }) =>
-        internalSquadsQueryKeys.getInternalSquadAccessibleNodes(route!).queryKey,
+        route
+            ? internalSquadsQueryKeys.getInternalSquadAccessibleNodes(route).queryKey
+            : internalSquadsQueryKeys.getInternalSquadAccessibleNodes._def,
     rQueryParams: {
         staleTime: sToMs(15)
     },

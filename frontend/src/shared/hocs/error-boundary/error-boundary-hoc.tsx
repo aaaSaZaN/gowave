@@ -1,8 +1,7 @@
 import NiceModal from '@ebay/nice-modal-react'
+import { NiceModalAutoClose } from '@shared/_modals/nice-modal-auto-close'
 import { Component, type ComponentType, type ErrorInfo, type ReactNode } from 'react'
 import { Outlet } from 'react-router'
-
-import { NiceModalAutoClose } from '@shared/_modals/nice-modal-auto-close'
 
 export interface ErrorBoundaryFallbackProps {
     componentStack: null | string
@@ -21,19 +20,19 @@ interface BoundaryState {
 }
 
 export class ErrorBoundary extends Component<IProps & { children: ReactNode }, BoundaryState> {
-    state: BoundaryState = { failed: false, error: null, componentStack: null }
+    override state: BoundaryState = { failed: false, error: null, componentStack: null }
 
     static getDerivedStateFromError(error: unknown): Partial<BoundaryState> {
         return { failed: true, error }
     }
 
-    componentDidCatch(_error: unknown, info: ErrorInfo) {
+    override componentDidCatch(_error: unknown, info: ErrorInfo) {
         this.setState({ componentStack: info.componentStack ?? null })
     }
 
     resetErrorBoundary = () => this.setState({ failed: false, error: null, componentStack: null })
 
-    render() {
+    override render() {
         const { FallbackComponent, children } = this.props
         return this.state.failed ? (
             <FallbackComponent

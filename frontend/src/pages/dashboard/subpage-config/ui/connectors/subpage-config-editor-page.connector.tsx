@@ -1,8 +1,8 @@
-import { useNavigate, useParams } from 'react-router'
-
 import { useGetSubscriptionPageConfig } from '@shared/api/hooks'
 import { ROUTES } from '@shared/constants'
+import { runAsync } from '@shared/lib/run-async'
 import { LoadingScreen } from '@shared/ui'
+import { useNavigate, useParams } from 'react-router'
 
 import { SubpageConfigEditorPageComponent } from '../components/subpage-config-editor-page.component'
 
@@ -24,7 +24,7 @@ export function SubpageConfigEditorPageConnector() {
     }
 
     if (!uuid) {
-        navigate(ROUTES.DASHBOARD.HOME, { replace: true })
+        runAsync(navigate(ROUTES.DASHBOARD.HOME, { replace: true }))
         return null
     }
 

@@ -1,4 +1,5 @@
 import { Stack, Text } from '@mantine/core'
+import { optionalProp } from '@shared/lib/optional-prop'
 
 import classes from './Trace.module.css'
 
@@ -14,7 +15,7 @@ export const TraceStat = (props: IProps) => {
     return (
         <Stack gap={2}>
             <span className={classes.microLabel}>{label}</span>
-            <Text c={color} ff="monospace" fw={600} lh={1} size="sm">
+            <Text {...optionalProp('c', color)} ff="monospace" fw={600} lh={1} size="sm">
                 {value}
             </Text>
         </Stack>

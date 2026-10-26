@@ -1,14 +1,14 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Drawer } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { PiListChecks } from 'react-icons/pi'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useGetHost } from '@shared/api/hooks'
 import { OPEN_ENTITY } from '@shared/constants'
+import { runAsync } from '@shared/lib/run-async'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useTranslation } from 'react-i18next'
+import { PiListChecks } from 'react-icons/pi'
 
 import { EditHostDrawerContent } from './edit-host.modal.content'
 
@@ -25,12 +25,16 @@ export const EditHostDrawer = NiceModal.create((props: IProps) => {
         modal,
         drawer: true,
         onClose() {
-            queryClient.refetchQueries({
-                queryKey: QueryKeys.hosts.getAllTags.queryKey
-            })
-            queryClient.refetchQueries({
-                queryKey: QueryKeys.hosts.getAllHosts.queryKey
-            })
+            runAsync(
+                queryClient.refetchQueries({
+                    queryKey: QueryKeys.hosts.getAllTags.queryKey
+                })
+            )
+            runAsync(
+                queryClient.refetchQueries({
+                    queryKey: QueryKeys.hosts.getAllHosts.queryKey
+                })
+            )
         }
     })
 

@@ -1,5 +1,5 @@
-import { Badge, BadgeProps } from '@mantine/core'
-import { TUsersStatus, USERS_STATUS } from '@remnawave/backend-contract'
+import { Badge, type BadgeProps } from '@mantine/core'
+import { type TUsersStatus, USERS_STATUS } from '@remnawave/backend-contract'
 import { PiClockCountdown, PiClockUser, PiProhibit, PiPulse } from 'react-icons/pi'
 
 interface IProps extends Omit<BadgeProps, 'children' | 'color'> {

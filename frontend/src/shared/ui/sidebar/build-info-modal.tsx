@@ -11,12 +11,11 @@ import {
     Text,
     Tooltip
 } from '@mantine/core'
-import { GetMetadataCommand } from '@remnawave/backend-contract'
+import type { GetMetadataCommand } from '@remnawave/backend-contract'
+import { instance } from '@shared/api'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { TbBrandGithub, TbCheck, TbCopy, TbGitBranch, TbDownload } from 'react-icons/tb'
-
-import { instance } from '@shared/api'
+import { TbBrandGithub, TbCheck, TbCopy, TbDownload, TbGitBranch } from 'react-icons/tb'
 
 import { Logo } from '../logo'
 import classes from './build-info-modal.module.css'

@@ -1,8 +1,7 @@
+import type { ISshSnippet } from '@entities/ssh-vault'
 import { ActionIcon, Button, Group, Scroller, Text, Tooltip } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import { TbPlus } from 'react-icons/tb'
-
-import type { ISshSnippet } from '@entities/ssh-vault'
 
 import classes from '../NodeSshTerminal.module.css'
 

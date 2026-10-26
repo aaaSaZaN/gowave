@@ -1,13 +1,13 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Modal } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { TbUser } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useGetUserById } from '@shared/api/hooks'
 import { OPEN_ENTITY } from '@shared/constants'
+import { runAsync } from '@shared/lib/run-async'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useTranslation } from 'react-i18next'
+import { TbUser } from 'react-icons/tb'
 
 import { ViewUserModalContent } from './view-user.modal.content'
 
@@ -23,15 +23,21 @@ export const ViewUserModal = NiceModal.create((props: IProps) => {
     const { modalProps } = useNiceMantineModal({
         modal,
         onClose: () => {
-            queryClient.refetchQueries({
-                queryKey: QueryKeys.users.getAllUsers._def
-            })
-            queryClient.refetchQueries({
-                queryKey: QueryKeys.users.getUserTags.queryKey
-            })
-            queryClient.refetchQueries({
-                queryKey: QueryKeys.system.getSystemStats.queryKey
-            })
+            runAsync(
+                queryClient.refetchQueries({
+                    queryKey: QueryKeys.users.getAllUsers._def
+                })
+            )
+            runAsync(
+                queryClient.refetchQueries({
+                    queryKey: QueryKeys.users.getUserTags.queryKey
+                })
+            )
+            runAsync(
+                queryClient.refetchQueries({
+                    queryKey: QueryKeys.system.getSystemStats.queryKey
+                })
+            )
         }
     })
 

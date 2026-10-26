@@ -1,9 +1,4 @@
 import { MonacoSetupHostJsonFieldsFeature } from '@features/dashboard/config-profiles/monaco-setup'
-import { TFunction } from 'i18next'
-import { ComponentType } from 'react'
-import { PiNetwork, PiPencilDuotone } from 'react-icons/pi'
-import { TbCloudNetwork, TbMask } from 'react-icons/tb'
-
 import { showModal } from '@shared/_modals/show-modal'
 import {
     BASIC_FINAL_MASK_PARAMS,
@@ -11,8 +6,13 @@ import {
     BASIC_SOCKOPT_PARAMS,
     PASTE_BASIC_XHTTP_EXTRA_PARAMS
 } from '@shared/constants'
+import { runAsync } from '@shared/lib/run-async'
+import type { TFunction } from 'i18next'
+import type { ComponentType } from 'react'
+import { PiNetwork, PiPencilDuotone } from 'react-icons/pi'
+import { TbCloudNetwork, TbMask } from 'react-icons/tb'
 
-import { THostForm } from '../host-form.types'
+import type { THostForm } from '../host-form.types'
 
 export type THostJsonField = 'finalMask' | 'muxParams' | 'sockoptParams' | 'xhttpExtraParams'
 
@@ -67,14 +67,16 @@ export const openHostJsonFieldModal = (
 ) => {
     const { docsUrl, field, IconComponent, path, sample, title } = config
 
-    showModal('jsonEditorModal', {
-        docsUrl,
-        IconComponent,
-        initialValue: (form.getValues()[field] as unknown as string) ?? '',
-        onSave: (value) => form.setFieldValue(field, value),
-        path,
-        sample,
-        setupSchema: () => MonacoSetupHostJsonFieldsFeature.setup(language),
-        title
-    })
+    runAsync(
+        showModal('jsonEditorModal', {
+            docsUrl,
+            IconComponent,
+            initialValue: (form.getValues()[field] as unknown as string) ?? '',
+            onSave: (value) => form.setFieldValue(field, value),
+            path,
+            sample,
+            setupSchema: () => MonacoSetupHostJsonFieldsFeature.setup(language),
+            title
+        })
+    )
 }

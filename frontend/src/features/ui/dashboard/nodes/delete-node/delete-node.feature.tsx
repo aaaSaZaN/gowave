@@ -1,11 +1,10 @@
 import { Loader, Menu } from '@mantine/core'
 import { modals } from '@mantine/modals'
+import { useDeleteNode } from '@shared/api/hooks'
 import { useTranslation } from 'react-i18next'
 import { TbTrash } from 'react-icons/tb'
 
-import { useDeleteNode } from '@shared/api/hooks'
-
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export function DeleteNodeFeature(props: IProps) {
     const { t } = useTranslation()
@@ -16,7 +15,7 @@ export function DeleteNodeFeature(props: IProps) {
             uuid: node.uuid
         },
         mutationFns: {
-            onSuccess: async () => {
+            onSuccess: () => {
                 handleClose()
             }
         }

@@ -1,7 +1,6 @@
-import { Drawer, DrawerProps, Group, useProps } from '@mantine/core'
-import { ReactNode } from 'react'
-
+import { Drawer, type DrawerProps, Group, useProps } from '@mantine/core'
 import classes from '@shared/constants/theme/overrides/drawer/drawer.module.css'
+import type { ReactNode } from 'react'
 
 interface IProps {
     drawerProps: Omit<DrawerProps, 'children' | 'title'>

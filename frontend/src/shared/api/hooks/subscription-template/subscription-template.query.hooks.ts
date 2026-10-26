@@ -26,7 +26,9 @@ export const useGetSubscriptionTemplate = createGetQueryHook({
     routeParamsSchema: GetSubscriptionTemplateCommand.RequestParamSchema,
     responseSchema: GetSubscriptionTemplateCommand.ResponseSchema,
     getQueryKey: ({ route }) =>
-        subscriptionTemplateQueryKeys.getSubscriptionTemplate(route!).queryKey,
+        route
+            ? subscriptionTemplateQueryKeys.getSubscriptionTemplate(route).queryKey
+            : subscriptionTemplateQueryKeys.getSubscriptionTemplate._def,
     rQueryParams: {
         refetchOnMount: false,
         staleTime: sToMs(30)

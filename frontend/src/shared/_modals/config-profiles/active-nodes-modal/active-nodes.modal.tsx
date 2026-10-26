@@ -10,14 +10,13 @@ import {
     Text,
     Tooltip
 } from '@mantine/core'
-import { GetConfigProfilesCommand } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
-import { PiCheck, PiCopy, PiCpu } from 'react-icons/pi'
-import { TbCpu } from 'react-icons/tb'
-
+import type { GetConfigProfilesCommand } from '@remnawave/backend-contract'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import ReactCountryFlag from '@shared/ui/country-flag'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useTranslation } from 'react-i18next'
+import { PiCheck, PiCopy, PiCpu } from 'react-icons/pi'
+import { TbCpu } from 'react-icons/tb'
 
 interface IProps {
     nodes: GetConfigProfilesCommand.Response['response']['configProfiles'][number]['nodes']

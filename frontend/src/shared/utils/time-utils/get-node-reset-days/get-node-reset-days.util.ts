@@ -1,5 +1,3 @@
-/* eslint-disable no-nested-ternary */
-/* eslint-disable @stylistic/indent */
 import dayjs from 'dayjs'
 
 export function getNodeResetDaysUtil(targetDay: number): number {

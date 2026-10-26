@@ -15,14 +15,13 @@ import {
     ThemeIcon
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { TSubscriptionPageSvgLibrary } from '@remnawave/subscription-page-types'
+import type { TSubscriptionPageSvgLibrary } from '@remnawave/subscription-page-types'
+import isSvg from '@shared/lib/is-svg'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SafeSvg } from '@shared/ui/safe-svg'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbBulb, TbPhoto, TbPlus, TbTrash } from 'react-icons/tb'
-
-import isSvg from '@shared/lib/is-svg'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { sanitizeSvg } from '@shared/utils/misc'
 
 import styles from '../subpage-config-visual-editor.module.css'
 
@@ -54,7 +53,7 @@ export function SvgLibraryModal(props: IProps) {
             }
             onChange(cleanedLibrary)
         }
-    }, [])
+    }, [svgLibrary, onChange, libraryEntries.filter])
 
     const handleAdd = () => {
         if (!newKey.trim() || !isSvg(newSvg)) return
@@ -82,9 +81,11 @@ export function SvgLibraryModal(props: IProps) {
     }
 
     const handleEdit = (key: string) => {
+        const svg = svgLibrary[key]
+        if (svg === undefined) return
         setEditingKey(key)
         setNewKey(key)
-        setNewSvg(svgLibrary[key])
+        setNewSvg(svg)
         openAddDrawer()
     }
 
@@ -198,10 +199,9 @@ export function SvgLibraryModal(props: IProps) {
                                                         }}
                                                         variant="light"
                                                     >
-                                                        <span
-                                                            dangerouslySetInnerHTML={{
-                                                                __html: sanitizeSvg(svg)
-                                                            }}
+                                                        <SafeSvg
+                                                            inline
+                                                            svg={svg}
                                                             style={{
                                                                 display: 'flex',
                                                                 alignItems: 'center'
@@ -310,10 +310,9 @@ export function SvgLibraryModal(props: IProps) {
                                                 }}
                                                 variant="light"
                                             >
-                                                <span
-                                                    dangerouslySetInnerHTML={{
-                                                        __html: sanitizeSvg(newSvg)
-                                                    }}
+                                                <SafeSvg
+                                                    inline
+                                                    svg={newSvg}
                                                     style={{
                                                         display: 'flex',
                                                         alignItems: 'center'

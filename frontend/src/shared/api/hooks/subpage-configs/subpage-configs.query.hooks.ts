@@ -25,7 +25,10 @@ export const useGetSubscriptionPageConfig = createGetQueryHook({
     endpoint: GetSubpageConfigCommand.TSQ_url,
     routeParamsSchema: GetSubpageConfigCommand.RequestParamSchema,
     responseSchema: GetSubpageConfigCommand.ResponseSchema,
-    getQueryKey: ({ route }) => subpageConfigsQueryKeys.getSubpageConfig(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? subpageConfigsQueryKeys.getSubpageConfig(route).queryKey
+            : subpageConfigsQueryKeys.getSubpageConfig._def,
     rQueryParams: {
         refetchOnMount: false,
         staleTime: sToMs(5)

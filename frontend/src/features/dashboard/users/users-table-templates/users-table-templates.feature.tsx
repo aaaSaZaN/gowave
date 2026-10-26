@@ -1,16 +1,14 @@
-import { ActionIcon, ColorSwatch, Menu, Tooltip } from '@mantine/core'
-import { modals } from '@mantine/modals'
-import { useTranslation } from 'react-i18next'
-import { TbBookmark, TbPlus, TbTrash } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-
 import {
     useUsersTableTemplates,
     useUsersTableTemplatesActions
 } from '@entities/dashboard/users/users-table-templates-store'
+import { ActionIcon, ColorSwatch, Menu, Tooltip } from '@mantine/core'
+import { modals } from '@mantine/modals'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useTranslation } from 'react-i18next'
+import { TbBookmark, TbPlus, TbTrash } from 'react-icons/tb'
 
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 import { getSwatchColor } from './lib/constants'
 import { applySnapshot, captureSnapshot } from './lib/snapshot'
 import { SaveTemplateModal } from './ui/save-template.modal'

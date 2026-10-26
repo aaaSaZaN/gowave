@@ -1,11 +1,11 @@
-import { z } from 'zod'
+import type { z } from 'zod'
 
-import { EnhancedMutationParams } from './enhanced-mutations-params.interface'
+import type { EnhancedMutationParams } from './enhanced-mutations-params.interface'
 
 export type MutationResponse<ResponseSchema extends undefined | z.ZodType<{ response: unknown }>> =
     ResponseSchema extends z.ZodType<{ response: unknown }>
         ? z.infer<ResponseSchema>['response']
-        : void
+        : undefined
 
 export interface MutationVariables<
     RouteParamsSchema extends z.ZodType<Record<string, unknown>>,

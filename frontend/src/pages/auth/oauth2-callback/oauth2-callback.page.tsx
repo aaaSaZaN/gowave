@@ -1,15 +1,15 @@
 import { Center, Loader, Stack, Text, Title, Transition } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { TOAuth2ProvidersKeys } from '@remnawave/backend-contract'
-import { CSSProperties, useEffect } from 'react'
-import { TbCheck } from 'react-icons/tb'
-import { useNavigate, useParams, useSearchParams } from 'react-router'
-
+import type { TOAuth2ProvidersKeys } from '@remnawave/backend-contract'
 import { useOauth2Callback } from '@shared/api/hooks'
 import { ROUTES } from '@shared/constants'
 import { useAuth } from '@shared/hooks/use-auth'
+import { runAsync } from '@shared/lib/run-async'
 import { Page } from '@shared/ui/page'
 import { consumeReturnTo } from '@shared/utils/return-to.util'
+import { type CSSProperties, useEffect } from 'react'
+import { TbCheck } from 'react-icons/tb'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 
 export const Oauth2CallbackPage = () => {
     const { provider } = useParams()
@@ -26,7 +26,7 @@ export const Oauth2CallbackPage = () => {
             onSuccess: () => {
                 setIsAuthenticated(true)
 
-                navigate(consumeReturnTo() ?? ROUTES.DASHBOARD.HOME)
+                runAsync(navigate(consumeReturnTo() ?? ROUTES.DASHBOARD.HOME))
             },
             onError: (error) => {
                 notifications.show({
@@ -36,7 +36,7 @@ export const Oauth2CallbackPage = () => {
                 })
                 setIsAuthenticated(false)
 
-                navigate(ROUTES.AUTH.LOGIN)
+                runAsync(navigate(ROUTES.AUTH.LOGIN))
             }
         }
     })
@@ -51,7 +51,7 @@ export const Oauth2CallbackPage = () => {
                 }
             })
         }
-    }, [code, state, provider])
+    }, [code, state, provider, oauth2Callback])
 
     return (
         <Page title="OAuth2 Authentication">

@@ -1,14 +1,13 @@
 import { ActionIcon, Box, Divider, Group, Stack } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { GetTorrentBlockerReportsCommand } from '@remnawave/backend-contract'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
-import { useTranslation } from 'react-i18next'
-import { TbExternalLink, TbFlame, TbJson } from 'react-icons/tb'
-
+import type { GetTorrentBlockerReportsCommand } from '@remnawave/backend-contract'
 import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 import { formatTimeUtil } from '@shared/utils/time-utils/format-time.util'
+import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { useTranslation } from 'react-i18next'
+import { TbExternalLink, TbFlame, TbJson } from 'react-icons/tb'
 
 interface IProps {
     report: GetTorrentBlockerReportsCommand.Response['response']['records'][number]
@@ -32,7 +31,7 @@ export const UserTorrentBlockerReportItem = (props: IProps) => {
 
                 <ActionIcon
                     color="gray"
-                    onClick={async () => {
+                    onClick={() => {
                         modals.open({
                             children: (
                                 <Box>

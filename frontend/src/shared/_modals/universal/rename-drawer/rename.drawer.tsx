@@ -1,5 +1,5 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
-import { ActionIcon, ModalProps, TextInput } from '@mantine/core'
+import { ActionIcon, type ModalProps, TextInput } from '@mantine/core'
 import { useField } from '@mantine/form'
 import {
     UpdateConfigProfileCommand,
@@ -10,10 +10,6 @@ import {
     UpdateSubpageConfigCommand,
     UpdateSubscriptionTemplateCommand
 } from '@remnawave/backend-contract'
-import { ReactNode, useId } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbDeviceFloppy, TbPencil } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import {
     QueryKeys,
@@ -26,8 +22,12 @@ import {
     useUpdateSubscriptionTemplate
 } from '@shared/api/hooks'
 import { queryClient } from '@shared/api/query-client'
+import { runAsync } from '@shared/lib/run-async'
 import { CompoundModalShared } from '@shared/ui/compound-modal/compound-modal.shared'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { type ReactNode, useId } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbDeviceFloppy, TbPencil } from 'react-icons/tb'
 
 type RenameType =
     | 'configProfile'
@@ -64,132 +64,276 @@ const validateWith =
         return result.success ? null : (result.error?.issues[0]?.message ?? null)
     }
 
-function makeBody<V>(options: {
+function RenameBody<V>({
+    modalProps,
+    name,
+    uuid,
+    mutate,
+    isPending,
+    buildVariables,
+    validate
+}: IBodyProps & {
+    isPending: boolean
+    mutate: (args: { variables: V }) => void
     buildVariables: (uuid: string, name: string) => V
-    queryKey: readonly unknown[]
-    useUpdate: (args: { mutationFns: { onSuccess: () => void } }) => {
-        isPending: boolean
-        mutate: (args: { variables: V }) => void
-    }
-    validate: (value: string) => null | string
+    validate: (value: string) => string | null
 }) {
-    const { buildVariables, queryKey, useUpdate, validate } = options
+    const { t } = useTranslation()
+    const formId = useId()
 
-    return function Body({ modalProps, name, onSaved, uuid }: IBodyProps) {
-        const { t } = useTranslation()
-        const formId = useId()
+    const nameField = useField<string>({
+        mode: 'controlled',
+        initialValue: '',
+        validate
+    })
 
-        const nameField = useField<string>({
-            mode: 'controlled',
-            initialValue: '',
-            validate
-        })
+    const handleSubmit = async () => {
+        if (await nameField.validate()) return
 
-        const { mutate, isPending } = useUpdate({
-            mutationFns: {
-                onSuccess: () => {
-                    queryClient.refetchQueries({ queryKey })
-                    onSaved()
-                }
-            }
-        })
-
-        const handleSubmit = async () => {
-            if (await nameField.validate()) return
-
-            mutate({ variables: buildVariables(uuid, nameField.getValue()) })
-        }
-
-        return (
-            <CompoundModalShared
-                buttons={
-                    <ActionIcon
-                        color="teal"
-                        disabled={!!nameField.error || !nameField.getValue()}
-                        form={formId}
-                        loading={isPending}
-                        type="submit"
-                        size="lg"
-                        variant="soft"
-                    >
-                        <TbDeviceFloppy size="20px" />
-                    </ActionIcon>
-                }
-                modalProps={modalProps}
-                title={
-                    <BaseOverlayHeader
-                        iconColor="teal"
-                        IconComponent={TbPencil}
-                        iconVariant="soft"
-                        title={t('common.action.rename')}
-                    />
-                }
-            >
-                <form
-                    id={formId}
-                    onSubmit={(event) => {
-                        event.preventDefault()
-                        handleSubmit()
-                    }}
-                >
-                    <TextInput
-                        data-autofocus
-                        key={nameField.key}
-                        placeholder={name}
-                        {...nameField.getInputProps()}
-                        required
-                    />
-                </form>
-            </CompoundModalShared>
-        )
+        mutate({ variables: buildVariables(uuid, nameField.getValue()) })
     }
+
+    return (
+        <CompoundModalShared
+            buttons={
+                <ActionIcon
+                    color="teal"
+                    disabled={!!nameField.error || !nameField.getValue()}
+                    form={formId}
+                    loading={isPending}
+                    type="submit"
+                    size="lg"
+                    variant="soft"
+                >
+                    <TbDeviceFloppy size="20px" />
+                </ActionIcon>
+            }
+            modalProps={modalProps}
+            title={
+                <BaseOverlayHeader
+                    iconColor="teal"
+                    IconComponent={TbPencil}
+                    iconVariant="soft"
+                    title={t('common.action.rename')}
+                />
+            }
+        >
+            <form
+                id={formId}
+                onSubmit={(event) => {
+                    event.preventDefault()
+                    runAsync(handleSubmit())
+                }}
+            >
+                <TextInput
+                    data-autofocus
+                    key={nameField.key}
+                    placeholder={name}
+                    {...nameField.getInputProps()}
+                    required
+                />
+            </form>
+        </CompoundModalShared>
+    )
+}
+
+const validateConfigProfileRenameBody = validateWith(
+    UpdateConfigProfileCommand.RequestBodySchema.omit({ uuid: true })
+)
+function ConfigProfileRenameBody(props: IBodyProps) {
+    const { mutate, isPending } = useUpdateConfigProfile({
+        mutationFns: {
+            onSuccess: () => {
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.configProfiles.getConfigProfiles.queryKey
+                    })
+                )
+                props.onSaved()
+            }
+        }
+    })
+    return (
+        <RenameBody
+            {...props}
+            mutate={mutate}
+            isPending={isPending}
+            buildVariables={(uuid, name) => ({ uuid, name })}
+            validate={validateConfigProfileRenameBody}
+        />
+    )
+}
+
+const validateExternalSquadRenameBody = validateWith(
+    UpdateExternalSquadCommand.RequestBodySchema.omit({ uuid: true })
+)
+function ExternalSquadRenameBody(props: IBodyProps) {
+    const { mutate, isPending } = useUpdateExternalSquad({
+        mutationFns: {
+            onSuccess: () => {
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.externalSquads.getExternalSquads.queryKey
+                    })
+                )
+                props.onSaved()
+            }
+        }
+    })
+    return (
+        <RenameBody
+            {...props}
+            mutate={mutate}
+            isPending={isPending}
+            buildVariables={(uuid, name) => ({ uuid, name })}
+            validate={validateExternalSquadRenameBody}
+        />
+    )
+}
+
+const validateInternalSquadRenameBody = validateWith(
+    UpdateInternalSquadCommand.RequestBodySchema.omit({ uuid: true })
+)
+function InternalSquadRenameBody(props: IBodyProps) {
+    const { mutate, isPending } = useUpdateInternalSquad({
+        mutationFns: {
+            onSuccess: () => {
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.internalSquads.getInternalSquads.queryKey
+                    })
+                )
+                props.onSaved()
+            }
+        }
+    })
+    return (
+        <RenameBody
+            {...props}
+            mutate={mutate}
+            isPending={isPending}
+            buildVariables={(uuid, name) => ({ uuid, name })}
+            validate={validateInternalSquadRenameBody}
+        />
+    )
+}
+
+const validateNodePluginRenameBody = validateWith(
+    UpdateNodePluginCommand.RequestBodySchema.omit({ uuid: true })
+)
+function NodePluginRenameBody(props: IBodyProps) {
+    const { mutate, isPending } = useUpdateNodePlugin({
+        mutationFns: {
+            onSuccess: () => {
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.nodePlugins.getNodePlugins.queryKey
+                    })
+                )
+                props.onSaved()
+            }
+        }
+    })
+    return (
+        <RenameBody
+            {...props}
+            mutate={mutate}
+            isPending={isPending}
+            buildVariables={(uuid, name) => ({ uuid, name })}
+            validate={validateNodePluginRenameBody}
+        />
+    )
+}
+
+const validatePasskeyRenameBody = validateWith(
+    UpdatePasskeyCommand.RequestBodySchema.omit({ id: true })
+)
+function PasskeyRenameBody(props: IBodyProps) {
+    const { mutate, isPending } = useUpdatePasskey({
+        mutationFns: {
+            onSuccess: () => {
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.passkeys.getPasskeys.queryKey
+                    })
+                )
+                props.onSaved()
+            }
+        }
+    })
+    return (
+        <RenameBody
+            {...props}
+            mutate={mutate}
+            isPending={isPending}
+            buildVariables={(uuid, name) => ({ id: uuid, name })}
+            validate={validatePasskeyRenameBody}
+        />
+    )
+}
+
+const validateSubpageConfigRenameBody = validateWith(
+    UpdateSubpageConfigCommand.RequestBodySchema.omit({ uuid: true })
+)
+function SubpageConfigRenameBody(props: IBodyProps) {
+    const { mutate, isPending } = useUpdateSubpageConfig({
+        mutationFns: {
+            onSuccess: () => {
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.subpageConfigs.getSubpageConfigs.queryKey
+                    })
+                )
+                props.onSaved()
+            }
+        }
+    })
+    return (
+        <RenameBody
+            {...props}
+            mutate={mutate}
+            isPending={isPending}
+            buildVariables={(uuid, name) => ({ uuid, name })}
+            validate={validateSubpageConfigRenameBody}
+        />
+    )
+}
+
+const validateTemplateRenameBody = validateWith(
+    UpdateSubscriptionTemplateCommand.RequestBodySchema.omit({ uuid: true })
+)
+function TemplateRenameBody(props: IBodyProps) {
+    const { mutate, isPending } = useUpdateSubscriptionTemplate({
+        mutationFns: {
+            onSuccess: () => {
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.subscriptionTemplate.getSubscriptionTemplates.queryKey
+                    })
+                )
+                props.onSaved()
+            }
+        }
+    })
+    return (
+        <RenameBody
+            {...props}
+            mutate={mutate}
+            isPending={isPending}
+            buildVariables={(uuid, name) => ({ uuid, name })}
+            validate={validateTemplateRenameBody}
+        />
+    )
 }
 
 const BODY_BY_KIND: Record<RenameType, (props: IBodyProps) => ReactNode> = {
-    configProfile: makeBody({
-        buildVariables: (uuid, name) => ({ uuid, name }),
-        queryKey: QueryKeys.configProfiles.getConfigProfiles.queryKey,
-        useUpdate: useUpdateConfigProfile,
-        validate: validateWith(UpdateConfigProfileCommand.RequestBodySchema.omit({ uuid: true }))
-    }),
-    externalSquad: makeBody({
-        buildVariables: (uuid, name) => ({ uuid, name }),
-        queryKey: QueryKeys.externalSquads.getExternalSquads.queryKey,
-        useUpdate: useUpdateExternalSquad,
-        validate: validateWith(UpdateExternalSquadCommand.RequestBodySchema.omit({ uuid: true }))
-    }),
-    internalSquad: makeBody({
-        buildVariables: (uuid, name) => ({ uuid, name }),
-        queryKey: QueryKeys.internalSquads.getInternalSquads.queryKey,
-        useUpdate: useUpdateInternalSquad,
-        validate: validateWith(UpdateInternalSquadCommand.RequestBodySchema.omit({ uuid: true }))
-    }),
-    nodePlugin: makeBody({
-        buildVariables: (uuid, name) => ({ uuid, name }),
-        queryKey: QueryKeys.nodePlugins.getNodePlugins.queryKey,
-        useUpdate: useUpdateNodePlugin,
-        validate: validateWith(UpdateNodePluginCommand.RequestBodySchema.omit({ uuid: true }))
-    }),
-    passkey: makeBody({
-        buildVariables: (uuid, name) => ({ id: uuid, name }),
-        queryKey: QueryKeys.passkeys.getPasskeys.queryKey,
-        useUpdate: useUpdatePasskey,
-        validate: validateWith(UpdatePasskeyCommand.RequestBodySchema.omit({ id: true }))
-    }),
-    subpageConfig: makeBody({
-        buildVariables: (uuid, name) => ({ uuid, name }),
-        queryKey: QueryKeys.subpageConfigs.getSubpageConfigs.queryKey,
-        useUpdate: useUpdateSubpageConfig,
-        validate: validateWith(UpdateSubpageConfigCommand.RequestBodySchema.omit({ uuid: true }))
-    }),
-    template: makeBody({
-        buildVariables: (uuid, name) => ({ uuid, name }),
-        queryKey: QueryKeys.subscriptionTemplate.getSubscriptionTemplates.queryKey,
-        useUpdate: useUpdateSubscriptionTemplate,
-        validate: validateWith(
-            UpdateSubscriptionTemplateCommand.RequestBodySchema.omit({ uuid: true })
-        )
-    })
+    configProfile: ConfigProfileRenameBody,
+    externalSquad: ExternalSquadRenameBody,
+    internalSquad: InternalSquadRenameBody,
+    nodePlugin: NodePluginRenameBody,
+    passkey: PasskeyRenameBody,
+    subpageConfig: SubpageConfigRenameBody,
+    template: TemplateRenameBody
 }
 
 export const RenameModalShared = NiceModal.create((props: IProps) => {

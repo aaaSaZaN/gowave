@@ -1,7 +1,6 @@
 import type { IEncryptedBlob } from './ssh-crypto'
-import type { TSshKeyAlgo } from './ssh-private-key'
-
 import { generateDeviceKey } from './ssh-crypto'
+import type { TSshKeyAlgo } from './ssh-private-key'
 
 const DB_NAME = 'rw-vault'
 const DB_VERSION = 2

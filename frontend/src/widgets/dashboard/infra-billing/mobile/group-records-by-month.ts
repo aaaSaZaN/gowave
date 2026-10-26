@@ -1,4 +1,4 @@
-import { GetInfraBillingRecordsCommand } from '@remnawave/backend-contract'
+import type { GetInfraBillingRecordsCommand } from '@remnawave/backend-contract'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 

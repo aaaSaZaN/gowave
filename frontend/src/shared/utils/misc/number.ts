@@ -21,7 +21,6 @@ export function formatCurrency(
     options?: FormatterOptions,
     currency = '$'
 ): string {
-    // eslint-disable-next-line no-use-before-define
     return formatDecimal(value, { ...options, prefix: currency })
 }
 
@@ -48,7 +47,7 @@ export function formatDecimal(value: number | string, options?: FormatterOptions
     }
 
     const parts = currentValue.toFixed(precision).split('.')
-    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator)
+    const integerPart = (parts[0] ?? '').replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator)
     const decimalPart = parts[1]
 
     return `${prefix}${integerPart}`

@@ -1,5 +1,3 @@
-import type { GeocheckResult } from './use-node-geocheck'
-
 import {
     ActionIcon,
     Anchor,
@@ -12,6 +10,14 @@ import {
     Tooltip
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
+import { usePseudoFullscreen } from '@shared/hooks'
+import clsx from '@shared/lib/classes'
+import { fullscreenClasses } from '@shared/ui/fullscreen-toggle-button'
+import { ZoomableImage } from '@shared/ui/zoomable-image'
+import {
+    copyImageScreenshotToClipboard,
+    downloadImageScreenshot
+} from '@shared/utils/copy-screenshot.util'
 import { githubDarkTheme, JsonEditor } from 'json-edit-react'
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -27,18 +33,9 @@ import {
     TbRefresh,
     TbRoute
 } from 'react-icons/tb'
-
-import { usePseudoFullscreen } from '@shared/hooks'
-import clsx from '@shared/lib/classes'
-import { fullscreenClasses } from '@shared/ui/fullscreen-toggle-button'
-import { ZoomableImage } from '@shared/ui/zoomable-image'
-import {
-    copyImageScreenshotToClipboard,
-    downloadImageScreenshot
-} from '@shared/utils/copy-screenshot.util'
-
 import classes from './GeocheckResult.module.css'
 import { GeocheckTraceWidget, resolveConnectivity } from './trace'
+import type { GeocheckResult } from './use-node-geocheck'
 
 const GEOCHECK_REPO_URL = 'https://github.com/remnawave/geocheck'
 

@@ -1,14 +1,13 @@
 import { Container } from '@mantine/core'
-import { GetApiTokensCommand, GetRemnawaveSettingsCommand } from '@remnawave/backend-contract'
+import type { GetApiTokensCommand, GetRemnawaveSettingsCommand } from '@remnawave/backend-contract'
+import { LoadingScreen, Logo, Page, PageHeaderShared } from '@shared/ui'
+import Masonry from '@shared/ui/masonry'
 import { ApiTokensCardWidget } from '@widgets/gowave-settings/api-tokens-card/api-tokens-card.widget'
 import { AuthentificationSettingsCardWidget } from '@widgets/gowave-settings/authentification-settings-card/authentification-settings-card.widget'
 import { BackendToolsCardWidget } from '@widgets/gowave-settings/backend-tools-card/backend-tools-card.widget'
 import { BrandingSettingsCardWidget } from '@widgets/gowave-settings/branding-settings-card/branding-settings-card.widget'
 import { ExperimentalSettingsCardWidget } from '@widgets/gowave-settings/experimental-settings-card/experimental-settings-card.widget'
 import { useTranslation } from 'react-i18next'
-
-import { LoadingScreen, Logo, Page, PageHeaderShared } from '@shared/ui'
-import Masonry from '@shared/ui/masonry'
 
 interface IProps {
     apiTokensData: GetApiTokensCommand.Response['response']

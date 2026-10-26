@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 function formatBytes(value: number, iec: boolean, bits: boolean = false): string {
     if (Number.isNaN(value)) return 'null'
     const base = iec ? 1024 : 1000
@@ -28,11 +27,9 @@ export function prettifyBytesUtil(
     if (!bytesInput) {
         return returnZero ? '0' : undefined
     }
-    if (typeof bytesInput === 'string') {
-        bytesInput = Number(bytesInput)
-    }
+    const bytes = typeof bytesInput === 'string' ? Number(bytesInput) : bytesInput
 
-    return formatBytes(bytesInput, true)
+    return formatBytes(bytes, true)
 }
 
 export function prettySiBytesUtil(
@@ -42,11 +39,9 @@ export function prettySiBytesUtil(
     if (!bytesInput) {
         return returnZero ? '0 B' : undefined
     }
-    if (typeof bytesInput === 'string') {
-        bytesInput = Number(bytesInput)
-    }
+    const bytes = typeof bytesInput === 'string' ? Number(bytesInput) : bytesInput
 
-    return formatBytes(bytesInput, false)
+    return formatBytes(bytes, false)
 }
 
 export function prettySiRealtimeBytesUtil(
@@ -57,11 +52,9 @@ export function prettySiRealtimeBytesUtil(
     if (!bytesInput) {
         return returnZero ? '0 B/s' : undefined
     }
-    if (typeof bytesInput === 'string') {
-        bytesInput = Number(bytesInput)
-    }
+    const bytes = typeof bytesInput === 'string' ? Number(bytesInput) : bytesInput
 
-    const res = formatBytes(bytesInput, false, true)
+    const res = formatBytes(bytes, false, true)
 
     return `${res}${withSeconds ? '/s' : ''}`
 }

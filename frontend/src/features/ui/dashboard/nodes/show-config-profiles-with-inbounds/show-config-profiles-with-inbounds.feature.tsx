@@ -1,13 +1,12 @@
 import { ActionIcon, Badge, Button, Group, Stack, Text, ThemeIcon, Tooltip } from '@mantine/core'
+import { showModal } from '@shared/_modals/show-modal'
+import { XrayLogo } from '@shared/ui/logos'
+import { SectionCard } from '@shared/ui/section-card'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbEdit, TbFilePlus, TbTag } from 'react-icons/tb'
 
-import { showModal } from '@shared/_modals/show-modal'
-import { XrayLogo } from '@shared/ui/logos'
-import { SectionCard } from '@shared/ui/section-card'
-
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export function ShowConfigProfilesWithInboundsFeature(props: IProps) {
     const {
@@ -84,10 +83,10 @@ export function ShowConfigProfilesWithInboundsFeature(props: IProps) {
 
                         {activeProfileInboundsPorts.length > 0 && (
                             <Group gap={4}>
-                                {activeProfileInboundsPorts.map((port, index) => (
+                                {[...new Set(activeProfileInboundsPorts)].map((port) => (
                                     <Badge
                                         color="gray"
-                                        key={`${port}-${index}`}
+                                        key={port}
                                         radius="sm"
                                         size="sm"
                                         variant="default"

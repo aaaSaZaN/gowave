@@ -1,16 +1,16 @@
 import {
     ActionIcon,
-    ActionIconProps,
+    type ActionIconProps,
     Box,
     CardSection,
-    CardSectionProps,
+    type CardSectionProps,
     Group,
     Stack,
     Text,
     Title
 } from '@mantine/core'
 import { motion } from 'motion/react'
-import { forwardRef, ReactNode } from 'react'
+import { forwardRef, type ReactNode } from 'react'
 
 import classes from './table.module.css'
 

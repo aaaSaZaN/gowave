@@ -1,8 +1,7 @@
 import { Button, Stack, Text, ThemeIcon } from '@mantine/core'
+import { ErrorMessageBlock } from '@shared/ui/error-message-block'
 import { useTranslation } from 'react-i18next'
 import { TbAlertTriangle, TbRefresh } from 'react-icons/tb'
-
-import { ErrorMessageBlock } from '@shared/ui/error-message-block'
 
 interface IProps {
     message: null | string

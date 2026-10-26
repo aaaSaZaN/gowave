@@ -1,10 +1,8 @@
-import { MRT_ColumnDef } from '@kastov/mantine-react-table-open'
-/* eslint-disable camelcase */
-import { GetHwidDevicesCommand } from '@remnawave/backend-contract'
+import type { MRT_ColumnDef } from '@kastov/mantine-react-table-open'
+import type { GetHwidDevicesCommand } from '@remnawave/backend-contract'
+import { formatTimeUtil } from '@shared/utils/time-utils'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-
-import { formatTimeUtil } from '@shared/utils/time-utils'
 
 export const useHwidInspectorTableColumns = () => {
     const { t, i18n } = useTranslation()

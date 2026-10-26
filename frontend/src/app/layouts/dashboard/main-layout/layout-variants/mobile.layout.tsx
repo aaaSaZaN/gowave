@@ -1,9 +1,8 @@
+import type { IGowaveInfo } from '@entities/dashboard/updates-store'
 import { Group } from '@mantine/core'
 import { useClickOutside, useDisclosure } from '@mantine/hooks'
-
+import { optionalProp } from '@shared/lib/optional-prop'
 import { HeaderControls } from '@shared/ui'
-
-import { IGowaveInfo } from '@entities/dashboard/updates-store'
 
 import { DASHBOARD_LINKS } from '../layout-shared'
 import { SidebarShellLayout } from './sidebar-shell.layout'
@@ -35,7 +34,7 @@ export const MobileLayout = (props: IProps) => {
                         <HeaderControls
                             {...DASHBOARD_LINKS}
                             isGithubLoading={isLoadingUpdates}
-                            stars={gowaveInfo.starsCount || undefined}
+                            {...optionalProp('stars', gowaveInfo.starsCount || undefined)}
                             withLanguage={false}
                             withLogout={false}
                             withVersion={false}

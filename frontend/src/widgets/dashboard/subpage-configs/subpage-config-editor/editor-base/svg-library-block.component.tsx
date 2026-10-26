@@ -1,11 +1,10 @@
 import { Badge, Button, Card, Group } from '@mantine/core'
-import { UseFormReturnType } from '@mantine/form'
+import type { UseFormReturnType } from '@mantine/form'
 import { useDisclosure } from '@mantine/hooks'
-import { TSubscriptionPageRawConfig } from '@remnawave/subscription-page-types'
+import type { TSubscriptionPageRawConfig } from '@remnawave/subscription-page-types'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { useTranslation } from 'react-i18next'
 import { TbPhoto } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
 import { SvgLibraryModal } from '../editor-components/svg-library-modal.component'
 import styles from '../subpage-config-visual-editor.module.css'

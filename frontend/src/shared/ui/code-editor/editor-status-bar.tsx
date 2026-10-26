@@ -1,5 +1,5 @@
 import { Code, Paper } from '@mantine/core'
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 import styles from './CodeEditor.module.css'
 

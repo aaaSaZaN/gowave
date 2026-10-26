@@ -16,6 +16,12 @@ import { useField } from '@mantine/form'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
 import { CreateApiTokenCommand } from '@remnawave/backend-contract'
+import { queryClient } from '@shared/api'
+import { QueryKeys, useCreateApiToken, useGetScopes } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
+import { ModalFooter } from '@shared/ui/modal-footer'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { sleep } from '@shared/utils/misc'
 import { useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import {
@@ -30,12 +36,6 @@ import {
     TbWorld
 } from 'react-icons/tb'
 
-import { queryClient } from '@shared/api'
-import { QueryKeys, useCreateApiToken, useGetScopes } from '@shared/api/hooks'
-import { ModalFooter } from '@shared/ui/modal-footer'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { sleep } from '@shared/utils/misc'
-
 import classes from '../api-token-card.module.css'
 import { ScopeResourceRow } from './scope-resource-row'
 import {
@@ -44,7 +44,7 @@ import {
     getKindState,
     getReadKeys,
     getWriteKeys,
-    ScopeResource
+    type ScopeResource
 } from './scopes.utils'
 import { ViewApiTokenContentWidget } from './view-api-token-modal.widget'
 
@@ -85,9 +85,11 @@ export const CreateApiTokenContentWidget = ({ isMobile }: IProps) => {
     const { mutate: createApiToken, isPending } = useCreateApiToken({
         mutationFns: {
             onSuccess: async (data) => {
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.apiTokens.getAllApiTokens.queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.apiTokens.getAllApiTokens.queryKey
+                    })
+                )
                 modals.closeAll()
 
                 await sleep(300)
@@ -113,7 +115,9 @@ export const CreateApiTokenContentWidget = ({ isMobile }: IProps) => {
     const setKeys = (keys: string[], checked: boolean) => {
         setSelectedEndpoints((prev) => {
             const next = new Set(prev)
-            keys.forEach((key) => (checked ? next.add(key) : next.delete(key)))
+            keys.forEach((key) => {
+                checked ? next.add(key) : next.delete(key)
+            })
             return next
         })
     }
@@ -144,15 +148,21 @@ export const CreateApiTokenContentWidget = ({ isMobile }: IProps) => {
 
     const presetRead = () => {
         const next = new Set<string>()
-        resources.forEach((resource) => getReadKeys(resource).forEach((key) => next.add(key)))
+        resources.forEach((resource) => {
+            getReadKeys(resource).forEach((key) => {
+                next.add(key)
+            })
+        })
         setSelectedEndpoints(next)
     }
 
     const presetFull = () => {
         const next = new Set<string>()
-        resources.forEach((resource) =>
-            resource.endpoints.forEach((endpoint) => next.add(endpoint.key))
-        )
+        resources.forEach((resource) => {
+            resource.endpoints.forEach((endpoint) => {
+                next.add(endpoint.key)
+            })
+        })
         setSelectedEndpoints(next)
     }
 

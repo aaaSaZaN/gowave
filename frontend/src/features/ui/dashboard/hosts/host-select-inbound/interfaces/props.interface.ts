@@ -1,5 +1,5 @@
-import { GetConfigProfilesCommand } from '@remnawave/backend-contract'
-import { ReactNode } from 'react'
+import type { GetConfigProfilesCommand } from '@remnawave/backend-contract'
+import type { ReactNode } from 'react'
 
 export interface IProps {
     activeConfigProfileInbound: null | string | undefined

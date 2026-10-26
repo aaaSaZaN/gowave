@@ -1,6 +1,5 @@
-import { useCallback, useState, useSyncExternalStore } from 'react'
-
 import { type ItemKey, type VirtualLayoutOptions, virtualLayout } from '@shared/lib/virtual-layout'
+import { useCallback, useState, useSyncExternalStore } from 'react'
 
 function createViewportStore() {
     let snapshot = { offset: 0, height: 0 }
@@ -110,7 +109,7 @@ export function useVirtualList(options: VirtualListOptions) {
     const measureElement = useCallback(
         (element: HTMLElement | null) => {
             if (!element) return
-            const index = Number(element.dataset.index)
+            const index = Number(element.dataset['index'])
             if (!Number.isInteger(index) || index < 0) return
             measurementStore.observe(element, getItemKey?.(index) ?? index)
         },

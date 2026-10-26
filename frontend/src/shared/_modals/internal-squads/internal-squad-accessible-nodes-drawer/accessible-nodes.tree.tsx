@@ -1,13 +1,18 @@
-import { Badge, RenderTreeNodePayload, Tree, TreeNodeData } from '@mantine/core'
-import { Group, Text } from '@mantine/core'
-import { GetInternalSquadAccessibleNodesCommand } from '@remnawave/backend-contract'
-import { useMemo } from 'react'
-import { PiTag } from 'react-icons/pi'
-import { TbChevronRight } from 'react-icons/tb'
-
+import {
+    Badge,
+    Group,
+    type RenderTreeNodePayload,
+    Text,
+    Tree,
+    type TreeNodeData
+} from '@mantine/core'
+import type { GetInternalSquadAccessibleNodesCommand } from '@remnawave/backend-contract'
 import { CountryFlag } from '@shared/ui/get-country-flag'
 import { XrayLogo } from '@shared/ui/logos'
 import { SectionCard } from '@shared/ui/section-card'
+import { useMemo } from 'react'
+import { PiTag } from 'react-icons/pi'
+import { TbChevronRight } from 'react-icons/tb'
 
 type AccessibleNode =
     GetInternalSquadAccessibleNodesCommand.Response['response']['accessibleNodes'][number]

@@ -10,12 +10,11 @@ import {
     ThemeIcon,
     Tooltip
 } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { TbDevices, TbRefresh } from 'react-icons/tb'
-
 import { useGetUserSubscriptionRequestHistory } from '@shared/api/hooks'
 import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
+import { useTranslation } from 'react-i18next'
+import { TbDevices, TbRefresh } from 'react-icons/tb'
 
 import { UserSubscriptionRequestItem } from './user-subscription-request-item'
 import classes from './user-subscription-requests.module.css'

@@ -1,17 +1,16 @@
-import { Checkbox, Group, Stack, Text, ThemeIcon, ThemeIconProps } from '@mantine/core'
-import { TFunction } from 'i18next'
-import { ComponentType } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbFlask, TbLayoutSidebar, TbPlugConnected, TbRocket, TbTerminal2 } from 'react-icons/tb'
-
-import { useIsMobile } from '@shared/hooks'
-import { SettingsCardShared } from '@shared/ui/settings-card'
-
 import {
-    IExperimentalFeatures,
+    type IExperimentalFeatures,
     useExperimentalFeatures,
     useViewPreferencesStoreActions
 } from '@entities/dashboard/view-preferences-store'
+import { Checkbox, Group, Stack, Text, ThemeIcon, type ThemeIconProps } from '@mantine/core'
+import { useIsMobile } from '@shared/hooks'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { SettingsCardShared } from '@shared/ui/settings-card'
+import type { TFunction } from 'i18next'
+import type { ComponentType } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbFlask, TbLayoutSidebar, TbPlugConnected, TbRocket, TbTerminal2 } from 'react-icons/tb'
 
 import classes from './ExperimentalSettingsCard.module.css'
 
@@ -86,7 +85,12 @@ export const ExperimentalSettingsCardWidget = () => {
                                 radius="md"
                             >
                                 <Group align="center" gap="sm" wrap="nowrap">
-                                    <ThemeIcon color={color} radius="md" size="lg" variant="soft">
+                                    <ThemeIcon
+                                        {...optionalProp('color', color)}
+                                        radius="md"
+                                        size="lg"
+                                        variant="soft"
+                                    >
                                         <IconComponent size={20} />
                                     </ThemeIcon>
 

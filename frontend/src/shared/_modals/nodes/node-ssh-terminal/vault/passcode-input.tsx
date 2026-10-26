@@ -77,6 +77,7 @@ export const PasscodeInput = (props: IProps) => {
                             className={classes.passcodeSlot}
                             data-active={isActive || undefined}
                             data-placeholder={!isFilled || undefined}
+                            // biome-ignore lint/suspicious/noArrayIndexKey: The passcode slots represent fixed character positions.
                             key={index}
                         >
                             {isFilled ? '•' : isActive ? '' : '○'}
@@ -87,8 +88,8 @@ export const PasscodeInput = (props: IProps) => {
             </div>
 
             <input
-                autoComplete="no-password"
-                autoFocus={autoFocus}
+                autoComplete="off"
+                data-autofocus={autoFocus || undefined}
                 className={classes.passcodeInput}
                 data-form-type="other"
                 disabled={disabled}

@@ -1,13 +1,12 @@
 import { ActionIcon, Group } from '@mantine/core'
-import { GetHostsCommand, GetSubscriptionTemplateCommand } from '@remnawave/backend-contract'
-import { SubscriptionTemplateEditorWidget } from '@widgets/dashboard/templates/subscription-template-editor'
-import { TbArrowBackUp } from 'react-icons/tb'
-import { useNavigate } from 'react-router'
-
+import type { GetHostsCommand, GetSubscriptionTemplateCommand } from '@remnawave/backend-contract'
 import { HelpActionIconShared } from '@shared/_modals/universal'
 import { ROUTES } from '@shared/constants'
 import { Page, PageHeaderShared } from '@shared/ui'
 import { getCoreLogoFromType } from '@shared/ui/get-core-logo-from-type'
+import { SubscriptionTemplateEditorWidget } from '@widgets/dashboard/templates/subscription-template-editor'
+import { TbArrowBackUp } from 'react-icons/tb'
+import { useNavigate } from 'react-router'
 
 interface Props {
     editorType: 'json' | 'yaml'

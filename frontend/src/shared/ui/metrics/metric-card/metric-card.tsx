@@ -1,8 +1,8 @@
-import { Card, Group, Stack, Text, ThemeIcon, ThemeIconProps } from '@mantine/core'
-import { ReactNode } from 'react'
-
+import { Card, Group, Stack, Text, ThemeIcon, type ThemeIconProps } from '@mantine/core'
+import { optionalProp } from '@shared/lib/optional-prop'
 import { ShimmerSkeleton } from '@shared/ui/shimmer-skeleton'
 import { formatInt } from '@shared/utils/misc'
+import type { ReactNode } from 'react'
 
 import classes from './metric-card.module.css'
 
@@ -37,10 +37,10 @@ export function MetricCardShared(props: IMetricCardProps) {
         <Card>
             <Group gap="md" wrap="nowrap">
                 <ThemeIcon
-                    color={iconColor}
+                    {...optionalProp('color', iconColor)}
                     radius="lg"
                     size="xl"
-                    variant={iconVariant}
+                    {...optionalProp('variant', iconVariant)}
                     {...themeIconProps}
                 >
                     <IconComponent size={iconSize} />

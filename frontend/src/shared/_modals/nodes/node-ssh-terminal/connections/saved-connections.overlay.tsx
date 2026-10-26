@@ -8,12 +8,12 @@ import {
     ThemeIcon,
     UnstyledButton
 } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { TbServer } from 'react-icons/tb'
-
+import { requireValue } from '@shared/lib/invariant'
 import { CountryFlag } from '@shared/ui/get-country-flag'
 import { Logo } from '@shared/ui/logo'
 import { SectionCard } from '@shared/ui/section-card'
+import { useTranslation } from 'react-i18next'
+import { TbServer } from 'react-icons/tb'
 
 import classes from '../NodeSshTerminal.module.css'
 import { TerminalOverlay } from '../window/terminal-overlay'
@@ -58,7 +58,7 @@ export const buildSavedConnections = (
         .filter((node) => byUuid.has(node.uuid))
         .toSorted((left, right) => left.viewPosition - right.viewPosition)
         .map((node) => {
-            const profile = byUuid.get(node.uuid)!
+            const profile = requireValue(byUuid.get(node.uuid), 'Saved SSH profile is missing')
 
             return {
                 countryCode: node.countryCode,

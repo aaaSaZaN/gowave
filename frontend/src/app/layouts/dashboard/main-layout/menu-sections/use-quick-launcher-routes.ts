@@ -1,11 +1,9 @@
-import type { MenuItem } from './interfaces'
+import type { IQuickLauncherRoute } from '@shared/ui/quick-launcher'
 import type { ComponentType } from 'react'
 
 import { useMemo } from 'react'
-
-import type { IQuickLauncherRoute } from '@shared/ui/quick-launcher'
-
 import { useDesktopMenuSections } from './desktop-menu-sections'
+import type { MenuItem } from './interfaces'
 
 type TSectionItem = MenuItem['section'][number]
 

@@ -6,7 +6,7 @@ import {
     MAX_APPS,
     MAX_PLATFORMS
 } from './hwid-inspector-metrics.constants'
-import { IPlatformApp, IPlatformDatum } from './hwid-inspector-metrics.types'
+import type { IPlatformApp, IPlatformDatum } from './hwid-inspector-metrics.types'
 
 export const formatCount = (value: number) => formatInt(value, { thousandSeparator: ' ' })
 
@@ -34,7 +34,7 @@ export function buildPlatformData(
             return {
                 name: platform.platform || 'Unknown',
                 value: platform.count,
-                color: CHART_COLORS[index % CHART_COLORS.length],
+                color: CHART_COLORS[index % CHART_COLORS.length] ?? 'gray',
                 apps,
                 allApps
             }

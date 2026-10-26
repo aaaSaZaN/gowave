@@ -121,7 +121,7 @@ export const generateDeviceKey = () =>
 export const generateDataKey = () => crypto.getRandomValues(new Uint8Array(32))
 
 export async function importDataKey(raw: Uint8Array): Promise<CryptoKey> {
-    return crypto.subtle.importKey('raw', raw as BufferSource, 'AES-GCM', false, [
+    return await crypto.subtle.importKey('raw', raw as BufferSource, 'AES-GCM', false, [
         'encrypt',
         'decrypt'
     ])

@@ -1,4 +1,4 @@
-import { TSubscriptionTemplateType } from '@remnawave/backend-contract'
+import type { TSubscriptionTemplateType } from '@remnawave/backend-contract'
 
 export interface IDownloadableSubscriptionTemplate {
     author: string

@@ -1,4 +1,4 @@
-import { OverflowList, OverflowListProps } from '@mantine/core'
+import { OverflowList, type OverflowListProps } from '@mantine/core'
 
 interface IProps<T> extends Omit<OverflowListProps<T>, 'maxRows'> {
     rowHeight?: number

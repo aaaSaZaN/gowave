@@ -1,3 +1,4 @@
+import { useMiscStoreActions, useMobileWarningClosed } from '@entities/dashboard/misc-store'
 import {
     Button,
     Center,
@@ -13,8 +14,6 @@ import {
 import { useTranslation } from 'react-i18next'
 import { PiDeviceMobile, PiMonitor, PiWarning } from 'react-icons/pi'
 import { TbBaselineDensitySmall, TbColumns, TbMaximize, TbRotate2 } from 'react-icons/tb'
-
-import { useMiscStoreActions, useMobileWarningClosed } from '@entities/dashboard/misc-store'
 
 export function MobileWarningOverlay() {
     const { t } = useTranslation()

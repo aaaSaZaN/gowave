@@ -1,7 +1,6 @@
-import { ConnectionsByNodeResultCommand } from '@remnawave/backend-contract'
-import { useCallback, useEffect, useState } from 'react'
-
+import type { ConnectionsByNodeResultCommand } from '@remnawave/backend-contract'
 import { useConnectionsByNode, useConnectionsByNodeResult } from '@shared/api/hooks'
+import { useCallback, useEffect, useState } from 'react'
 
 export type ActiveSessionUser = NonNullable<
     ConnectionsByNodeResultCommand.Response['response']['result']
@@ -35,22 +34,24 @@ export const useNodeActiveSessions = (nodeUuid: string) => {
         }
     })
 
+    const failedResult = Boolean(
+        connectionsByNodeResult &&
+            (connectionsByNodeResult.isFailed ||
+                (connectionsByNodeResult.isCompleted && !connectionsByNodeResult.result?.success))
+    )
+    const [previousResult, setPreviousResult] = useState(connectionsByNodeResult)
+    if (previousResult !== connectionsByNodeResult) {
+        setPreviousResult(connectionsByNodeResult)
+        if (failedResult) setIsFailed(true)
+    }
     useEffect(() => {
-        if (!connectionsByNodeResult) return undefined
-        if (
-            connectionsByNodeResult.isFailed ||
-            (connectionsByNodeResult.isCompleted && !connectionsByNodeResult.result?.success)
-        ) {
-            // oxlint-disable-next-line
-            setIsFailed(true)
-            return undefined
-        }
+        if (!connectionsByNodeResult || failedResult) return undefined
         if (connectionsByNodeResult.isCompleted) {
             const timer = setTimeout(() => setIsCompleted(true), 500)
             return () => clearTimeout(timer)
         }
         return undefined
-    }, [connectionsByNodeResult])
+    }, [connectionsByNodeResult, failedResult])
 
     const refresh = useCallback(() => {
         setJobId(null)
@@ -61,7 +62,7 @@ export const useNodeActiveSessions = (nodeUuid: string) => {
 
     useEffect(() => {
         connectionsByNode({})
-    }, [])
+    }, [connectionsByNode])
 
     return {
         isCompleted,

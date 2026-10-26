@@ -1,14 +1,13 @@
 import { Stack } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
+import { LoadingScreen } from '@shared/ui'
+import { MobileWarningOverlay } from '@shared/ui/mobile-warning-overlay/mobile-warning-overlay'
+import { Page } from '@shared/ui/page'
 import { UsersMetrics } from '@widgets/dashboard/users/users-metrics'
 import { UserTableWidget } from '@widgets/dashboard/users/users-table'
 import { motion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-
-import { LoadingScreen } from '@shared/ui'
-import { MobileWarningOverlay } from '@shared/ui/mobile-warning-overlay/mobile-warning-overlay'
-import { Page } from '@shared/ui/page'
 
 const DeferredUserTableWidget = () => {
     const [shouldRender, setShouldRender] = useState(false)

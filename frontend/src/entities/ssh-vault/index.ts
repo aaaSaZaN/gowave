@@ -1,5 +1,5 @@
 export * from './ssh-crypto'
 export * from './ssh-private-key'
 export * from './ssh-vault.db'
-export * from './vault-backup-file'
 export * from './use-ssh-vault-store'
+export * from './vault-backup-file'

@@ -1,5 +1,5 @@
 interface Version {
-    numbers: number[]
+    numbers: [number, number, number]
     prerelease: string[]
     version: string
 }
@@ -12,7 +12,7 @@ function parse(input: unknown): Version | null {
             /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([\da-zA-Z-]+(?:\.[\da-zA-Z-]+)*))?(?:\+([\da-zA-Z-]+(?:\.[\da-zA-Z-]+)*))?$/
         )
     if (!match) return null
-    const numbers = match.slice(1, 4).map(Number)
+    const numbers: [number, number, number] = [Number(match[1]), Number(match[2]), Number(match[3])]
     const prerelease = match[4]?.split('.') ?? []
     if (numbers.some((value) => !Number.isSafeInteger(value))) return null
     if (prerelease.some((value) => /^\d+$/.test(value) && value.length > 1 && value[0] === '0')) {
@@ -40,7 +40,7 @@ function compare(left: string, right: string): number {
     const a = parse(left)
     const b = parse(right)
     if (!a || !b) throw new Error('Invalid version')
-    for (let i = 0; i < 3; i++) {
+    for (const i of [0, 1, 2] as const) {
         if (a.numbers[i] !== b.numbers[i]) return a.numbers[i] > b.numbers[i] ? 1 : -1
     }
     if (!a.prerelease.length || !b.prerelease.length) {

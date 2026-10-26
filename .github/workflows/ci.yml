@@ -68,7 +68,7 @@ jobs:
           path: ${{ runner.temp }}/probe*.json
 
   frontend:
-    name: Frontend (tests, typecheck, build, contract)
+    name: Frontend (Biome, tests, typecheck, build, contract)
     runs-on: ubuntu-latest
     needs: backend
     steps:
@@ -87,6 +87,10 @@ jobs:
           bun scripts/check-branding.cjs
           bash -n install.sh
           bash scripts/tests/installer.sh
+
+      - name: Biome lint, format and imports
+        working-directory: frontend
+        run: bun run check
 
       - name: Typecheck
         working-directory: frontend

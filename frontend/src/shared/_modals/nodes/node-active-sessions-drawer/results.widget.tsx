@@ -1,13 +1,12 @@
 import { Stack, Tabs } from '@mantine/core'
+import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 import { useMemo, useState } from 'react'
 import { TbRadar, TbSortAscending, TbSortDescending } from 'react-icons/tb'
-
-import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 
 import { IpStatsWidget } from './ip-stats.widget'
 import { SessionsListWidget } from './sessions-list.widget'
 import { SummaryCardWidget } from './summary-card.widget'
-import { ActiveSessionUser } from './use-node-active-sessions'
+import type { ActiveSessionUser } from './use-node-active-sessions'
 
 type SortMode = 'default' | 'ips-asc' | 'ips-desc'
 

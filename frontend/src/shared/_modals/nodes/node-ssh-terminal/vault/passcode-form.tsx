@@ -1,9 +1,8 @@
+import { describeVaultError, isValidPasscode, PASSCODE_MAX_LENGTH } from '@entities/ssh-vault'
 import { Button, Stack, Text } from '@mantine/core'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbKey } from 'react-icons/tb'
-
-import { PASSCODE_MAX_LENGTH, describeVaultError, isValidPasscode } from '@entities/ssh-vault'
 
 import { PasscodeInput } from './passcode-input'
 

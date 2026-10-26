@@ -1,7 +1,7 @@
-import {
+import type {
+    GetConfigProfilesCommand,
     GetHostsCommand,
-    GetHostsTagsCommand,
-    GetConfigProfilesCommand
+    GetHostsTagsCommand
 } from '@remnawave/backend-contract'
 
 export interface IProps {

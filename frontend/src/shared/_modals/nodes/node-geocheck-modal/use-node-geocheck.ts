@@ -1,7 +1,9 @@
-import { GeocheckByNodeCommand, GeocheckByNodeResultCommand } from '@remnawave/backend-contract'
-import { useCallback, useState } from 'react'
-
+import type {
+    GeocheckByNodeCommand,
+    GeocheckByNodeResultCommand
+} from '@remnawave/backend-contract'
 import { useGeocheckByNode, useGeocheckByNodeResult } from '@shared/api/hooks'
+import { useCallback, useState } from 'react'
 
 const POLL_INTERVAL = 1000
 

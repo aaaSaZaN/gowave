@@ -1,6 +1,6 @@
 import { Group, Text } from '@mantine/core'
 
-import { IPlatformApp } from './hwid-inspector-metrics.types'
+import type { IPlatformApp } from './hwid-inspector-metrics.types'
 import { formatCount } from './hwid-inspector-metrics.utils'
 
 export function AppBreakdown({ apps }: { apps: IPlatformApp[] }) {

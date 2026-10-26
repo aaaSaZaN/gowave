@@ -1,16 +1,15 @@
-import type { editor } from 'monaco-editor'
-
 import { Box, Text } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import Editor, { EditorProps, OnMount } from '@monaco-editor/react'
-import { parse } from 'jsonc-parser'
-import { Fragment, ReactNode, useRef, useState } from 'react'
-
+import Editor, { type EditorProps, type OnMount } from '@monaco-editor/react'
 import { BASE_MONACO_OPTIONS, MONACO_THEME_NAME } from '@shared/constants/monaco-theme'
 import clsx from '@shared/lib/classes'
+import { optionalProp } from '@shared/lib/optional-prop'
 import { describeJsonPath } from '@shared/utils/monaco/json-path'
-import { RepairResult, repairJsonInEditor } from '@shared/utils/monaco/repair-json'
+import { type RepairResult, repairJsonInEditor } from '@shared/utils/monaco/repair-json'
 import { useMonaco } from '@shared/utils/setup-monaco/load-monaco'
+import { parse } from 'jsonc-parser'
+import type { editor } from 'monaco-editor'
+import { Fragment, type ReactNode, useRef, useState } from 'react'
 
 import { LoaderModalShared } from '../loader-modal/loader-model.shared'
 import styles from './CodeEditor.module.css'
@@ -127,6 +126,7 @@ export function CodeEditor(props: Props) {
                 <Box className={styles.pathBar}>
                     <Text c="dimmed" ff="monospace" size="xs" truncate="end">
                         {jsonPath.map((segment, index) => (
+                            // biome-ignore lint/suspicious/noArrayIndexKey: Breadcrumb identity includes its depth; JSON path segments may repeat.
                             <Fragment key={`${index}-${segment}`}>
                                 {index > 0 && <span className={styles.pathSeparator}> › </span>}
                                 <span
@@ -146,8 +146,8 @@ export function CodeEditor(props: Props) {
 
             {isMonacoReady ? (
                 <Editor
-                    defaultLanguage={defaultLanguage}
-                    language={language}
+                    {...optionalProp('defaultLanguage', defaultLanguage)}
+                    {...optionalProp('language', language)}
                     loading={<LoaderModalShared mih="100%" />}
                     onMount={handleMount}
                     theme={MONACO_THEME_NAME}

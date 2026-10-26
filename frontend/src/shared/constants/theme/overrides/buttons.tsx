@@ -1,4 +1,3 @@
-// oxlint-disable
 import { ActionIcon, Button, CloseButton, Switch } from '@mantine/core'
 
 export default {

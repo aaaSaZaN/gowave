@@ -1,15 +1,16 @@
 import { CopyButton, Menu } from '@mantine/core'
-import { GetSubpageConfigsCommand } from '@remnawave/backend-contract'
+import type { GetSubpageConfigsCommand } from '@remnawave/backend-contract'
 import { SUBPAGE_DEFAULT_CONFIG_UUID } from '@remnawave/subscription-page-types'
+import { showModal } from '@shared/_modals/show-modal'
+import { ROUTES } from '@shared/constants'
+import { WithDndSortable } from '@shared/hocs/with-dnd-sortable'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
+import { EntityCardShared } from '@shared/ui/entity-card'
 import { useTranslation } from 'react-i18next'
 import { PiCheck, PiCopy, PiPencil, PiTrashDuotone } from 'react-icons/pi'
 import { TbCopyCheck, TbFile, TbTags } from 'react-icons/tb'
 import { generatePath, useNavigate } from 'react-router'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { ROUTES } from '@shared/constants'
-import { WithDndSortable } from '@shared/hocs/with-dnd-sortable'
-import { EntityCardShared } from '@shared/ui/entity-card'
 
 interface IProps {
     disableReordering?: boolean
@@ -32,10 +33,12 @@ export function SubpageConfigCardWidget(props: IProps) {
     const navigate = useNavigate()
 
     const navigateToConfig = () => {
-        navigate(
-            generatePath(ROUTES.DASHBOARD.SUBPAGE_CONFIGS.SUBPAGE_CONFIG_BY_UUID, {
-                uuid: subpageConfig.uuid
-            })
+        runAsync(
+            navigate(
+                generatePath(ROUTES.DASHBOARD.SUBPAGE_CONFIGS.SUBPAGE_CONFIG_BY_UUID, {
+                    uuid: subpageConfig.uuid
+                })
+            )
         )
     }
 
@@ -65,7 +68,7 @@ export function SubpageConfigCardWidget(props: IProps) {
                         <CopyButton timeout={2000} value={subpageConfig.uuid}>
                             {({ copied, copy }) => (
                                 <Menu.Item
-                                    color={copied ? 'teal' : undefined}
+                                    {...optionalProp('color', copied ? 'teal' : undefined)}
                                     leftSection={
                                         copied ? <PiCheck size={18} /> : <PiCopy size={18} />
                                     }
@@ -79,11 +82,13 @@ export function SubpageConfigCardWidget(props: IProps) {
                         <Menu.Item
                             leftSection={<PiPencil size={18} />}
                             onClick={() => {
-                                showModal('renameModal', {
-                                    renameFrom: 'subpageConfig',
-                                    name: subpageConfig.name,
-                                    uuid: subpageConfig.uuid
-                                })
+                                runAsync(
+                                    showModal('renameModal', {
+                                        renameFrom: 'subpageConfig',
+                                        name: subpageConfig.name,
+                                        uuid: subpageConfig.uuid
+                                    })
+                                )
                             }}
                         >
                             {t('common.action.rename')}
@@ -91,15 +96,16 @@ export function SubpageConfigCardWidget(props: IProps) {
 
                         <Menu.Item
                             leftSection={<TbTags size={18} />}
-
                             onClick={() => {
-                                showModal('editTagsModal', {
-                                    editTagsFrom: 'subpageConfig',
+                                runAsync(
+                                    showModal('editTagsModal', {
+                                        editTagsFrom: 'subpageConfig',
 
-                                    tags: subpageConfig.tags,
+                                        tags: subpageConfig.tags,
 
-                                    uuid: subpageConfig.uuid
-                                })
+                                        uuid: subpageConfig.uuid
+                                    })
+                                )
                             }}
                         >
                             {t('common.field.tags')}

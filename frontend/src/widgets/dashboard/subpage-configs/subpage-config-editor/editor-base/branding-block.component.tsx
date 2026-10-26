@@ -1,10 +1,9 @@
 import { Card, Divider, Stack, TextInput } from '@mantine/core'
-import { UseFormReturnType } from '@mantine/form'
-import { TSubscriptionPageRawConfig } from '@remnawave/subscription-page-types'
+import type { UseFormReturnType } from '@mantine/form'
+import type { TSubscriptionPageRawConfig } from '@remnawave/subscription-page-types'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { useTranslation } from 'react-i18next'
 import { TbPalette } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
 import styles from '../subpage-config-visual-editor.module.css'
 

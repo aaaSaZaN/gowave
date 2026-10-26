@@ -1,8 +1,7 @@
-import { useTranslation } from 'react-i18next'
-import { TbLock } from 'react-icons/tb'
-
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
+import { useTranslation } from 'react-i18next'
+import { TbLock } from 'react-icons/tb'
 
 import { PasscodeForm } from './passcode-form'
 

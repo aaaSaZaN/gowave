@@ -8,12 +8,11 @@ import {
     TextInput,
     ThemeIcon
 } from '@mantine/core'
-import { GeocheckByNodeCommand, GetNodeCommand } from '@remnawave/backend-contract'
+import type { GeocheckByNodeCommand, GetNodeCommand } from '@remnawave/backend-contract'
+import { NodeIpStatusIcon, resolveNodeIpStatusMeta } from '@shared/ui/node-ips'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbAffiliate, TbPlayerPlay, TbRoute, TbWorldSearch } from 'react-icons/tb'
-
-import { NodeIpStatusIcon, resolveNodeIpStatusMeta } from '@shared/ui/node-ips'
 
 type TSource = 'default' | 'interface' | 'ip'
 

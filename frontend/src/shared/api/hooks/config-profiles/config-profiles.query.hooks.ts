@@ -44,7 +44,10 @@ export const useGetConfigProfile = createGetQueryHook({
     endpoint: GetConfigProfileByUuidCommand.TSQ_url,
     responseSchema: GetConfigProfileByUuidCommand.ResponseSchema,
     routeParamsSchema: GetConfigProfileByUuidCommand.RequestParamSchema,
-    getQueryKey: ({ route }) => configProfilesQueryKeys.getConfigProfile(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? configProfilesQueryKeys.getConfigProfile(route).queryKey
+            : configProfilesQueryKeys.getConfigProfile._def,
     rQueryParams: {
         refetchOnMount: true,
         staleTime: sToMs(30)
@@ -56,7 +59,10 @@ export const useGetConfigProfileInbounds = createGetQueryHook({
     endpoint: GetInboundsByProfileUuidCommand.TSQ_url,
     responseSchema: GetInboundsByProfileUuidCommand.ResponseSchema,
     routeParamsSchema: GetInboundsByProfileUuidCommand.RequestParamSchema,
-    getQueryKey: ({ route }) => configProfilesQueryKeys.getConfigProfileInbounds(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? configProfilesQueryKeys.getConfigProfileInbounds(route).queryKey
+            : configProfilesQueryKeys.getConfigProfileInbounds._def,
     rQueryParams: {
         refetchOnMount: true,
         staleTime: sToMs(30)
@@ -68,7 +74,10 @@ export const useGetComputedConfigProfile = createGetQueryHook({
     endpoint: GetComputedConfigProfileByUuidCommand.TSQ_url,
     responseSchema: GetComputedConfigProfileByUuidCommand.ResponseSchema,
     routeParamsSchema: GetComputedConfigProfileByUuidCommand.RequestParamSchema,
-    getQueryKey: ({ route }) => configProfilesQueryKeys.getComputedConfigProfile(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? configProfilesQueryKeys.getComputedConfigProfile(route).queryKey
+            : configProfilesQueryKeys.getComputedConfigProfile._def,
     rQueryParams: {
         enabled: false
     },

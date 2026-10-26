@@ -1,18 +1,17 @@
 import { Accordion, Card, Divider, Group, Select, Stack, Text } from '@mantine/core'
-import { UseFormReturnType } from '@mantine/form'
-import {
+import type { UseFormReturnType } from '@mantine/form'
+import type {
     TSubscriptionPagePlatformKey,
     TSubscriptionPagePlatformSchema,
     TSubscriptionPageRawConfig
 } from '@remnawave/subscription-page-types'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { useTranslation } from 'react-i18next'
 import { TbDeviceDesktop, TbPlus } from 'react-icons/tb'
 
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-
 import { PlatformEditor } from '../editor-components/platform-editor.component'
-import styles from '../subpage-config-visual-editor.module.css'
 import { AVAILABLE_PLATFORMS, PLATFORM_LABELS } from '../subpage-config.constants'
+import styles from '../subpage-config-visual-editor.module.css'
 
 interface IProps {
     form: UseFormReturnType<TSubscriptionPageRawConfig>

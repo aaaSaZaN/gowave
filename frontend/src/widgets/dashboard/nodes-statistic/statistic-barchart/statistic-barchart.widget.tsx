@@ -1,4 +1,3 @@
-/* eslint-disable @stylistic/indent */
 import {
     alpha,
     Box,
@@ -12,16 +11,15 @@ import {
     Text
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { GetStatsNodesUsageCommand } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
-import { PiEmpty } from 'react-icons/pi'
-import { TbChartBar } from 'react-icons/tb'
-
+import type { GetStatsNodesUsageCommand } from '@remnawave/backend-contract'
 import { Chart } from '@shared/ui/chart'
 import { CountryFlag } from '@shared/ui/get-country-flag'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { prettifyBytesUtil } from '@shared/utils/bytes'
 import { formatTimeUtil } from '@shared/utils/time-utils'
+import { useTranslation } from 'react-i18next'
+import { PiEmpty } from 'react-icons/pi'
+import { TbChartBar } from 'react-icons/tb'
 
 interface IProps {
     categories: string[] | undefined
@@ -219,14 +217,14 @@ export const NodesStatisticBarchartWidget = (props: IProps) => {
                         gridLineDashStyle: 'LongDash'
                     },
                     yAxis: {
-                        title: undefined,
+                        title: { text: undefined },
                         reversedStacks: false,
                         labels: {
                             autoRotation: [-45, 45],
                             style: { color: 'var(--mantine-color-text)' },
                             formatter: ({ value }) => prettifyBytesUtil(value, true)
                         },
-                        gridLineColor: undefined
+                        gridLineColor: 'transparent'
                     },
                     tooltip: {
                         shared: false,
@@ -261,6 +259,7 @@ export const NodesStatisticBarchartWidget = (props: IProps) => {
                                 const idx = pointIndex + i
                                 if (idx >= 0 && idx < seriesData.length) {
                                     const point = seriesData[idx]
+                                    if (!point) continue
                                     nearbyDays.push({
                                         date: formatTimeUtil({
                                             time: point.category,

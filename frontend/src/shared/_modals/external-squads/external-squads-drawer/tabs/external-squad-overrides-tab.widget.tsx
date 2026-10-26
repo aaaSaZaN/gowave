@@ -13,16 +13,16 @@ import {
     Textarea,
     TextInput
 } from '@mantine/core'
-import { GetExternalSquadByUuidCommand } from '@remnawave/backend-contract'
-import { TFunction } from 'i18next'
+import type { GetExternalSquadByUuidCommand } from '@remnawave/backend-contract'
+import { queryClient } from '@shared/api'
+import { QueryKeys, useUpdateExternalSquad } from '@shared/api/hooks'
+import { optionalProp } from '@shared/lib/optional-prop'
+import type { TFunction } from 'i18next'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiPlus, PiTrash } from 'react-icons/pi'
 import { TbDeviceFloppy } from 'react-icons/tb'
 import { z } from 'zod'
-
-import { queryClient } from '@shared/api'
-import { QueryKeys, useUpdateExternalSquad } from '@shared/api/hooks'
 
 interface IFieldConfig {
     description?: string
@@ -247,7 +247,7 @@ export function ExternalSquadOverridesTab<T extends Record<string, unknown>>(pro
                         onChange={(val) => handleUpdateOverride(field, Number(val))}
                         rightSection={rightSection}
                         size="sm"
-                        value={Number(value) || undefined}
+                        {...optionalProp('value', Number(value) || undefined)}
                     />
                 )
             case 'string':

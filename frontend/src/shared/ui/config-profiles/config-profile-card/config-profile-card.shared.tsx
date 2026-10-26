@@ -1,14 +1,13 @@
-import type { IProps } from './interfaces/props.interface'
-
 import { Accordion, Badge, Divider, Group, Text, Tooltip } from '@mantine/core'
+import { showModal } from '@shared/_modals/show-modal'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiCheckBold, PiCpu } from 'react-icons/pi'
-
-import { showModal } from '@shared/_modals/show-modal'
-
 import { VirtualizedInboundsListShared } from '../virtualized-inbounds-list/virtualized-inbounds-list.shared'
 import { AccordionControlShared } from './accordion-control.shared'
+import type { IProps } from './interfaces/props.interface'
 
 export const ConfigProfileCardShared = memo((props: IProps) => {
     const {
@@ -36,7 +35,7 @@ export const ConfigProfileCardShared = memo((props: IProps) => {
             value={profile.uuid}
         >
             <AccordionControlShared
-                hideSelectActions={hideSelectActions}
+                {...optionalProp('hideSelectActions', hideSelectActions)}
                 onSelectAllInbounds={onSelectAllInbounds}
                 onUnselectAllInbounds={onUnselectAllInbounds}
                 profile={profile}
@@ -72,10 +71,12 @@ export const ConfigProfileCardShared = memo((props: IProps) => {
                                 e.stopPropagation()
                                 e.nativeEvent.stopImmediatePropagation()
 
-                                showModal('configProfiles_activeNodesModal', {
-                                    nodes: profile.nodes,
-                                    profileName: profile.name
-                                })
+                                runAsync(
+                                    showModal('configProfiles_activeNodesModal', {
+                                        nodes: profile.nodes,
+                                        profileName: profile.name
+                                    })
+                                )
                             }}
                             size="md"
                             style={{ cursor: 'pointer' }}

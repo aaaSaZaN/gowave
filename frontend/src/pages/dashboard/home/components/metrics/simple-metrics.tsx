@@ -1,9 +1,8 @@
-import { GetStatsCommand } from '@remnawave/backend-contract'
-import { TFunction } from 'i18next'
-import { PiChartBarDuotone, PiCpuDuotone, PiMemoryFill, PiMemoryLight } from 'react-icons/pi'
-
-import { IMetricCardProps } from '@shared/ui/metrics/metric-card'
+import type { GetStatsCommand } from '@remnawave/backend-contract'
+import type { IMetricCardProps } from '@shared/ui/metrics/metric-card'
 import { prettifyBytesUtil } from '@shared/utils/bytes'
+import type { TFunction } from 'i18next'
+import { PiChartBarDuotone, PiCpuDuotone, PiMemoryFill, PiMemoryLight } from 'react-icons/pi'
 
 export const getSimpleMetrics = (
     systemInfo: GetStatsCommand.Response['response'],

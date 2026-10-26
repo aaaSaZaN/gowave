@@ -1,10 +1,9 @@
 import { Loader, Menu } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { useTranslation } from 'react-i18next'
-import { PiClockCounterClockwiseDuotone } from 'react-icons/pi'
-
 import { queryClient } from '@shared/api'
 import { useResetUserTraffic, usersQueryKeys } from '@shared/api/hooks'
+import { useTranslation } from 'react-i18next'
+import { PiClockCounterClockwiseDuotone } from 'react-icons/pi'
 
 interface IProps {
     userId: number
@@ -25,7 +24,7 @@ export function ResetUsageUserFeature(props: IProps) {
         }
     })
 
-    const handleResetUsage = async () => {
+    const handleResetUsage = () => {
         resetUserTraffic({
             route: {
                 userId: userId

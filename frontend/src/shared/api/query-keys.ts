@@ -34,11 +34,9 @@ export function createQueryKeys<
 }
 
 type Merge<Groups extends readonly unknown[]> = {
-    [
-        Group in Groups[number] as Group extends { _def: readonly [infer Name extends string] }
-            ? Name
-            : never
-    ]: Group
+    [Group in Groups[number] as Group extends { _def: readonly [infer Name extends string] }
+        ? Name
+        : never]: Group
 }
 
 export function mergeQueryKeys<const Groups extends readonly { _def: readonly [string] }[]>(

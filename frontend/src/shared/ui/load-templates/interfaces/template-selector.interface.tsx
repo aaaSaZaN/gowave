@@ -1,6 +1,6 @@
-import { TSubscriptionTemplateType } from '@remnawave/backend-contract'
+import type { TSubscriptionTemplateType } from '@remnawave/backend-contract'
 
-import {
+import type {
     IDownloadableSubscriptionTemplate,
     IDownloadableSubscriptionTemplateList
 } from '@shared/constants/templates'

@@ -1,8 +1,7 @@
 import { Badge, Card, Grid, Group, Progress, Stack, Text, ThemeIcon } from '@mantine/core'
-import { GetRemnawaveHealthCommand } from '@remnawave/backend-contract'
-import { PiClockDuotone, PiCloudDuotone, PiGearSixDuotone, PiQueueDuotone } from 'react-icons/pi'
-
+import type { GetRemnawaveHealthCommand } from '@remnawave/backend-contract'
 import { prettifyBytesUtil } from '@shared/utils/bytes'
+import { PiClockDuotone, PiCloudDuotone, PiGearSixDuotone, PiQueueDuotone } from 'react-icons/pi'
 
 import classes from './runtime-detail-card.module.css'
 

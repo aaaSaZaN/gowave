@@ -1,21 +1,23 @@
 import { Badge, Card, Group, Text } from '@mantine/core'
+import { showModal } from '@shared/_modals/show-modal'
+import { runAsync } from '@shared/lib/run-async'
+import { formatInt } from '@shared/utils/misc'
 import { memo } from 'react'
 import { PiTag, PiUsers } from 'react-icons/pi'
 import { TbCirclesRelation } from 'react-icons/tb'
 
-import { showModal } from '@shared/_modals/show-modal'
-import { formatInt } from '@shared/utils/misc'
-
 import classes from './Checkbox.module.css'
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export const InternalSquadCardShared = memo((props: IProps) => {
     const { internalSquad } = props
 
     const handleOpenEditModal = (squadUuid: string) => {
-        showModal('internalSquads_internalSquadsInboundsDrawer', {
-            squadUuid
-        })
+        runAsync(
+            showModal('internalSquads_internalSquadsInboundsDrawer', {
+                squadUuid
+            })
+        )
     }
 
     if (!internalSquad) {

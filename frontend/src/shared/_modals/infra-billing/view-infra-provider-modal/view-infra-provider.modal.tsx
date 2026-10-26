@@ -1,16 +1,19 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Button, Modal, Stack, TextInput } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
-import { GetInfraProvidersCommand, UpdateInfraProviderCommand } from '@remnawave/backend-contract'
-import { useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbServer } from 'react-icons/tb'
-
+import { schemaResolver, useForm } from '@mantine/form'
+import {
+    type GetInfraProvidersCommand,
+    UpdateInfraProviderCommand
+} from '@remnawave/backend-contract'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateInfraProvider } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { handleFormErrors } from '@shared/utils/misc'
+import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbServer } from 'react-icons/tb'
 
 interface IProps {
     infraProvider: GetInfraProvidersCommand.Response['response']['providers'][number]
@@ -34,9 +37,11 @@ export const ViewInfraProviderModal = NiceModal.create((props: IProps) => {
         useUpdateInfraProvider({
             mutationFns: {
                 onSuccess: () => {
-                    queryClient.refetchQueries({
-                        queryKey: QueryKeys.infraBilling.getInfraProviders.queryKey
-                    })
+                    runAsync(
+                        queryClient.refetchQueries({
+                            queryKey: QueryKeys.infraBilling.getInfraProviders.queryKey
+                        })
+                    )
 
                     hide()
                 },
@@ -55,9 +60,9 @@ export const ViewInfraProviderModal = NiceModal.create((props: IProps) => {
                 faviconLink: infraProvider.faviconLink
             })
         }
-    }, [infraProvider])
+    }, [infraProvider, form.initialize])
 
-    const handleSubmit = form.onSubmit(async (values) => {
+    const handleSubmit = form.onSubmit((values) => {
         updateInfraProvider({
             variables: {
                 uuid: values.uuid,

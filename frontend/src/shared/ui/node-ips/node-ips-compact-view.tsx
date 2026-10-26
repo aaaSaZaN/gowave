@@ -1,9 +1,8 @@
 import { Badge, Group, HoverCard, ScrollArea, Stack, Text } from '@mantine/core'
-import { TNodeIps } from '@remnawave/backend-contract'
+import type { TNodeIps } from '@remnawave/backend-contract'
 import { useTranslation } from 'react-i18next'
-
-import { NodeIpStatusIcon } from './node-ip-status-icon'
 import { resolveNodeIpStatusMeta } from './node-ip-status.constants'
+import { NodeIpStatusIcon } from './node-ip-status-icon'
 
 interface IProps {
     ips: null | TNodeIps | undefined
@@ -30,12 +29,8 @@ export const NodeIpsCompactView = (props: IProps) => {
         <HoverCard openDelay={150} position="bottom-start" shadow="md" width={280} withArrow>
             <HoverCard.Target>
                 <Group gap={4} wrap="nowrap">
-                    {visibleIps.map((entry, index) => (
-                        <NodeIpStatusIcon
-                            key={`${entry.ip}-${index}`}
-                            size="sm"
-                            status={entry.status}
-                        />
+                    {visibleIps.map((entry) => (
+                        <NodeIpStatusIcon key={entry.ip} size="sm" status={entry.status} />
                     ))}
 
                     {hiddenCount > 0 && (
@@ -54,8 +49,8 @@ export const NodeIpsCompactView = (props: IProps) => {
 
                     <ScrollArea.Autosize mah={260} type="auto">
                         <Stack gap={6}>
-                            {ips.map((entry, index) => (
-                                <Group gap={8} key={`${entry.ip}-${index}`} wrap="nowrap">
+                            {ips.map((entry) => (
+                                <Group gap={8} key={entry.ip} wrap="nowrap">
                                     <NodeIpStatusIcon size="sm" status={entry.status} />
                                     <Text ff="monospace" size="xs" style={{ flex: 1 }} truncate>
                                         {entry.ip}

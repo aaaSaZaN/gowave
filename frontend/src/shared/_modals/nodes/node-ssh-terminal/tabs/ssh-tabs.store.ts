@@ -1,8 +1,7 @@
-import type { ISshSessionHandle, ISshSessionStatus, ISshTab } from '../ssh-terminal.types'
-
-import { GetNodeCommand } from '@remnawave/backend-contract'
+import type { GetNodeCommand } from '@remnawave/backend-contract'
 import { createContext, use } from 'react'
 import { createStore, useStore } from 'zustand'
+import type { ISshSessionHandle, ISshSessionStatus, ISshTab } from '../ssh-terminal.types'
 
 export const MAX_TABS = 10
 

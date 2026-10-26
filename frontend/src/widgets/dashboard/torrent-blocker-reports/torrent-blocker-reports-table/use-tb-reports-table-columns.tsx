@@ -1,28 +1,47 @@
 import {
     NodeSelectItem,
-    NodeSelectItemProps
+    type NodeSelectItemProps
 } from '@features/dashboard/users/users-table/model/node-select-item'
-import { MRT_ColumnDef } from '@kastov/mantine-react-table-open'
+import type { MRT_ColumnDef } from '@kastov/mantine-react-table-open'
 import { Group, Text } from '@mantine/core'
-import { GetNodesCommand, GetTorrentBlockerReportsCommand } from '@remnawave/backend-contract'
-import { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
-
+import type { GetNodesCommand, GetTorrentBlockerReportsCommand } from '@remnawave/backend-contract'
 import { CountryFlag } from '@shared/ui/get-country-flag'
 import { formatTimeUtil } from '@shared/utils/time-utils'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export const useTbReportsTableColumns = (nodes?: GetNodesCommand.Response['response']) => {
     const { t, i18n } = useTranslation()
 
     return useMemo<
         MRT_ColumnDef<GetTorrentBlockerReportsCommand.Response['response']['records'][number]>[]
-    >(
-        () => [
+    >(() => {
+        const renderCell0: NonNullable<
+            MRT_ColumnDef<
+                GetTorrentBlockerReportsCommand.Response['response']['records'][number]
+            >['Cell']
+        > = ({ cell }) => (
+            <Group
+                align="center"
+                gap="sm"
+                style={{
+                    flex: 1,
+                    minWidth: 0
+                }}
+                wrap="nowrap"
+            >
+                <CountryFlag countryCode={cell.row.original.node?.countryCode} />
+                <Text ff="monospace" fw={500} size="md">
+                    {cell.row.original.node?.name || '–'}
+                </Text>
+            </Group>
+        )
+        return [
             {
                 accessorKey: 'user.username',
                 header: 'Username',
                 accessorFn: (originalRow) => {
-                    if (originalRow.user && originalRow.user.username) {
+                    if (originalRow.user?.username) {
                         return originalRow.user.username
                     }
                     return '–'
@@ -47,22 +66,7 @@ export const useTbReportsTableColumns = (nodes?: GetNodesCommand.Response['respo
             {
                 accessorKey: 'node.uuid',
                 header: 'Reported Node',
-                Cell: ({ cell }) => (
-                    <Group
-                        align="center"
-                        gap="sm"
-                        style={{
-                            flex: 1,
-                            minWidth: 0
-                        }}
-                        wrap="nowrap"
-                    >
-                        <CountryFlag countryCode={cell.row.original.node?.countryCode} />
-                        <Text ff="monospace" fw={500} size="md">
-                            {cell.row.original.node?.name || '–'}
-                        </Text>
-                    </Group>
-                ),
+                Cell: renderCell0,
                 filterVariant: 'select',
                 mantineFilterSelectProps: {
                     comboboxProps: {
@@ -89,11 +93,7 @@ export const useTbReportsTableColumns = (nodes?: GetNodesCommand.Response['respo
                 accessorKey: 'report.actionReport.ip',
                 header: 'IP',
                 accessorFn: (originalRow) => {
-                    if (
-                        originalRow.report &&
-                        originalRow.report.actionReport &&
-                        originalRow.report.actionReport.ip
-                    ) {
+                    if (originalRow.report?.actionReport?.ip) {
                         return originalRow.report.actionReport.ip
                     }
                     return '–'
@@ -110,11 +110,7 @@ export const useTbReportsTableColumns = (nodes?: GetNodesCommand.Response['respo
                 accessorKey: 'report.xrayReport.inboundTag',
                 header: 'Inbound Tag',
                 accessorFn: (originalRow) => {
-                    if (
-                        originalRow.report &&
-                        originalRow.report.xrayReport &&
-                        originalRow.report.xrayReport.inboundTag
-                    ) {
+                    if (originalRow.report?.xrayReport?.inboundTag) {
                         return originalRow.report.xrayReport.inboundTag
                     }
                     return '–'
@@ -151,11 +147,7 @@ export const useTbReportsTableColumns = (nodes?: GetNodesCommand.Response['respo
                 accessorKey: 'report.xrayReport.outboundTag',
                 header: 'Outbound Tag',
                 accessorFn: (originalRow) => {
-                    if (
-                        originalRow.report &&
-                        originalRow.report.xrayReport &&
-                        originalRow.report.xrayReport.outboundTag
-                    ) {
+                    if (originalRow.report?.xrayReport?.outboundTag) {
                         return originalRow.report.xrayReport.outboundTag
                     }
                     return '–'
@@ -174,11 +166,7 @@ export const useTbReportsTableColumns = (nodes?: GetNodesCommand.Response['respo
                 accessorKey: 'report.xrayReport.protocol',
                 header: 'Protocol',
                 accessorFn: (originalRow) => {
-                    if (
-                        originalRow.report &&
-                        originalRow.report.xrayReport &&
-                        originalRow.report.xrayReport.protocol
-                    ) {
+                    if (originalRow.report?.xrayReport?.protocol) {
                         return originalRow.report.xrayReport.protocol
                     }
                     return '–'
@@ -191,7 +179,6 @@ export const useTbReportsTableColumns = (nodes?: GetNodesCommand.Response['respo
                     align: 'center'
                 }
             }
-        ],
-        [nodes, t, i18n.language]
-    )
+        ]
+    }, [nodes, t, i18n.language])
 }

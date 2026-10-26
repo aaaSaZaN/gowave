@@ -1,6 +1,6 @@
 import {
-    ConnectionsByUserResultCommand,
     ConnectionsByNodeResultCommand,
+    ConnectionsByUserResultCommand,
     GeocheckByNodeResultCommand
 } from '@remnawave/backend-contract'
 
@@ -26,7 +26,9 @@ export const useConnectionsByUserResult = createGetQueryHook({
     responseSchema: ConnectionsByUserResultCommand.ResponseSchema,
     routeParamsSchema: ConnectionsByUserResultCommand.RequestParamSchema,
     getQueryKey: ({ route, query }) =>
-        connectionsQueryKeys.connectionsByUserResult({ ...route!, ...query! }).queryKey,
+        route && query
+            ? connectionsQueryKeys.connectionsByUserResult({ ...route, ...query }).queryKey
+            : connectionsQueryKeys.connectionsByUserResult._def,
     rQueryParams: {
         staleTime: sToMs(60)
     },
@@ -38,7 +40,9 @@ export const useConnectionsByNodeResult = createGetQueryHook({
     responseSchema: ConnectionsByNodeResultCommand.ResponseSchema,
     routeParamsSchema: ConnectionsByNodeResultCommand.RequestParamSchema,
     getQueryKey: ({ route, query }) =>
-        connectionsQueryKeys.connectionsByNodeResult({ ...route!, ...query! }).queryKey,
+        route && query
+            ? connectionsQueryKeys.connectionsByNodeResult({ ...route, ...query }).queryKey
+            : connectionsQueryKeys.connectionsByNodeResult._def,
     rQueryParams: {
         staleTime: sToMs(60)
     },
@@ -50,7 +54,9 @@ export const useGeocheckByNodeResult = createGetQueryHook({
     responseSchema: GeocheckByNodeResultCommand.ResponseSchema,
     routeParamsSchema: GeocheckByNodeResultCommand.RequestParamSchema,
     getQueryKey: ({ route, query }) =>
-        connectionsQueryKeys.geocheckByNodeResult({ ...route!, ...query! }).queryKey,
+        route && query
+            ? connectionsQueryKeys.geocheckByNodeResult({ ...route, ...query }).queryKey
+            : connectionsQueryKeys.geocheckByNodeResult._def,
     rQueryParams: {
         staleTime: sToMs(60)
     },

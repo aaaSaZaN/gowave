@@ -5,14 +5,14 @@ interface ColorOptions {
 
 function hashString(value: string): number {
     let hash = 2166136261
-    for (const char of value) hash = Math.imul(hash ^ char.codePointAt(0)!, 16777619)
+    for (const char of value) hash = Math.imul(hash ^ (char.codePointAt(0) ?? 0), 16777619)
     return hash >>> 0
 }
 
 function pick(value: number | number[] | undefined, hash: number): number {
     if (typeof value === 'number') return value
     const choices = value?.length ? value : [0.35, 0.5, 0.65]
-    return choices[hash % choices.length]
+    return choices[hash % choices.length] ?? 0.5
 }
 
 export default class ColorHash {

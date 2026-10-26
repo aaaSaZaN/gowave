@@ -1,6 +1,5 @@
-import { TbCode } from 'react-icons/tb'
-
 import { openApplyToNodesModal } from '@shared/_modals/universal'
+import { TbCode } from 'react-icons/tb'
 
 export const openConfirmSnippetSyncModal = (onConfirm: () => void) => {
     openApplyToNodesModal({

@@ -1,27 +1,26 @@
+import {
+    useSectionActiveTag,
+    useViewPreferencesStoreActions
+} from '@entities/dashboard/view-preferences-store'
 import { modals } from '@mantine/modals'
-import { useMemo } from 'react'
-import { PiBracketsAngle } from 'react-icons/pi'
-
 import {
     QueryKeys,
     useDeleteSubscriptionTemplate,
     useReorderSubscriptionTemplates
 } from '@shared/api/hooks'
 import { queryClient } from '@shared/api/query-client'
+import { runAsync } from '@shared/lib/run-async'
 import { filterByTag, TagFilterBar } from '@shared/ui'
 import { MihomoLogo } from '@shared/ui/logos/mihomo-logo'
 import { SingboxLogo } from '@shared/ui/logos/singbox-logo'
 import { StashLogo } from '@shared/ui/logos/stash-logo'
 import { XrayLogo } from '@shared/ui/logos/xray-logo'
 import { VirtualizedDndGrid } from '@shared/ui/virtualized-dnd-grid'
-
-import {
-    useSectionActiveTag,
-    useViewPreferencesStoreActions
-} from '@entities/dashboard/view-preferences-store'
+import { useMemo } from 'react'
+import { PiBracketsAngle } from 'react-icons/pi'
 
 import { TemplatesCardWidget } from '../template-card/templates-card.widget'
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export function TemplatesGridWidget(props: IProps) {
     const { templates, type } = props
@@ -38,9 +37,11 @@ export function TemplatesGridWidget(props: IProps) {
     const { mutate: deleteTemplate } = useDeleteSubscriptionTemplate({
         mutationFns: {
             onSuccess: () => {
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.subscriptionTemplate.getSubscriptionTemplates.queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.subscriptionTemplate.getSubscriptionTemplates.queryKey
+                    })
+                )
             }
         }
     })

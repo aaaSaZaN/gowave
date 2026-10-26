@@ -10,23 +10,24 @@ import {
     Textarea,
     TextInput
 } from '@mantine/core'
-import { GetExternalSquadByUuidCommand } from '@remnawave/backend-contract'
-import { useCallback, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { PiInfo, PiPlus, PiTrash } from 'react-icons/pi'
-import { TbDeviceFloppy, TbPrescription } from 'react-icons/tb'
-
+import type { GetExternalSquadByUuidCommand } from '@remnawave/backend-contract'
 import { HelpActionIconShared } from '@shared/_modals/universal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useGetSubscriptionSettings, useUpdateExternalSquad } from '@shared/api/hooks'
 import { useAutoAnimate } from '@shared/hooks/use-auto-animate'
+import { optionalProp } from '@shared/lib/optional-prop'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers/template-info-popover/template-info-popover.shared'
 import { SectionCard } from '@shared/ui/section-card'
 import { TagInputPill } from '@shared/ui/tag-input-pill/tag-input-pill'
 import { sortResponseHeadersByPriority } from '@shared/utils/misc'
+import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { PiInfo, PiPlus, PiTrash } from 'react-icons/pi'
+import { TbDeviceFloppy, TbPrescription } from 'react-icons/tb'
 
 interface HeaderItem {
+    id: string
     key: string
     value: string
 }
@@ -61,6 +62,7 @@ export const ExternalSquadsResponseHeadersTabWidget = (props: IProps) => {
         setAddHeaders(
             sortResponseHeadersByPriority(
                 Object.entries(externalSquad.responseHeadersAdd ?? {}).map(([key, value]) => ({
+                    id: `stored:${key}`,
                     key,
                     value: String(value)
                 }))
@@ -92,6 +94,7 @@ export const ExternalSquadsResponseHeadersTabWidget = (props: IProps) => {
 
         const headersFiltered = addHeaders
             .map((header) => ({
+                id: header.id,
                 key: header.key.trim().toLowerCase(),
                 value: header.value.trim()
             }))
@@ -101,6 +104,7 @@ export const ExternalSquadsResponseHeadersTabWidget = (props: IProps) => {
         const uniqueHeaders: HeaderItem[] = []
         for (let i = headersFiltered.length - 1; i >= 0; i--) {
             const header = headersFiltered[i]
+            if (!header) continue
             if (!seen.has(header.key)) {
                 uniqueHeaders.unshift(header)
                 seen.add(header.key)
@@ -156,7 +160,7 @@ export const ExternalSquadsResponseHeadersTabWidget = (props: IProps) => {
     }
 
     const addLocalHeader = useCallback(() => {
-        setAddHeaders((prev) => [...prev, { key: '', value: '' }])
+        setAddHeaders((prev) => [...prev, { id: crypto.randomUUID(), key: '', value: '' }])
     }, [])
 
     const removeLocalHeader = useCallback((index: number) => {
@@ -170,7 +174,9 @@ export const ExternalSquadsResponseHeadersTabWidget = (props: IProps) => {
     const updateLocalHeaderKey = useCallback((index: number, key: string) => {
         setAddHeaders((prev) => {
             const newHeaders = [...prev]
-            newHeaders[index] = { ...newHeaders[index], key }
+            const current = newHeaders[index]
+            if (!current) return prev
+            newHeaders[index] = { ...current, key }
             return newHeaders
         })
     }, [])
@@ -178,7 +184,9 @@ export const ExternalSquadsResponseHeadersTabWidget = (props: IProps) => {
     const updateLocalHeaderValue = useCallback((index: number, value: string) => {
         setAddHeaders((prev) => {
             const newHeaders = [...prev]
-            newHeaders[index] = { ...newHeaders[index], value }
+            const current = newHeaders[index]
+            if (!current) return prev
+            newHeaders[index] = { ...current, value }
             return newHeaders
         })
     }, [])
@@ -227,7 +235,7 @@ export const ExternalSquadsResponseHeadersTabWidget = (props: IProps) => {
 
                     <Stack gap="xs" ref={parent}>
                         {addHeaders.map((header, index) => (
-                            <Group align="flex-start" gap="sm" key={index}>
+                            <Group align="flex-start" gap="sm" key={header.id}>
                                 <TextInput
                                     onChange={(e) => updateLocalHeaderKey(index, e.target.value)}
                                     placeholder={t('headers-manager.widget.key')}
@@ -298,7 +306,7 @@ export const ExternalSquadsResponseHeadersTabWidget = (props: IProps) => {
                             )
                         }}
                         renderPill={({ value, onRemove }) => (
-                            <TagInputPill onRemove={onRemove} value={value} />
+                            <TagInputPill {...optionalProp('onRemove', onRemove)} value={value} />
                         )}
                         value={removeKeys}
                         styles={{

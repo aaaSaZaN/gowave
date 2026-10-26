@@ -1,18 +1,17 @@
-import { DataTableColumn } from '@kastov/mantine-datatable'
+import type { DataTableColumn } from '@kastov/mantine-datatable'
 import { ActionIcon, Group, MultiSelect, Text } from '@mantine/core'
-import { GetHostsCommand } from '@remnawave/backend-contract'
-import { TFunction } from 'i18next'
-import { PiProhibit, PiPulse } from 'react-icons/pi'
-import { TbEdit, TbEyeOff, TbSearch } from 'react-icons/tb'
-
+import type { GetHostsCommand } from '@remnawave/backend-contract'
 import {
-    type BooleanFilterValue,
     BooleanCell,
     BooleanFilterControl,
+    type BooleanFilterValue,
     EllipsisCell,
     SelectFilter,
     TextSearchFilter
 } from '@shared/ui'
+import type { TFunction } from 'i18next'
+import { PiProhibit, PiPulse } from 'react-icons/pi'
+import { TbEdit, TbEyeOff, TbSearch } from 'react-icons/tb'
 
 export type { BooleanFilterValue }
 
@@ -509,7 +508,7 @@ export function getHostsTableColumns(
     }
 
     return [
-        remarkColumn,
+        ...(remarkColumn ? [remarkColumn] : []),
         buildStatusColumn(t, filters),
         ...textColumns,
         ...selectColumns,

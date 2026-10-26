@@ -1,12 +1,7 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Button, Group, Modal, Stack } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { BulkAllUpdateUsersCommand } from '@remnawave/backend-contract'
-import { motion } from 'motion/react'
-import { useTranslation } from 'react-i18next'
-import { PiFloppyDiskDuotone } from 'react-icons/pi'
-import { TbUsers } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import {
     QueryKeys,
@@ -16,10 +11,15 @@ import {
 } from '@shared/api/hooks'
 import { queryClient } from '@shared/api/query-client'
 import { useIsMobile } from '@shared/hooks/use-is-mobile'
+import { runAsync } from '@shared/lib/run-async'
 import { BulkFormsUsersShared } from '@shared/ui/forms/users/bulk-forms-components'
 import { ModalFooter } from '@shared/ui/modal-footer'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { handleFormErrors } from '@shared/utils/misc'
+import { motion } from 'motion/react'
+import { useTranslation } from 'react-i18next'
+import { PiFloppyDiskDuotone } from 'react-icons/pi'
+import { TbUsers } from 'react-icons/tb'
 
 const MotionWrapper = motion.div
 const MotionStack = motion.create(Stack)
@@ -50,8 +50,10 @@ export const BulkAllUsersUpdateModal = NiceModal.create(() => {
     const { modalProps, hide } = useNiceMantineModal({
         modal,
         onClose: () => {
-            queryClient.refetchQueries({ queryKey: QueryKeys.users.getAllUsers._def })
-            queryClient.refetchQueries({ queryKey: QueryKeys.system.getSystemStats.queryKey })
+            runAsync(queryClient.refetchQueries({ queryKey: QueryKeys.users.getAllUsers._def }))
+            runAsync(
+                queryClient.refetchQueries({ queryKey: QueryKeys.system.getSystemStats.queryKey })
+            )
         }
     })
 
@@ -88,7 +90,7 @@ export const BulkAllUsersUpdateModal = NiceModal.create(() => {
         }
     })
 
-    const handleBulkUpdate = form.onSubmit(async (values) => {
+    const handleBulkUpdate = form.onSubmit((values) => {
         updateUsers(
             {
                 variables: {

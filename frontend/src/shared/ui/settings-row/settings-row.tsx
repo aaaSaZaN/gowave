@@ -1,5 +1,5 @@
 import { ActionIcon, Box, Input, Tooltip } from '@mantine/core'
-import { createContext, ReactNode, useContext, useId } from 'react'
+import { createContext, type ReactNode, useContext, useId } from 'react'
 import { TbArrowBackUp } from 'react-icons/tb'
 
 import classes from './SettingsRow.module.css'

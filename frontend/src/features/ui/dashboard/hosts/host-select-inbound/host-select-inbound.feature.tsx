@@ -1,13 +1,14 @@
 import { ActionIcon, Box, Group, Stack, Text } from '@mantine/core'
+import { showModal } from '@shared/_modals/show-modal'
+import cx from '@shared/lib/classes'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
+import { XrayLogo } from '@shared/ui/logos'
 import { useTranslation } from 'react-i18next'
 import { TbAlertTriangle, TbChevronRight } from 'react-icons/tb'
 
-import { showModal } from '@shared/_modals/show-modal'
-import cx from '@shared/lib/classes'
-import { XrayLogo } from '@shared/ui/logos'
-
 import classes from './host-select-inbound.module.css'
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export function HostSelectInboundFeature(props: IProps) {
     const {
@@ -48,7 +49,7 @@ export function HostSelectInboundFeature(props: IProps) {
                     if (event.key !== 'Enter' && event.key !== ' ') return
 
                     event.preventDefault()
-                    openPicker()
+                    runAsync(openPicker())
                 }}
                 role="button"
                 tabIndex={0}
@@ -66,7 +67,7 @@ export function HostSelectInboundFeature(props: IProps) {
 
                         <Stack gap={0} miw={0}>
                             <Text
-                                ff={hasInbound ? 'monospace' : undefined}
+                                {...optionalProp('ff', hasInbound ? 'monospace' : undefined)}
                                 fw={600}
                                 size="sm"
                                 truncate

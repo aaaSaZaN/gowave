@@ -1,11 +1,7 @@
 import { DataTable, type DataTableSortStatus, useDataTableColumns } from '@kastov/mantine-datatable'
 import { Box, Button, Stack, Text } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
-import { GetNodesCommand } from '@remnawave/backend-contract'
-import { memo, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { PiEmpty } from 'react-icons/pi'
-
+import type { GetNodesCommand } from '@remnawave/backend-contract'
 import { showModal } from '@shared/_modals/show-modal'
 import {
     useGetConfigProfiles,
@@ -14,13 +10,17 @@ import {
     useGetNodes
 } from '@shared/api/hooks'
 import { usePreventTableBackScroll } from '@shared/hooks'
+import { runAsync } from '@shared/lib/run-async'
 import { DataTableControls, LoadingScreen, sortRecords } from '@shared/ui'
 import { sToMs } from '@shared/utils/time-utils'
+import { memo, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { PiEmpty } from 'react-icons/pi'
 
 import {
     getNodesTableColumns,
-    type NodesTableFilters,
-    type NodeStatusFilter
+    type NodeStatusFilter,
+    type NodesTableFilters
 } from './use-nodes-table-widget'
 
 type NodeType = GetNodesCommand.Response['response'][number]
@@ -67,7 +67,7 @@ export const NodesDataTableWidget = memo((props: IProps) => {
     usePreventTableBackScroll()
 
     const handleViewNode = (nodeUuid: string) => {
-        showModal('nodes_editNodeModal', { nodeUuid })
+        runAsync(showModal('nodes_editNodeModal', { nodeUuid }))
     }
 
     const { availableTags, availableProviders, availableInbounds } = useMemo(() => {
@@ -76,9 +76,13 @@ export const NodesDataTableWidget = memo((props: IProps) => {
         const providersSet = new Set<string>()
         const inboundsSet = new Set<string>()
         for (const node of nodes) {
-            node.tags?.forEach((tag) => tagsSet.add(tag))
+            node.tags?.forEach((tag) => {
+                tagsSet.add(tag)
+            })
             if (node.provider?.name) providersSet.add(node.provider.name)
-            node.configProfile?.activeInbounds?.forEach((inbound) => inboundsSet.add(inbound.tag))
+            node.configProfile?.activeInbounds?.forEach((inbound) => {
+                inboundsSet.add(inbound.tag)
+            })
         }
         return {
             availableInbounds: [...inboundsSet].sort(),

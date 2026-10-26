@@ -1,8 +1,7 @@
-import type { IProps } from './interfaces/props.interface'
-
 import { CloseButton, Combobox, InputBase, useCombobox } from '@mantine/core'
 import { useState } from 'react'
 import { PiTagDuotone } from 'react-icons/pi'
+import type { IProps } from './interfaces/props.interface'
 
 export function CreateableTagInputShared(props: IProps) {
     const { tags, value, onChange, defaultValue, ...restProps } = props

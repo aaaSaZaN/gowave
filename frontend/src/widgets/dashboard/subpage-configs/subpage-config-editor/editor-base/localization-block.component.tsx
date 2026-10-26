@@ -1,14 +1,13 @@
 import { Badge, Card, Divider, Group, ScrollArea, SimpleGrid, Stack } from '@mantine/core'
-import { UseFormReturnType } from '@mantine/form'
+import type { UseFormReturnType } from '@mantine/form'
 import {
     getLanguagesArray,
-    TSubscriptionPageLanguageCode,
-    TSubscriptionPageRawConfig
+    type TSubscriptionPageLanguageCode,
+    type TSubscriptionPageRawConfig
 } from '@remnawave/subscription-page-types'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { useTranslation } from 'react-i18next'
 import { TbGlobe } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
 import { LocaleCard } from '../editor-components/locale-card.component'
 import styles from '../subpage-config-visual-editor.module.css'

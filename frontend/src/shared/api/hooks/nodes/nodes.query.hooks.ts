@@ -1,15 +1,14 @@
 import {
-    GetNodeMetadataCommand,
     GetNodeCommand,
+    GetNodeMetadataCommand,
     GetNodeSecretKeyCommand,
-    GetNodesTagsCommand,
-    GetNodesCommand
+    GetNodesCommand,
+    GetNodesTagsCommand
 } from '@remnawave/backend-contract'
-import { keepPreviousData } from '@tanstack/react-query'
-import { z } from 'zod'
-
 import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
+import { keepPreviousData } from '@tanstack/react-query'
+import { z } from 'zod'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'
 
@@ -49,7 +48,8 @@ export const useGetNode = createGetQueryHook({
     endpoint: GetNodeCommand.TSQ_url,
     responseSchema: GetNodeCommand.ResponseSchema,
     routeParamsSchema: GetNodeCommand.RequestParamSchema,
-    getQueryKey: ({ route }) => nodesQueryKeys.getNode(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route ? nodesQueryKeys.getNode(route).queryKey : nodesQueryKeys.getNode._def,
     rQueryParams: {
         refetchOnMount: true,
         staleTime: sToMs(5),
@@ -85,7 +85,10 @@ export const useGetNodeMetadata = createGetQueryHook({
     endpoint: GetNodeMetadataCommand.TSQ_url,
     responseSchema: GetNodeMetadataCommand.ResponseSchema,
     routeParamsSchema: GetNodeMetadataCommand.RequestParamsSchema,
-    getQueryKey: ({ route }) => nodesQueryKeys.getNodeMetadata(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? nodesQueryKeys.getNodeMetadata(route).queryKey
+            : nodesQueryKeys.getNodeMetadata._def,
     rQueryParams: {
         staleTime: sToMs(60)
     }

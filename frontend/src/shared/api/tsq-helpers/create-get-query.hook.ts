@@ -1,13 +1,13 @@
-import { QueryKey, useQuery, UseQueryResult } from '@tanstack/react-query'
-import { z } from 'zod'
+import { type QueryKey, type UseQueryResult, useQuery } from '@tanstack/react-query'
+import type { z } from 'zod'
 
 import { instance } from '../axios'
 import { createUrl, handleRequestError } from '../helpers'
-import { CreateGetQueryHookArgs } from '../interfaces'
+import type { CreateGetQueryHookArgs } from '../interfaces'
 
 type QueryParams<R, Q> = {
-    query?: Q
-    route?: R
+    query?: Q | undefined
+    route?: R | undefined
 }
 
 /**
@@ -93,7 +93,7 @@ export function createGetQueryHook<
         params: QueryParams<z.infer<RouteParamsSchema>, z.infer<RequestQuerySchema>>
     ) => QueryKey
 }) {
-    const queryFn = async (params?: {
+    const queryFn = (params?: {
         errorHandler?: ErrorHandler
         query?: z.infer<RequestQuerySchema>
         route?: z.infer<RouteParamsSchema>

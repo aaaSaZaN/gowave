@@ -1,12 +1,12 @@
 import { ActionIcon, Tooltip } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
-import { useTranslation } from 'react-i18next'
-import { TbCopy } from 'react-icons/tb'
-
 import { hideModal } from '@shared/_modals/show-modal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useCloneHost, useGetHost } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
+import { useTranslation } from 'react-i18next'
+import { TbCopy } from 'react-icons/tb'
 
 interface IProps {
     hostUuid: string
@@ -41,8 +41,8 @@ export function CloneHostFeature(props: IProps) {
 
         await cloneHost({ variables: { cloneFromUuid: host.uuid } })
 
-        hideModal('hosts_editHostDrawer')
-        queryClient.refetchQueries({ queryKey: QueryKeys.hosts.getAllHosts.queryKey })
+        runAsync(hideModal('hosts_editHostDrawer'))
+        runAsync(queryClient.refetchQueries({ queryKey: QueryKeys.hosts.getAllHosts.queryKey }))
     }
 
     const openModal = () =>

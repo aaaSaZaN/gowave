@@ -1,12 +1,11 @@
 import { RollingNumber, SimpleGrid, Stack } from '@mantine/core'
-import { GetHttpStatsCommand } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
-import { TbDivide, TbFlame, TbRoute, TbTrendingUp } from 'react-icons/tb'
-
+import type { GetHttpStatsCommand } from '@remnawave/backend-contract'
 import { useAutoAnimate } from '@shared/hooks/use-auto-animate'
 import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 import { MetricCardShared } from '@shared/ui/metrics/metric-card'
 import { SectionCard } from '@shared/ui/section-card'
+import { useTranslation } from 'react-i18next'
+import { TbDivide, TbFlame, TbRoute, TbTrendingUp } from 'react-icons/tb'
 
 import { HttpStatRow } from './http-stat-row'
 

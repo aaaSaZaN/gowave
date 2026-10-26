@@ -1,30 +1,26 @@
+import type { INodeKeyInfo } from '@entities/ssh-vault'
+import { useSshVaultActions, useSshVaultStatus } from '@entities/ssh-vault'
+import { Box, Button, Center, Loader } from '@mantine/core'
+import type { GetNodeCommand } from '@remnawave/backend-contract'
+import { getAuthorizationToken, getBackendDomain } from '@shared/api'
+import { useCreateSshTicket } from '@shared/api/hooks'
+import type { Terminal } from '@xterm/xterm'
+import { AnimatePresence, motion } from 'motion/react'
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbPlugConnected } from 'react-icons/tb'
+import classes from '../NodeSshTerminal.module.css'
 import type {
     ISshSessionHandle,
     ISshSessionStatus,
     ISshTarget,
     TStage
 } from '../ssh-terminal.types'
-
-import { Box, Button, Center, Loader } from '@mantine/core'
-import { GetNodeCommand } from '@remnawave/backend-contract'
-import { Terminal } from '@xterm/xterm'
-import { AnimatePresence, motion } from 'motion/react'
-import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbPlugConnected } from 'react-icons/tb'
-
-import { getAuthorizationToken, getBackendDomain } from '@shared/api'
-import { useCreateSshTicket } from '@shared/api/hooks'
-
-import type { INodeKeyInfo } from '@entities/ssh-vault'
-import { useSshVaultActions, useSshVaultStatus } from '@entities/ssh-vault'
-
-import classes from '../NodeSshTerminal.module.css'
 import { ConnectionLogScreen } from './connection-log.screen'
 import { ConnectionSetupScreen } from './connection-setup.screen'
 import { HostKeyOverlay } from './host-key.overlay'
 import { KeyImportOverlay } from './key-import.overlay'
-import { ISshHostKeyPrompt, SshConnection, TSshStage } from './ssh-connection'
+import { type ISshHostKeyPrompt, SshConnection, type TSshStage } from './ssh-connection'
 import { TerminalView } from './terminal.view'
 
 interface IProps {
@@ -119,7 +115,7 @@ export const SshSessionTab = (props: IProps) => {
             setError(null)
             setStage('connecting')
 
-            let ticket
+            let ticket: Awaited<ReturnType<typeof createTicket>>
             try {
                 ticket = await createTicket({ route: { uuid: node.uuid } })
             } catch (requestError) {
@@ -226,7 +222,7 @@ export const SshSessionTab = (props: IProps) => {
                 username: profile.username
             })
         })()
-    }, [vaultStatus, node.uuid])
+    }, [vaultStatus, node.uuid, vaultActions.getProfile, vaultActions.ensureNodeKey, connect])
 
     const showSettings = useCallback(() => {
         teardown()

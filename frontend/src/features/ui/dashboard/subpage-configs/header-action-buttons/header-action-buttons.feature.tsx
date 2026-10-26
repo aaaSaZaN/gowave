@@ -1,12 +1,11 @@
 import { ActionIcon, ActionIconGroup, Group, Tooltip } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { TbPlus, TbRefresh } from 'react-icons/tb'
-import { useNavigate } from 'react-router'
-
 import { showModal } from '@shared/_modals/show-modal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useGetSubpageConfigs } from '@shared/api/hooks'
 import { UniversalSpotlightActionIconShared } from '@shared/ui/universal-spotlight'
+import { useTranslation } from 'react-i18next'
+import { TbPlus, TbRefresh } from 'react-icons/tb'
+import { useNavigate } from 'react-router'
 
 export const SubpageConfigsHeaderActionButtonsFeature = () => {
     const { t } = useTranslation()

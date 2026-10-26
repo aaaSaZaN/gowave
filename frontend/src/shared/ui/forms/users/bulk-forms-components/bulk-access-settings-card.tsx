@@ -1,18 +1,20 @@
 import { Select, Stack } from '@mantine/core'
 import { DateTimePicker, getTimeRange } from '@mantine/dates'
-import { UseFormReturnType } from '@mantine/form'
+import type { UseFormReturnType } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
-import { BulkAllUpdateUsersCommand, GetExternalSquadsCommand } from '@remnawave/backend-contract'
+import type {
+    BulkAllUpdateUsersCommand,
+    GetExternalSquadsCommand
+} from '@remnawave/backend-contract'
+import { userStatusValues } from '@shared/constants/forms'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
 import dayjs from 'dayjs'
-import { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
+import type { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiCalendarDuotone } from 'react-icons/pi'
 import { TbShield, TbStatusChange } from 'react-icons/tb'
-
-import { userStatusValues } from '@shared/constants/forms'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
 
 interface IProps {
     cardVariants: Variants

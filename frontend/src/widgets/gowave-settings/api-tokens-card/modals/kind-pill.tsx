@@ -1,11 +1,10 @@
 import { UnstyledButton } from '@mantine/core'
-import { MouseEvent } from 'react'
+import clsx from '@shared/lib/classes'
+import type { MouseEvent } from 'react'
 import { TbCheck, TbMinus } from 'react-icons/tb'
 
-import clsx from '@shared/lib/classes'
-
 import classes from '../api-token-card.module.css'
-import { KindState } from './scopes.utils'
+import type { KindState } from './scopes.utils'
 
 interface IProps {
     label: string

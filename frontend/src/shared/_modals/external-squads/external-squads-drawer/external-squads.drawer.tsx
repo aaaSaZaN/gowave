@@ -14,6 +14,16 @@ import {
     Tooltip,
     Transition
 } from '@mantine/core'
+import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
+import {
+    useGetExternalSquad,
+    useGetSubpageConfigs,
+    useGetSubscriptionTemplates
+} from '@shared/api/hooks'
+import { OPEN_ENTITY } from '@shared/constants'
+import { CopyEntityLinkButton } from '@shared/ui'
+import { LoaderModalShared } from '@shared/ui/loader-modal'
+import { formatInt } from '@shared/utils/misc'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiCheck, PiCopy, PiIdentificationBadge, PiListChecks, PiUsers } from 'react-icons/pi'
@@ -25,17 +35,6 @@ import {
     TbSettings,
     TbWebhook
 } from 'react-icons/tb'
-
-import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
-import {
-    useGetExternalSquad,
-    useGetSubpageConfigs,
-    useGetSubscriptionTemplates
-} from '@shared/api/hooks'
-import { OPEN_ENTITY } from '@shared/constants'
-import { CopyEntityLinkButton } from '@shared/ui'
-import { LoaderModalShared } from '@shared/ui/loader-modal'
-import { formatInt } from '@shared/utils/misc'
 
 import classes from './external-squads.module.css'
 import {
@@ -111,7 +110,6 @@ export const ExternalSquadsDrawer = NiceModal.create((props: IProps) => {
 
                                 <Stack gap={6} style={{ flex: 1, minWidth: 0 }}>
                                     <Text
-                                        className={classes.title}
                                         ff="monospace"
                                         fw={700}
                                         lineClamp={1}

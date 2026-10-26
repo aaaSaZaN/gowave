@@ -1,7 +1,8 @@
-import { Box, BoxProps, ElementProps } from '@mantine/core'
+import { Box, type BoxProps, type ElementProps } from '@mantine/core'
 
 interface UnderlineShape
-    extends ElementProps<'svg', keyof BoxProps>, Omit<BoxProps, 'children' | 'ref'> {
+    extends ElementProps<'svg', keyof BoxProps>,
+        Omit<BoxProps, 'children' | 'ref'> {
     size?: number | string
 }
 

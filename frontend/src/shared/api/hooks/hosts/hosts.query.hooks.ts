@@ -44,7 +44,8 @@ export const useGetHost = createGetQueryHook({
     endpoint: GetHostCommand.TSQ_url,
     responseSchema: GetHostCommand.ResponseSchema,
     routeParamsSchema: GetHostCommand.RequestParamSchema,
-    getQueryKey: ({ route }) => hostsQueryKeys.getHost(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route ? hostsQueryKeys.getHost(route).queryKey : hostsQueryKeys.getHost._def,
     rQueryParams: {},
     errorHandler: (error) => errorHandler(error, 'Get Host')
 })

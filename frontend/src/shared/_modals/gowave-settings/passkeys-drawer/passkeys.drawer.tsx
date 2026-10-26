@@ -13,15 +13,6 @@ import {
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
-import {
-    type PublicKeyCredentialCreationOptionsJSON,
-    startRegistration
-} from '@simplewebauthn/browser'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { PiPencil, PiTrash } from 'react-icons/pi'
-import { TbFingerprint, TbPasswordFingerprint, TbPlus } from 'react-icons/tb'
-
 import { showModal } from '@shared/_modals/show-modal'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { queryClient } from '@shared/api'
@@ -33,12 +24,21 @@ import {
     usePasskeyRegistrationVerify
 } from '@shared/api/hooks'
 import consola from '@shared/lib/logger'
+import { runAsync } from '@shared/lib/run-async'
 import { CompoundDrawerShared } from '@shared/ui/compound-drawer/compound-drawer.shared'
 import { CopyableDataListItem } from '@shared/ui/copyable-field/copyable-data-list-item'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { formatTimeUtil } from '@shared/utils/time-utils'
+import {
+    type PublicKeyCredentialCreationOptionsJSON,
+    startRegistration
+} from '@simplewebauthn/browser'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { PiPencil, PiTrash } from 'react-icons/pi'
+import { TbFingerprint, TbPasswordFingerprint, TbPlus } from 'react-icons/tb'
 
 export const PasskeysDrawer = NiceModal.create(() => {
     const { t, i18n } = useTranslation()
@@ -55,9 +55,11 @@ export const PasskeysDrawer = NiceModal.create(() => {
     const { mutate: deletePasskey, isPending: isDeleting } = useDeletePasskey({
         mutationFns: {
             onSuccess: () => {
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.passkeys.getPasskeys.queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.passkeys.getPasskeys.queryKey
+                    })
+                )
             }
         }
     })
@@ -66,9 +68,11 @@ export const PasskeysDrawer = NiceModal.create(() => {
     const { mutateAsync: verifyRegistration } = usePasskeyRegistrationVerify({
         mutationFns: {
             onSuccess: () => {
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.passkeys.getPasskeys.queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.passkeys.getPasskeys.queryKey
+                    })
+                )
             }
         }
     })

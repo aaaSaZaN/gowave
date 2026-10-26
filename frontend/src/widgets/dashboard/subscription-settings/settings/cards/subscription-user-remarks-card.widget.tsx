@@ -1,20 +1,19 @@
 import { CodeHighlight } from '@mantine/code-highlight'
 import { Button, Card, Group, Stack } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
 import { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { PiClockCountdown, PiClockUser, PiListChecks, PiProhibit } from 'react-icons/pi'
-import { TbDevices2, TbListLetters, TbX } from 'react-icons/tb'
-
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateSubscriptionSettings } from '@shared/api/hooks'
 import Masonry from '@shared/ui/masonry'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 import { handleFormErrors } from '@shared/utils/misc'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { PiClockCountdown, PiClockUser, PiListChecks, PiProhibit } from 'react-icons/pi'
+import { TbDevices2, TbListLetters, TbX } from 'react-icons/tb'
 
 import { RemarksManager } from './managers/remarks-manager.widget'
 import { computeRemarks } from './subscription-user-remarks.utils'
@@ -109,12 +108,12 @@ export const SubscriptionUserRemarksCardWidget = (props: IProps) => {
             return filtered.length > 0 ? filtered : ['']
         }
 
-        const expiredFiltered = filterEmptyStrings(remarks.expired)
-        const limitedFiltered = filterEmptyStrings(remarks.limited)
-        const disabledFiltered = filterEmptyStrings(remarks.disabled)
-        const emptyHostsFiltered = filterEmptyStrings(remarks.emptyHosts)
-        const HWIDMaxDevicesExceededFiltered = filterEmptyStrings(remarks.HWIDMaxDevicesExceeded)
-        const HWIDNotSupportedFiltered = filterEmptyStrings(remarks.HWIDNotSupported)
+        const expiredFiltered = filterEmptyStrings(remarks['expired'])
+        const limitedFiltered = filterEmptyStrings(remarks['limited'])
+        const disabledFiltered = filterEmptyStrings(remarks['disabled'])
+        const emptyHostsFiltered = filterEmptyStrings(remarks['emptyHosts'])
+        const HWIDMaxDevicesExceededFiltered = filterEmptyStrings(remarks['HWIDMaxDevicesExceeded'])
+        const HWIDNotSupportedFiltered = filterEmptyStrings(remarks['HWIDNotSupported'])
 
         if (
             expiredFiltered[0] === '' ||
@@ -175,7 +174,7 @@ export const SubscriptionUserRemarksCardWidget = (props: IProps) => {
                                 <RemarksManager
                                     icon={<TbDevices2 size="24px" />}
                                     iconColor="red"
-                                    initialRemarks={remarks.HWIDMaxDevicesExceeded}
+                                    initialRemarks={remarks['HWIDMaxDevicesExceeded']}
                                     onChange={updateHWIDMaxDevicesExceededRemarks}
                                     title={t(
                                         'subscription-user-remarks-card.widget.hwid-max-devices-exceeded'
@@ -185,7 +184,7 @@ export const SubscriptionUserRemarksCardWidget = (props: IProps) => {
                                 <RemarksManager
                                     icon={<TbX size="24px" />}
                                     iconColor="red"
-                                    initialRemarks={remarks.HWIDNotSupported}
+                                    initialRemarks={remarks['HWIDNotSupported']}
                                     onChange={updateHWIDNotSupportedRemarks}
                                     title={t(
                                         'subscription-user-remarks-card.widget.hwid-not-supported'
@@ -195,7 +194,7 @@ export const SubscriptionUserRemarksCardWidget = (props: IProps) => {
                                 <RemarksManager
                                     icon={<PiClockUser size="24px" />}
                                     iconColor="red"
-                                    initialRemarks={remarks.expired}
+                                    initialRemarks={remarks['expired']}
                                     onChange={updateExpiredRemarks}
                                     title={`${t('common.field.user-status')}: EXPIRED`}
                                 />
@@ -203,7 +202,7 @@ export const SubscriptionUserRemarksCardWidget = (props: IProps) => {
                                 <RemarksManager
                                     icon={<PiClockCountdown size="24px" />}
                                     iconColor="orange"
-                                    initialRemarks={remarks.limited}
+                                    initialRemarks={remarks['limited']}
                                     onChange={updateLimitedRemarks}
                                     title={`${t('common.field.user-status')}: LIMITED`}
                                 />
@@ -211,7 +210,7 @@ export const SubscriptionUserRemarksCardWidget = (props: IProps) => {
                                 <RemarksManager
                                     icon={<PiProhibit size="24px" />}
                                     iconColor="gray"
-                                    initialRemarks={remarks.disabled}
+                                    initialRemarks={remarks['disabled']}
                                     onChange={updateDisabledRemarks}
                                     title={`${t('common.field.user-status')}: DISABLED`}
                                 />
@@ -219,7 +218,7 @@ export const SubscriptionUserRemarksCardWidget = (props: IProps) => {
                                 <RemarksManager
                                     icon={<PiListChecks size="24px" />}
                                     iconColor="blue"
-                                    initialRemarks={remarks.emptyHosts}
+                                    initialRemarks={remarks['emptyHosts']}
                                     onChange={updateEmptyHostsRemarks}
                                     title={t('subscription-user-remarks-card.widget.empty-hosts')}
                                 />

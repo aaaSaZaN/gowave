@@ -1,5 +1,7 @@
-import { GetStatsCommand } from '@remnawave/backend-contract'
-import { TFunction } from 'i18next'
+import type { GetStatsCommand } from '@remnawave/backend-contract'
+import type { IMetricCardProps } from '@shared/ui/metrics/metric-card'
+import { formatInt } from '@shared/utils/misc'
+import type { TFunction } from 'i18next'
 import {
     PiClockCountdownDuotone,
     PiClockUserDuotone,
@@ -7,9 +9,6 @@ import {
     PiPulseDuotone,
     PiUsersDuotone
 } from 'react-icons/pi'
-
-import { IMetricCardProps } from '@shared/ui/metrics/metric-card'
-import { formatInt } from '@shared/utils/misc'
 
 export const getUsersMetrics = (
     users: GetStatsCommand.Response['response']['users'],

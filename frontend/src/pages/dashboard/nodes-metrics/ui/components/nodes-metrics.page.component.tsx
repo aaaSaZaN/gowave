@@ -1,10 +1,9 @@
+import { LoadingScreen, Page, PageHeaderShared } from '@shared/ui'
 import { NodeMetricsWidget } from '@widgets/dashboard/nodes/nodes-metrics'
 import { useTranslation } from 'react-i18next'
 import { PiSpeedometer } from 'react-icons/pi'
 
-import { LoadingScreen, Page, PageHeaderShared } from '@shared/ui'
-
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export default function NodesMetricsPageComponent(props: IProps) {
     const { t } = useTranslation()

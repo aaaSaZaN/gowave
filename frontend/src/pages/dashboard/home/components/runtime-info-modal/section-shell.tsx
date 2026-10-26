@@ -1,5 +1,5 @@
 import { Box, Divider, Group, Stack, Text, ThemeIcon, Title } from '@mantine/core'
-import { ComponentType, ReactNode } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 
 import classes from './runtime-info-modal.module.css'
 

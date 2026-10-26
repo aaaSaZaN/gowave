@@ -1,25 +1,23 @@
+import { NODES_VIEW_MODE, useExperimentalFeature } from '@entities/dashboard/view-preferences-store'
 import { ActionIcon, ActionIconGroup, Group, Stack, Tooltip } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { spotlight } from '@mantine/spotlight'
+import { showModal } from '@shared/_modals/show-modal'
+import { useGetNodes, useRestartAllNodes } from '@shared/api/hooks'
+import { ActionCardShared } from '@shared/ui'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { useTranslation } from 'react-i18next'
 import { PiSpiral } from 'react-icons/pi'
 import {
     TbAlertCircle,
     TbCards,
-    TbPlus,
     TbPlugConnected,
+    TbPlus,
     TbRefresh,
     TbRocket,
     TbSearch,
     TbTable
 } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { useGetNodes, useRestartAllNodes } from '@shared/api/hooks'
-import { ActionCardShared } from '@shared/ui'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-
-import { NODES_VIEW_MODE, useExperimentalFeature } from '@entities/dashboard/view-preferences-store'
 
 interface IProps {
     setViewMode: (viewMode: NODES_VIEW_MODE) => void

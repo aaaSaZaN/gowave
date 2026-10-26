@@ -15,14 +15,13 @@ import {
     Text,
     Tooltip
 } from '@mantine/core'
-import { GetNodeCommand } from '@remnawave/backend-contract'
-import { useQuery } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
-import { TbCheck, TbCopy, TbListDetails, TbRefresh, TbTerminal2 } from 'react-icons/tb'
-
+import type { GetNodeCommand } from '@remnawave/backend-contract'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { instance } from '@shared/api/axios'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useQuery } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
+import { TbCheck, TbCopy, TbListDetails, TbRefresh, TbTerminal2 } from 'react-icons/tb'
 
 interface IProps {
     node: GetNodeCommand.Response['response']
@@ -70,7 +69,7 @@ export const NodeLogsModal = NiceModal.create((props: IProps) => {
                 behavior: 'smooth'
             })
         }
-    }, [logs, autoScroll])
+    }, [autoScroll])
 
     const getLineColor = (line: string): string => {
         if (line.includes('[Warning]') || line.includes('WARN')) {
@@ -229,6 +228,7 @@ export const NodeLogsModal = NiceModal.create((props: IProps) => {
                                 {logs.map((line, idx) => (
                                     <Text
                                         component="div"
+                                        // biome-ignore lint/suspicious/noArrayIndexKey: Log rows are read-only line positions; identical log text can occur repeatedly.
                                         key={idx}
                                         size="xs"
                                         style={{

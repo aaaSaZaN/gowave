@@ -1,5 +1,5 @@
 import { ActionIcon, Badge, Card, Group, Text } from '@mantine/core'
-import {
+import type {
     TSubscriptionPageBlockConfig,
     TSubscriptionPageLanguageCode
 } from '@remnawave/subscription-page-types'

@@ -1,4 +1,4 @@
-import { type DataTableSortStatus } from '@kastov/mantine-datatable'
+import type { DataTableSortStatus } from '@kastov/mantine-datatable'
 
 import get from '@shared/lib/object-path'
 

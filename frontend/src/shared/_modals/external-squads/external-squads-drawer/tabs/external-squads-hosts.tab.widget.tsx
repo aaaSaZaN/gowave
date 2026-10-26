@@ -1,11 +1,10 @@
 import {
     ExternalSquadHostOverridesSchema,
-    GetExternalSquadByUuidCommand
+    type GetExternalSquadByUuidCommand
 } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
-import z from 'zod'
-
 import { resolveHostFormFields } from '@shared/ui/forms/hosts/base-host-form'
+import { useTranslation } from 'react-i18next'
+import type z from 'zod'
 
 import { ExternalSquadOverridesTab } from './external-squad-overrides-tab.widget'
 

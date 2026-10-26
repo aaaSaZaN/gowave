@@ -1,11 +1,10 @@
 import { Center, Stack, Text, ThemeIcon } from '@mantine/core'
-import { GetNodesCommand } from '@remnawave/backend-contract'
+import type { GetNodesCommand } from '@remnawave/backend-contract'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
 import { useTranslation } from 'react-i18next'
 import { PiCpu } from 'react-icons/pi'
 import { TbServer } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
 
 interface IProps {
     nodes: GetNodesCommand.Response['response']

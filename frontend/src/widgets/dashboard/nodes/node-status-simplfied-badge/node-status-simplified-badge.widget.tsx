@@ -7,7 +7,7 @@ import {
     PiWarningCircle
 } from 'react-icons/pi'
 
-import { IProps } from './interface'
+import type { IProps } from './interface'
 
 export const NodeStatusSimplfiedBadgeWidget = memo(
     ({ isConnected, isConnecting, isDisabled, nodeUuid, ...rest }: IProps) => {

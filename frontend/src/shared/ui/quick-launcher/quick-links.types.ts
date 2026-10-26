@@ -116,34 +116,34 @@ export function sanitizeQuickLinks(value: unknown): TQuickLink[] {
         if (typeof item !== 'object' || item === null) return
 
         const link = item as Record<string, unknown>
-        const kind = link.kind === 'builtin' ? 'modal' : link.kind
+        const kind = link['kind'] === 'builtin' ? 'modal' : link['kind']
 
         if (kind === 'modal') {
-            if (isQuickModalId(link.id)) out.push({ id: link.id, kind: 'modal' })
+            if (isQuickModalId(link['id'])) out.push({ id: link['id'], kind: 'modal' })
 
             return
         }
 
         if (kind === 'route') {
-            if (typeof link.path === 'string' && link.path.startsWith('/')) {
-                out.push({ kind: 'route', path: link.path })
+            if (typeof link['path'] === 'string' && link['path'].startsWith('/')) {
+                out.push({ kind: 'route', path: link['path'] })
             }
 
             return
         }
 
         if (kind !== 'external') return
-        if (typeof link.url !== 'string' || !isSafeExternalUrl(link.url)) return
-        if (typeof link.label !== 'string') return
+        if (typeof link['url'] !== 'string' || !isSafeExternalUrl(link['url'])) return
+        if (typeof link['label'] !== 'string') return
 
-        const label = link.label.trim().slice(0, MAX_QUICK_LABEL)
+        const label = link['label'].trim().slice(0, MAX_QUICK_LABEL)
         if (label.length === 0) return
 
         out.push({
-            icon: isQuickIconName(link.icon) ? link.icon : DEFAULT_QUICK_ICON,
+            icon: isQuickIconName(link['icon']) ? link['icon'] : DEFAULT_QUICK_ICON,
             kind: 'external',
             label,
-            url: link.url
+            url: link['url']
         })
     })
 

@@ -1,13 +1,13 @@
-import { Stack, TextInput, Group, Button } from '@mantine/core'
+import { Button, Group, Stack, TextInput } from '@mantine/core'
 import { useField } from '@mantine/form'
 import { CreateSubpageConfigCommand } from '@remnawave/backend-contract'
-import { t } from 'i18next'
-import { generatePath, NavigateFunction } from 'react-router'
-
 import { queryClient } from '@shared/api'
 import { useCreateSubpageConfig } from '@shared/api/hooks'
 import { QueryKeys } from '@shared/api/hooks/keys-factory'
 import { ROUTES } from '@shared/constants'
+import { runAsync } from '@shared/lib/run-async'
+import { t } from 'i18next'
+import { generatePath, type NavigateFunction } from 'react-router'
 
 interface IProps {
     onClose: () => void
@@ -38,11 +38,13 @@ export const CreateSubpageConfigContent = (props: IProps) => {
         mutationFns: {
             onSuccess: (data) => {
                 onClose()
-                handleUpdate()
-                navigate(
-                    generatePath(ROUTES.DASHBOARD.SUBPAGE_CONFIGS.SUBPAGE_CONFIG_BY_UUID, {
-                        uuid: data.uuid
-                    })
+                runAsync(handleUpdate())
+                runAsync(
+                    navigate(
+                        generatePath(ROUTES.DASHBOARD.SUBPAGE_CONFIGS.SUBPAGE_CONFIG_BY_UUID, {
+                            uuid: data.uuid
+                        })
+                    )
                 )
             }
         }

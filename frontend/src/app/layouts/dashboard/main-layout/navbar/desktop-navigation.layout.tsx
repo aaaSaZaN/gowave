@@ -1,9 +1,10 @@
 import { Menu, Menubar } from '@mantine/core'
-import { ElementType, Fragment } from 'react'
+import clsx from '@shared/lib/classes'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
+import { type ElementType, Fragment } from 'react'
 import { PiCaretDownBold } from 'react-icons/pi'
 import { Link, matchPath, useLocation, useNavigate } from 'react-router'
-
-import clsx from '@shared/lib/classes'
 
 import { useDesktopMenuSections } from '../menu-sections/desktop-menu-sections'
 import classes from './desktop-navigation.module.css'
@@ -40,11 +41,13 @@ export const DesktopNavigation = () => {
                     return hrefs.some((href) => isPathActive(pathname, href))
                 })
 
+                const firstItem = section.section[0]
                 const singleItem =
                     section.section.length === 1 &&
-                    !section.section[0].dropdownItems &&
-                    !section.section[0].newTab
-                        ? section.section[0]
+                    firstItem &&
+                    !firstItem.dropdownItems &&
+                    !firstItem.newTab
+                        ? firstItem
                         : null
 
                 if (singleItem) {
@@ -56,7 +59,7 @@ export const DesktopNavigation = () => {
                                 })}
                                 onKeyDown={(event) => {
                                     if (event.key === 'Enter' || event.key === ' ') {
-                                        navigate(singleItem.href)
+                                        runAsync(navigate(singleItem.href))
                                     }
                                 }}
                                 {...{ component: Link, to: singleItem.href }}
@@ -68,8 +71,9 @@ export const DesktopNavigation = () => {
                     )
                 }
 
-                const firstItem = section.section.find((item) => !item.newTab)
-                const firstSectionHref = firstItem?.dropdownItems?.[0]?.href ?? firstItem?.href
+                const firstNavigableItem = section.section.find((item) => !item.newTab)
+                const firstSectionHref =
+                    firstNavigableItem?.dropdownItems?.[0]?.href ?? firstNavigableItem?.href
 
                 return (
                     <Menubar.Menu key={section.id} width={250} withinPortal>
@@ -79,7 +83,7 @@ export const DesktopNavigation = () => {
                             })}
                             {...(firstSectionHref ? { component: Link, to: firstSectionHref } : {})}
                         >
-                            <NavIcon icon={section.icon} />
+                            <NavIcon {...optionalProp('icon', section.icon)} />
                             <span>{section.header}</span>
                             <PiCaretDownBold className={classes.caret} size={11} />
                         </Menubar.Target>
@@ -99,7 +103,11 @@ export const DesktopNavigation = () => {
                                                 })}
                                                 component={Link}
                                                 key={dropdownItem.id}
-                                                leftSection={<NavIcon icon={dropdownItem.icon} />}
+                                                leftSection={
+                                                    <NavIcon
+                                                        {...optionalProp('icon', dropdownItem.icon)}
+                                                    />
+                                                }
                                                 to={dropdownItem.href}
                                             >
                                                 {dropdownItem.name}

@@ -13,7 +13,9 @@ import {
     ThemeIcon,
     Tooltip
 } from '@mantine/core'
-import { GetNodesMetricsCommand } from '@remnawave/backend-contract'
+import type { GetNodesMetricsCommand } from '@remnawave/backend-contract'
+import { SectionCard } from '@shared/ui/section-card'
+import { formatInt } from '@shared/utils/misc'
 import { memo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -26,9 +28,6 @@ import {
     PiUsersDuotone
 } from 'react-icons/pi'
 import { TbServer2 } from 'react-icons/tb'
-
-import { SectionCard } from '@shared/ui/section-card'
-import { formatInt } from '@shared/utils/misc'
 
 export const NodeDetailsCard = memo(
     ({

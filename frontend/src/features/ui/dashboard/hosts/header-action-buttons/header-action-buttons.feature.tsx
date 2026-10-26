@@ -1,14 +1,13 @@
+import { HOSTS_VIEW_MODE } from '@entities/dashboard/view-preferences-store'
 import { ActionIcon, ActionIconGroup, Group, Tooltip } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { TbCards, TbPlus, TbRefresh, TbTable } from 'react-icons/tb'
-
 import { showModal } from '@shared/_modals/show-modal'
 import { HelpActionIconShared } from '@shared/_modals/universal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useGetHosts } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
 import { UniversalSpotlightActionIconShared } from '@shared/ui/universal-spotlight'
-
-import { HOSTS_VIEW_MODE } from '@entities/dashboard/view-preferences-store'
+import { useTranslation } from 'react-i18next'
+import { TbCards, TbPlus, TbRefresh, TbTable } from 'react-icons/tb'
 
 interface IProps {
     setViewMode: (viewMode: HOSTS_VIEW_MODE) => void
@@ -23,7 +22,7 @@ export const HeaderActionButtonsFeature = (props: IProps) => {
     const { isFetching } = useGetHosts()
 
     const handleCreate = () => {
-        showModal('hosts_createHostDrawer')
+        runAsync(showModal('hosts_createHostDrawer'))
     }
 
     const handleUpdate = async () => {

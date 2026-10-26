@@ -1,13 +1,12 @@
 import { Card, Grid, Group, Stack, Text, ThemeIcon } from '@mantine/core'
+import { useGetInfraBillingNodes } from '@shared/api/hooks'
+import { formatCurrency } from '@shared/utils/misc'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { useTranslation } from 'react-i18next'
 import { FaServer } from 'react-icons/fa'
 import { MdPayment, MdTrendingUp } from 'react-icons/md'
 import { TbAlertTriangle } from 'react-icons/tb'
-
-import { useGetInfraBillingNodes } from '@shared/api/hooks'
-import { formatCurrency } from '@shared/utils/misc'
 
 dayjs.extend(utc)
 
@@ -51,8 +50,8 @@ export function MobileStatsWidget() {
 
     return (
         <Grid gap="xs" mb="md">
-            {stats.map((stat, index) => (
-                <Grid.Col key={index} span={6}>
+            {stats.map((stat) => (
+                <Grid.Col key={stat.label} span={6}>
                     <Card padding="sm">
                         <Group gap="xs" wrap="nowrap">
                             <ThemeIcon color={stat.color} radius="md" size="lg" variant="soft">

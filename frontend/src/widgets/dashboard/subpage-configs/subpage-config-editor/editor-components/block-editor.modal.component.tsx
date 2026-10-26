@@ -1,14 +1,16 @@
 import { Button, Card, Drawer, Stack, Text, TextInput } from '@mantine/core'
-import {
+import type {
     TSubscriptionPageBlockConfig,
     TSubscriptionPageButtonConfig,
     TSubscriptionPageLanguageCode,
     TSubscriptionPageSvgLibrary
 } from '@remnawave/subscription-page-types'
+import { useListKeys } from '@shared/hooks/use-list-keys'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { swapItems } from '@shared/lib/swap-items'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { useTranslation } from 'react-i18next'
 import { TbChevronRight, TbPalette, TbPlus } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
 import styles from '../subpage-config-visual-editor.module.css'
 import { ButtonEditor } from './button-editor.component'
@@ -25,6 +27,8 @@ interface IProps {
     opened: boolean
     svgLibrary: TSubscriptionPageSvgLibrary
 }
+
+const EMPTY_BUTTONS: TSubscriptionPageButtonConfig[] = []
 
 const DEFAULT_COLOR = [
     'blue',
@@ -46,8 +50,9 @@ const DEFAULT_COLOR = [
 export function BlockEditorModal(props: IProps) {
     const { block, enabledLocales, onChange, onClose, onExited, opened, svgLibrary } = props
     const { t } = useTranslation()
+    const buttonKeys = useListKeys(block?.buttons ?? EMPTY_BUTTONS)
 
-    const firstLocale = enabledLocales[0]
+    const firstLocale = enabledLocales[0] ?? 'en'
     const blockTitle =
         (firstLocale && block?.title[firstLocale]) ||
         t('block-editor.modal.component.untitled-block')
@@ -84,22 +89,14 @@ export function BlockEditorModal(props: IProps) {
     const handleButtonMoveUp = (buttonIndex: number) => {
         if (!block) return
         if (buttonIndex === 0) return
-        const newButtons = [...block.buttons]
-        ;[newButtons[buttonIndex - 1], newButtons[buttonIndex]] = [
-            newButtons[buttonIndex],
-            newButtons[buttonIndex - 1]
-        ]
+        const newButtons = swapItems(block.buttons, buttonIndex, buttonIndex - 1)
         onChange({ ...block, buttons: newButtons })
     }
 
     const handleButtonMoveDown = (buttonIndex: number) => {
         if (!block) return
         if (buttonIndex >= block.buttons.length - 1) return
-        const newButtons = [...block.buttons]
-        ;[newButtons[buttonIndex], newButtons[buttonIndex + 1]] = [
-            newButtons[buttonIndex + 1],
-            newButtons[buttonIndex]
-        ]
+        const newButtons = swapItems(block.buttons, buttonIndex, buttonIndex + 1)
         onChange({ ...block, buttons: newButtons })
     }
 
@@ -107,7 +104,7 @@ export function BlockEditorModal(props: IProps) {
         <Drawer
             keepMounted={false}
             onClose={onClose}
-            onExitTransitionEnd={onExited}
+            {...optionalProp('onExitTransitionEnd', onExited)}
             opened={opened}
             position="left"
             size="xl"
@@ -196,7 +193,7 @@ export function BlockEditorModal(props: IProps) {
                                         canMoveUp={buttonIndex > 0}
                                         enabledLocales={enabledLocales}
                                         index={buttonIndex}
-                                        key={buttonIndex}
+                                        key={buttonKeys[buttonIndex]}
                                         onChange={(b) => handleButtonChange(buttonIndex, b)}
                                         onDelete={() => handleButtonDelete(buttonIndex)}
                                         onMoveDown={() => handleButtonMoveDown(buttonIndex)}

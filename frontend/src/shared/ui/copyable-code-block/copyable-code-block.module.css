@@ -63,7 +63,7 @@
     opacity: 1;
 }
 
-.copyButton[data-copied='true'] {
+.copyButton[data-copied="true"] {
     opacity: 1;
     color: var(--mantine-color-teal-5);
 }

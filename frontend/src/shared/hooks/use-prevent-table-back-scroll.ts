@@ -1,6 +1,5 @@
-import { useLayoutEffect } from 'react'
-
 import { preventBackScrollTables } from '@shared/utils/misc'
+import { useLayoutEffect } from 'react'
 
 export function usePreventTableBackScroll() {
     useLayoutEffect(() => {

@@ -11,15 +11,10 @@ import {
     Text,
     Textarea
 } from '@mantine/core'
-import { UseFormReturnType } from '@mantine/form'
-import { CreateNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
-import { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { PiTagDuotone } from 'react-icons/pi'
-import { TbBell, TbChartBar, TbChartLine, TbClock, TbExternalLink } from 'react-icons/tb'
-
-import { TTrafficTrackingStart, useGetNodesTags } from '@shared/api/hooks'
+import type { UseFormReturnType } from '@mantine/form'
+import type { CreateNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
+import { type TTrafficTrackingStart, useGetNodesTags } from '@shared/api/hooks'
+import { optionalProp } from '@shared/lib/optional-prop'
 import { TrafficLimitInput } from '@shared/ui/forms/traffic-limit-input'
 import { SelectInfraProviderShared } from '@shared/ui/infra-billing/select-infra-provider/select-infra-provider.shared'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
@@ -27,6 +22,11 @@ import { SectionCard } from '@shared/ui/section-card'
 import { TagInputPill } from '@shared/ui/tag-input-pill'
 import { prettifyBytesUtil } from '@shared/utils/bytes'
 import { getNodeTrafficPeriodStartUtil } from '@shared/utils/time-utils'
+import type { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { PiTagDuotone } from 'react-icons/pi'
+import { TbBell, TbChartBar, TbChartLine, TbClock, TbExternalLink } from 'react-icons/tb'
 
 import classes from './node-tracking-and-billing.card.module.css'
 
@@ -122,7 +122,10 @@ export const NodeTrackingAndBillingCard = <
                 <SectionCard.Section>
                     <Stack gap="md">
                         <SelectInfraProviderShared
-                            selectedInfraProviderUuid={form.getValues().providerUuid}
+                            {...optionalProp(
+                                'selectedInfraProviderUuid',
+                                form.getValues().providerUuid
+                            )}
                             setSelectedInfraProviderUuid={(providerUuid) => {
                                 form.setFieldValue('providerUuid', providerUuid as never)
                             }}
@@ -259,7 +262,10 @@ export const NodeTrackingAndBillingCard = <
                                     .join(', ') || form.getInputProps('tags').error
                             }
                             renderPill={({ value, onRemove }) => (
-                                <TagInputPill onRemove={onRemove} value={value} />
+                                <TagInputPill
+                                    {...optionalProp('onRemove', onRemove)}
+                                    value={value}
+                                />
                             )}
                         />
 

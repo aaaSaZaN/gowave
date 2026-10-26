@@ -1,5 +1,6 @@
-import { GetBandwidthStatsCommand } from '@remnawave/backend-contract'
-import { TFunction } from 'i18next'
+import type { GetBandwidthStatsCommand } from '@remnawave/backend-contract'
+import type { IMetricCardWithTrendProps } from '@shared/ui/metrics/metric-card'
+import type { TFunction } from 'i18next'
 import {
     PiCalendarDotDuotone,
     PiCalendarDotsDuotone,
@@ -7,8 +8,6 @@ import {
     PiChartDonutDuotone,
     PiChartPieSliceDuotone
 } from 'react-icons/pi'
-
-import { IMetricCardWithTrendProps } from '@shared/ui/metrics/metric-card'
 
 export const getBandwidthMetrics = (
     bandwidthStats: GetBandwidthStatsCommand.Response['response'],

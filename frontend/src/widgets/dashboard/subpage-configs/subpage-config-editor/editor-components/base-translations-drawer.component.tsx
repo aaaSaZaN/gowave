@@ -2,14 +2,13 @@ import { Drawer, Stack } from '@mantine/core'
 import {
     BASE_TRANSLATION_KEYS,
     BASE_TRANSLATION_LABELS,
-    TSubscriptionPageBaseTranslationKeys,
-    TSubscriptionPageLanguageCode,
-    TSubscriptionPageTranslateKeys
+    type TSubscriptionPageBaseTranslationKeys,
+    type TSubscriptionPageLanguageCode,
+    type TSubscriptionPageTranslateKeys
 } from '@remnawave/subscription-page-types'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { useTranslation } from 'react-i18next'
 import { TbLanguage } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
 import { LocalizedTextEditor } from './localized-text-editor.component'
 

@@ -1,7 +1,6 @@
 import { ActionIcon } from '@mantine/core'
-import { PiUserCircle } from 'react-icons/pi'
-
 import { showModal } from '@shared/_modals/show-modal'
+import { PiUserCircle } from 'react-icons/pi'
 
 interface IProps {
     userId: number

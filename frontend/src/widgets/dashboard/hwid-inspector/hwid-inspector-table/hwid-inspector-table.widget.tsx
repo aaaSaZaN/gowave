@@ -1,14 +1,23 @@
+import {
+    useHwidInspectorTableStore,
+    useHwidInspectorTableStoreActions
+} from '@entities/dashboard/hwid-inspector/hwid-inspector-table-store'
 import { useHwidInspectorTableColumns } from '@features/dashboard/hwid-inspector/hwid-inspector-table/model/use-hwid-inspector-table-columns'
-/* eslint-disable camelcase */
 import {
     MantineReactTable,
-    MRT_ColumnFilterFnsState,
+    type MRT_ColumnFilterFnsState,
     MRT_ShowHideColumnsButton,
     MRT_ToggleDensePaddingButton,
     MRT_ToggleFullScreenButton,
     useMantineReactTable
 } from '@kastov/mantine-react-table-open'
 import { ActionIcon, ActionIconGroup, Tooltip } from '@mantine/core'
+import { useGetHwidDevices } from '@shared/api/hooks'
+import { usePreventTableBackScroll } from '@shared/hooks'
+import { DEFAULT_PAGINATION_STATE, useMrtTableBinding } from '@shared/lib/mrt-table-store'
+import { ResolveUserActionShared } from '@shared/ui/resolve-user-action-icon'
+import { DataTableShared } from '@shared/ui/table'
+import { sToMs } from '@shared/utils/time-utils'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -19,27 +28,18 @@ import {
     TbRestore
 } from 'react-icons/tb'
 
-import { useGetHwidDevices } from '@shared/api/hooks'
-import { usePreventTableBackScroll } from '@shared/hooks'
-import { DEFAULT_PAGINATION_STATE, useMrtTableBinding } from '@shared/lib/mrt-table-store'
-import { ResolveUserActionShared } from '@shared/ui/resolve-user-action-icon'
-import { DataTableShared } from '@shared/ui/table'
-import { sToMs } from '@shared/utils/time-utils'
-
-import {
-    useHwidInspectorTableStore,
-    useHwidInspectorTableStoreActions
-} from '@entities/dashboard/hwid-inspector/hwid-inspector-table-store'
-
 export function HwidInspectorTableWidget() {
     const { t } = useTranslation()
 
     const actions = useHwidInspectorTableStoreActions()
     const tableColumns = useHwidInspectorTableColumns()
 
-    const { state: persistedTableState, handlers: persistedTableHandlers } = useMrtTableBinding(
-        useHwidInspectorTableStore
-    )
+    const { state: persistedTableState, handlers: persistedTableHandlers } = useMrtTableBinding({
+        getState: useHwidInspectorTableStore.getState,
+        getInitialState: useHwidInspectorTableStore.getInitialState,
+        setState: useHwidInspectorTableStore.setState,
+        subscribe: useHwidInspectorTableStore.subscribe
+    })
 
     const [columnFilterFns, setColumnFilterFns] = useState<MRT_ColumnFilterFnsState>(
         Object.fromEntries(tableColumns.map(({ accessorKey }) => [accessorKey, 'contains']))
@@ -91,10 +91,14 @@ export function HwidInspectorTableWidget() {
         enableColumnResizing: true,
 
         /* prettier-ignore */
-        mantineToolbarAlertBannerProps: isError ? {
-            color: 'red',
-            children: t('user-table.widget.error-loading-data')
-        } : undefined,
+        ...(isError
+            ? {
+                  mantineToolbarAlertBannerProps: {
+                      color: 'red',
+                      children: t('user-table.widget.error-loading-data')
+                  }
+              }
+            : {}),
 
         ...persistedTableHandlers,
         onColumnFilterFnsChange: setColumnFilterFns,

@@ -48,7 +48,7 @@ function decorateCanvas(
         const by = Math.random() * totalHeight
         const br = Math.max(totalWidth, totalHeight) * (0.3 + Math.random() * 0.4)
         const radial = ctx.createRadialGradient(bx, by, 0, bx, by, br)
-        radial.addColorStop(0, shuffled[i % shuffled.length])
+        radial.addColorStop(0, shuffled[i % shuffled.length] ?? 'rgba(99, 59, 171, 0.45)')
         radial.addColorStop(1, 'rgba(0, 0, 0, 0)')
         ctx.fillStyle = radial
         ctx.fillRect(0, 0, totalWidth, totalHeight)

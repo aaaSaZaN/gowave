@@ -1,4 +1,4 @@
-import {
+import type {
     GetSubscriptionTemplatesCommand,
     TSubscriptionTemplateType
 } from '@remnawave/backend-contract'

@@ -1,10 +1,9 @@
-import type { IGeocheckHop } from './trace.types'
-
 import { Box, Text } from '@mantine/core'
-
-import { TraceLink } from './trace-link'
+import { optionalProp } from '@shared/lib/optional-prop'
 import classes from './Trace.module.css'
+import type { IGeocheckHop } from './trace.types'
 import { isTimedOutHop } from './trace.types'
+import { TraceLink } from './trace-link'
 
 const JUMP_THRESHOLD_MS = 20
 
@@ -58,7 +57,12 @@ export const HopRow = (props: IProps) => {
                 />
             </Box>
 
-            <Text c={hasJump ? 'orange' : undefined} ff="monospace" size="11px" ta="right">
+            <Text
+                {...optionalProp('c', hasJump ? 'orange' : undefined)}
+                ff="monospace"
+                size="11px"
+                ta="right"
+            >
                 {isTimedOut ? '—' : `${formatMs(hop.avg_ms)} ms`}
                 {hasJump && delta !== null && (
                     <Text c="orange" component="span" size="10px">

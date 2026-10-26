@@ -1,16 +1,15 @@
 import { Button, Group, NumberInput, px, Stack, Switch, Text, Textarea } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
-import { PiGear, PiIdentificationBadge } from 'react-icons/pi'
-import { TbDevices2 } from 'react-icons/tb'
-import { Link } from 'react-router'
-
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateSubscriptionSettings } from '@shared/api/hooks'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 import { handleFormErrors } from '@shared/utils/misc'
+import { useTranslation } from 'react-i18next'
+import { PiGear, PiIdentificationBadge } from 'react-icons/pi'
+import { TbDevices2 } from 'react-icons/tb'
+import { Link } from 'react-router'
 
 interface IProps {
     subscriptionSettings: UpdateSubscriptionSettingsCommand.Response['response']
@@ -26,7 +25,11 @@ export const SubscriptionHwidSettingsWidget = (props: IProps) => {
         validate: schemaResolver(UpdateSubscriptionSettingsCommand.RequestBodySchema),
         initialValues: {
             uuid: subscriptionSettings.uuid,
-            hwidSettings: subscriptionSettings.hwidSettings!
+            hwidSettings: subscriptionSettings.hwidSettings ?? {
+                enabled: false,
+                fallbackDeviceLimit: 0,
+                maxDevicesAnnounce: ''
+            }
         }
     })
 

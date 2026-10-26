@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
-
 import type { IConnectionProfile } from '@entities/ssh-vault'
 import { useSshVaultActions } from '@entities/ssh-vault'
+import { useCallback, useEffect, useState } from 'react'
 
 export function useSshProfiles(isUnlocked: boolean) {
     const vaultActions = useSshVaultActions()
@@ -20,7 +19,7 @@ export function useSshProfiles(isUnlocked: boolean) {
         return () => {
             cancelled = true
         }
-    }, [isUnlocked])
+    }, [isUnlocked, vaultActions.listProfiles])
 
     const refresh = useCallback(async () => {
         setProfiles(await vaultActions.listProfiles())

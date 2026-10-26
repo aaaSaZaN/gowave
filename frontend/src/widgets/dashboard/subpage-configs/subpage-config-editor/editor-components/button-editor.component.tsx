@@ -13,16 +13,14 @@ import { useDisclosure } from '@mantine/hooks'
 import {
     BUTTON_TYPES_VALUES,
     SUBSCRIPTION_PAGE_TEMPLATE_KEYS,
-    TButtonType,
-    TSubscriptionPageButtonConfig,
-    TSubscriptionPageLanguageCode,
-    TSubscriptionPageSvgLibrary
+    type TButtonType,
+    type TSubscriptionPageButtonConfig,
+    type TSubscriptionPageLanguageCode,
+    type TSubscriptionPageSvgLibrary
 } from '@remnawave/subscription-page-types'
-import { useTranslation } from 'react-i18next'
-import { TbArrowDown, TbArrowUp, TbChevronRight, TbTrash } from 'react-icons/tb'
-import { TbExternalLink } from 'react-icons/tb'
-
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers'
+import { useTranslation } from 'react-i18next'
+import { TbArrowDown, TbArrowUp, TbChevronRight, TbExternalLink, TbTrash } from 'react-icons/tb'
 
 import styles from '../subpage-config-visual-editor.module.css'
 import { LocalizedTextEditor } from './localized-text-editor.component'

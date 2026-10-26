@@ -1,11 +1,11 @@
 import { ActionIcon, Tooltip } from '@mantine/core'
+import { showModal } from '@shared/_modals/show-modal'
+import { runAsync } from '@shared/lib/run-async'
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbChartArcs } from 'react-icons/tb'
 
-import { showModal } from '@shared/_modals/show-modal'
-
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 const GetNodeUsersUsageFeatureComponent = (props: IProps) => {
     const { nodeUuid } = props
@@ -16,9 +16,11 @@ const GetNodeUsersUsageFeatureComponent = (props: IProps) => {
             <ActionIcon
                 color="indigo"
                 onClick={() => {
-                    showModal('nodes_nodeUsageStatsDrawer', {
-                        nodeUuid
-                    })
+                    runAsync(
+                        showModal('nodes_nodeUsageStatsDrawer', {
+                            nodeUuid
+                        })
+                    )
                 }}
                 size="lg"
                 variant="soft"

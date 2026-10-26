@@ -1,15 +1,12 @@
-import type { AggregatedUserNode } from './use-sessions-explorer'
-
 import { ActionIcon, Box, Group, Stack, Text, Tooltip } from '@mantine/core'
-import { memo } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbClockCheck, TbClockExclamation, TbClockPause, TbExternalLink } from 'react-icons/tb'
-
 import clsx from '@shared/lib/classes'
 import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
 import { formatRelativeDateUtil, formatTimeUtil } from '@shared/utils/time-utils'
-
+import { memo } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbClockCheck, TbClockExclamation, TbClockPause, TbExternalLink } from 'react-icons/tb'
 import styles from './sessions-explorer.module.css'
+import type { AggregatedUserNode } from './use-sessions-explorer'
 
 interface IProps {
     ip: AggregatedUserNode['ips'][number]

@@ -10,10 +10,6 @@ import {
     Tooltip
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { useTranslation } from 'react-i18next'
-import { TbDevices, TbRefresh, TbTrash } from 'react-icons/tb'
-import { Virtuoso } from 'react-virtuoso'
-
 import {
     QueryKeys,
     useDeleteAllUserHwidDevices,
@@ -23,6 +19,9 @@ import {
 import { queryClient } from '@shared/api/query-client'
 import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
+import { useTranslation } from 'react-i18next'
+import { TbDevices, TbRefresh, TbTrash } from 'react-icons/tb'
+import { Virtuoso } from 'react-virtuoso'
 
 import { UserHwidDeviceItem } from './user-hwid-device-item'
 import classes from './user-hwid-devices.module.css'

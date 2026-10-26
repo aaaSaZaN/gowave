@@ -1,6 +1,6 @@
-import { TSubscriptionTemplateType } from '@remnawave/backend-contract'
+import type { TSubscriptionTemplateType } from '@remnawave/backend-contract'
 
-import { IDownloadableSubscriptionTemplate } from '@shared/constants/templates'
+import type { IDownloadableSubscriptionTemplate } from '@shared/constants/templates'
 
 export interface TemplateSelectorModalProps {
     editorType: 'NODE_PLUGIN' | 'SRR' | 'SUBPAGE_CONFIG' | 'SUBSCRIPTION' | 'XRAY_CORE'

@@ -1,6 +1,5 @@
-import { useEffect } from 'react'
-
 import { nprogress } from '@shared/ui/navigation-progress'
+import { useEffect } from 'react'
 
 export function LoadingProgress() {
     useEffect(() => {
@@ -8,5 +7,5 @@ export function LoadingProgress() {
         return () => nprogress.complete()
     }, [])
 
-    return <></>
+    return null
 }

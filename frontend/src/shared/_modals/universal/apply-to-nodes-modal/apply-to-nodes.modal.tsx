@@ -1,11 +1,10 @@
-import { Stack, ThemeIconProps } from '@mantine/core'
+import { Stack, type ThemeIconProps } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { t } from 'i18next'
-import { IconType } from 'react-icons'
-import { TbDeviceFloppy, TbRocket } from 'react-icons/tb'
-
 import { ActionCardShared } from '@shared/ui'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { t } from 'i18next'
+import type { IconType } from 'react-icons'
+import { TbDeviceFloppy, TbRocket } from 'react-icons/tb'
 
 interface IProps {
     IconComponent: IconType

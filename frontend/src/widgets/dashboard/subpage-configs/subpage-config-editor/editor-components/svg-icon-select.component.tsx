@@ -9,13 +9,12 @@ import {
     Tooltip
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { TSubscriptionPageSvgLibrary } from '@remnawave/subscription-page-types'
+import type { TSubscriptionPageSvgLibrary } from '@remnawave/subscription-page-types'
+import isSvg from '@shared/lib/is-svg'
+import { SafeSvg } from '@shared/ui/safe-svg'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbCheck, TbPhoto, TbX } from 'react-icons/tb'
-
-import isSvg from '@shared/lib/is-svg'
-import { sanitizeSvg } from '@shared/utils/misc'
 
 import styles from '../subpage-config-visual-editor.module.css'
 import { RequiredAsterisk } from './required-asterisk'
@@ -82,12 +81,7 @@ export function SvgIconSelect(props: IProps) {
                         <Group gap="sm" wrap="nowrap">
                             <Box className={styles.iconSelectPreview}>
                                 {isValidSelectedSvg && selectedSvg ? (
-                                    <Box
-                                        className={styles.iconSelectSvg}
-                                        dangerouslySetInnerHTML={{
-                                            __html: sanitizeSvg(selectedSvg)
-                                        }}
-                                    />
+                                    <SafeSvg className={styles.iconSelectSvg} svg={selectedSvg} />
                                 ) : (
                                     <TbPhoto color="var(--mantine-color-dimmed)" size={20} />
                                 )}
@@ -140,11 +134,9 @@ export function SvgIconSelect(props: IProps) {
                                                 size={52}
                                                 variant="subtle"
                                             >
-                                                <Box
+                                                <SafeSvg
                                                     className={styles.iconSelectItemSvg}
-                                                    dangerouslySetInnerHTML={{
-                                                        __html: sanitizeSvg(svg)
-                                                    }}
+                                                    svg={svg}
                                                 />
 
                                                 {isSelected && (

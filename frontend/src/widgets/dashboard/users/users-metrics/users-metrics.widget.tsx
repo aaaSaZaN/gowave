@@ -1,4 +1,6 @@
 import { SimpleGrid } from '@mantine/core'
+import { useGetSystemStats } from '@shared/api/hooks'
+import { type IMetricCardProps, MetricCardShared } from '@shared/ui/metrics/metric-card'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -8,9 +10,6 @@ import {
     PiPulseDuotone,
     PiUsersDuotone
 } from 'react-icons/pi'
-
-import { useGetSystemStats } from '@shared/api/hooks'
-import { IMetricCardProps, MetricCardShared } from '@shared/ui/metrics/metric-card'
 
 export function UsersMetrics() {
     const { t } = useTranslation()

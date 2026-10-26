@@ -1,14 +1,12 @@
+import { useUsersTableSelectionStoreActions } from '@entities/dashboard/users/users-table-selection'
 import { ActionIcon, Badge, Button, CloseButton, Group, Tooltip } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { TbBolt, TbEdit, TbSelectAll } from 'react-icons/tb'
-
 import { showModal } from '@shared/_modals/show-modal'
 import { QueryKeys } from '@shared/api/hooks'
 import { queryClient } from '@shared/api/query-client'
+import { useTranslation } from 'react-i18next'
+import { TbBolt, TbEdit, TbSelectAll } from 'react-icons/tb'
 
-import { useUsersTableSelectionStoreActions } from '@entities/dashboard/users/users-table-selection'
-
-import { IProps } from './interfaces/props.interface'
+import type { IProps } from './interfaces/props.interface'
 
 export const UsersTableSelectionFeature = (props: IProps) => {
     const { resetRowSelection, toggleAllPageRowsSelected } = props

@@ -1,14 +1,13 @@
 import { Box, Flex } from '@mantine/core'
-import {
+import type {
     GetSubscriptionSettingsCommand,
     TSubscriptionTemplateType
 } from '@remnawave/backend-contract'
+import { Page, PageHeaderShared } from '@shared/ui'
+import { SrrAdvancedWarningOverlay } from '@shared/ui/srr-advanced-warning-overlay/srr-advanced-warning-overlay'
 import { ResponseRulesEditorWidget } from '@widgets/dashboard/response-rules/response-rules-editor'
 import { useTranslation } from 'react-i18next'
 import { TbRoute } from 'react-icons/tb'
-
-import { Page, PageHeaderShared } from '@shared/ui'
-import { SrrAdvancedWarningOverlay } from '@shared/ui/srr-advanced-warning-overlay/srr-advanced-warning-overlay'
 
 interface Props {
     groupedTemplates: Record<TSubscriptionTemplateType, string[]>

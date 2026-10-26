@@ -1,13 +1,12 @@
+import {
+    type UsersTableTemplateSnapshot,
+    useUsersTableTemplatesActions
+} from '@entities/dashboard/users/users-table-templates-store'
 import { Button, CheckIcon, ColorSwatch, Group, Stack, Text, TextInput } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbDeviceFloppy } from 'react-icons/tb'
-
-import {
-    UsersTableTemplateSnapshot,
-    useUsersTableTemplatesActions
-} from '@entities/dashboard/users/users-table-templates-store'
 
 import { DEFAULT_TEMPLATE_COLOR, getSwatchColor, TEMPLATE_COLORS } from '../lib/constants'
 

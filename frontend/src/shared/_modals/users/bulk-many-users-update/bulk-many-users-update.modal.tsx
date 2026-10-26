@@ -1,14 +1,8 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
+import { useUsersTableSelectionStoreActions } from '@entities/dashboard/users/users-table-selection'
 import { Button, Group, Modal, Stack } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { BulkUpdateUsersCommand } from '@remnawave/backend-contract'
-import dayjs from 'dayjs'
-import { motion } from 'motion/react'
-import { useTranslation } from 'react-i18next'
-import { PiFloppyDiskDuotone } from 'react-icons/pi'
-import { TbUsers } from 'react-icons/tb'
-import { z } from 'zod'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { useBulkUpdateUsers, useGetExternalSquads, useGetUserTags } from '@shared/api/hooks'
 import { useIsMobile } from '@shared/hooks'
@@ -16,8 +10,12 @@ import { BulkManyFormsUsersShared } from '@shared/ui/forms/users/bulk-many-forms
 import { ModalFooter } from '@shared/ui/modal-footer'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { handleFormErrors } from '@shared/utils/misc'
-
-import { useUsersTableSelectionStoreActions } from '@entities/dashboard/users/users-table-selection'
+import dayjs from 'dayjs'
+import { motion } from 'motion/react'
+import { useTranslation } from 'react-i18next'
+import { PiFloppyDiskDuotone } from 'react-icons/pi'
+import { TbUsers } from 'react-icons/tb'
+import { z } from 'zod'
 
 const MotionWrapper = motion.div
 const MotionStack = motion.create(Stack)
@@ -100,7 +98,7 @@ export const BulkManyUsersUpdateModal = NiceModal.create((props: IProps) => {
         }
     })
 
-    const handleBulkUpdate = form.onSubmit(async (values) => {
+    const handleBulkUpdate = form.onSubmit((values) => {
         updateUsers(
             {
                 variables: {

@@ -1,4 +1,5 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
+import { useUsersTableSelectionStoreActions } from '@entities/dashboard/users/users-table-selection'
 import {
     Button,
     Divider,
@@ -12,6 +13,17 @@ import {
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { modals } from '@mantine/modals'
+import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
+import {
+    useBulkDeleteUsers,
+    useBulkExtendUsersExpirationDate,
+    useBulkResetTraffic,
+    useBulkRevokeUsersSubscription,
+    useBulkSetActiveInternalSquads,
+    useGetInternalSquads
+} from '@shared/api/hooks'
+import { ActionCardShared } from '@shared/ui'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { InternalSquadsListWidget } from '@widgets/dashboard/users/internal-squads-list'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -23,20 +35,6 @@ import {
     TbRefreshAlert,
     TbUsersMinus
 } from 'react-icons/tb'
-
-import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
-import {
-    useGetInternalSquads,
-    useBulkDeleteUsers,
-    useBulkRevokeUsersSubscription,
-    useBulkResetTraffic,
-    useBulkSetActiveInternalSquads,
-    useBulkExtendUsersExpirationDate
-} from '@shared/api/hooks'
-import { ActionCardShared } from '@shared/ui'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-
-import { useUsersTableSelectionStoreActions } from '@entities/dashboard/users/users-table-selection'
 
 interface IProps {
     usersCount: number

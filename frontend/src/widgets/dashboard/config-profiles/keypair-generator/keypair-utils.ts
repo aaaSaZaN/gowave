@@ -1,7 +1,6 @@
 import { x25519 } from '@noble/curves/ed25519.js'
 import { ml_dsa65 } from '@noble/post-quantum/ml-dsa.js'
 import { ml_kem768 } from '@noble/post-quantum/ml-kem.js'
-/* eslint-disable camelcase */
 import { randomBytes } from '@noble/post-quantum/utils.js'
 
 import { encodeURLSafe } from '@shared/lib/base64'

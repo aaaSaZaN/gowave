@@ -1,8 +1,7 @@
 import { ActionIcon, Box, Group, Scroller, Text } from '@mantine/core'
+import { CountryFlag } from '@shared/ui/get-country-flag'
 import { useTranslation } from 'react-i18next'
 import { TbPlus, TbX } from 'react-icons/tb'
-
-import { CountryFlag } from '@shared/ui/get-country-flag'
 
 import classes from '../NodeSshTerminal.module.css'
 import { useSshActiveTabId, useSshStatuses, useSshTabs, useSshTabsActions } from './ssh-tabs.store'

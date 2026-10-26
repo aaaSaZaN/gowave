@@ -1,18 +1,18 @@
 import {
-    InfiniteData,
-    QueryKey,
-    useInfiniteQuery,
-    UseInfiniteQueryResult
+    type InfiniteData,
+    type QueryKey,
+    type UseInfiniteQueryResult,
+    useInfiniteQuery
 } from '@tanstack/react-query'
-import { z } from 'zod'
+import type { z } from 'zod'
 
 import { instance } from '../axios'
 import { createUrl, handleRequestError } from '../helpers'
-import { CreateGetQueryHookArgs } from '../interfaces'
+import type { CreateGetQueryHookArgs } from '../interfaces'
 
 type QueryParams<R, Q> = {
-    query?: Q
-    route?: R
+    query?: Q | undefined
+    route?: R | undefined
 }
 
 /** React Query options supported by the infinite query hook (managed keys excluded). */

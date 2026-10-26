@@ -1,22 +1,25 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { ActionIcon, Group, Stack } from '@mantine/core'
-import { DatePickerInput, DatesRangeValue } from '@mantine/dates'
+import { DatePickerInput, type DatesRangeValue } from '@mantine/dates'
 import { useDebouncedState } from '@mantine/hooks'
 import { modals } from '@mantine/modals'
-import dayjs from 'dayjs'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbCalendar, TbChartArcs, TbChartLine, TbQuestionMark, TbRefresh } from 'react-icons/tb'
-
 import { showModal } from '@shared/_modals/show-modal'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { useGetInternalSquadUsageInfinite } from '@shared/api/hooks'
 import { colorFromId } from '@shared/lib/color'
+import { runAsync } from '@shared/lib/run-async'
 import { CompoundDrawerShared } from '@shared/ui/compound-drawer/compound-drawer.shared'
 import { TrafficLimitInput } from '@shared/ui/forms/traffic-limit-input/traffic-limit-input'
-import { ITopLeaderboardItem, TopLeaderboardCardShared } from '@shared/ui/leaderboard-item-card'
+import {
+    type ITopLeaderboardItem,
+    TopLeaderboardCardShared
+} from '@shared/ui/leaderboard-item-card'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { getDefaultDateRange } from '@shared/utils/time-utils'
+import dayjs from 'dayjs'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbCalendar, TbChartArcs, TbChartLine, TbQuestionMark, TbRefresh } from 'react-icons/tb'
 
 import { InternalSquadsUsageInfoModalContent } from './internal-squads-usage-info.modal'
 
@@ -96,8 +99,8 @@ export const InternalSquadsUsageDrawer = NiceModal.create((props: IProps) => {
 
     const usageUsers = internalSquadUsage?.pages.flatMap((page) => page.users) ?? []
 
-    const handleViewUser = async (user: ITopLeaderboardItem) => {
-        showModal('users_viewUserModal', { userId: Number(user.name) })
+    const handleViewUser = (user: ITopLeaderboardItem) => {
+        runAsync(showModal('users_viewUserModal', { userId: Number(user.name) }))
     }
 
     return (

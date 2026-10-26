@@ -1,5 +1,6 @@
 export const HappLogo = ({ size = 48 }: { size?: number }) => (
     <svg
+        aria-hidden="true"
         height={size}
         preserveAspectRatio="xMidYMid meet"
         style={{ borderRadius: '8px', overflow: 'hidden' }}

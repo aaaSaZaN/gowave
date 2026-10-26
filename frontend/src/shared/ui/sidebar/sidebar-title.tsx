@@ -1,8 +1,7 @@
 import { Text } from '@mantine/core'
-import { useMemo } from 'react'
-
 import { useGetAuthStatus } from '@shared/api/hooks/auth/auth.query.hooks'
 import { parseColoredTextUtil } from '@shared/utils/misc'
+import { useMemo } from 'react'
 
 import classes from './sidebar.module.css'
 
@@ -22,8 +21,8 @@ export const SidebarTitleShared = () => {
 
     return (
         <Text className={classes.logoTitle}>
-            {titleParts.map((part, index) => (
-                <Text c={part.color || 'white'} component="span" inherit key={index}>
+            {titleParts.map((part) => (
+                <Text c={part.color || 'white'} component="span" inherit key={part.text}>
                     {part.text}
                 </Text>
             ))}

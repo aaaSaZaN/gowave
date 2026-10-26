@@ -1,6 +1,5 @@
-import axios from 'axios'
-
 import { consola } from '@shared/lib/logger'
+import axios from 'axios'
 
 export const fetchWithProgress = async (url: string, onProgress?: (progress: number) => void) => {
     try {

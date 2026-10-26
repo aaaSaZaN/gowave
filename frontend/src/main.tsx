@@ -37,5 +37,7 @@ if (typeof window !== 'undefined') {
     }
 }
 
-const root = createRoot(document.getElementById('root')!)
+const container = document.getElementById('root')
+if (!container) throw new Error('GoWave root element is missing')
+const root = createRoot(container)
 root.render(<App />)

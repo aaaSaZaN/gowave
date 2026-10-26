@@ -1,20 +1,19 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
+import type { ISshSnippet } from '@entities/ssh-vault'
+import { useSshVaultActions, useSshVaultStatus } from '@entities/ssh-vault'
 import { ActionIcon, Box, FloatingWindow, Group, Text, Tooltip } from '@mantine/core'
 import { useHotkeys } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
-import { GetNodeCommand } from '@remnawave/backend-contract'
+import type { GetNodeCommand } from '@remnawave/backend-contract'
+import { useGetNodes } from '@shared/api/hooks'
+import { useSingleInstanceLock } from '@shared/hooks/use-single-instance-lock'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { registerScrollLockShard } from '@shared/utils/scroll-lock-shards'
+import { sToMs } from '@shared/utils/time-utils'
 import { AnimatePresence } from 'motion/react'
 import { useCallback, useEffect, useEffectEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbServer, TbSettings, TbShieldLock, TbTerminal2 } from 'react-icons/tb'
-
-import { useGetNodes } from '@shared/api/hooks'
-import { useSingleInstanceLock } from '@shared/hooks/use-single-instance-lock'
-import { registerScrollLockShard } from '@shared/utils/scroll-lock-shards'
-import { sToMs } from '@shared/utils/time-utils'
-
-import type { ISshSnippet } from '@entities/ssh-vault'
-import { useSshVaultActions, useSshVaultStatus } from '@entities/ssh-vault'
 
 import {
     SavedConnectionsList,
@@ -32,8 +31,8 @@ import {
 } from './hotkeys'
 import classes from './NodeSshTerminal.module.css'
 import { SshSessionTab } from './session/ssh-session.tab'
-import { SnippetsBar } from './snippets/snippets-bar'
 import { SnippetsOverlay } from './snippets/snippets.overlay'
+import { SnippetsBar } from './snippets/snippets-bar'
 import { SshTabStrip } from './tabs/ssh-tab-strip'
 import {
     createSshTabsStore,
@@ -47,7 +46,11 @@ import {
 import { useTerminalFontActions } from './terminal-font.store'
 import { useIsVaultGateOpen, VaultGate } from './vault/vault-gate'
 import { TrafficLights } from './window/traffic-lights'
-import { defaultGeometry, IWindowGeometry, useWindowGeometry } from './window/use-window-geometry'
+import {
+    defaultGeometry,
+    type IWindowGeometry,
+    useWindowGeometry
+} from './window/use-window-geometry'
 
 const SSH_TERMINAL_LOCK = 'rw-ssh-terminal'
 
@@ -113,7 +116,7 @@ const SshTerminalWindow = (props: IWindowProps) => {
 
     useEffect(() => {
         addTabForNode()
-    }, [modal.args])
+    }, [])
 
     const stopSessions = useEffectEvent(() => {
         for (const tab of tabs) tabActions.getHandle(tab.id)?.showSettings()
@@ -221,7 +224,7 @@ const SshTerminalWindow = (props: IWindowProps) => {
 
     useEffect(() => {
         void vaultActions.refresh()
-    }, [])
+    }, [vaultActions.refresh])
 
     const refreshSnippets = useEffectEvent(async () => {
         setSnippets(await vaultActions.listSnippets())
@@ -239,7 +242,7 @@ const SshTerminalWindow = (props: IWindowProps) => {
         return () => {
             cancelled = true
         }
-    }, [vaultStatus])
+    }, [vaultStatus, vaultActions.listSnippets])
 
     return (
         <FloatingWindow
@@ -438,7 +441,7 @@ export const NodeSshTerminalWindow = NiceModal.create((props: IProps) => {
             <SshTerminalWindow
                 geometry={geometry}
                 modal={modal}
-                node={props.node}
+                {...optionalProp('node', props.node)}
                 onGeometryChange={setGeometry}
             />
         </SshTabsProvider>

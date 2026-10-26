@@ -1,8 +1,7 @@
+import { useDisclaimerAccepted, useMiscStoreActions } from '@entities/dashboard/misc-store'
 import { Anchor, Button, Divider, List, Modal, Stack, Text, ThemeIcon, Title } from '@mantine/core'
 import { Trans, useTranslation } from 'react-i18next'
 import { PiCheckCircle, PiGavel, PiShieldWarning } from 'react-icons/pi'
-
-import { useDisclaimerAccepted, useMiscStoreActions } from '@entities/dashboard/misc-store'
 
 export function DisclaimerOverlay() {
     const { t } = useTranslation()

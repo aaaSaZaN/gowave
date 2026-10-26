@@ -1,17 +1,16 @@
 import { Button, Card, Select, Stack, Text } from '@mantine/core'
 import {
-    GetExternalSquadByUuidCommand,
+    type GetExternalSquadByUuidCommand,
     SUBSCRIPTION_TEMPLATE_TYPE,
-    TSubscriptionTemplateType
+    type TSubscriptionTemplateType
 } from '@remnawave/backend-contract'
-import { useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbDeviceFloppy } from 'react-icons/tb'
-
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateExternalSquad } from '@shared/api/hooks'
 import { useGetSubscriptionTemplates } from '@shared/api/hooks/subscription-template/subscription-template.query.hooks'
 import { MihomoLogo, SingboxLogo, StashLogo, XrayLogo } from '@shared/ui/logos'
+import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbDeviceFloppy } from 'react-icons/tb'
 
 interface IProps {
     externalSquad: GetExternalSquadByUuidCommand.Response['response']

@@ -7,7 +7,9 @@
     border-bottom: none;
     padding-left: var(--mantine-spacing-sm);
     padding-right: var(--mantine-spacing-sm);
+    /* biome-ignore lint/complexity/noImportantStyles: Override Mantine inline modal spacing. */
     padding-top: var(--mantine-spacing-sm) !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Override Mantine inline modal spacing. */
     padding-bottom: var(--mantine-spacing-sm) !important;
     border-radius: 0;
 }

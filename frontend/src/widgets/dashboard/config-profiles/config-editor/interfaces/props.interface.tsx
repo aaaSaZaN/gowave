@@ -1,4 +1,4 @@
-import { GetConfigProfileByUuidCommand, GetSnippetsCommand } from '@remnawave/backend-contract'
+import type { GetConfigProfileByUuidCommand, GetSnippetsCommand } from '@remnawave/backend-contract'
 
 export interface IProps {
     configProfile: GetConfigProfileByUuidCommand.Response['response']

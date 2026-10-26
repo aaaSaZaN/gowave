@@ -1,4 +1,5 @@
-function findScrollableParent(el: Element | null, horizontal: boolean): Element | null {
+function findScrollableParent(element: Element | null, horizontal: boolean): Element | null {
+    let el = element
     while (el && el !== document.body) {
         const style = window.getComputedStyle(el)
         const overflow = horizontal ? style.overflowX : style.overflowY
@@ -6,7 +7,6 @@ function findScrollableParent(el: Element | null, horizontal: boolean): Element 
         if (overflow === 'auto' || overflow === 'scroll') {
             return el
         }
-        // eslint-disable-next-line no-param-reassign
         el = el.parentElement
     }
     return null

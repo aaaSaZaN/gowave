@@ -2,8 +2,8 @@ import { notifications } from '@mantine/notifications'
 import {
     CreateSnippetCommand,
     DeleteSnippetCommand,
-    UpdateSnippetCommand,
-    SyncSnippetCommand
+    SyncSnippetCommand,
+    UpdateSnippetCommand
 } from '@remnawave/backend-contract'
 
 import { createMutationHook } from '../../tsq-helpers'

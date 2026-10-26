@@ -1,8 +1,7 @@
+import type { Monaco } from '@monaco-editor/react'
+import type { GetSubscriptionSettingsCommand } from '@remnawave/backend-contract'
 import type { editor } from 'monaco-editor'
-
-import { Monaco } from '@monaco-editor/react'
-import { GetSubscriptionSettingsCommand } from '@remnawave/backend-contract'
-import { RefObject } from 'react'
+import type { RefObject } from 'react'
 
 export interface Props {
     editorRef: RefObject<editor.IStandaloneCodeEditor | null>

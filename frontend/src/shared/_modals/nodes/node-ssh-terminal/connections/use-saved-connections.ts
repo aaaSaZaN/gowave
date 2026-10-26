@@ -1,10 +1,8 @@
-import type { INodeOrder, ISavedConnection } from './saved-connections.overlay'
-
-import { useMemo } from 'react'
-
 import type { IConnectionProfile } from '@entities/ssh-vault'
 
+import { useMemo } from 'react'
 import { useSshActiveTabId, useSshStatuses, useSshTabs } from '../tabs/ssh-tabs.store'
+import type { INodeOrder, ISavedConnection } from './saved-connections.overlay'
 import { buildSavedConnections } from './saved-connections.overlay'
 
 export function useSavedConnections(

@@ -12,7 +12,7 @@ test('virtual rows cover the viewport with bounded overscan', () => {
         layout.virtualItems.map((item) => item.index),
         [8, 9, 10, 11, 12, 13, 14]
     )
-    assert.equal(layout.virtualItems[0].start, 320)
+    assert.equal(layout.virtualItems[0]?.start, 320)
     assert.equal(layout.virtualItems.at(-1)?.end, 600)
 })
 
@@ -26,7 +26,7 @@ test('virtual row sizes follow keys through filtering and reordering', () => {
         {
             count: keys.length,
             estimateSize: () => 40,
-            getItemKey: (index) => keys[index],
+            getItemKey: (index) => keys[index] ?? index,
             scrollMargin: 200
         },
         { offset: 200, height: 300 },

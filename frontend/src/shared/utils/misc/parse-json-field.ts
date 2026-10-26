@@ -2,9 +2,13 @@ import consola from '@shared/lib/logger'
 
 export const parseJsonField = (value: unknown): null | object | string => {
     if (value === '') return null
+    if (typeof value !== 'string') return null
 
     try {
-        return JSON.parse(value as unknown as string)
+        const parsed: unknown = JSON.parse(value)
+        return typeof parsed === 'string' || (typeof parsed === 'object' && parsed !== null)
+            ? parsed
+            : null
     } catch (error) {
         consola.error(error)
         return null

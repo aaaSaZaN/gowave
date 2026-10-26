@@ -1,9 +1,9 @@
-import { GetNodePluginsCommand } from '@remnawave/backend-contract'
+import type { GetNodePluginsCommand } from '@remnawave/backend-contract'
+import { ROUTES } from '@shared/constants'
+import { runAsync } from '@shared/lib/run-async'
+import { UniversalSpotlightContentShared } from '@shared/ui/universal-spotlight'
 import { TbPackage } from 'react-icons/tb'
 import { generatePath, useNavigate } from 'react-router'
-
-import { ROUTES } from '@shared/constants'
-import { UniversalSpotlightContentShared } from '@shared/ui/universal-spotlight'
 
 interface IProps {
     plugins: GetNodePluginsCommand.Response['response']['nodePlugins']
@@ -15,10 +15,12 @@ export const NodePluginsSpotlightWidget = (props: IProps) => {
     const navigate = useNavigate()
 
     const handleViewNodePlugin = (nodePluginUuid: string) => {
-        navigate(
-            generatePath(ROUTES.DASHBOARD.MANAGEMENT.NODE_PLUGINS.NODE_PLUGIN_BY_UUID, {
-                uuid: nodePluginUuid
-            })
+        runAsync(
+            navigate(
+                generatePath(ROUTES.DASHBOARD.MANAGEMENT.NODE_PLUGINS.NODE_PLUGIN_BY_UUID, {
+                    uuid: nodePluginUuid
+                })
+            )
         )
     }
 

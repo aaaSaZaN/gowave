@@ -2,16 +2,16 @@ import { RestrictToWindow } from '@dnd-kit/dom/modifiers'
 import { move } from '@dnd-kit/helpers'
 import {
     DragDropProvider,
-    DragEndEvent,
-    DragOverEvent,
+    type DragEndEvent,
+    type DragOverEvent,
     DragOverlay,
-    DragStartEvent
+    type DragStartEvent
 } from '@dnd-kit/react'
 import { Box } from '@mantine/core'
-import { ReactNode, useEffect, useRef, useState } from 'react'
-import { VirtuosoGrid } from 'react-virtuoso'
-
 import { DndSortableIndexContext } from '@shared/hocs/with-dnd-sortable'
+import { requireValue } from '@shared/lib/invariant'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { VirtuosoGrid } from 'react-virtuoso'
 
 import classes from './virtualized-dnd-grid.module.css'
 import { VirtualizedGridComponents } from './virtualized-grid-components'
@@ -67,7 +67,9 @@ export function VirtualizedDndGrid<T extends { uuid: string }>(props: Virtualize
             if (newIds === ids) return prev
 
             const itemsByUuid = new Map(prev.map((item) => [item.uuid, item]))
-            return newIds.map((uuid) => itemsByUuid.get(uuid)!)
+            return newIds.map((uuid) =>
+                requireValue(itemsByUuid.get(uuid), 'Reordered item is missing')
+            )
         })
     }
 

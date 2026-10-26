@@ -54,6 +54,7 @@ function finalize<T>(node: IDraft<T>): ITreeNode<T> {
 
     while (!current.item && current.children.size === 1) {
         const [only] = current.children.values()
+        if (!only) break
 
         current = {
             children: only.children,

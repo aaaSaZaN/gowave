@@ -1,6 +1,10 @@
 import {
+    useTbReportsTableStore,
+    useTbReportsTableStoreActions
+} from '@entities/dashboard/torrent-blocker-reports/tb-reports-table-store'
+import {
     MantineReactTable,
-    MRT_ColumnFilterFnsState,
+    type MRT_ColumnFilterFnsState,
     MRT_ShowHideColumnsButton,
     MRT_ToggleDensePaddingButton,
     MRT_ToggleFullScreenButton,
@@ -8,6 +12,19 @@ import {
 } from '@kastov/mantine-react-table-open'
 import { ActionIcon, ActionIconGroup, Box, Tooltip } from '@mantine/core'
 import { modals } from '@mantine/modals'
+import { showModal } from '@shared/_modals/show-modal'
+import {
+    useGetNodes,
+    useGetTorrentBlockerReports,
+    useGetTorrentBlockerStats,
+    useTruncateTorrentBlockerReports
+} from '@shared/api/hooks'
+import { usePreventTableBackScroll } from '@shared/hooks'
+import { DEFAULT_PAGINATION_STATE, useMrtTableBinding } from '@shared/lib/mrt-table-store'
+import { runAsync } from '@shared/lib/run-async'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { DataTableShared } from '@shared/ui/table'
+import { sToMs } from '@shared/utils/time-utils'
 import { githubDarkTheme, JsonEditor } from 'json-edit-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -22,24 +39,6 @@ import {
     TbTrash
 } from 'react-icons/tb'
 
-import { showModal } from '@shared/_modals/show-modal'
-import {
-    useGetNodes,
-    useGetTorrentBlockerReports,
-    useGetTorrentBlockerStats,
-    useTruncateTorrentBlockerReports
-} from '@shared/api/hooks'
-import { usePreventTableBackScroll } from '@shared/hooks'
-import { DEFAULT_PAGINATION_STATE, useMrtTableBinding } from '@shared/lib/mrt-table-store'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { DataTableShared } from '@shared/ui/table'
-import { sToMs } from '@shared/utils/time-utils'
-
-import {
-    useTbReportsTableStore,
-    useTbReportsTableStoreActions
-} from '@entities/dashboard/torrent-blocker-reports/tb-reports-table-store'
-
 import { useTbReportsTableColumns } from './use-tb-reports-table-columns'
 
 export function TorrentBlockerReportsTableWidget() {
@@ -52,8 +51,12 @@ export function TorrentBlockerReportsTableWidget() {
 
     const tableColumns = useTbReportsTableColumns(nodes)
 
-    const { state: persistedTableState, handlers: persistedTableHandlers } =
-        useMrtTableBinding(useTbReportsTableStore)
+    const { state: persistedTableState, handlers: persistedTableHandlers } = useMrtTableBinding({
+        getState: useTbReportsTableStore.getState,
+        getInitialState: useTbReportsTableStore.getInitialState,
+        setState: useTbReportsTableStore.setState,
+        subscribe: useTbReportsTableStore.subscribe
+    })
 
     const [columnFilterFns, setColumnFilterFns] = useState<MRT_ColumnFilterFnsState>(
         Object.fromEntries(tableColumns.map(({ accessorKey }) => [accessorKey, 'contains']))
@@ -82,7 +85,7 @@ export function TorrentBlockerReportsTableWidget() {
 
     const { mutate: truncateTorrentBlockerReports } = useTruncateTorrentBlockerReports()
 
-    const handleTruncateTorrentBlockerReports = async () => {
+    const handleTruncateTorrentBlockerReports = () => {
         truncateTorrentBlockerReports({})
         refetch()
     }
@@ -110,10 +113,14 @@ export function TorrentBlockerReportsTableWidget() {
         enableColumnResizing: true,
 
         /* prettier-ignore */
-        mantineToolbarAlertBannerProps: isError ? {
-            color: 'red',
-            children: t('user-table.widget.error-loading-data')
-        } : undefined,
+        ...(isError
+            ? {
+                  mantineToolbarAlertBannerProps: {
+                      color: 'red',
+                      children: t('user-table.widget.error-loading-data')
+                  }
+              }
+            : {}),
 
         ...persistedTableHandlers,
         onColumnFilterFnsChange: setColumnFilterFns,
@@ -158,8 +165,8 @@ export function TorrentBlockerReportsTableWidget() {
         renderRowActions: ({ row }) => (
             <ActionIconGroup>
                 <ActionIcon
-                    onClick={async () => {
-                        showModal('users_viewUserModal', { userId: row.original.userId })
+                    onClick={() => {
+                        runAsync(showModal('users_viewUserModal', { userId: row.original.userId }))
                     }}
                     size="input-sm"
                     variant="soft"
@@ -168,7 +175,7 @@ export function TorrentBlockerReportsTableWidget() {
                 </ActionIcon>
                 <ActionIcon
                     color="grape"
-                    onClick={async () => {
+                    onClick={() => {
                         window.open(
                             `https://ipinfo.io/${row.original.report.actionReport.ip}`,
                             '_blank'
@@ -182,7 +189,7 @@ export function TorrentBlockerReportsTableWidget() {
 
                 <ActionIcon
                     color="gray"
-                    onClick={async () => {
+                    onClick={() => {
                         modals.open({
                             children: (
                                 <Box>

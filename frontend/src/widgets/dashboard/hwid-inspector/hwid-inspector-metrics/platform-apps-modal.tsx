@@ -1,12 +1,11 @@
 import { modals } from '@mantine/modals'
-import { useTranslation } from 'react-i18next'
-import { PiAppWindowDuotone } from 'react-icons/pi'
-
 import ColorHash from '@shared/lib/color'
 import { TopLeaderboardCardShared } from '@shared/ui/leaderboard-item-card'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useTranslation } from 'react-i18next'
+import { PiAppWindowDuotone } from 'react-icons/pi'
 
-import { IPlatformDatum } from './hwid-inspector-metrics.types'
+import type { IPlatformDatum } from './hwid-inspector-metrics.types'
 import { formatCount } from './hwid-inspector-metrics.utils'
 
 function PlatformAppsModalContent({ platform }: { platform: IPlatformDatum }) {

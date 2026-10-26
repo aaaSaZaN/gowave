@@ -1,6 +1,5 @@
-import type { BackendModule, LanguageDetectorModule } from 'i18next'
-
 import { panelUrl } from '@shared/lib/panel-path'
+import type { BackendModule, LanguageDetectorModule } from 'i18next'
 
 export const languageDetector: LanguageDetectorModule = {
     type: 'languageDetector',
@@ -20,7 +19,7 @@ export const languageDetector: LanguageDetectorModule = {
             window.location.hostname.split('.')[0]
         ]
             .filter((language): language is string => Boolean(language))
-            .map((language) => language.split('-')[0])
+            .map((language) => language.split('-')[0] ?? language)
     },
     cacheUserLanguage(language) {
         if (language === 'cimode') return
@@ -48,11 +47,15 @@ export const localeBackend: BackendModule = {
                     )
                     return
                 }
-                let resource
+                let resource: unknown
                 try {
                     resource = await response.json()
                 } catch (error) {
                     callback(error instanceof Error ? error : new Error(String(error)), false)
+                    return
+                }
+                if (typeof resource !== 'object' || resource === null || Array.isArray(resource)) {
+                    callback(new Error('Locale resource must be an object'), false)
                     return
                 }
                 callback(null, resource)

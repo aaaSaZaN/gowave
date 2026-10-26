@@ -1,18 +1,17 @@
-import type { AggregatedUser, AggregatedUserNode } from './use-sessions-explorer'
-
 import { ActionIcon, Badge, Box, Group, Tooltip } from '@mantine/core'
+import { showModal } from '@shared/_modals/show-modal'
+import { runAsync } from '@shared/lib/run-async'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
 import { forwardRef, memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiUserCircle } from 'react-icons/pi'
 import { TbFingerprint, TbId, TbServer, TbSum } from 'react-icons/tb'
 import { GroupedVirtuoso } from 'react-virtuoso'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
+import styles from './sessions-explorer.module.css'
 
 import { SessionsExplorerIpRow } from './sessions-explorer-ip-row'
-import styles from './sessions-explorer.module.css'
+import type { AggregatedUser, AggregatedUserNode } from './use-sessions-explorer'
 
 interface FlatIp {
     ip: AggregatedUserNode['ips'][number]
@@ -72,8 +71,8 @@ export const SessionsExplorerCard = memo(
             return { visibleNodes: visible, groupCounts: counts, flatIps: flat }
         }, [user.nodes])
 
-        const handleViewUser = async () => {
-            showModal('users_viewUserModal', { userId: user.userId })
+        const handleViewUser = () => {
+            runAsync(showModal('users_viewUserModal', { userId: user.userId }))
         }
 
         return (

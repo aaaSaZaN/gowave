@@ -36,7 +36,7 @@ test('base64 matches RFC vectors, binary data and large UTF-8 templates', () => 
         ['fo', 'Zm8='],
         ['foo', 'Zm9v'],
         ['foobar', 'Zm9vYmFy']
-    ]) {
+    ] as const) {
         assert.equal(encodeBase64(text), encoded)
         assert.equal(decodeBase64(encoded), text)
     }
@@ -127,8 +127,10 @@ test('version checks follow SemVer prerelease precedence and ignore build metada
         '1.0.0-rc.1',
         '1.0.0'
     ]
-    for (let index = 1; index < ordered.length; index++)
-        assert.ok(semver.gt(ordered[index], ordered[index - 1]))
+    for (const [index, next] of ordered.entries()) {
+        const previous = ordered[index - 1]
+        if (previous) assert.ok(semver.gt(next, previous))
+    }
     assert.equal(semver.gt('1.2.3+build2', '1.2.3+build1'), false)
     assert.equal(semver.clean(' =v3.4.15 '), '3.4.15')
     assert.equal(semver.valid('1.02.3'), null)

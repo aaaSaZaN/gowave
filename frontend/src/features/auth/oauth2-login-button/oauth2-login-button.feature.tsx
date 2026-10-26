@@ -1,13 +1,12 @@
 import { Button, Stack } from '@mantine/core'
-import { TOAuth2ProvidersKeys } from '@remnawave/backend-contract'
+import type { TOAuth2ProvidersKeys } from '@remnawave/backend-contract'
+import { useOAuth2Authorize } from '@shared/api/hooks'
 import { useState } from 'react'
 import { BiLogoGithub, BiLogoTelegram } from 'react-icons/bi'
 import { SiKeycloak } from 'react-icons/si'
 import { TbKey } from 'react-icons/tb'
 
-import { useOAuth2Authorize } from '@shared/api/hooks'
-
-import { IProps } from './interfaces/props.interface'
+import type { IProps } from './interfaces/props.interface'
 
 export const OAuth2LoginButtonsFeature = (props: IProps) => {
     const { authentication } = props
@@ -59,6 +58,7 @@ export const OAuth2LoginButtonsFeature = (props: IProps) => {
                     color="dark"
                     leftSection={
                         <svg
+                            aria-hidden="true"
                             height={20}
                             viewBox="0 0 1015 1015"
                             width={20}

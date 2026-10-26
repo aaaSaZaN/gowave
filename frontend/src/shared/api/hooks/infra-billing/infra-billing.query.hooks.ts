@@ -1,13 +1,12 @@
 import {
-    GetInfraBillingRecordsCommand,
     GetInfraBillingNodesCommand,
+    GetInfraBillingRecordsCommand,
     GetInfraProviderCommand,
     GetInfraProvidersCommand
 } from '@remnawave/backend-contract'
-import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
-
 import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 
 import { instance } from '../../axios'
 import { createUrl } from '../../helpers'
@@ -43,7 +42,10 @@ export const useGetInfraProvider = createGetQueryHook({
     endpoint: GetInfraProviderCommand.TSQ_url,
     responseSchema: GetInfraProviderCommand.ResponseSchema,
     routeParamsSchema: GetInfraProviderCommand.RequestParamSchema,
-    getQueryKey: ({ route }) => infraBillingQueryKeys.getInfraProvider(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? infraBillingQueryKeys.getInfraProvider(route).queryKey
+            : infraBillingQueryKeys.getInfraProvider._def,
     rQueryParams: {
         refetchOnMount: true,
         staleTime: sToMs(30),
@@ -57,7 +59,9 @@ export const useGetInfraBillingHistoryRecords = createGetQueryHook({
     responseSchema: GetInfraBillingRecordsCommand.ResponseSchema,
     requestQuerySchema: GetInfraBillingRecordsCommand.RequestQuerySchema,
     getQueryKey: ({ query }) =>
-        infraBillingQueryKeys.getInfraBillingHistoryRecords(query!).queryKey,
+        query
+            ? infraBillingQueryKeys.getInfraBillingHistoryRecords(query).queryKey
+            : infraBillingQueryKeys.getInfraBillingHistoryRecords._def,
     rQueryParams: {
         staleTime: sToMs(20),
         refetchInterval: sToMs(60),
