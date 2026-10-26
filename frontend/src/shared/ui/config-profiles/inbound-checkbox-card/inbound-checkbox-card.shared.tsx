@@ -1,8 +1,9 @@
+import { githubDarkTheme } from '@json-edit-react/themes'
 import { ActionIcon, Badge, Checkbox, Group, Text } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import type { GetConfigProfilesCommand } from '@remnawave/backend-contract'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
 import { useTranslation } from 'react-i18next'
 import { TbCode } from 'react-icons/tb'
 import classes from './InboundCheckboxCard.module.css'
@@ -18,14 +19,14 @@ export const InboundCheckboxCardShared = (props: IProps) => {
     ) => {
         modals.open({
             children: (
-                <JsonEditor
+                <JsonViewer
                     collapse={3}
                     data={inbound.rawInbound}
                     indent={4}
                     maxWidth="100%"
                     rootName=""
+                    showCollectionCount
                     theme={githubDarkTheme}
-                    viewOnly
                 />
             ),
             title: (

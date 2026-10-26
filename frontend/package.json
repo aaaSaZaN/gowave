@@ -45,6 +45,7 @@
     "@dnd-kit/helpers": "0.5.1",
     "@dnd-kit/react": "0.5.1",
     "@ebay/nice-modal-react": "1.2.13",
+    "@json-edit-react/themes": "1.0.0",
     "@kastov/mantine-datatable": "9.3.4",
     "@kastov/mantine-react-table-open": "9.0.12",
     "@lottiefiles/dotlottie-react": "0.20.0",
@@ -98,7 +99,7 @@
     "rehype-raw": "7.0.0",
     "remark-gfm": "4.0.1",
     "uqr": "0.1.3",
-    "zod": "4.6.7",
+    "zod": "4.5.4",
     "zustand": "5.0.16"
   },
   "devDependencies": {

@@ -1,4 +1,5 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
+import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     ActionIcon,
     Badge,
@@ -21,7 +22,7 @@ import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { QrCodeBuilder } from '@shared/ui/qr-code-builder'
 import { SectionCardRoot } from '@shared/ui/section-card/section-card.root'
 import { SectionCardSection } from '@shared/ui/section-card/section-card.section'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
 import { useTranslation } from 'react-i18next'
 import {
     PiCheck,
@@ -180,7 +181,7 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
             ),
             children: (
                 <Box>
-                    <JsonEditor
+                    <JsonViewer
                         collapse={({ path }) => {
                             if (path.length === 0) return false
                             if (path[0] !== 'resolvedProxyConfigs') return true
@@ -188,15 +189,15 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
                         }}
                         data={JSON.parse(JSON.stringify(rawSubscription))}
                         indent={4}
-                        keySort={([a], [b]) => {
+                        sortKeys={([a], [b]) => {
                             if (a === 'resolvedProxyConfigs') return -1
                             if (b === 'resolvedProxyConfigs') return 1
                             return 0
                         }}
                         maxWidth="100%"
                         rootName=""
+                        showCollectionCount
                         theme={githubDarkTheme}
-                        viewOnly
                         jsonStringify={(data) => JSON.stringify(data)}
                     />
                 </Box>

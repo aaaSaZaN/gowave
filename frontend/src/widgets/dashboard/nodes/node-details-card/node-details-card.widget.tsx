@@ -5,6 +5,7 @@ import { GetNodeUsersUsageFeature } from '@features/ui/dashboard/nodes/get-node-
 import { OpenNodeLogsFeature } from '@features/ui/dashboard/nodes/open-node-logs'
 import { OpenNodeSshFeature } from '@features/ui/dashboard/nodes/open-node-ssh'
 import { OpenNodeUpdateFeature } from '@features/ui/dashboard/nodes/open-node-update'
+import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     ActionIcon,
     Badge,
@@ -38,7 +39,7 @@ import { SectionCard } from '@shared/ui/section-card'
 import { prettifyBytesUtil } from '@shared/utils/bytes'
 import { isCustomXrayVersion, isGoNodeVersion } from '@shared/utils/misc/node-versions'
 import { getNodeResetDaysUtil, getXrayUptimeUtil } from '@shared/utils/time-utils'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
 import { memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -292,14 +293,14 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                                         ),
                                         children: (
                                             <Box>
-                                                <JsonEditor
+                                                <JsonViewer
                                                     collapse={3}
                                                     data={metadata.metadata as object}
                                                     indent={4}
                                                     maxWidth="100%"
                                                     rootName=""
+                                                    showCollectionCount
                                                     theme={githubDarkTheme}
-                                                    viewOnly
                                                 />
                                             </Box>
                                         )

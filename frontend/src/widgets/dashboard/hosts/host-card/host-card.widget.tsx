@@ -1,5 +1,6 @@
 import { OptimisticSortingPlugin } from '@dnd-kit/dom/sortable'
 import { useSortable } from '@dnd-kit/react/sortable'
+import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     ActionIcon,
     Badge,
@@ -30,7 +31,7 @@ import { XrayLogo } from '@shared/ui/logos'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SingleRowOverflowList } from '@shared/ui/single-row-overflow-list'
 import { resolveCountryCode } from '@shared/utils/misc/resolve-country-code'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
 import { type CSSProperties, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiNetwork, PiProhibit, PiPulse } from 'react-icons/pi'
@@ -457,7 +458,7 @@ export function HostCardWidget(props: IProps) {
                                         e.stopPropagation()
                                         modals.open({
                                             children: (
-                                                <JsonEditor
+                                                <JsonViewer
                                                     collapse={3}
                                                     data={JSON.parse(
                                                         JSON.stringify(item.muxParams)
@@ -465,8 +466,8 @@ export function HostCardWidget(props: IProps) {
                                                     indent={2}
                                                     maxWidth="100%"
                                                     rootName=""
+                                                    showCollectionCount
                                                     theme={githubDarkTheme}
-                                                    viewOnly
                                                 />
                                             ),
                                             title: (
@@ -495,7 +496,7 @@ export function HostCardWidget(props: IProps) {
                                         e.stopPropagation()
                                         modals.open({
                                             children: (
-                                                <JsonEditor
+                                                <JsonViewer
                                                     collapse={3}
                                                     data={JSON.parse(
                                                         JSON.stringify(item.finalMask)
@@ -503,8 +504,8 @@ export function HostCardWidget(props: IProps) {
                                                     indent={2}
                                                     maxWidth="100%"
                                                     rootName=""
+                                                    showCollectionCount
                                                     theme={githubDarkTheme}
-                                                    viewOnly
                                                 />
                                             ),
                                             title: (
@@ -533,7 +534,7 @@ export function HostCardWidget(props: IProps) {
                                         e.stopPropagation()
                                         modals.open({
                                             children: (
-                                                <JsonEditor
+                                                <JsonViewer
                                                     collapse={3}
                                                     data={JSON.parse(
                                                         JSON.stringify(item.sockoptParams)
@@ -541,8 +542,8 @@ export function HostCardWidget(props: IProps) {
                                                     indent={2}
                                                     maxWidth="100%"
                                                     rootName=""
+                                                    showCollectionCount
                                                     theme={githubDarkTheme}
-                                                    viewOnly
                                                 />
                                             ),
                                             title: (

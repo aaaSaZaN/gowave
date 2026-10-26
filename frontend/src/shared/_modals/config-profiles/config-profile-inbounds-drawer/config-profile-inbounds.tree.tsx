@@ -1,3 +1,4 @@
+import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     ActionIcon,
     Badge,
@@ -21,7 +22,7 @@ import { runAsync } from '@shared/lib/run-async'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { formatInt } from '@shared/utils/misc'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { JsonViewer } from 'json-edit-react'
 import { useMemo } from 'react'
 import { PiCheck, PiCopy, PiTag, PiUsers } from 'react-icons/pi'
 import { TbChevronRight, TbCirclesRelation, TbTag } from 'react-icons/tb'
@@ -47,14 +48,14 @@ const openRawInboundModal = (inbound: ProfileInbound) => {
     modals.open({
         children: (
             <Box>
-                <JsonEditor
+                <JsonViewer
                     collapse={3}
                     data={inbound.rawInbound as object}
                     indent={4}
                     maxWidth="100%"
                     rootName=""
+                    showCollectionCount
                     theme={githubDarkTheme}
-                    viewOnly
                 />
             </Box>
         ),
