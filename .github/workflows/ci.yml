@@ -62,7 +62,7 @@ jobs:
       - name: Build
         run: CGO_ENABLED=0 go build -o /dev/null ./cmd/server
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: contract-probe
           path: ${{ runner.temp }}/probe*.json
