@@ -1,11 +1,6 @@
 {
   "description": "Reviewed exceptions. Inspect matching lines with bun scripts/check-branding.cjs --inspect before changing a digest. Dependency package identifiers and LICENSE/LICENCE are allowed separately.",
   "files": {
-    "README.md": {
-      "reason": "Original-project attribution; copyright and license provenance.",
-      "count": 1,
-      "sha256": "1baa3d6b708c3bd300c8055b8067e58a27704a64221fc9197c1d4c3bd3ad1a58"
-    },
     "backend-go/config/config.go": {
       "reason": "Reject the known insecure legacy secret; removing this check would weaken validation.",
       "count": 1,
