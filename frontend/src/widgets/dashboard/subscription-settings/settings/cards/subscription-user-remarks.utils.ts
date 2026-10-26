@@ -1,4 +1,4 @@
-import type { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
+import type { SubscriptionSettings } from '@shared/api/schemas/subscription-settings.schema'
 
 export const processRemarks = (remarksData: string | string[] | undefined): string[] => {
     if (!remarksData) return ['']
@@ -9,9 +9,7 @@ export const processRemarks = (remarksData: string | string[] | undefined): stri
     return Array.isArray(remarksData) && remarksData.length > 0 ? remarksData : ['']
 }
 
-export const computeRemarks = (
-    settings: UpdateSubscriptionSettingsCommand.Response['response']
-) => {
+export const computeRemarks = (settings: SubscriptionSettings) => {
     return {
         expired: processRemarks(settings.customRemarks.expiredUsers),
         limited: processRemarks(settings.customRemarks.limitedUsers),

@@ -15,6 +15,7 @@ import (
 	"gowave/internal/database"
 	"gowave/internal/httpx"
 	"gowave/internal/prometheus"
+	"gowave/internal/responserules"
 
 	"golang.org/x/sync/singleflight"
 	"gorm.io/gorm"
@@ -218,6 +219,9 @@ func formatSubscriptionSettings(s *database.SubscriptionSetting) map[string]inte
 	responseRules := json.RawMessage(`{"version":"1","rules":[]}`)
 	if s.ResponseRules != "" && s.ResponseRules != "null" {
 		responseRules = json.RawMessage(s.ResponseRules)
+		if normalized, err := responserules.Normalize(responseRules); err == nil {
+			responseRules = normalized
+		}
 	}
 
 	hwidSettings := json.RawMessage(`{"enabled":false,"fallbackDeviceLimit":0,"maxDevicesAnnounce":null}`)
@@ -283,13 +287,21 @@ func (h *Handler) UpdateSubscriptionSettings(w http.ResponseWriter, r *http.Requ
 		s.RandomizeHosts = *body.RandomizeHosts
 	}
 	if len(body.ResponseRules) > 0 && string(body.ResponseRules) != "null" {
-		s.ResponseRules = string(body.ResponseRules)
+		normalized, err := responserules.Normalize(body.ResponseRules)
+		if err != nil {
+			httpx.Error(w, r, http.StatusBadRequest, "E000", err.Error())
+			return
+		}
+		s.ResponseRules = string(normalized)
 	}
 	if len(body.HwidSettings) > 0 && string(body.HwidSettings) != "null" {
 		s.HwidSettings = string(body.HwidSettings)
 	}
 	s.UpdatedAt = time.Now().UTC()
-	h.db.Save(s)
+	if err := h.db.Save(s).Error; err != nil {
+		httpx.Error(w, r, http.StatusInternalServerError, "E000", "Failed to save subscription settings")
+		return
+	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"response": formatSubscriptionSettings(s),

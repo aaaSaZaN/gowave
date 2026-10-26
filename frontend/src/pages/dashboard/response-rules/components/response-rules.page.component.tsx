@@ -1,8 +1,6 @@
 import { Box, Flex } from '@mantine/core'
-import type {
-    GetSubscriptionSettingsCommand,
-    TSubscriptionTemplateType
-} from '@remnawave/backend-contract'
+import type { TSubscriptionTemplateType } from '@remnawave/backend-contract'
+import type { ResponseRules } from '@shared/api/schemas/subscription-settings.schema'
 import { Page, PageHeaderShared } from '@shared/ui'
 import { SrrAdvancedWarningOverlay } from '@shared/ui/srr-advanced-warning-overlay/srr-advanced-warning-overlay'
 import { ResponseRulesEditorWidget } from '@widgets/dashboard/response-rules/response-rules-editor'
@@ -11,7 +9,7 @@ import { TbRoute } from 'react-icons/tb'
 
 interface Props {
     groupedTemplates: Record<TSubscriptionTemplateType, string[]>
-    responseRules: GetSubscriptionSettingsCommand.Response['response']['responseRules']
+    responseRules: ResponseRules
     subscriptionSettingsUuid: string
 }
 

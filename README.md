@@ -13,6 +13,31 @@ A lightweight proxy management panel written in Go. Same API and web interface, 
 
 Measurements and methodology are on the [benchmarks](https://aaasazan.github.io/gowave-docs/en/benchmarks/) page.
 
+## Response Rules headers
+
+GoWave uses JSON objects for `responseModifications.headers`:
+
+```json
+{
+  "responseModifications": {
+    "headers": {
+      "X-Custom-Header": "example",
+      "support-url": "https://example.com/support"
+    }
+  }
+}
+```
+
+The upstream array format (`[{"key":"X-Custom-Header","value":"example"}]`)
+is legacy and accepted only for compatibility with existing clients and imported
+rules. On upgrade, GoWave automatically converts stored arrays to objects in a
+database migration, for both SQLite and PostgreSQL. Saving legacy rules also
+converts them; settings responses and the editor use objects. Repeated header
+names are case-insensitive, with the last value retained during conversion.
+
+This is an intentional extension of the pinned upstream API contract. Other
+Response Rules fields retain their upstream format.
+
 ## Installation
 
 You need a Linux server (Debian, Ubuntu or the RHEL family, `amd64`/`arm64`) and a domain whose A record points to that server.

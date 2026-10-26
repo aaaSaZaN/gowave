@@ -6,6 +6,7 @@ import { notifications } from '@mantine/notifications'
 import { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateSubscriptionSettings } from '@shared/api/hooks'
+import type { SubscriptionSettings } from '@shared/api/schemas/subscription-settings.schema'
 import Masonry from '@shared/ui/masonry'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SettingsCardShared } from '@shared/ui/settings-card'
@@ -19,7 +20,7 @@ import { RemarksManager } from './managers/remarks-manager.widget'
 import { computeRemarks } from './subscription-user-remarks.utils'
 
 interface IProps {
-    subscriptionSettings: UpdateSubscriptionSettingsCommand.Response['response']
+    subscriptionSettings: SubscriptionSettings
 }
 
 export const SubscriptionUserRemarksCardWidget = (props: IProps) => {

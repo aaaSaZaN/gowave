@@ -100,6 +100,9 @@ jobs:
         working-directory: frontend
         run: bun run test
 
+      - name: Response Rules header schemas
+        run: bun scripts/tests/response-rule-headers.cjs
+
       - name: Build
         working-directory: frontend
         run: bun run build

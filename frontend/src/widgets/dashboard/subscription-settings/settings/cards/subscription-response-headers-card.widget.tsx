@@ -4,6 +4,7 @@ import { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
 import { HelpActionIconShared } from '@shared/_modals/universal/help-drawer/help-action-icon.shared'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateSubscriptionSettings } from '@shared/api/hooks'
+import type { SubscriptionSettings } from '@shared/api/schemas/subscription-settings.schema'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers/template-info-popover/template-info-popover.shared'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 import { handleFormErrors, sortResponseHeadersByPriority } from '@shared/utils/misc'
@@ -18,7 +19,7 @@ interface HeaderItem {
 }
 
 interface IProps {
-    subscriptionSettings: UpdateSubscriptionSettingsCommand.Response['response']
+    subscriptionSettings: SubscriptionSettings
 }
 
 const HEADER_NAME_REGEX = /^[!#$%&'*+\-.0-9A-Z^_`a-z|~]+$/

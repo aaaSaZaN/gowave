@@ -16,11 +16,11 @@ import { notifications } from '@mantine/notifications'
 import {
     REMNAWAVE_CLIENT_TYPE_BROWSER,
     REMNAWAVE_CLIENT_TYPE_HEADER,
-    TestSrrMatcherCommand,
-    type UpdateSubscriptionSettingsCommand
+    TestSrrMatcherCommand
 } from '@remnawave/backend-contract'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateSubscriptionSettings } from '@shared/api/hooks'
+import type { SubscriptionSettings } from '@shared/api/schemas/subscription-settings.schema'
 import { useIsMobile } from '@shared/hooks'
 import consola from '@shared/lib/logger'
 import { optionalProp } from '@shared/lib/optional-prop'
@@ -63,9 +63,7 @@ export function ResponseRulesEditorActionsFeature(props: Props) {
     const { mutate: updateResponseRulesRes, isPending: isUpdating } = useUpdateSubscriptionSettings(
         {
             mutationFns: {
-                onSuccess: async (
-                    updatedResponseRules: UpdateSubscriptionSettingsCommand.Response['response']
-                ) => {
+                onSuccess: async (updatedResponseRules: SubscriptionSettings) => {
                     await queryClient.refetchQueries({
                         queryKey: QueryKeys.subscriptionSettings.getSubscriptionSettings.queryKey
                     })

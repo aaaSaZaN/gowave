@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"gowave/internal/responserules"
+
 	"gorm.io/gorm"
 )
 
@@ -75,12 +77,40 @@ func applyMigrations(db *gorm.DB) error {
 					return fmt.Errorf("migration %s: %w", entry.Name(), err)
 				}
 			}
+			if entry.Name() == "006_response_rule_headers.sql" {
+				if err := migrateResponseRuleHeaders(tx); err != nil {
+					return fmt.Errorf("migration %s: %w", entry.Name(), err)
+				}
+			}
 			if err := tx.Exec("INSERT INTO gowave_migrations (name, applied_at) VALUES (?, ?)", entry.Name(), time.Now().UTC()).Error; err != nil {
 				return err
 			}
 		}
 		return nil
 	})
+}
+
+func migrateResponseRuleHeaders(tx *gorm.DB) error {
+	var settings []SubscriptionSetting
+	if err := tx.Select("uuid", "response_rules").Find(&settings).Error; err != nil {
+		return err
+	}
+	for _, setting := range settings {
+		if strings.TrimSpace(setting.ResponseRules) == "" {
+			continue
+		}
+		normalized, err := responserules.Normalize([]byte(setting.ResponseRules))
+		if err != nil {
+			return fmt.Errorf("subscription settings %s: %w", setting.UUID, err)
+		}
+		if string(normalized) != setting.ResponseRules {
+			if err := tx.Model(&SubscriptionSetting{}).Where("uuid = ?", setting.UUID).
+				UpdateColumn("response_rules", string(normalized)).Error; err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 var foreignKeyPattern = regexp.MustCompile(`FOREIGN KEY \("([a-z_]+)"\) REFERENCES "([a-z_]+)"\("([a-z_]+)"\)`)

@@ -13,6 +13,7 @@ import (
 	"gowave/config"
 	"gowave/internal/database"
 	"gowave/internal/httpx"
+	"gowave/internal/responserules"
 	"gowave/internal/subscription"
 
 	"github.com/go-chi/chi/v5"
@@ -142,7 +143,7 @@ func (s *StubHandler) DebugSrrMatcher(w http.ResponseWriter, r *http.Request) {
 		headers["host"], inputHeaders["host"] = r.Host, r.Host
 	}
 	result := subscription.MatchSRRRules(string(body.ResponseRules), headers, "")
-	outputHeaders := []subscription.SRRHeaderMod{}
+	outputHeaders := responserules.Headers{}
 	var matchedRule interface{}
 	if result.MatchedRule != nil {
 		matchedRule = result.MatchedRule

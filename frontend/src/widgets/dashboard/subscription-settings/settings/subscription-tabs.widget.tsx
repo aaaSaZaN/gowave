@@ -1,5 +1,5 @@
 import { px, Tabs } from '@mantine/core'
-import type { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
+import type { SubscriptionSettings } from '@shared/api/schemas/subscription-settings.schema'
 import Masonry from '@shared/ui/masonry'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -12,7 +12,7 @@ import { SubscriptionResponseHeadersCardWidget } from './cards/subscription-resp
 import { SubscriptionUserRemarksCardWidget } from './cards/subscription-user-remarks-card.widget'
 
 interface SubscriptionTabsProps {
-    subscriptionSettings: UpdateSubscriptionSettingsCommand.Response['response']
+    subscriptionSettings: SubscriptionSettings
 }
 
 const TABS = {

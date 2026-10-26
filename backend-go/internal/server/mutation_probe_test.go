@@ -84,6 +84,12 @@ func TestContractMutationProbe(t *testing.T) {
 	step := func(method, path string, body interface{}) json.RawMessage {
 		return e.step(&results, &failures, method, path, body)
 	}
+	settingsUUID := responseField(step("GET", "/api/subscription-settings", nil), "uuid")
+	for _, headers := range []string{`{"X-Probe":"value"}`, `[{"key":"X-Probe","value":"value"}]`} {
+		rules := json.RawMessage(`{"version":"1","rules":[{"name":"headers","enabled":true,"operator":"AND","conditions":[],"responseType":"XRAY_BASE64","responseModifications":{"headers":` + headers + `}}]}`)
+		step("PATCH", "/api/subscription-settings", map[string]interface{}{"uuid": settingsUUID, "responseRules": rules})
+		step("POST", "/api/system/testers/srr-matcher", map[string]interface{}{"responseRules": rules})
+	}
 
 	var config interface{}
 	_ = json.Unmarshal([]byte(probeXrayConfig), &config)

@@ -1,0 +1,1 @@
+-- Legacy Response Rules header arrays are converted to objects by the Go migration hook.

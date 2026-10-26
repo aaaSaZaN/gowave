@@ -3,13 +3,14 @@ import { schemaResolver, useForm } from '@mantine/form'
 import { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateSubscriptionSettings } from '@shared/api/hooks'
+import type { SubscriptionSettings } from '@shared/api/schemas/subscription-settings.schema'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 import { handleFormErrors } from '@shared/utils/misc'
 import { useTranslation } from 'react-i18next'
 import { PiGear } from 'react-icons/pi'
 
 interface IProps {
-    subscriptionSettings: UpdateSubscriptionSettingsCommand.Response['response']
+    subscriptionSettings: SubscriptionSettings
 }
 
 export const SubscriptionAdditionalOptionsWidget = (props: IProps) => {

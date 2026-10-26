@@ -3,6 +3,7 @@ import { GetSubscriptionSettingsCommand } from '@remnawave/backend-contract'
 import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
 
+import { SubscriptionSettingsResponseSchema } from '../../schemas/subscription-settings.schema'
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'
 
 export const subscriptionSettingsQueryKeys = createQueryKeys('subscriptionSettings', {
@@ -13,7 +14,7 @@ export const subscriptionSettingsQueryKeys = createQueryKeys('subscriptionSettin
 
 export const useGetSubscriptionSettings = createGetQueryHook({
     endpoint: GetSubscriptionSettingsCommand.TSQ_url,
-    responseSchema: GetSubscriptionSettingsCommand.ResponseSchema,
+    responseSchema: SubscriptionSettingsResponseSchema,
     getQueryKey: () => subscriptionSettingsQueryKeys.getSubscriptionSettings.queryKey,
     rQueryParams: {
         refetchOnMount: false,

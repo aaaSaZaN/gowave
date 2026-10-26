@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"regexp"
 	"strings"
+
+	"gowave/internal/responserules"
 )
 
 type SRRConfig struct {
@@ -18,7 +20,7 @@ type SRRSettings struct {
 
 type SRRRule struct {
 	Name                  string                    `json:"name"`
-	Description           string                    `json:"description"`
+	Description           string                    `json:"description,omitempty"`
 	Enabled               bool                      `json:"enabled"`
 	Operator              string                    `json:"operator"` // "AND" or "OR"
 	Conditions            []SRRCondition            `json:"conditions"`
@@ -33,22 +35,17 @@ type SRRCondition struct {
 	CaseSensitive bool   `json:"caseSensitive"`
 }
 
-type SRRHeaderMod struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
 type SRRResponseModifications struct {
-	Headers                           []SRRHeaderMod `json:"headers"`
-	ApplyHeadersToEnd                 bool           `json:"applyHeadersToEnd"`
-	SubscriptionTemplate              string         `json:"subscriptionTemplate"`
-	IgnoreHostXrayJSONTemplate        bool           `json:"ignoreHostXrayJsonTemplate"`
-	IgnoreServeJSONAtBaseSubscription bool           `json:"ignoreServeJsonAtBaseSubscription"`
-	DisableHwidCheck                  bool           `json:"disableHwidCheck"`
-	AdditionalExtendedClientsRegex    []string       `json:"additionalExtendedClientsRegex,omitempty"`
-	Encryption                        *SRREncryption `json:"encryption,omitempty"`
-	ExcludeHostsByTags                []string       `json:"excludeHostsByTags,omitempty"`
-	RespondWithRemarks                []string       `json:"respondWithRemarks,omitempty"`
+	Headers                           responserules.Headers `json:"headers"`
+	ApplyHeadersToEnd                 bool                  `json:"applyHeadersToEnd"`
+	SubscriptionTemplate              string                `json:"subscriptionTemplate,omitempty"`
+	IgnoreHostXrayJSONTemplate        bool                  `json:"ignoreHostXrayJsonTemplate"`
+	IgnoreServeJSONAtBaseSubscription bool                  `json:"ignoreServeJsonAtBaseSubscription"`
+	DisableHwidCheck                  bool                  `json:"disableHwidCheck"`
+	AdditionalExtendedClientsRegex    []string              `json:"additionalExtendedClientsRegex,omitempty"`
+	Encryption                        *SRREncryption        `json:"encryption,omitempty"`
+	ExcludeHostsByTags                []string              `json:"excludeHostsByTags,omitempty"`
+	RespondWithRemarks                []string              `json:"respondWithRemarks,omitempty"`
 }
 
 // SRREncryption is ResponseRuleEncryptionSchema.

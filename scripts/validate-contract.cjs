@@ -6,6 +6,18 @@
 const path = require('path');
 const fs = require('fs');
 const contract = require(path.resolve(__dirname, '../frontend/node_modules/@remnawave/backend-contract'));
+const {
+    SubscriptionSettingsResponseSchema,
+    TestSrrMatcherResponseSchema,
+} = require('../frontend/src/shared/api/schemas/subscription-settings.schema.ts');
+
+// GoWave's documented extension makes Response Rules headers objects. Keep all
+// other fields checked against the pinned contract through the shared schemas.
+const responseSchemas = {
+    GetSubscriptionSettingsCommand: SubscriptionSettingsResponseSchema,
+    UpdateSubscriptionSettingsCommand: SubscriptionSettingsResponseSchema,
+    TestSrrMatcherCommand: TestSrrMatcherResponseSchema,
+};
 
 const results = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 let failures = 0;
@@ -19,7 +31,7 @@ for (const result of results) {
         continue;
     }
     if (!command || !command.ResponseSchema) continue;
-    const parsed = command.ResponseSchema.safeParse(result.body);
+    const parsed = (responseSchemas[result.name] ?? command.ResponseSchema).safeParse(result.body);
     if (!parsed.success) {
         failures++;
         const issues = parsed.error.issues

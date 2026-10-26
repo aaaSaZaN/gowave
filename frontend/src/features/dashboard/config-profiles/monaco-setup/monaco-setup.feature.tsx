@@ -2,10 +2,10 @@ import {
     type GetSharedListsCommand,
     type GetSnippetsCommand,
     HostMapperSchema,
-    ResponseRulesConfigSchema,
     type TSubscriptionTemplateType
 } from '@remnawave/backend-contract'
 import { NodePluginEditorSchema, SharedListConfigSchema } from '@remnawave/node-plugins'
+import { ResponseRulesConfigSchema } from '@shared/api/schemas/subscription-settings.schema'
 import consola from '@shared/lib/logger'
 import { registerJsonSchema } from '@shared/utils/monaco/json-schema-registry'
 import axios from 'axios'
@@ -363,7 +363,8 @@ export const MonacoSetupResponseRulesFeature = {
     setup: (groupedTemplates: Record<TSubscriptionTemplateType, string[]>) => {
         try {
             const schema = ResponseRulesConfigSchema.toJSONSchema({
-                target: 'draft-07'
+                target: 'draft-07',
+                io: 'input'
             })
 
             const templateOptions = {

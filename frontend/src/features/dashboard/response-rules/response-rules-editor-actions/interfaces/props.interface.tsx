@@ -1,5 +1,5 @@
 import type { Monaco } from '@monaco-editor/react'
-import type { GetSubscriptionSettingsCommand } from '@remnawave/backend-contract'
+import type { ResponseRules } from '@shared/api/schemas/subscription-settings.schema'
 import type { editor } from 'monaco-editor'
 import type { RefObject } from 'react'
 
@@ -9,7 +9,7 @@ export interface Props {
     isResponseRulesValid: boolean
     monacoRef: RefObject<Monaco | null>
     originalValue: string
-    responseRules: GetSubscriptionSettingsCommand.Response['response']['responseRules']
+    responseRules: ResponseRules
     setHasUnsavedChanges: (value: boolean) => void
     setIsResponseRulesValid: (value: boolean) => void
     setOriginalValue: (value: string) => void

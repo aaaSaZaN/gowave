@@ -3,6 +3,7 @@ import { schemaResolver, useForm } from '@mantine/form'
 import { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateSubscriptionSettings } from '@shared/api/hooks'
+import type { SubscriptionSettings } from '@shared/api/schemas/subscription-settings.schema'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 import { handleFormErrors } from '@shared/utils/misc'
@@ -12,7 +13,7 @@ import { TbDevices2 } from 'react-icons/tb'
 import { Link } from 'react-router'
 
 interface IProps {
-    subscriptionSettings: UpdateSubscriptionSettingsCommand.Response['response']
+    subscriptionSettings: SubscriptionSettings
 }
 
 export const SubscriptionHwidSettingsWidget = (props: IProps) => {

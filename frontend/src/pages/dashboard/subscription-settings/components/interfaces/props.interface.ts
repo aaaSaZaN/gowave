@@ -1,5 +1,5 @@
-import type { GetSubscriptionSettingsCommand } from '@remnawave/backend-contract'
+import type { SubscriptionSettings } from '@shared/api/schemas/subscription-settings.schema'
 
 export interface IProps {
-    subscriptionSettings: GetSubscriptionSettingsCommand.Response['response']
+    subscriptionSettings: SubscriptionSettings
 }

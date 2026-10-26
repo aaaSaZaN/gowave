@@ -80,6 +80,33 @@ func setSettings(t *testing.T, db *gorm.DB, values map[string]interface{}) {
 
 var curl = map[string]string{"User-Agent": "curl/8.0"}
 
+func TestResponseRuleHeaderFormats(t *testing.T) {
+	db, user := subscriptionDB(t)
+	router := subscriptionRouter(db)
+	for _, headers := range []string{
+		`{"X-Test":"rule-value","support-url":"https://rule.example"}`,
+		`[{"key":"X-Test","value":"rule-value"},{"key":"support-url","value":"https://rule.example"}]`,
+	} {
+		for _, atEnd := range []bool{false, true} {
+			setSettings(t, db, map[string]interface{}{
+				"custom_response_headers": `{"support-url":"https://global.example"}`,
+				"response_rules":          fmt.Sprintf(`{"version":"1","rules":[{"name":"headers","enabled":true,"operator":"AND","conditions":[],"responseType":"XRAY_BASE64","responseModifications":{"headers":%s,"applyHeadersToEnd":%t}}]}`, headers, atEnd),
+			})
+			w := get(router, "/api/sub/"+user.ShortUUID, curl)
+			if w.Code != http.StatusOK || w.Header().Get("X-Test") != "rule-value" || w.Body.Len() == 0 {
+				t.Fatalf("headers=%s atEnd=%t: %d %v %s", headers, atEnd, w.Code, w.Header(), w.Body.String())
+			}
+			wantSupport := "https://global.example"
+			if atEnd {
+				wantSupport = "https://rule.example"
+			}
+			if got := w.Header().Get("support-url"); got != wantSupport {
+				t.Fatalf("headers=%s atEnd=%t: support-url=%s, want %s", headers, atEnd, got, wantSupport)
+			}
+		}
+	}
+}
+
 func TestResponseRulesFollowUpstream(t *testing.T) {
 	db, user := subscriptionDB(t)
 	router := subscriptionRouter(db)
