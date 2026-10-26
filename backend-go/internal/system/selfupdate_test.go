@@ -146,7 +146,60 @@ func TestApplyUpdateRequestsRootHelper(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("with helper: %d %s", w.Code, w.Body.String())
 	}
-	if info, err := os.Stat(filepath.Join(dir, updateRequestName)); err != nil || info.Size() != 0 {
-		t.Fatalf("update request: %v %v", info, err)
+	request := filepath.Join(dir, updateRequestName)
+	if got := readRequestedChannel(request); got != CurrentChannel() {
+		t.Fatalf("default request channel = %q, want %q", got, CurrentChannel())
+	}
+
+	w = httptest.NewRecorder()
+	(&Handler{}).ApplyUpdate(w, httptest.NewRequest(http.MethodPost, "/api/system/updates/apply", strings.NewReader(`{"channel":"dev"}`)))
+	if w.Code != http.StatusOK || readRequestedChannel(request) != ChannelDev {
+		t.Fatalf("switch to dev: %d %s", w.Code, w.Body.String())
+	}
+
+	w = httptest.NewRecorder()
+	(&Handler{}).ApplyUpdate(w, httptest.NewRequest(http.MethodPost, "/api/system/updates/apply", strings.NewReader(`{"channel":"nightly"}`)))
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("unknown channel: %d %s", w.Code, w.Body.String())
+	}
+}
+
+func TestReadRequestedChannelRejectsUntrustedRequests(t *testing.T) {
+	dir := t.TempDir()
+	for name, content := range map[string]string{"empty": "", "unknown": "nightly", "long": strings.Repeat("dev", 20)} {
+		path := filepath.Join(dir, name)
+		if err := os.WriteFile(path, []byte(content), 0600); err != nil {
+			t.Fatal(err)
+		}
+		if got := readRequestedChannel(path); got != CurrentChannel() {
+			t.Errorf("%s: channel %q", name, got)
+		}
+	}
+	target := filepath.Join(dir, "target")
+	if err := os.WriteFile(target, []byte(ChannelDev), 0600); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(dir, "link")
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatal(err)
+	}
+	if got := readRequestedChannel(link); got != CurrentChannel() {
+		t.Errorf("followed a symlinked request: %q", got)
+	}
+	if got := readRequestedChannel(target); got != ChannelDev {
+		t.Errorf("valid request: %q", got)
+	}
+	if got := releaseDownloadBase(ChannelDev); !strings.HasSuffix(got, "/releases/download/dev/") {
+		t.Errorf("dev download base %q", got)
+	}
+	if got := releaseDownloadBase(ChannelStable); !strings.HasSuffix(got, "/releases/latest/download/") {
+		t.Errorf("stable download base %q", got)
+	}
+}
+
+func TestInstallerCommandPassesChannelToScript(t *testing.T) {
+	want := `sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/aaaSaZaN/gowave/main/install.sh)" _ --update --dev`
+	if got := installerCommand(ChannelDev); got != want {
+		t.Fatalf("installerCommand(dev) = %q, want %q", got, want)
 	}
 }

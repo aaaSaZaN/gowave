@@ -21,8 +21,6 @@ import (
 	"time"
 )
 
-const releaseBaseURL = "https://github.com/aaaSaZaN/gowave/releases/latest/download/"
-
 // Limits for a release download; the real artifacts are far smaller.
 const (
 	maxReleaseFile     = 256 << 20
@@ -30,9 +28,9 @@ const (
 )
 
 // ApplyRelease is the root side of an in-panel update (`gowave update apply`,
-// started by gowave-update.service). It installs the latest release after
-// checking SHA256SUMS, keeps the code root-owned, reapplies the service policy
-// and restarts the panel.
+// started by gowave-update.service). It installs the newest build of the
+// requested channel (stable or dev) after checking SHA256SUMS, keeps the code
+// root-owned, reapplies the service policy and restarts the panel.
 func ApplyRelease(installDir string) error {
 	if os.Geteuid() != 0 {
 		return errors.New("update apply must run as root")
@@ -42,8 +40,12 @@ func ApplyRelease(installDir string) error {
 	if err != nil {
 		return err
 	}
-	// The request has served its purpose; it carries no data.
-	_ = os.Remove(filepath.Join(updateRequestDir, updateRequestName))
+	// The request only names the channel; it has served its purpose once read.
+	request := filepath.Join(updateRequestDir, updateRequestName)
+	channel := readRequestedChannel(request)
+	_ = os.Remove(request)
+	fmt.Printf("Installing the latest %s build\n", channel)
+	baseURL := releaseDownloadBase(channel)
 
 	work, err := os.MkdirTemp("", "gowave-update-")
 	if err != nil {
@@ -55,7 +57,7 @@ func ApplyRelease(installDir string) error {
 	const frontName = "gowave-frontend.tar.gz"
 	client := &http.Client{Timeout: 10 * time.Minute}
 	for _, name := range []string{"SHA256SUMS", binName, frontName} {
-		if err := download(client, releaseBaseURL+name, filepath.Join(work, name)); err != nil {
+		if err := download(client, baseURL+name, filepath.Join(work, name)); err != nil {
 			return fmt.Errorf("download %s: %w", name, err)
 		}
 	}

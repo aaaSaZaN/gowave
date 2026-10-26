@@ -47,6 +47,64 @@ an administrator's systemd override. Running the server as root is allowed but l
 warning. The Docker image runs as UID/GID 10001; the supplied
 Compose configuration also drops capabilities and uses a read-only root filesystem.
 
+## Stable and dev builds
+
+GoWave has two update channels:
+
+| | Stable | Dev |
+| :--- | :--- | :--- |
+| Built from | `v*` tags | every push to `main` that passes CI |
+| Binaries | [latest release](https://github.com/aaaSaZaN/gowave/releases/latest) | rolling [`dev` pre-release](https://github.com/aaaSaZaN/gowave/releases/tag/dev) |
+| Docker | `ghcr.io/aaasazan/gowave:latest`, `:1.2.3` | `ghcr.io/aaasazan/gowave:dev`, `:dev-<sha>` |
+| Version | `v1.2.3` | `dev-<sha>` |
+
+Dev builds may be unstable. The stable updater and the `latest` tags never pick
+them up. The panel shows a dev build with a red version badge.
+
+**Switching channels.** Open **Build Info** (the version badge in the header) and
+pick *Stable* or *Dev*. The panel checks the newest build of that channel. Native
+installs with the update helper install it with **Switch**, the same way as an
+ordinary in-panel update. Later updates stay on the chosen channel. Docker installs
+show a command that sets `GOWAVE_IMAGE` in the Compose `.env`:
+
+```bash
+cd /opt/gowave-docker
+sed -i '/^GOWAVE_IMAGE=/d' .env && echo 'GOWAVE_IMAGE=ghcr.io/aaasazan/gowave:dev' >> .env
+docker compose pull && docker compose up -d
+```
+
+Use `:latest` instead of `:dev` to go back to stable.
+
+The installer asks for the channel on a fresh install and on every update; Enter
+keeps the installed one. Options skip the question:
+
+```bash
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/aaaSaZaN/gowave/main/install.sh)" _ --dev
+```
+
+| Option | Environment | Meaning |
+| :--- | :--- | :--- |
+| `--stable`, `--dev`, `--channel stable\|dev` | `GOWAVE_CHANNEL` | update channel |
+| `--version v1.2.3` | `GOWAVE_VERSION` | pin a stable release (`dev` also selects the dev channel) |
+| `--update` | `GOWAVE_ACTION=update` | update an existing install without prompts or a terminal |
+| `--lang ru\|en` | `GOWAVE_LANG` | output language without asking |
+
+`--update` keeps the installed channel unless one is given, so it suits Ansible
+and cron:
+
+```bash
+curl -fsSL -o /tmp/gowave-install.sh https://raw.githubusercontent.com/aaaSaZaN/gowave/main/install.sh
+```
+```bash
+sudo bash /tmp/gowave-install.sh --update --dev --lang en
+```
+
+A fresh install still needs a terminal, because it asks for the domain, proxy
+and database.
+
+Make a backup before switching. A stable release can be older than the dev build
+you leave, and database migrations applied by the dev build are not rolled back.
+
 Yandex authentication is unavailable, including with previously saved OAuth
 settings. Its legacy API fields remain disabled for contract compatibility.
 
@@ -80,6 +138,15 @@ git clone https://github.com/aaaSaZaN/gowave.git && cd gowave
 (cd frontend && bun install --frozen-lockfile && bun run build)
 cd backend-go && go test ./... && CGO_ENABLED=0 go build -o gowave ./cmd/server
 ```
+
+Publishing builds:
+
+- `git push` to `main`: CI runs, then `.github/workflows/dev.yml` replaces the `dev`
+  pre-release and pushes the `dev` and `dev-<sha>` images. Pushes that change only
+  Markdown files are skipped.
+- `git tag v1.2.3 && git push origin v1.2.3`: `.github/workflows/release.yml` runs CI
+  and publishes the stable release and the `1.2.3` and `latest` images. A tag with a
+  hyphen (`v1.2.3-beta.1`) becomes a pre-release and does not move `latest`.
 
 Contract checks, PostgreSQL tests and building the Docker image are covered on the [Building from source](https://aaasazan.github.io/gowave-docs/en/development/) page and in [AGENTS.md](AGENTS.md).
 

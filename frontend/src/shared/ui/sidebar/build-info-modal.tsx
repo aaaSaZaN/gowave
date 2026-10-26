@@ -1,5 +1,7 @@
 import {
     ActionIcon,
+    Alert,
+    Anchor,
     Badge,
     Box,
     Button,
@@ -7,54 +9,55 @@ import {
     CopyButton,
     Group,
     Paper,
+    SegmentedControl,
     Stack,
     Text,
     Tooltip
 } from '@mantine/core'
 import type { GetMetadataCommand } from '@remnawave/backend-contract'
 import { instance } from '@shared/api'
-import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { TbBrandGithub, TbCheck, TbCopy, TbDownload, TbGitBranch } from 'react-icons/tb'
+import {
+    TbAlertTriangle,
+    TbBrandGithub,
+    TbCheck,
+    TbCopy,
+    TbDownload,
+    TbGitBranch,
+    TbGitCommit
+} from 'react-icons/tb'
 
 import { Logo } from '../logo'
 import classes from './build-info-modal.module.css'
+import { type UpdateChannel, usePanelUpdateCheck } from './panel-update-check'
 
 interface BuildInfoModalProps {
-    isNewVersionAvailable: boolean
     gowaveMetadata: GetMetadataCommand.Response['response']
 }
 
-interface IPanelUpdateCheck {
-    canAutoUpdate: boolean
-    isDocker: boolean
-    updateCommand?: string
-}
-
-export function BuildInfoModal({ gowaveMetadata, isNewVersionAvailable }: BuildInfoModalProps) {
+export function BuildInfoModal({ gowaveMetadata }: BuildInfoModalProps) {
+    const currentChannel: UpdateChannel =
+        gowaveMetadata.git?.backend?.branch === 'dev' ? 'dev' : 'stable'
+    const [targetChannel, setTargetChannel] = useState<UpdateChannel>(currentChannel)
     const [isUpdating, setIsUpdating] = useState(false)
+    const isSwitching = targetChannel !== currentChannel
 
     // Docker installs and native installs without the root update helper are
     // updated on the server; the panel only shows the command.
-    const updateCheck = useQuery({
-        queryKey: ['panel-update-check'],
-        queryFn: async () => {
-            const res = await instance.get<IPanelUpdateCheck>('/api/system/updates/check')
-            return res.data
-        },
-        enabled: isNewVersionAvailable,
-        refetchOnWindowFocus: false
-    })
+    const updateCheck = usePanelUpdateCheck(isSwitching ? targetChannel : undefined)
+    const hasUpdate = Boolean(updateCheck.data?.hasUpdate)
     const serverUpdateCommand =
         updateCheck.data && !updateCheck.data.canAutoUpdate
             ? updateCheck.data.updateCommand
             : undefined
+    const commitSha = gowaveMetadata.git?.backend?.commitSha
 
     const handleUpdate = async () => {
         setIsUpdating(true)
         try {
-            // A root helper downloads and verifies the release, then restarts the panel.
-            await instance.post('/api/system/updates/apply')
+            // A root helper downloads and verifies the channel's newest build,
+            // then restarts the panel.
+            await instance.post('/api/system/updates/apply', { channel: targetChannel })
             setTimeout(() => {
                 window.location.reload()
             }, 30000)
@@ -63,9 +66,61 @@ export function BuildInfoModal({ gowaveMetadata, isNewVersionAvailable }: BuildI
         }
     }
 
+    let updateTitle = 'Update available'
+    let updateDescription = `${updateCheck.data?.latestVersion ?? ''} is available`
+    if (isSwitching) {
+        updateTitle = targetChannel === 'dev' ? 'Switch to dev' : 'Switch to stable'
+        updateDescription = `Installs ${updateCheck.data?.latestVersion ?? ''}`
+    }
+
     return (
         <Stack gap="md">
-            {isNewVersionAvailable && (
+            <Stack gap={6}>
+                <Text c="dimmed" size="xs">
+                    Update channel
+                </Text>
+                <SegmentedControl
+                    data={[
+                        { label: 'Stable (releases)', value: 'stable' },
+                        { label: 'Dev (every commit)', value: 'dev' }
+                    ]}
+                    disabled={isUpdating}
+                    fullWidth
+                    onChange={(value) => setTargetChannel(value as UpdateChannel)}
+                    radius="md"
+                    size="xs"
+                    value={targetChannel}
+                />
+            </Stack>
+
+            {isSwitching && (
+                <Alert
+                    color={targetChannel === 'dev' ? 'red' : 'yellow'}
+                    icon={<TbAlertTriangle size={16} />}
+                    radius="md"
+                    variant="light"
+                >
+                    <Text size="xs">
+                        {targetChannel === 'dev'
+                            ? 'Dev builds are made from every commit to main and may be unstable. Make a backup first.'
+                            : 'The latest stable release may be older than this dev build. Database changes made by newer dev builds stay in place; make a backup first.'}
+                    </Text>
+                </Alert>
+            )}
+
+            {updateCheck.isError && (
+                <Text c="dimmed" size="xs">
+                    Could not check for updates.
+                </Text>
+            )}
+
+            {!updateCheck.isLoading && !updateCheck.isError && !hasUpdate && (
+                <Text c="dimmed" size="xs">
+                    You are running the latest {currentChannel} build.
+                </Text>
+            )}
+
+            {hasUpdate && (
                 <Paper className={classes.updateCard} p="md" radius="md">
                     <Group align="center" gap="md" wrap="wrap">
                         <Group gap="sm" wrap="nowrap">
@@ -74,10 +129,10 @@ export function BuildInfoModal({ gowaveMetadata, isNewVersionAvailable }: BuildI
                             </Box>
                             <Stack className={classes.updateTextWrapper} gap={4}>
                                 <Text c="teal.4" fw={600} size="sm">
-                                    Update available
+                                    {updateTitle}
                                 </Text>
                                 <Text c="dimmed" size="xs">
-                                    A new version is available
+                                    {updateDescription}
                                 </Text>
                             </Stack>
                         </Group>
@@ -92,9 +147,9 @@ export function BuildInfoModal({ gowaveMetadata, isNewVersionAvailable }: BuildI
                                 size="xs"
                                 variant="light"
                                 loading={isUpdating}
-                                onClick={handleUpdate}
+                                onClick={() => void handleUpdate()}
                             >
-                                Update panel
+                                {isSwitching ? 'Switch' : 'Update panel'}
                             </Button>
                         )}
                     </Group>
@@ -170,6 +225,19 @@ export function BuildInfoModal({ gowaveMetadata, isNewVersionAvailable }: BuildI
                         )}
                     </CopyButton>
                 </Group>
+                {commitSha && (
+                    <Group gap={6} mt="sm" wrap="nowrap">
+                        <TbGitCommit size={14} />
+                        <Anchor
+                            ff="monospace"
+                            href={gowaveMetadata.git?.backend?.commitUrl}
+                            size="xs"
+                            target="_blank"
+                        >
+                            {commitSha.slice(0, 7)}
+                        </Anchor>
+                    </Group>
+                )}
             </Paper>
 
             <Group gap="sm" grow>

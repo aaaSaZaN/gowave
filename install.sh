@@ -9,11 +9,24 @@
 # panel listens on 127.0.0.1 only. When an upstream panel or PasarGuard install is
 # found, offers to move its data. Asks for the language (Russian or English)
 # first.
-# GOWAVE_VERSION=v1.2.3 pins a release instead of the latest one.
+#
+# Options, also accepted as environment variables for Ansible and other tools
+# (run `install.sh --help`). With a downloaded file: bash install.sh --update --dev
+#   --stable | --dev | --channel stable|dev  GOWAVE_CHANNEL  update channel
+#   --version v1.2.3                         GOWAVE_VERSION  pin a stable release
+#   --update                                 GOWAVE_ACTION=update
+#   --lang ru|en                             GOWAVE_LANG
+# --update updates an existing install without any prompts and without a
+# terminal, keeping its channel unless one is given.
 set -Eeuo pipefail
 
 REPO=aaaSaZaN/gowave
+IMAGE_REPO=ghcr.io/aaasazan/gowave
 GOWAVE_VERSION=${GOWAVE_VERSION:-latest}
+GOWAVE_CHANNEL=${GOWAVE_CHANNEL:-}
+GOWAVE_ACTION=${GOWAVE_ACTION:-}
+GOWAVE_LANG=${GOWAVE_LANG:-}
+NONINTERACTIVE=false
 INSTALL_DIR=/opt/gowave
 DOCKER_DIR=/opt/gowave-docker
 UNIT_FILE=/etc/systemd/system/gowave.service
@@ -111,6 +124,133 @@ ask_language() {
     done
 }
 
+# ---------------------------------------------------------------- options
+
+usage() {
+    cat <<'USAGE'
+GoWave installer / Установщик GoWave
+
+Usage: install.sh [options]
+  sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/aaaSaZaN/gowave/main/install.sh)" _ [options]
+
+  --stable               Stable channel: tagged releases (default)
+                         Канал stable: релизы по тегам (по умолчанию)
+  --dev                  Dev channel: a build of every commit to main
+                         Канал dev: сборка каждого коммита в main
+  --channel stable|dev   Same as --stable / --dev
+  --version v1.2.3       Pin a stable release / Установить конкретный релиз
+  --update               Update an existing install without prompts (no terminal needed)
+                         Обновить установленную панель без вопросов (терминал не нужен)
+  --lang ru|en           Language without asking / Язык без вопроса
+  -h, --help             This help / Эта справка
+
+Environment: GOWAVE_CHANNEL, GOWAVE_VERSION (latest, dev or v1.2.3),
+GOWAVE_ACTION=update, GOWAVE_LANG.
+Without a channel the installer asks; --update keeps the installed channel.
+USAGE
+}
+
+# Errors here come before the language is known, so they are in both.
+parse_args() {
+    while [ $# -gt 0 ]; do
+        case $1 in
+        --stable) GOWAVE_CHANNEL=stable ;;
+        --dev) GOWAVE_CHANNEL=dev ;;
+        --channel | --version | --lang)
+            [ $# -ge 2 ] || die "Не указано значение для $1 / $1 needs a value"
+            case $1 in
+            --channel) GOWAVE_CHANNEL=$2 ;;
+            --version) GOWAVE_VERSION=$2 ;;
+            --lang) GOWAVE_LANG=$2 ;;
+            esac
+            shift
+            ;;
+        --channel=*) GOWAVE_CHANNEL=${1#*=} ;;
+        --version=*) GOWAVE_VERSION=${1#*=} ;;
+        --lang=*) GOWAVE_LANG=${1#*=} ;;
+        --update) GOWAVE_ACTION=update ;;
+        -h | --help) usage; exit 0 ;;
+        *) die "Неизвестный параметр: $1 (см. --help) / Unknown option: $1 (see --help)" ;;
+        esac
+        shift
+    done
+    case $GOWAVE_CHANNEL in '' | stable | dev) ;; *) die "Канал должен быть stable или dev / The channel must be stable or dev" ;; esac
+    case $GOWAVE_LANG in '' | ru | en) ;; *) die "Язык должен быть ru или en / The language must be ru or en" ;; esac
+    case $GOWAVE_ACTION in '' | update) ;; *) die "GOWAVE_ACTION поддерживает только update / GOWAVE_ACTION supports only update" ;; esac
+    if [ "$GOWAVE_VERSION" = dev ]; then
+        [ "$GOWAVE_CHANNEL" != stable ] || die "GOWAVE_VERSION=dev противоречит --stable / GOWAVE_VERSION=dev conflicts with --stable"
+        GOWAVE_CHANNEL=dev
+    elif [ "$GOWAVE_VERSION" != latest ]; then
+        [[ $GOWAVE_VERSION =~ ^v[0-9][0-9A-Za-z.+-]*$ ]] ||
+            die "Версия должна быть latest, dev или v1.2.3 / The version must be latest, dev or v1.2.3"
+        [ "$GOWAVE_CHANNEL" != dev ] || die "--version закрепляет stable-релиз, он не сочетается с --dev / --version pins a stable release and conflicts with --dev"
+        GOWAVE_CHANNEL=stable
+    fi
+    apply_channel
+}
+
+# apply_channel points downloads at the chosen channel: the dev pre-release, or
+# the latest (or pinned) stable release.
+apply_channel() {
+    if [ "$GOWAVE_CHANNEL" = dev ]; then
+        GOWAVE_VERSION=dev
+    elif [ "$GOWAVE_VERSION" = dev ]; then
+        GOWAVE_VERSION=latest
+    fi
+}
+
+channel_label() {
+    local label
+    if [ "$1" = dev ]; then
+        label=$(t 'Dev: сборка каждого коммита в main, может быть нестабильной' 'Dev: a build of every commit to main, may be unstable')
+    else
+        label=$(t 'Stable: проверенные релизы (рекомендуется)' 'Stable: tested releases (recommended)')
+    fi
+    [ "$1" = "${2:-}" ] && label="$label $(t '(текущий)' '(current)')"
+    printf '%s' "$label"
+}
+
+# choose_channel asks for the channel unless an option already set it. The
+# installed channel (if any) is listed first, so Enter keeps it.
+choose_channel() {
+    local current=${1:-} first=stable second=dev
+    [ -z "$GOWAVE_CHANNEL" ] || return 0
+    if [ "$current" = dev ]; then first=dev second=stable; fi
+    case $(choose "$(t 'Канал обновлений:' 'Update channel:')" "$(channel_label $first "$current")" "$(channel_label $second "$current")") in
+    1) GOWAVE_CHANNEL=$first ;;
+    *) GOWAVE_CHANNEL=$second ;;
+    esac
+    apply_channel
+}
+
+# panel_image is the Docker image of the chosen channel or pinned release.
+panel_image() {
+    case $GOWAVE_VERSION in
+    latest) printf '%s:latest' "$IMAGE_REPO" ;;
+    dev) printf '%s:dev' "$IMAGE_REPO" ;;
+    *) printf '%s:%s' "$IMAGE_REPO" "${GOWAVE_VERSION#v}" ;;
+    esac
+}
+
+# installed_channel reads the channel of the existing install: the Compose image
+# tag, or the version of a trusted native binary (dev builds are dev-<sha>).
+installed_channel() {
+    local version
+    if [ "$MODE" = docker ]; then
+        case $(env_get "$ENV_FILE" GOWAVE_IMAGE) in
+        *:dev | *:dev-*) echo dev ;;
+        *) echo stable ;;
+        esac
+    elif trusted_binary && version=$(cd "$INSTALL_DIR" && ./gowave-server --version </dev/null 2>/dev/null); then
+        case $version in
+        dev-*) echo dev ;;
+        *) echo stable ;;
+        esac
+    else
+        echo stable
+    fi
+}
+
 # ---------------------------------------------------------------- system
 
 PKG=''
@@ -120,10 +260,17 @@ APT_UPDATED=false
 detect_system() {
     # The language is not known yet: these two errors come in both.
     [ "$(id -u)" -eq 0 ] || die 'Запустите установщик от root (sudo). / Run the installer as root (sudo).'
-    (: </dev/tty) 2>/dev/null ||
-        die 'Нужен интерактивный терминал: запустите команду из README в SSH-сессии. / An interactive terminal is required: run the command from the README in an SSH session.'
-    exec 3</dev/tty
-    ask_language
+    if [ "$GOWAVE_ACTION" = update ]; then
+        # Unattended: prompts read nothing and take their defaults.
+        NONINTERACTIVE=true
+        exec 3</dev/null
+        UI_LANG=${GOWAVE_LANG:-ru}
+    else
+        (: </dev/tty) 2>/dev/null ||
+            die 'Нужен интерактивный терминал: запустите команду из README в SSH-сессии или обновите без вопросов с --update. / An interactive terminal is required: run the command from the README in an SSH session, or update without prompts with --update.'
+        exec 3</dev/tty
+        if [ -n "$GOWAVE_LANG" ]; then UI_LANG=$GOWAVE_LANG; else ask_language; fi
+    fi
     [ -d /run/systemd/system ] || die "$(t 'Нужен systemd.' 'systemd is required.')"
     if have apt-get; then
         PKG=apt
@@ -523,10 +670,16 @@ start_native() {
 
 # Root must never run a binary the gowave service account could have replaced:
 # installs made before the root-owned layout gave it the whole directory.
-require_trusted_binary() {
+trusted_binary() {
     local bin=$INSTALL_DIR/gowave-server mode
-    mode=$(stat -c '%u %a' "$bin" 2>/dev/null) || die "$(t "Не найден $bin." "$bin not found.")"
-    if [ -L "$bin" ] || [ "${mode%% *}" != 0 ] || [ $((8#${mode#* } & 8#022)) -ne 0 ]; then
+    mode=$(stat -c '%u %a' "$bin" 2>/dev/null) || return 1
+    [ ! -L "$bin" ] && [ "${mode%% *}" = 0 ] && [ $((8#${mode#* } & 8#022)) -eq 0 ]
+}
+
+require_trusted_binary() {
+    local bin=$INSTALL_DIR/gowave-server
+    [ -e "$bin" ] || [ -L "$bin" ] || die "$(t "Не найден $bin." "$bin not found.")"
+    if ! trusted_binary; then
         die "$(t "$bin может изменить сервисный пользователь, запускать его от root небезопасно. Выберите «Обновить» в меню: панель переустановится из проверенного релиза." \
             "$bin can be modified by the service account, so it is unsafe to run as root. Choose Update in the menu to reinstall the panel from a verified release.")"
     fi
@@ -573,7 +726,10 @@ migrate_data() {
 move_to_docker() {
     ensure_docker
     info "$(t 'Перевожу панель в Docker с PostgreSQL' 'Moving the panel to Docker with PostgreSQL')"
-    gowave_cli migrate to-docker --yes --from "$INSTALL_DIR" ||
+    local image_args=()
+    # The default image is :latest; other channels and pinned releases name theirs.
+    [ "$GOWAVE_VERSION" != latest ] && image_args=(--image "$(panel_image)")
+    gowave_cli migrate to-docker --yes --from "$INSTALL_DIR" "${image_args[@]}" ||
         die "$(t 'Переход в Docker не удался, панель продолжает работать на SQLite.' 'Moving to Docker failed, the panel keeps running on SQLite.')"
 }
 
@@ -1000,6 +1156,7 @@ fresh_install() {
         choose_database
     fi
 
+    choose_channel
     ask_proxy
     ask_domain
     ask_panel_path
@@ -1018,6 +1175,7 @@ fresh_install() {
     else
         echo "$(t "  База:     PostgreSQL в Docker, $DOCKER_DIR" "  Database:  PostgreSQL in Docker, $DOCKER_DIR")"
     fi
+    echo "$(t "  Канал:    $GOWAVE_CHANNEL ($(panel_version_label))" "  Channel:   $GOWAVE_CHANNEL ($(panel_version_label))")"
     if [ "$PROXY" = external ]; then
         echo "$(t "  Прокси:   свой, направьте его на 127.0.0.1:$APP_PORT" "  Proxy:     your own, point it to 127.0.0.1:$APP_PORT")"
     else
@@ -1172,14 +1330,29 @@ configured_proxy() {
 }
 
 update_gowave() {
+    local current
     APP_PORT=$(env_get "$ENV_FILE" APP_PORT)
     APP_PORT=${APP_PORT:-3000}
     PANEL_BASE_PATH=$(env_get "$ENV_FILE" PANEL_BASE_PATH)
     PANEL_BASE_PATH=${PANEL_BASE_PATH:-/}
+    current=$(installed_channel)
+    if [ "$NONINTERACTIVE" = true ] && [ -z "$GOWAVE_CHANNEL" ]; then
+        GOWAVE_CHANNEL=$current
+        apply_channel
+    fi
+    choose_channel "$current"
+    if [ "$current" = dev ] && [ "$GOWAVE_CHANNEL" = stable ]; then
+        warn "$(t 'Переход с dev на stable: stable-релиз может быть старше dev-сборки, а изменения базы данных, сделанные dev-сборкой, не откатываются. Сначала сделайте резервную копию.' \
+            'Switching from dev to stable: the stable release may be older than the dev build, and database changes made by the dev build are not rolled back. Make a backup first.')"
+        [ "$NONINTERACTIVE" = true ] || confirm "$(t 'Продолжить?' 'Continue?')" || die "$(t 'Отменено.' 'Cancelled.')"
+    elif [ "$current" != "$GOWAVE_CHANNEL" ]; then
+        info "$(t "Канал: $current -> $GOWAVE_CHANNEL" "Channel: $current -> $GOWAVE_CHANNEL")"
+    fi
     if [ "$MODE" = docker ]; then
         # Older compose files published the panel on every interface.
         # shellcheck disable=SC2016
         sed -i 's#^\(\s*- \)"${APP_PORT:-3000}:3000"#\1"127.0.0.1:${APP_PORT:-3000}:3000"#' "$DOCKER_DIR/docker-compose.yml"
+        set_docker_image
         info "$(t 'Обновляю образы' 'Updating images')"
         (cd "$DOCKER_DIR" && run docker compose pull && run docker compose up -d --wait --wait-timeout 180)
     else
@@ -1195,6 +1368,32 @@ update_gowave() {
         confirm "$(t 'Настроить домен и HTTPS сейчас?' 'Set up a domain and HTTPS now?')" && configure_domain
     fi
     return 0
+}
+
+# set_docker_image points the Compose project at the chosen channel's image. An
+# image from elsewhere (a local build, a mirror) is left alone.
+set_docker_image() {
+    local image wanted
+    image=$(env_get "$ENV_FILE" GOWAVE_IMAGE)
+    wanted=$(panel_image)
+    case $image in
+    '' | "$IMAGE_REPO" | "$IMAGE_REPO":*) ;;
+    *)
+        warn "$(t "Используется свой образ $image, канал не меняю." "A custom image $image is configured, the channel is left unchanged.")"
+        return 0
+        ;;
+    esac
+    [ "$image" = "$wanted" ] && return 0
+    env_set "$ENV_FILE" GOWAVE_IMAGE "$wanted"
+    info "$(t 'Образ панели:' 'Panel image:') $wanted"
+}
+
+panel_version_label() {
+    case $GOWAVE_VERSION in
+    latest) t 'последний релиз' 'latest release' ;;
+    dev) t 'последняя dev-сборка' 'latest dev build' ;;
+    *) printf '%s' "$GOWAVE_VERSION" ;;
+    esac
 }
 
 configure_domain() {
@@ -1288,17 +1487,23 @@ manage_existing() {
 }
 
 main() {
+    parse_args "$@"
     detect_system
     WORK=$(mktemp -d)
     trap on_exit EXIT
     trap 'line=$LINENO; printf "%s\n" "${RED}[x] $(t "Неожиданная ошибка (строка $line), лог: $LOG" "Unexpected error (line $line), log: $LOG")${RESET}" >&2' ERR
     ensure_tools
     detect_existing
-    if [ -n "$MODE" ]; then
+    if [ "$GOWAVE_ACTION" = update ]; then
+        [ -n "$MODE" ] || die "$(t 'GoWave не установлена: --update обновляет только существующую установку.' 'GoWave is not installed: --update only updates an existing install.')"
+        update_gowave
+    elif [ -n "$MODE" ]; then
         manage_existing
     else
         fresh_install
     fi
 }
 
-if [[ ${BASH_SOURCE[0]} = "$0" ]]; then main "$@"; fi
+# Sourced by scripts/tests/installer.sh. Under `bash -c "$(curl ...)"` there is no
+# source file, and BASH_SOURCE is empty.
+if [[ ${BASH_SOURCE[0]:-$0} = "$0" ]]; then main "$@"; fi

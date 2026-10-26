@@ -1,0 +1,164 @@
+name: Dev build
+
+# Every push to main that passes CI becomes the dev channel:
+#   - the rolling "dev" pre-release (releases/download/dev/...), recreated on each
+#     build so it stays on top of the Releases page; releases/latest and the
+#     stable updater never see it;
+#   - Docker tags ghcr.io/<owner>/gowave:dev and :dev-<sha>; "latest" is untouched.
+# Stable releases still come only from v* tags (release.yml).
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push supersedes a build that has not been published yet.
+concurrency:
+  group: dev-build
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  meta:
+    name: Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      short: ${{ steps.v.outputs.short }}
+    steps:
+      - id: v
+        run: |
+          short="${GITHUB_SHA::7}"
+          echo "short=$short" >> "$GITHUB_OUTPUT"
+          echo "version=dev-$short" >> "$GITHUB_OUTPUT"
+
+  release:
+    name: Publish dev pre-release
+    needs: [ci, meta]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.meta.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend-go/go.mod
+          cache-dependency-path: backend-go/go.sum
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: frontend/package.json
+
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: |
+          bun install --frozen-lockfile
+          bun run editor:download
+          bun run build
+          bun run editor:compress
+          tar -czf ../gowave-frontend.tar.gz -C dist .
+
+      - name: Build Backend Binaries
+        working-directory: ./backend-go
+        run: |
+          LDFLAGS="-s -w -X 'gowave/internal/system.AppVersion=${VERSION}' -X 'gowave/internal/system.Channel=dev' -X 'gowave/internal/system.CommitSha=${GITHUB_SHA}'"
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="$LDFLAGS" -o ../gowave-linux-amd64 ./cmd/server
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="$LDFLAGS" -o ../gowave-linux-arm64 ./cmd/server
+
+      - name: Verify embedded version
+        run: |
+          embedded="$(./gowave-linux-amd64 --version)"
+          if [ "$embedded" != "$VERSION" ]; then
+            echo "Binary reports '${embedded}', expected '${VERSION}'; check the -X package path" >&2
+            exit 1
+          fi
+
+      - name: Checksums
+        run: sha256sum gowave-frontend.tar.gz gowave-linux-amd64 gowave-linux-arm64 > SHA256SUMS
+
+      # The release name carries the build version: the panel compares it with
+      # its own version to offer dev updates.
+      - name: Replace the dev pre-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "Unstable build of \`main\` at ${GITHUB_SHA}."
+            echo
+            echo "Install or switch to it from the panel (Build Info → dev) or with \`install.sh --dev\`. Docker: \`ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/gowave:dev\`."
+            echo
+            echo "### Latest commit"
+            git log -1 --format='%s%n%n%b' "$GITHUB_SHA"
+          } > notes.md
+          gh release delete dev --yes --cleanup-tag || true
+          gh release create dev \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "$VERSION" \
+            --notes-file notes.md \
+            gowave-frontend.tar.gz gowave-linux-amd64 gowave-linux-arm64 SHA256SUMS
+
+  docker:
+    name: Publish dev Docker image
+    needs: [ci, meta]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/gowave" >> "$GITHUB_ENV"
+
+      - name: Image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=dev
+            type=raw,value=dev-${{ needs.meta.outputs.short }}
+
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            VERSION=${{ needs.meta.outputs.version }}
+            CHANNEL=dev
+            COMMIT_SHA=${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -48,8 +48,9 @@ jobs:
         working-directory: ./backend-go
         run: |
           VERSION="${GITHUB_REF_NAME}"
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w -X 'gowave/internal/system.AppVersion=${VERSION}'" -o ../gowave-linux-amd64 ./cmd/server
-          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="-s -w -X 'gowave/internal/system.AppVersion=${VERSION}'" -o ../gowave-linux-arm64 ./cmd/server
+          LDFLAGS="-s -w -X 'gowave/internal/system.AppVersion=${VERSION}' -X 'gowave/internal/system.CommitSha=${GITHUB_SHA}'"
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="$LDFLAGS" -o ../gowave-linux-amd64 ./cmd/server
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="$LDFLAGS" -o ../gowave-linux-arm64 ./cmd/server
 
       - name: Verify embedded version
         run: |
@@ -94,7 +95,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE }}
-          # latest=auto skips pre-release versions such as v1.2.0-beta.1
+          # latest=auto skips pre-release versions such as v1.2.0-beta.1.
+          # The dev channel has its own tags (dev, dev-<sha>) from dev.yml.
           tags: |
             type=semver,pattern={{version}}
 
@@ -113,7 +115,9 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          build-args: VERSION=${{ github.ref_name }}
+          build-args: |
+            VERSION=${{ github.ref_name }}
+            COMMIT_SHA=${{ github.sha }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

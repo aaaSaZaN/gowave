@@ -193,6 +193,13 @@ func (h *Handler) GetMetadata(w http.ResponseWriter, r *http.Request) {
 	resp.Response.Build.Time = BuildTime
 	resp.Response.Build.Number = BuildNum
 	resp.Response.Git.Backend.Branch = "main"
+	if CurrentChannel() == ChannelDev {
+		resp.Response.Git.Backend.Branch = ChannelDev
+	}
+	if CommitSha != "" {
+		resp.Response.Git.Backend.CommitSha = CommitSha
+		resp.Response.Git.Backend.CommitURL = "https://github.com/" + githubRepo + "/commit/" + CommitSha
+	}
 
 	json.NewEncoder(w).Encode(resp)
 }

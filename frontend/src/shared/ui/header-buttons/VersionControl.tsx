@@ -1,39 +1,24 @@
-import { useGowaveInfo } from '@entities/dashboard/updates-store'
 import { Group, Text } from '@mantine/core'
 import { modals } from '@mantine/modals'
-
 import { useGetGowaveMetadata } from '@shared/api/hooks'
 import clsx from '@shared/lib/classes'
-import semver from '@shared/lib/version'
-import { useMemo } from 'react'
 
 import { Logo } from '../logo'
 import { BaseOverlayHeader } from '../overlays/base-overlay-header'
 import { BuildInfoModal } from '../sidebar/build-info-modal'
+import { usePanelUpdateCheck } from '../sidebar/panel-update-check'
 import { HeaderControl } from './HeaderControl'
 import { SkeletonHeaderControl } from './SkeletonHeaderControl'
 import classes from './VersionControl.module.css'
 
 export function VersionControl() {
-    const gowaveInfo = useGowaveInfo()
     const { data: gowaveMetadata, isLoading } = useGetGowaveMetadata()
+    // Stable builds compare with releases/latest, dev builds with the rolling
+    // dev pre-release; the backend picks by the channel it was built for.
+    const { data: updateCheck } = usePanelUpdateCheck()
 
-    const [isNewVersionAvailable, isDev] = useMemo(() => {
-        if (!gowaveMetadata) return [false, false]
-
-        const currentVersion = semver.clean(gowaveMetadata.version) || gowaveMetadata.version
-        const latest = semver.clean(gowaveInfo.latestVersion) || gowaveInfo.latestVersion
-
-        const hasUpdate = Boolean(
-            latest &&
-                currentVersion &&
-                semver.valid(latest) &&
-                semver.valid(currentVersion) &&
-                semver.gt(latest, currentVersion)
-        )
-
-        return [hasUpdate, gowaveMetadata.git?.backend?.branch !== 'main']
-    }, [gowaveInfo.latestVersion, gowaveMetadata])
+    const isNewVersionAvailable = Boolean(updateCheck?.hasUpdate)
+    const isDev = gowaveMetadata?.git?.backend?.branch === 'dev'
 
     if (isLoading || !gowaveMetadata) {
         return <SkeletonHeaderControl width={85} />
@@ -52,19 +37,14 @@ export function VersionControl() {
             centered: true,
             size: 'md',
             withCloseButton: true,
-            children: (
-                <BuildInfoModal
-                    isNewVersionAvailable={isNewVersionAvailable}
-                    gowaveMetadata={gowaveMetadata}
-                />
-            )
+            children: <BuildInfoModal gowaveMetadata={gowaveMetadata} />
         })
     }
 
     return (
         <HeaderControl
             className={clsx(classes.version, {
-                [classes.newVersion]: isNewVersionAvailable && !isDev,
+                [classes.newVersion]: isNewVersionAvailable,
                 [classes.dev]: isDev
             })}
             onClick={handleClick}
