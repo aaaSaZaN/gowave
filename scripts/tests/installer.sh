@@ -130,4 +130,27 @@ set_docker_image 2>/dev/null
 [ "$(env_get "$ENV_FILE" GOWAVE_IMAGE)" = registry.local/gowave:custom ] || fail 'custom image replaced'
 MODE=native
 
+# Native installs repair old CLI files and links even under a restrictive umask.
+CLI_PATH=$WORK/bin/gowave
+UNIT_FILE=$WORK/gowave.service
+mkdir -p "$(dirname "$CLI_PATH")"
+cat >"$INSTALL_DIR/gowave-server" <<'SERVER'
+#!/bin/sh
+[ "$1" = --version ] && { echo 'gowave vtest'; exit 0; }
+[ "$1 $2" = 'service install' ]
+SERVER
+chmod 0755 "$INSTALL_DIR/gowave-server"
+run() { "$@"; }
+for kind in missing regular symlink; do
+    rm -f "$CLI_PATH"
+    case $kind in
+        regular) printf 'stale CLI' >"$CLI_PATH"; chmod 0644 "$CLI_PATH" ;;
+        symlink) ln -s "$WORK/missing-server" "$CLI_PATH" ;;
+    esac
+    (umask 077; write_unit; write_unit)
+    [ "$(readlink "$CLI_PATH")" = "$INSTALL_DIR/gowave-server" ] || fail "$kind CLI not replaced"
+    [ -x "$CLI_PATH" ] || fail "$kind CLI is not executable"
+    [ "$("$CLI_PATH" --version)" = 'gowave vtest' ] || fail "$kind CLI could not run"
+done
+
 echo 'Installer behavior checks passed.'

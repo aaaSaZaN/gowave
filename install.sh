@@ -654,9 +654,9 @@ WantedBy=multi-user.target
 EOF
     fi
     run "$INSTALL_DIR/gowave-server" service install "$INSTALL_DIR"
-    if [ ! -e "$CLI_PATH" ] || [ -L "$CLI_PATH" ]; then
-        ln -sfn "$INSTALL_DIR/gowave-server" "$CLI_PATH"
-    fi
+    # A native install replaces stale CLI copies, including non-executable files.
+    [ ! -d "$CLI_PATH" ] || die "CLI path is a directory: $CLI_PATH"
+    ln -sfn "$INSTALL_DIR/gowave-server" "$CLI_PATH"
 }
 
 start_native() {
