@@ -6,7 +6,8 @@ import {
     numberToVarBytesBE
 } from '@noble/curves/utils.js'
 import { utf8ToBytes } from '@noble/hashes/utils.js'
-import { decodeURLSafe, encodeURLSafe } from '@stablelib/base64'
+
+import { decodeURLSafe, encodeURLSafe } from '@shared/lib/base64'
 
 import { fromBase64, toBase64 } from './ssh-crypto'
 
@@ -61,9 +62,9 @@ export async function parseSshPrivateKey(input: string, comment: string): Promis
         case 'OPENSSH PRIVATE KEY':
             return parseOpenSshKey(pem.body, comment)
         case 'PRIVATE KEY':
-            return parsePkcs8(pem.body, comment)
+            return await parsePkcs8(pem.body, comment)
         case 'RSA PRIVATE KEY':
-            return parsePkcs8(wrapPkcs1(pem.body), comment)
+            return await parsePkcs8(wrapPkcs1(pem.body), comment)
         case 'DSA PRIVATE KEY':
         case 'EC PRIVATE KEY':
             throw new SshKeyError('unsupported-algo')
@@ -151,7 +152,7 @@ function webCryptoHash(hash: null | string): string {
 function readPem(input: string): IPem {
     const match = /-----BEGIN ([A-Z0-9 ]+)-----([\s\S]*?)-----END \1-----/.exec(input.trim())
 
-    if (!match) throw new SshKeyError('unsupported-format')
+    if (!match?.[1] || match[2] === undefined) throw new SshKeyError('unsupported-format')
 
     if (/Proc-Type:\s*4,ENCRYPTED/i.test(match[2])) throw new SshKeyError('encrypted')
 
@@ -184,7 +185,9 @@ function parseOpenSshKey(body: Uint8Array, comment: string): IParsedSshKey {
     const publicBlob = reader.string()
     const secrets = new Reader(reader.string())
 
-    if (secrets.uint32() !== secrets.uint32()) throw new SshKeyError('encrypted')
+    const check1 = secrets.uint32()
+    const check2 = secrets.uint32()
+    if (check1 !== check2) throw new SshKeyError('encrypted')
 
     const keyType = decodeUtf8(secrets.string())
 
@@ -384,7 +387,7 @@ function mpint(value: Uint8Array): Uint8Array {
 
     if (trimmed.length === 0) return new Uint8Array(1)
 
-    return trimmed[0] & 0x80 ? concatBytes(new Uint8Array(1), trimmed) : trimmed
+    return (trimmed[0] ?? 0) & 0x80 ? concatBytes(new Uint8Array(1), trimmed) : trimmed
 }
 
 function trimLeadingZeros(value: Uint8Array): Uint8Array {

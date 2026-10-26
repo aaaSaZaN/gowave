@@ -1,12 +1,12 @@
-import {
+import type {
     GetSubscriptionTemplatesCommand,
     TSubscriptionTemplateType
 } from '@remnawave/backend-contract'
-import { generatePath, useNavigate } from 'react-router'
-
 import { ROUTES } from '@shared/constants'
+import { runAsync } from '@shared/lib/run-async'
 import { getCoreLogoFromType } from '@shared/ui'
 import { UniversalSpotlightContentShared } from '@shared/ui/universal-spotlight'
+import { generatePath, useNavigate } from 'react-router'
 
 interface IProps {
     templates: GetSubscriptionTemplatesCommand.Response['response']['templates']
@@ -18,11 +18,13 @@ export const TemplatesSpotlightWidget = (props: IProps) => {
     const navigate = useNavigate()
 
     const handleViewTemplate = (templateUuid: string, templateType: TSubscriptionTemplateType) => {
-        navigate(
-            generatePath(ROUTES.DASHBOARD.TEMPLATES.TEMPLATE_EDITOR, {
-                type: templateType,
-                uuid: templateUuid
-            })
+        runAsync(
+            navigate(
+                generatePath(ROUTES.DASHBOARD.TEMPLATES.TEMPLATE_EDITOR, {
+                    type: templateType,
+                    uuid: templateUuid
+                })
+            )
         )
     }
 

@@ -1,7 +1,8 @@
 import { Checkbox, Stack, Text, TextInput } from '@mantine/core'
-import { GetInternalSquadsCommand } from '@remnawave/backend-contract'
-import { useVirtualizer } from '@tanstack/react-virtual'
-import { Key, memo, useRef } from 'react'
+import type { GetInternalSquadsCommand } from '@remnawave/backend-contract'
+import { useVirtualList } from '@shared/hooks/use-virtual-list'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { type Key, memo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiEmpty } from 'react-icons/pi'
 import { TbCirclesRelation } from 'react-icons/tb'
@@ -34,7 +35,7 @@ export const InternalSquadsListWidget = memo((props: IProps) => {
 
     const parentRef = useRef<HTMLDivElement>(null)
 
-    const virtualizer = useVirtualizer({
+    const virtualizer = useVirtualList({
         count: filteredInternalSquads.length,
         getScrollElement: () => parentRef.current,
         estimateSize: () => 60,
@@ -68,12 +69,12 @@ export const InternalSquadsListWidget = memo((props: IProps) => {
                 >
                     <div
                         style={{
-                            height: `${virtualizer.getTotalSize()}px`,
+                            height: `${virtualizer.totalSize}px`,
                             width: '100%',
                             position: 'relative'
                         }}
                     >
-                        {virtualizer.getVirtualItems().length === 0 && (
+                        {virtualizer.virtualItems.length === 0 && (
                             <div
                                 key="no-squads-found"
                                 style={{
@@ -94,8 +95,9 @@ export const InternalSquadsListWidget = memo((props: IProps) => {
                             </div>
                         )}
 
-                        {virtualizer.getVirtualItems().map((virtualRow) => {
+                        {virtualizer.virtualItems.map((virtualRow) => {
                             const internalSquad = filteredInternalSquads[virtualRow.index]
+                            if (!internalSquad) return null
                             return (
                                 <div
                                     key={internalSquad.uuid}
@@ -110,7 +112,7 @@ export const InternalSquadsListWidget = memo((props: IProps) => {
                                     }}
                                 >
                                     <InternalSquadCheckboxCard
-                                        hideEditButton={hideEditButton}
+                                        {...optionalProp('hideEditButton', hideEditButton)}
                                         internalSquad={internalSquad}
                                     />
                                 </div>

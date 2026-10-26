@@ -1,17 +1,16 @@
-import { createQueryKeys } from '@lukemorales/query-key-factory'
 import {
-    GetUsersTagsCommand,
-    GetUsersCommand,
     GetConnectionKeysByUserIdCommand,
+    GetRawSubscriptionByShortUuidCommand,
     GetUserAccessibleNodesCommand,
     GetUserByIdCommand,
     GetUserMetadataCommand,
     GetUserSubscriptionRequestHistoryCommand,
-    GetRawSubscriptionByShortUuidCommand
+    GetUsersCommand,
+    GetUsersTagsCommand
 } from '@remnawave/backend-contract'
-import { keepPreviousData } from '@tanstack/react-query'
-
+import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
+import { keepPreviousData } from '@tanstack/react-query'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'
 
@@ -48,7 +47,8 @@ export const useGetUserById = createGetQueryHook({
     endpoint: GetUserByIdCommand.TSQ_url,
     responseSchema: GetUserByIdCommand.ResponseSchema,
     routeParamsSchema: GetUserByIdCommand.RequestParamSchema,
-    getQueryKey: ({ route }) => usersQueryKeys.getUserById(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route ? usersQueryKeys.getUserById(route).queryKey : usersQueryKeys.getUserById._def,
     rQueryParams: {
         staleTime: sToMs(3),
         refetchInterval: sToMs(35)
@@ -60,7 +60,8 @@ export const useGetUsers = createGetQueryHook({
     endpoint: GetUsersCommand.TSQ_url,
     responseSchema: GetUsersCommand.ResponseSchema,
     requestQuerySchema: GetUsersCommand.RequestQuerySchema,
-    getQueryKey: ({ query }) => usersQueryKeys.getAllUsers(query!).queryKey,
+    getQueryKey: ({ query }) =>
+        query ? usersQueryKeys.getAllUsers(query).queryKey : usersQueryKeys.getAllUsers._def,
     rQueryParams: {
         staleTime: sToMs(20),
         refetchInterval: sToMs(25),
@@ -85,7 +86,10 @@ export const useGetUserAccessibleNodes = createGetQueryHook({
     endpoint: GetUserAccessibleNodesCommand.TSQ_url,
     responseSchema: GetUserAccessibleNodesCommand.ResponseSchema,
     routeParamsSchema: GetUserAccessibleNodesCommand.RequestParamSchema,
-    getQueryKey: ({ route }) => usersQueryKeys.getUserAccessibleNodes(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? usersQueryKeys.getUserAccessibleNodes(route).queryKey
+            : usersQueryKeys.getUserAccessibleNodes._def,
     rQueryParams: {
         staleTime: sToMs(60)
     },
@@ -96,7 +100,10 @@ export const useGetUserSubscriptionRequestHistory = createGetQueryHook({
     endpoint: GetUserSubscriptionRequestHistoryCommand.TSQ_url,
     responseSchema: GetUserSubscriptionRequestHistoryCommand.ResponseSchema,
     routeParamsSchema: GetUserSubscriptionRequestHistoryCommand.RequestParamSchema,
-    getQueryKey: ({ route }) => usersQueryKeys.getUserSubscriptionRequestHistory(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? usersQueryKeys.getUserSubscriptionRequestHistory(route).queryKey
+            : usersQueryKeys.getUserSubscriptionRequestHistory._def,
     rQueryParams: {
         staleTime: sToMs(60)
     },
@@ -107,7 +114,10 @@ export const useGetConnectionKeysByUserId = createGetQueryHook({
     endpoint: GetConnectionKeysByUserIdCommand.TSQ_url,
     responseSchema: GetConnectionKeysByUserIdCommand.ResponseSchema,
     routeParamsSchema: GetConnectionKeysByUserIdCommand.RequestParamSchema,
-    getQueryKey: ({ route }) => usersQueryKeys.getConnectionKeysByUserId(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? usersQueryKeys.getConnectionKeysByUserId(route).queryKey
+            : usersQueryKeys.getConnectionKeysByUserId._def,
     rQueryParams: {
         staleTime: sToMs(4)
     },
@@ -118,7 +128,10 @@ export const useGetUserMetadata = createGetQueryHook({
     endpoint: GetUserMetadataCommand.TSQ_url,
     responseSchema: GetUserMetadataCommand.ResponseSchema,
     routeParamsSchema: GetUserMetadataCommand.RequestParamsSchema,
-    getQueryKey: ({ route }) => usersQueryKeys.getUserMetadata(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? usersQueryKeys.getUserMetadata(route).queryKey
+            : usersQueryKeys.getUserMetadata._def,
     rQueryParams: {
         staleTime: sToMs(60)
     }
@@ -128,7 +141,10 @@ export const useGetRawSubscription = createGetQueryHook({
     endpoint: GetRawSubscriptionByShortUuidCommand.TSQ_url,
     responseSchema: GetRawSubscriptionByShortUuidCommand.ResponseSchema,
     routeParamsSchema: GetRawSubscriptionByShortUuidCommand.RequestParamSchema,
-    getQueryKey: ({ route }) => usersQueryKeys.getRawSubscription(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? usersQueryKeys.getRawSubscription(route).queryKey
+            : usersQueryKeys.getRawSubscription._def,
     rQueryParams: {
         staleTime: sToMs(60)
     }

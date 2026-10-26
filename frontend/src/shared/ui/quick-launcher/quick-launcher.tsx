@@ -1,10 +1,18 @@
-import type { ILauncherPosition, IQuickLauncherRoute, TQuickLink } from './quick-links.types'
-import type { SetFloatingWindowPosition } from '@mantine/hooks'
-
-import { ActionIcon, FloatingWindow } from '@mantine/core'
 import {
-    CSSProperties,
-    ComponentType,
+    useExperimentalFeature,
+    useExperimentalFeatures,
+    useLauncherColumns,
+    useLauncherPosition,
+    useQuickLinks,
+    useViewPreferencesStoreActions
+} from '@entities/dashboard/view-preferences-store'
+import { ActionIcon, FloatingWindow } from '@mantine/core'
+import type { SetFloatingWindowPosition } from '@mantine/hooks'
+import { showModal } from '@shared/_modals/show-modal'
+import { registerScrollLockShard } from '@shared/utils/scroll-lock-shards'
+import {
+    type ComponentType,
+    type CSSProperties,
     useCallback,
     useEffect,
     useLayoutEffect,
@@ -15,22 +23,11 @@ import {
 import { useTranslation } from 'react-i18next'
 import { TbArrowsMove, TbGripHorizontal, TbPlus, TbSettings } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { registerScrollLockShard } from '@shared/utils/scroll-lock-shards'
-
-import {
-    useExperimentalFeature,
-    useExperimentalFeatures,
-    useLauncherColumns,
-    useLauncherPosition,
-    useQuickLinks,
-    useViewPreferencesStoreActions
-} from '@entities/dashboard/view-preferences-store'
+import classes from './QuickLauncher.module.css'
 
 import { QUICK_ICONS, QUICK_MODALS } from './quick-links.catalog'
+import type { ILauncherPosition, IQuickLauncherRoute, TQuickLink } from './quick-links.types'
 import { isSafeExternalUrl, MAX_QUICK_COLUMNS } from './quick-links.types'
-import classes from './QuickLauncher.module.css'
 
 const OFFSET = 5
 const AUTO_COLUMNS = 3
@@ -65,7 +62,7 @@ export const QuickLauncher = ({ routes }: IProps) => {
     const positionRef = useRef<ILauncherPosition | null>(null)
     const nodeRef = useRef<HTMLDivElement | null>(null)
     const setPositionRef = useRef<null | SetFloatingWindowPosition>(null)
-    const pendingShiftRef = useRef(0)
+    const [pendingShift, setPendingShift] = useState(0)
     const grabRef = useRef<null | {
         offsetX: number
         offsetY: number
@@ -79,30 +76,28 @@ export const QuickLauncher = ({ routes }: IProps) => {
     const [isHeaderVisible, setIsHeaderVisible] = useState(false)
     const [isGrabbing, setIsGrabbing] = useState(false)
 
-    const cancelHold = () => {
+    const cancelHold = useCallback(() => {
         if (holdTimerRef.current === null) return
 
         window.clearTimeout(holdTimerRef.current)
         holdTimerRef.current = null
-    }
+    }, [])
 
     const toggleHeader = (isPinned: boolean) => {
-        pendingShiftRef.current = isPinned ? 0 : isHeaderVisible ? HEADER_HEIGHT : -HEADER_HEIGHT
+        setPendingShift(isPinned ? 0 : isHeaderVisible ? HEADER_HEIGHT : -HEADER_HEIGHT)
         setIsHeaderVisible(!isHeaderVisible)
     }
 
     useLayoutEffect(() => {
-        const shift = pendingShiftRef.current
+        const shift = pendingShift
         const node = nodeRef.current
-
-        pendingShiftRef.current = 0
 
         if (!shift || !node) return
 
         const rect = node.getBoundingClientRect()
 
         setPositionRef.current?.({ left: rect.left, top: rect.top + shift })
-    }, [isHeaderVisible])
+    }, [pendingShift])
 
     const registerShard = useCallback((node: HTMLDivElement | null) => {
         nodeRef.current = node
@@ -189,7 +184,7 @@ export const QuickLauncher = ({ routes }: IProps) => {
         setIsGrabbing(false)
     }
 
-    useEffect(() => cancelHold, [])
+    useEffect(() => cancelHold, [cancelHold])
 
     useEffect(() => {
         const handleViewportResize = () => {

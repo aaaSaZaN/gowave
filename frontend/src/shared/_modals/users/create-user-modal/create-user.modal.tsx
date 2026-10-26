@@ -1,13 +1,7 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Button, Group, Modal, Stack } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { CreateUserCommand, USERS_STATUS } from '@remnawave/backend-contract'
-import dayjs from 'dayjs'
-import { motion } from 'motion/react'
-import { useTranslation } from 'react-i18next'
-import { PiFloppyDiskDuotone } from 'react-icons/pi'
-import { TbUser } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { queryClient } from '@shared/api'
 import {
@@ -18,6 +12,7 @@ import {
     useGetUserTags
 } from '@shared/api/hooks'
 import { useIsMobile } from '@shared/hooks'
+import { runAsync } from '@shared/lib/run-async'
 import {
     AccessSettingsCard,
     ContactInformationCard,
@@ -29,6 +24,11 @@ import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { ModalFooter } from '@shared/ui/modal-footer'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { handleFormErrors } from '@shared/utils/misc'
+import dayjs from 'dayjs'
+import { motion } from 'motion/react'
+import { useTranslation } from 'react-i18next'
+import { PiFloppyDiskDuotone } from 'react-icons/pi'
+import { TbUser } from 'react-icons/tb'
 
 const MotionWrapper = motion.div
 const MotionStack = motion.create(Stack)
@@ -58,15 +58,21 @@ export const CreateUserModal = NiceModal.create(() => {
     const { modalProps, hide } = useNiceMantineModal({
         modal,
         onClose: () => {
-            queryClient.refetchQueries({
-                queryKey: QueryKeys.users.getAllUsers._def
-            })
-            queryClient.refetchQueries({
-                queryKey: QueryKeys.users.getUserTags.queryKey
-            })
-            queryClient.refetchQueries({
-                queryKey: QueryKeys.system.getSystemStats.queryKey
-            })
+            runAsync(
+                queryClient.refetchQueries({
+                    queryKey: QueryKeys.users.getAllUsers._def
+                })
+            )
+            runAsync(
+                queryClient.refetchQueries({
+                    queryKey: QueryKeys.users.getUserTags.queryKey
+                })
+            )
+            runAsync(
+                queryClient.refetchQueries({
+                    queryKey: QueryKeys.system.getSystemStats.queryKey
+                })
+            )
         }
     })
 
@@ -116,7 +122,7 @@ export const CreateUserModal = NiceModal.create(() => {
         }
     })
 
-    const handleSubmit = form.onSubmit(async (values) => {
+    const handleSubmit = form.onSubmit((values) => {
         createUser(
             {
                 variables: {

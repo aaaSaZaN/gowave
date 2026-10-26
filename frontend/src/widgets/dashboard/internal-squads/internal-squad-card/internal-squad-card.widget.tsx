@@ -1,5 +1,11 @@
 import { Badge, CopyButton, Group, Menu, Tooltip } from '@mantine/core'
-import { GetInternalSquadsCommand } from '@remnawave/backend-contract'
+import type { GetInternalSquadsCommand } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import { WithDndSortable } from '@shared/hocs/with-dnd-sortable'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
+import { EntityCardShared } from '@shared/ui/entity-card'
+import { formatInt } from '@shared/utils/misc'
 import { useTranslation } from 'react-i18next'
 import { PiCheck, PiCopy, PiPencil, PiTag, PiTrashDuotone, PiUsers } from 'react-icons/pi'
 import {
@@ -10,11 +16,6 @@ import {
     TbUsersMinus,
     TbUsersPlus
 } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { WithDndSortable } from '@shared/hocs/with-dnd-sortable'
-import { EntityCardShared } from '@shared/ui/entity-card'
-import { formatInt } from '@shared/utils/misc'
 
 interface IProps {
     disableReordering?: boolean
@@ -42,9 +43,11 @@ export function InternalSquadCardWidget(props: IProps) {
     const isActive = membersCount > 0
 
     const handleOpenInbounds = () => {
-        showModal('internalSquads_internalSquadsInboundsDrawer', {
-            squadUuid: internalSquad.uuid
-        })
+        runAsync(
+            showModal('internalSquads_internalSquadsInboundsDrawer', {
+                squadUuid: internalSquad.uuid
+            })
+        )
     }
 
     return (
@@ -139,7 +142,7 @@ export function InternalSquadCardWidget(props: IProps) {
                         <CopyButton timeout={2000} value={internalSquad.uuid}>
                             {({ copied, copy }) => (
                                 <Menu.Item
-                                    color={copied ? 'teal' : undefined}
+                                    {...optionalProp('color', copied ? 'teal' : undefined)}
                                     leftSection={
                                         copied ? <PiCheck size={18} /> : <PiCopy size={18} />
                                     }
@@ -165,15 +168,16 @@ export function InternalSquadCardWidget(props: IProps) {
 
                         <Menu.Item
                             leftSection={<TbTags size={18} />}
-
                             onClick={() => {
-                                showModal('editTagsModal', {
-                                    editTagsFrom: 'internalSquad',
+                                runAsync(
+                                    showModal('editTagsModal', {
+                                        editTagsFrom: 'internalSquad',
 
-                                    tags: internalSquad.tags,
+                                        tags: internalSquad.tags,
 
-                                    uuid: internalSquad.uuid
-                                })
+                                        uuid: internalSquad.uuid
+                                    })
+                                )
                             }}
                         >
                             {t('common.field.tags')}

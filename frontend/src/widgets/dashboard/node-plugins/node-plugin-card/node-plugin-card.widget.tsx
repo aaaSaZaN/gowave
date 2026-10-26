@@ -1,14 +1,15 @@
 import { CopyButton, Menu } from '@mantine/core'
-import { GetNodePluginsCommand } from '@remnawave/backend-contract'
+import type { GetNodePluginsCommand } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import { ROUTES } from '@shared/constants'
+import { WithDndSortable } from '@shared/hocs/with-dnd-sortable'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
+import { EntityCardShared } from '@shared/ui/entity-card'
 import { useTranslation } from 'react-i18next'
 import { PiCheck, PiCopy, PiCpu, PiPencil, PiTrashDuotone } from 'react-icons/pi'
 import { TbCopyCheck, TbPackage, TbTags } from 'react-icons/tb'
 import { generatePath, useNavigate } from 'react-router'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { ROUTES } from '@shared/constants'
-import { WithDndSortable } from '@shared/hocs/with-dnd-sortable'
-import { EntityCardShared } from '@shared/ui/entity-card'
 
 interface IProps {
     disableReordering?: boolean
@@ -33,10 +34,12 @@ export function NodePluginCardWidget(props: IProps) {
     const navigate = useNavigate()
 
     const navigateToNodePlugin = () => {
-        navigate(
-            generatePath(ROUTES.DASHBOARD.MANAGEMENT.NODE_PLUGINS.NODE_PLUGIN_BY_UUID, {
-                uuid: nodePlugin.uuid
-            })
+        runAsync(
+            navigate(
+                generatePath(ROUTES.DASHBOARD.MANAGEMENT.NODE_PLUGINS.NODE_PLUGIN_BY_UUID, {
+                    uuid: nodePlugin.uuid
+                })
+            )
         )
     }
 
@@ -61,7 +64,7 @@ export function NodePluginCardWidget(props: IProps) {
                         <CopyButton timeout={2000} value={nodePlugin.uuid}>
                             {({ copied, copy }) => (
                                 <Menu.Item
-                                    color={copied ? 'teal' : undefined}
+                                    {...optionalProp('color', copied ? 'teal' : undefined)}
                                     leftSection={
                                         copied ? <PiCheck size={18} /> : <PiCopy size={18} />
                                     }
@@ -82,11 +85,13 @@ export function NodePluginCardWidget(props: IProps) {
                         <Menu.Item
                             leftSection={<PiPencil size={18} />}
                             onClick={() => {
-                                showModal('renameModal', {
-                                    renameFrom: 'nodePlugin',
-                                    name: nodePlugin.name,
-                                    uuid: nodePlugin.uuid
-                                })
+                                runAsync(
+                                    showModal('renameModal', {
+                                        renameFrom: 'nodePlugin',
+                                        name: nodePlugin.name,
+                                        uuid: nodePlugin.uuid
+                                    })
+                                )
                             }}
                         >
                             {t('common.action.rename')}
@@ -94,15 +99,16 @@ export function NodePluginCardWidget(props: IProps) {
 
                         <Menu.Item
                             leftSection={<TbTags size={18} />}
-
                             onClick={() => {
-                                showModal('editTagsModal', {
-                                    editTagsFrom: 'nodePlugin',
+                                runAsync(
+                                    showModal('editTagsModal', {
+                                        editTagsFrom: 'nodePlugin',
 
-                                    tags: nodePlugin.tags,
+                                        tags: nodePlugin.tags,
 
-                                    uuid: nodePlugin.uuid
-                                })
+                                        uuid: nodePlugin.uuid
+                                    })
+                                )
                             }}
                         >
                             {t('common.field.tags')}

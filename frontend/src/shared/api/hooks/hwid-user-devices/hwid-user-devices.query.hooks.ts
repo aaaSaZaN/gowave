@@ -1,13 +1,12 @@
-import { createQueryKeys } from '@lukemorales/query-key-factory'
 import {
     GetHwidDevicesCommand,
     GetHwidDevicesStatsCommand,
     GetTopUsersByHwidDevicesCommand,
     GetUserHwidDevicesCommand
 } from '@remnawave/backend-contract'
-import { keepPreviousData } from '@tanstack/react-query'
-
+import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
+import { keepPreviousData } from '@tanstack/react-query'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'
 
@@ -33,7 +32,10 @@ export const useGetUserHwidDevices = createGetQueryHook({
     endpoint: GetUserHwidDevicesCommand.TSQ_url,
     responseSchema: GetUserHwidDevicesCommand.ResponseSchema,
     routeParamsSchema: GetUserHwidDevicesCommand.RequestParamSchema,
-    getQueryKey: ({ route }) => hwidUserDevicesQueryKeys.getUserHwidDevices(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? hwidUserDevicesQueryKeys.getUserHwidDevices(route).queryKey
+            : hwidUserDevicesQueryKeys.getUserHwidDevices._def,
     rQueryParams: {
         refetchInterval: sToMs(60)
     },
@@ -44,7 +46,10 @@ export const useGetHwidDevices = createGetQueryHook({
     endpoint: GetHwidDevicesCommand.TSQ_url,
     responseSchema: GetHwidDevicesCommand.ResponseSchema,
     requestQuerySchema: GetHwidDevicesCommand.RequestQuerySchema,
-    getQueryKey: ({ query }) => hwidUserDevicesQueryKeys.getAllHwidDevices(query!).queryKey,
+    getQueryKey: ({ query }) =>
+        query
+            ? hwidUserDevicesQueryKeys.getAllHwidDevices(query).queryKey
+            : hwidUserDevicesQueryKeys.getAllHwidDevices._def,
     rQueryParams: {
         staleTime: sToMs(20),
         refetchInterval: sToMs(25),
@@ -70,7 +75,10 @@ export const useGetTopUsersByHwidDevices = createGetQueryHook({
     endpoint: GetTopUsersByHwidDevicesCommand.TSQ_url,
     responseSchema: GetTopUsersByHwidDevicesCommand.ResponseSchema,
     requestQuerySchema: GetTopUsersByHwidDevicesCommand.RequestQuerySchema,
-    getQueryKey: ({ query }) => hwidUserDevicesQueryKeys.getTopUsersByHwidDevices(query!).queryKey,
+    getQueryKey: ({ query }) =>
+        query
+            ? hwidUserDevicesQueryKeys.getTopUsersByHwidDevices(query).queryKey
+            : hwidUserDevicesQueryKeys.getTopUsersByHwidDevices._def,
     rQueryParams: {
         placeholderData: keepPreviousData,
         staleTime: STALE_TIME,

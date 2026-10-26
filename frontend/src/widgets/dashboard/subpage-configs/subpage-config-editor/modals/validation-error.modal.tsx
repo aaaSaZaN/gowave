@@ -1,8 +1,7 @@
 import { Stack, Text } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { TbAlertTriangle } from 'react-icons/tb'
-
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { TbAlertTriangle } from 'react-icons/tb'
 
 export const showValidationErrorsModal = (errors: { message: string; path: string }[]) => {
     modals.open({
@@ -19,8 +18,8 @@ export const showValidationErrorsModal = (errors: { message: string; path: strin
         children: (
             <Stack gap="sm" p="sm">
                 <Stack gap={2} mt="xs">
-                    {errors.map((err, idx) => (
-                        <Text c="red" key={idx} size="sm">
+                    {errors.map((err) => (
+                        <Text c="red" key={`${err.path}:${err.message}`} size="sm">
                             • {err.path ? `${err.path}: ` : ''}
                             {err.message}
                         </Text>

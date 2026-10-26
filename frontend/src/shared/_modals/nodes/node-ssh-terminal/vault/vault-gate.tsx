@@ -1,7 +1,3 @@
-import { Box, Center, Loader } from '@mantine/core'
-
-import type { TInstanceLock } from '@shared/hooks/use-single-instance-lock'
-
 import {
     useSshVaultActions,
     useSshVaultHasPasscode,
@@ -9,6 +5,8 @@ import {
     useSshVaultPasscodeLength,
     useSshVaultStatus
 } from '@entities/ssh-vault'
+import { Box, Center, Loader } from '@mantine/core'
+import type { TInstanceLock } from '@shared/hooks/use-single-instance-lock'
 
 import classes from '../NodeSshTerminal.module.css'
 import { InstanceConflictScreen } from '../window/instance-conflict.screen'

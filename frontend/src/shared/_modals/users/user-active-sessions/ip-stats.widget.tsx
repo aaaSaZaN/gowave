@@ -1,18 +1,18 @@
 import { Group, Paper, Text } from '@mantine/core'
+import { useTime } from '@shared/hooks/use-time'
+import { formatInt } from '@shared/utils/misc'
 import { useMemo } from 'react'
 import { TbClockCheck, TbClockExclamation, TbClockPause } from 'react-icons/tb'
 
-import { formatInt } from '@shared/utils/misc'
-
-import { ActiveSessionNode } from './use-user-active-sessions'
+import type { ActiveSessionNode } from './use-user-active-sessions'
 
 interface IProps {
     nodes: ActiveSessionNode[]
 }
 
 export const IpStatsWidget = ({ nodes }: IProps) => {
+    const now = useTime()
     const stats = useMemo(() => {
-        const now = new Date().getTime()
         let active = 0
         let idle = 0
         let stale = 0
@@ -27,7 +27,7 @@ export const IpStatsWidget = ({ nodes }: IProps) => {
         }
 
         return { active, idle, stale }
-    }, [nodes])
+    }, [nodes, now])
 
     return (
         <Group gap="xs" grow>

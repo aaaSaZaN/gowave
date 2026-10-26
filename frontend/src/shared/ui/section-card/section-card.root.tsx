@@ -1,5 +1,5 @@
-import { Card, CardProps, Divider, MantineSpacing, Stack } from '@mantine/core'
-import { Children, ReactNode, RefObject } from 'react'
+import { Card, type CardProps, Divider, type MantineSpacing, Stack } from '@mantine/core'
+import { Children, type ReactNode, type RefObject } from 'react'
 
 interface ISectionCardRootProps extends Omit<CardProps, 'children'> {
     children: ReactNode
@@ -26,9 +26,11 @@ export function SectionCardRoot({
 
     const childrenWithDividers = childArray.flatMap((child, index) => {
         if (onlyFirstDivider && index === 0 && childArray.length > 1) {
+            // biome-ignore lint/suspicious/noArrayIndexKey: Dividers are stateless boundaries between child positions.
             return [child, <Divider key={`divider-${index}`} style={{ opacity: dividerOpacity }} />]
         }
         if (allDividers && index < childArray.length - 1) {
+            // biome-ignore lint/suspicious/noArrayIndexKey: Dividers are stateless boundaries between child positions.
             return [child, <Divider key={`divider-${index}`} style={{ opacity: dividerOpacity }} />]
         }
         return [child]

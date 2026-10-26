@@ -11,7 +11,13 @@ import {
     Transition
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { GetNodesCommand } from '@remnawave/backend-contract'
+import type { GetNodesCommand } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import { queryClient } from '@shared/api'
+import { QueryKeys, useBulkNodesProfileModification } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
+import { XrayLogo } from '@shared/ui/logos'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { useTranslation } from 'react-i18next'
 import {
     TbArrowBarToDown,
@@ -22,12 +28,6 @@ import {
     TbChartArcs,
     TbDots
 } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { queryClient } from '@shared/api'
-import { QueryKeys, useBulkNodesProfileModification } from '@shared/api/hooks'
-import { XrayLogo } from '@shared/ui/logos'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
 import { BulkUpdateNodesModalContent } from './bulk-update-nodes.modal.content'
 import { MultiSelectNodesModalContent } from './multi-select-modal.content'
@@ -49,7 +49,9 @@ export const MultiSelectNodesFeature = (props: IProps) => {
             onSuccess: () => {
                 setSelectedRecords([])
 
-                queryClient.refetchQueries({ queryKey: QueryKeys.nodes.getAllNodes.queryKey })
+                runAsync(
+                    queryClient.refetchQueries({ queryKey: QueryKeys.nodes.getAllNodes.queryKey })
+                )
             }
         }
     })
@@ -94,10 +96,15 @@ export const MultiSelectNodesFeature = (props: IProps) => {
                             <Stack gap="sm">
                                 <Group justify="space-between">
                                     <Badge color="shaded-gray" size="lg" variant="soft">
-                                        {t('common.message.selected', { count: selectedRecords.length })}
+                                        {t('common.message.selected', {
+                                            count: selectedRecords.length
+                                        })}
                                     </Badge>
                                     <Group gap={0} justify="flex-end">
-                                        <Tooltip label={t('common.action.clear-selection')} withArrow>
+                                        <Tooltip
+                                            label={t('common.action.clear-selection')}
+                                            withArrow
+                                        >
                                             <CloseButton onClick={() => setSelectedRecords([])} />
                                         </Tooltip>
                                     </Group>
@@ -158,9 +165,13 @@ export const MultiSelectNodesFeature = (props: IProps) => {
                                     fullWidth
                                     leftSection={<TbChartArcs size={18} />}
                                     onClick={() => {
-                                        showModal('nodes_nodesUsageStatsModal', {
-                                            nodeUuids: selectedRecords.map((record) => record.uuid)
-                                        })
+                                        runAsync(
+                                            showModal('nodes_nodesUsageStatsModal', {
+                                                nodeUuids: selectedRecords.map(
+                                                    (record) => record.uuid
+                                                )
+                                            })
+                                        )
                                     }}
                                     size="sm"
                                     variant="soft"

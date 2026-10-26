@@ -1,13 +1,12 @@
 import { ConfigProfilesHeaderActionButtonsFeature } from '@features/ui/dashboard/config-profiles/header-action-buttons'
+import { XrayLogo } from '@shared/ui/logos'
+import { Page } from '@shared/ui/page'
+import { PageHeaderShared } from '@shared/ui/page-header/page-header.shared'
 import { ConfigProfilesGridWidget } from '@widgets/dashboard/config-profiles/config-profiles-grid/config-profiles-grid.widget'
 import { ConfigProfilesSpotlightWidget } from '@widgets/dashboard/config-profiles/config-profiles-spotlight/config-profiles-spotlight'
 import { useTranslation } from 'react-i18next'
 
-import { XrayLogo } from '@shared/ui/logos'
-import { Page } from '@shared/ui/page'
-import { PageHeaderShared } from '@shared/ui/page-header/page-header.shared'
-
-import { Props } from './interfaces'
+import type { Props } from './interfaces'
 
 export const ConfigPageComponent = (props: Props) => {
     const { t } = useTranslation()

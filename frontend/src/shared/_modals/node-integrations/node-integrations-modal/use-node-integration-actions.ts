@@ -1,9 +1,8 @@
 import { modals } from '@mantine/modals'
-import { t } from 'i18next'
-import { useState } from 'react'
-
 import { queryClient } from '@shared/api'
 import { QueryKeys, useDeleteNodeIntegration } from '@shared/api/hooks'
+import { t } from 'i18next'
+import { useState } from 'react'
 
 export function useNodeIntegrationActions() {
     const [deletingUuid, setDeletingUuid] = useState<null | string>(null)

@@ -1,4 +1,4 @@
-import { type DataTableColumnToggle } from '@kastov/mantine-datatable'
+import type { DataTableColumnToggle } from '@kastov/mantine-datatable'
 import { Button, Checkbox, Divider, Group, Popover, ScrollArea, Stack, Text } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { useTranslation } from 'react-i18next'

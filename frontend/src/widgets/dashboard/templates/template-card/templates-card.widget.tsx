@@ -1,15 +1,16 @@
 import { CopyButton, Menu } from '@mantine/core'
-import { GetSubscriptionTemplatesCommand } from '@remnawave/backend-contract'
-import { ReactNode } from 'react'
+import type { GetSubscriptionTemplatesCommand } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import { ROUTES } from '@shared/constants'
+import { WithDndSortable } from '@shared/hocs/with-dnd-sortable'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
+import { EntityCardShared } from '@shared/ui/entity-card'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiCheck, PiCopy, PiPencil, PiTrashDuotone } from 'react-icons/pi'
 import { TbTags } from 'react-icons/tb'
 import { generatePath, useNavigate } from 'react-router'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { ROUTES } from '@shared/constants'
-import { WithDndSortable } from '@shared/hocs/with-dnd-sortable'
-import { EntityCardShared } from '@shared/ui/entity-card'
 
 interface IProps {
     disableReordering?: boolean
@@ -63,7 +64,7 @@ export function TemplatesCardWidget(props: IProps) {
                         <CopyButton timeout={2000} value={template.uuid}>
                             {({ copied, copy }) => (
                                 <Menu.Item
-                                    color={copied ? 'teal' : undefined}
+                                    {...optionalProp('color', copied ? 'teal' : undefined)}
                                     leftSection={
                                         copied ? <PiCheck size={18} /> : <PiCopy size={18} />
                                     }
@@ -78,11 +79,13 @@ export function TemplatesCardWidget(props: IProps) {
                             disabled={template.name === 'Default'}
                             leftSection={<PiPencil size={18} />}
                             onClick={() => {
-                                showModal('renameModal', {
-                                    renameFrom: 'template',
-                                    name: template.name,
-                                    uuid: template.uuid
-                                })
+                                runAsync(
+                                    showModal('renameModal', {
+                                        renameFrom: 'template',
+                                        name: template.name,
+                                        uuid: template.uuid
+                                    })
+                                )
                             }}
                         >
                             {t('common.action.rename')}
@@ -90,15 +93,16 @@ export function TemplatesCardWidget(props: IProps) {
 
                         <Menu.Item
                             leftSection={<TbTags size={18} />}
-
                             onClick={() => {
-                                showModal('editTagsModal', {
-                                    editTagsFrom: 'template',
+                                runAsync(
+                                    showModal('editTagsModal', {
+                                        editTagsFrom: 'template',
 
-                                    tags: template.tags,
+                                        tags: template.tags,
 
-                                    uuid: template.uuid
-                                })
+                                        uuid: template.uuid
+                                    })
+                                )
                             }}
                         >
                             {t('common.field.tags')}

@@ -1,13 +1,13 @@
 import { Badge, Group } from '@mantine/core'
 import { Spotlight } from '@mantine/spotlight'
-import { GetNodesCommand } from '@remnawave/backend-contract'
-import ReactCountryFlag from 'react-country-flag'
+import type { GetNodesCommand } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import { runAsync } from '@shared/lib/run-async'
+import ReactCountryFlag from '@shared/ui/country-flag'
+import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 import { useTranslation } from 'react-i18next'
 import { PiUsersDuotone } from 'react-icons/pi'
 import { TbServer, TbServer2 } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 
 import { NodeStatusBadgeWidget } from '../node-status-badge'
 
@@ -25,7 +25,7 @@ export const NodesSpotlightSearchWidget = ({ nodes }: IProps) => {
 
         const node = nodes.find((node) => node.uuid === value)
         if (node) {
-            showModal('nodes_editNodeModal', { nodeUuid: node.uuid })
+            runAsync(showModal('nodes_editNodeModal', { nodeUuid: node.uuid }))
         }
     }
 

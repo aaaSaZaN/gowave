@@ -1,9 +1,8 @@
 import { ActionIcon, Badge, Text, Tooltip } from '@mantine/core'
-import { GetSharedListsCommand } from '@remnawave/backend-contract'
+import type { GetSharedListsCommand } from '@remnawave/backend-contract'
+import type { ITreeNode, ITreeRowContent } from '@shared/ui/tree-browser'
 import { t } from 'i18next'
 import { TbTrash } from 'react-icons/tb'
-
-import { ITreeNode, ITreeRowContent } from '@shared/ui/tree-browser'
 
 import classes from './shared-lists.module.css'
 

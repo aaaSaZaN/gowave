@@ -1,9 +1,9 @@
 import { Button } from '@mantine/core'
+import { showModal } from '@shared/_modals/show-modal'
+import { runAsync } from '@shared/lib/run-async'
+import { useSettingsRowControl } from '@shared/ui/settings-row'
 import { useTranslation } from 'react-i18next'
 import { TbArrowsExchange, TbPencil } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { useSettingsRowControl } from '@shared/ui/settings-row'
 
 import { useHostFormData } from '../host-form-data.context'
 import { useHostOptions } from '../host-options.context'
@@ -19,10 +19,12 @@ export function MapperOption() {
             color="gray"
             leftSection={<TbArrowsExchange size={16} />}
             onClick={() => {
-                showModal('hosts_hostMapperModal', {
-                    form,
-                    rawInbound: resolveSelectedRawInbound()
-                })
+                runAsync(
+                    showModal('hosts_hostMapperModal', {
+                        form,
+                        rawInbound: resolveSelectedRawInbound()
+                    })
+                )
             }}
             rightSection={<TbPencil size={14} />}
             size="compact-sm"

@@ -1,6 +1,6 @@
-import { createQueryKeys } from '@lukemorales/query-key-factory'
 import { GetNodeIntegrationCommand, GetNodeIntegrationsCommand } from '@remnawave/backend-contract'
 
+import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'
@@ -18,7 +18,10 @@ export const useGetNodeIntegration = createGetQueryHook({
     endpoint: GetNodeIntegrationCommand.TSQ_url,
     routeParamsSchema: GetNodeIntegrationCommand.RequestParamSchema,
     responseSchema: GetNodeIntegrationCommand.ResponseSchema,
-    getQueryKey: ({ route }) => nodeIntegrationsQueryKeys.getNodeIntegration(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? nodeIntegrationsQueryKeys.getNodeIntegration(route).queryKey
+            : nodeIntegrationsQueryKeys.getNodeIntegration._def,
     rQueryParams: {
         refetchOnMount: true,
         staleTime: sToMs(5)

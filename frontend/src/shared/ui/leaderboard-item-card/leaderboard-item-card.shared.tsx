@@ -1,7 +1,6 @@
 import { Box, Group, Text } from '@mantine/core'
-import { ReactNode } from 'react'
-
 import { prettifyBytesUtil } from '@shared/utils/bytes'
+import type { ReactNode } from 'react'
 
 import styles from './leaderboard-item-card.module.css'
 

@@ -1,14 +1,13 @@
 import { Button, Card, Code, Group, Stack, Text, ThemeIcon } from '@mantine/core'
 import { useOs } from '@mantine/hooks'
 import { BULLBOARD_ROOT, ROOT, SCALAR_ROOT, SWAGGER_ROOT } from '@remnawave/backend-contract'
-import { TFunction } from 'i18next'
-import { ReactNode, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbApi, TbBook2, TbExternalLink, TbServer, TbStack2 } from 'react-icons/tb'
-
 import { getBackendDomain } from '@shared/api'
 import { useIssueOtt } from '@shared/api/hooks/api-tokens/api-tokens.mutation.hooks'
 import { SettingsCardShared } from '@shared/ui/settings-card'
+import type { TFunction } from 'i18next'
+import { type ReactNode, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbApi, TbBook2, TbExternalLink, TbServer, TbStack2 } from 'react-icons/tb'
 
 interface BackendTool {
     color: string

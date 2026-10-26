@@ -2,7 +2,7 @@ name: Sync translations from Crowdin
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: "0 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -23,8 +23,8 @@ jobs:
           download_translations: true
           localization_branch_name: translations
           create_pull_request: true
-          pull_request_title: 'chore(i18n): update translations'
-          pull_request_base_branch_name: 'dev'
+          pull_request_title: "chore(i18n): update translations"
+          pull_request_base_branch_name: "dev"
           config: ./crowdin.yml
           skip_ref_checkout: true
           crowdin_branch_name: dev
@@ -40,7 +40,7 @@ jobs:
 
             ---
             *Automated by [Crowdin GitHub Action](https://github.com/crowdin/github-action)*
-          commit_message: 'chore(i18n): update translations'
+          commit_message: "chore(i18n): update translations"
         env:
           # A classic GitHub Personal Access Token with the 'repo' scope selected (the user should have write access to the repository).
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

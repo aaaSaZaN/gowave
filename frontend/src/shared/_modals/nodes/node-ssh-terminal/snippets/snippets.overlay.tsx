@@ -1,3 +1,4 @@
+import type { ISshSnippet } from '@entities/ssh-vault'
 import {
     ActionIcon,
     Box,
@@ -10,14 +11,11 @@ import {
     TextInput,
     ThemeIcon
 } from '@mantine/core'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbArrowLeft, TbBolt, TbDeviceFloppy, TbPlus, TbTrash } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
-
-import type { ISshSnippet } from '@entities/ssh-vault'
 
 import classes from '../NodeSshTerminal.module.css'
 import { TerminalOverlay } from '../window/terminal-overlay'
@@ -47,7 +45,7 @@ export const SnippetsOverlay = (props: IProps) => {
         try {
             await onSave({
                 command: draft.command.trim(),
-                id: draft.id,
+                ...(draft.id === undefined ? {} : { id: draft.id }),
                 name: draft.name.trim()
             })
             setDraft(null)
@@ -89,102 +87,97 @@ export const SnippetsOverlay = (props: IProps) => {
                             titleOrder={5}
                         />
 
-                        <CloseButton aria-label={t('common.action.close')} ml="auto" onClick={onClose} />
+                        <CloseButton
+                            aria-label={t('common.action.close')}
+                            ml="auto"
+                            onClick={onClose}
+                        />
                     </Group>
                 </SectionCard.Section>
 
                 {draft ? (
-                    <>
-                        <SectionCard.Section>
-                            <Stack gap="sm">
-                                <TextInput
-                                    autoFocus
-                                    label={t('common.field.name')}
-                                    onChange={(event) =>
-                                        setDraft({ ...draft, name: event.currentTarget.value })
+                    <SectionCard.Section>
+                        <Stack gap="sm">
+                            <TextInput
+                                autoFocus
+                                label={t('common.field.name')}
+                                onChange={(event) =>
+                                    setDraft({ ...draft, name: event.currentTarget.value })
+                                }
+                                placeholder="Docker Stats"
+                                value={draft.name}
+                            />
+                            <Textarea
+                                autosize
+                                label={t('node-ssh.snippet-command')}
+                                maxRows={8}
+                                minRows={3}
+                                onChange={(event) =>
+                                    setDraft({
+                                        ...draft,
+                                        command: event.currentTarget.value
+                                    })
+                                }
+                                placeholder="docker stats"
+                                spellCheck={false}
+                                styles={{
+                                    input: {
+                                        fontFamily: 'var(--mantine-font-family-monospace)'
                                     }
-                                    placeholder="Docker Stats"
-                                    value={draft.name}
-                                />
-                                <Textarea
-                                    autosize
-                                    label={t('node-ssh.snippet-command')}
-                                    maxRows={8}
-                                    minRows={3}
-                                    onChange={(event) =>
-                                        setDraft({
-                                            ...draft,
-                                            command: event.currentTarget.value
-                                        })
-                                    }
-                                    placeholder="docker stats"
-                                    spellCheck={false}
-                                    styles={{
-                                        input: {
-                                            fontFamily: 'var(--mantine-font-family-monospace)'
-                                        }
-                                    }}
-                                    value={draft.command}
-                                />
-                            </Stack>
-                        </SectionCard.Section>
-                    </>
+                                }}
+                                value={draft.command}
+                            />
+                        </Stack>
+                    </SectionCard.Section>
                 ) : (
-                    <>
-                        <SectionCard.Section>
-                            {snippets.length === 0 ? (
-                                <Stack align="center" gap={6} py="lg">
-                                    <ThemeIcon color="gray" radius="md" size={38} variant="soft">
-                                        <TbBolt size={20} />
-                                    </ThemeIcon>
-                                    <Text c="dimmed" size="sm" ta="center">
-                                        {t('node-ssh.snippets-empty')}
-                                    </Text>
-                                </Stack>
-                            ) : (
-                                <Box className={classes.snippetList}>
-                                    <Stack gap={4}>
-                                        {snippets.map((snippet) => (
-                                            <Group
-                                                className={classes.snippetRow}
-                                                gap="xs"
-                                                key={snippet.id}
-                                                onClick={() => setDraft({ ...snippet })}
-                                                wrap="nowrap"
+                    <SectionCard.Section>
+                        {snippets.length === 0 ? (
+                            <Stack align="center" gap={6} py="lg">
+                                <ThemeIcon color="gray" radius="md" size={38} variant="soft">
+                                    <TbBolt size={20} />
+                                </ThemeIcon>
+                                <Text c="dimmed" size="sm" ta="center">
+                                    {t('node-ssh.snippets-empty')}
+                                </Text>
+                            </Stack>
+                        ) : (
+                            <Box className={classes.snippetList}>
+                                <Stack gap={4}>
+                                    {snippets.map((snippet) => (
+                                        <Group
+                                            className={classes.snippetRow}
+                                            gap="xs"
+                                            key={snippet.id}
+                                            onClick={() => setDraft({ ...snippet })}
+                                            wrap="nowrap"
+                                        >
+                                            <Box flex={1} miw={0}>
+                                                <Text size="sm" truncate>
+                                                    {snippet.name}
+                                                </Text>
+                                                <Text c="dimmed" ff="monospace" size="xs" truncate>
+                                                    {snippet.command.split('\n')[0]}
+                                                </Text>
+                                            </Box>
+                                            <ActionIcon
+                                                className={classes.snippetDelete}
+                                                color="red"
+                                                ml="auto"
+                                                onClick={(event) => {
+                                                    event.stopPropagation()
+                                                    void onDelete(snippet.id)
+                                                }}
+                                                size="sm"
+                                                variant="subtle"
                                             >
-                                                <Box flex={1} miw={0}>
-                                                    <Text size="sm" truncate>
-                                                        {snippet.name}
-                                                    </Text>
-                                                    <Text
-                                                        c="dimmed"
-                                                        ff="monospace"
-                                                        size="xs"
-                                                        truncate
-                                                    >
-                                                        {snippet.command.split('\n')[0]}
-                                                    </Text>
-                                                </Box>
-                                                <ActionIcon
-                                                    className={classes.snippetDelete}
-                                                    color="red"
-                                                    ml="auto"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation()
-                                                        void onDelete(snippet.id)
-                                                    }}
-                                                    size="sm"
-                                                    variant="subtle"
-                                                >
-                                                    <TbTrash size={14} />
-                                                </ActionIcon>
-                                            </Group>
-                                        ))}
-                                    </Stack>
-                                </Box>
-                            )}
-                        </SectionCard.Section>
-                    </>
+                                                <TbTrash size={14} />
+                                            </ActionIcon>
+                                        </Group>
+                                    ))}
+                                </Stack>
+                            </Box>
+                        )}
+                    </SectionCard.Section>
                 )}
 
                 <SectionCard.Section>

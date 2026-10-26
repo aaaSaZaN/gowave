@@ -6,17 +6,26 @@
 }
 
 .window[data-maximized] {
+    /* biome-ignore lint/complexity/noImportantStyles: Window state must override inline FloatingWindow geometry. */
     inset: 0 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Window state must override inline FloatingWindow geometry. */
     width: 100% !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Window state must override inline FloatingWindow geometry. */
     height: 100% !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Window state must override inline FloatingWindow geometry. */
     max-width: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Window state must override inline FloatingWindow geometry. */
     max-height: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Window state must override inline FloatingWindow geometry. */
     transform: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Window state must override inline FloatingWindow geometry. */
     border-radius: 0 !important;
 }
 
 .window[data-minimized] {
+    /* biome-ignore lint/complexity/noImportantStyles: Window state must override inline FloatingWindow geometry. */
     height: auto !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Window state must override inline FloatingWindow geometry. */
     min-height: 0 !important;
 }
 
@@ -34,8 +43,8 @@
     transition: opacity 200ms ease;
 }
 
-.trafficLights:hover .trafficLight svg,
-.trafficLight:focus-visible svg {
+.trafficLight:focus-visible svg,
+.trafficLights:hover .trafficLight svg {
     opacity: 1;
 }
 
@@ -325,7 +334,7 @@
 }
 
 .resizeHandle::after {
-    content: '';
+    content: "";
     position: absolute;
     right: 4px;
     bottom: 4px;
@@ -396,15 +405,15 @@
     transition: color 150ms ease;
 }
 
-.logRow[data-state='done'] {
+.logRow[data-state="done"] {
     color: var(--surface-muted);
 }
 
-.logRow[data-state='active'] {
+.logRow[data-state="active"] {
     color: var(--accent);
 }
 
-.logRow[data-state='failed'] {
+.logRow[data-state="failed"] {
     color: var(--danger);
 }
 
@@ -414,7 +423,7 @@
     text-align: center;
 }
 
-.logRow[data-state='done'] .logGlyph {
+.logRow[data-state="done"] .logGlyph {
     color: var(--ok);
 }
 

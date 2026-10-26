@@ -1,4 +1,4 @@
-import { QueryClient, UseMutationOptions } from '@tanstack/react-query'
+import type { QueryClient, UseMutationOptions } from '@tanstack/react-query'
 
 export interface EnhancedMutationParams<
     TData = unknown,
@@ -6,9 +6,9 @@ export interface EnhancedMutationParams<
     TVariables = void,
     TContext = unknown
 > extends Omit<
-    UseMutationOptions<TData, TError, TVariables, TContext>,
-    'mutationFn' | 'onError' | 'onSettled' | 'onSuccess'
-> {
+        UseMutationOptions<TData, TError, TVariables, TContext>,
+        'mutationFn' | 'onError' | 'onSettled' | 'onSuccess'
+    > {
     onError?: (
         error: TError,
         variables: TVariables,

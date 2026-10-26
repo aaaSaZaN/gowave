@@ -1,9 +1,9 @@
+import {
+    useSectionActiveTag,
+    useViewPreferencesStoreActions
+} from '@entities/dashboard/view-preferences-store'
 import { Center, Stack, Text, ThemeIcon } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbWebhook } from 'react-icons/tb'
-
 import {
     QueryKeys,
     useAddUsersToExternalSquad,
@@ -15,20 +15,19 @@ import {
     useUpdateExternalSquad
 } from '@shared/api/hooks'
 import { queryClient } from '@shared/api/query-client'
+import { runAsync } from '@shared/lib/run-async'
 import { filterByTag, TagFilterBar } from '@shared/ui'
 import { baseNotificationsMutations } from '@shared/ui/notifications/base-notification-mutations'
 import { SectionCard } from '@shared/ui/section-card'
 import { VirtualizedDndGrid } from '@shared/ui/virtualized-dnd-grid'
 import { cloneString } from '@shared/utils/misc'
 import { sToMs } from '@shared/utils/time-utils'
-
-import {
-    useSectionActiveTag,
-    useViewPreferencesStoreActions
-} from '@entities/dashboard/view-preferences-store'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbWebhook } from 'react-icons/tb'
 
 import { ExternalSquadCardWidget } from '../external-squad-card/external-squad-card.widget'
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export function ExternalSquadsGridWidget(props: IProps) {
     const { externalSquads } = props
@@ -51,9 +50,11 @@ export function ExternalSquadsGridWidget(props: IProps) {
     const { mutate: deleteExternalSquad } = useDeleteExternalSquad({
         mutationFns: {
             onSuccess: () => {
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.externalSquads.getExternalSquads.queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.externalSquads.getExternalSquads.queryKey
+                    })
+                )
             }
         }
     })
@@ -239,40 +240,38 @@ export function ExternalSquadsGridWidget(props: IProps) {
     }
 
     return (
-        <>
-            <VirtualizedDndGrid
-                enableDnd={activeTag === null}
-                header={
-                    <TagFilterBar
-                        activeTag={activeTag}
-                        items={externalSquads}
-                        onChange={(tag) => setSectionActiveTag('externalSquads', tag)}
-                    />
-                }
-                items={visibleItems}
-                onReorder={handleReorder}
-                renderDragOverlay={(externalSquad) => (
-                    <ExternalSquadCardWidget
-                        externalSquad={externalSquad}
-                        handleAddToUsers={handleAddToUsers}
-                        handleCloneExternalSquad={handleCloneExternalSquad}
-                        handleDeleteExternalSquad={handleDeleteExternalSquad}
-                        handleRemoveFromUsers={handleRemoveFromUsers}
-                        isDragOverlay
-                    />
-                )}
-                renderItem={(externalSquad) => (
-                    <ExternalSquadCardWidget
-                        disableReordering={activeTag !== null}
-                        externalSquad={externalSquad}
-                        handleAddToUsers={handleAddToUsers}
-                        handleCloneExternalSquad={handleCloneExternalSquad}
-                        handleDeleteExternalSquad={handleDeleteExternalSquad}
-                        handleRemoveFromUsers={handleRemoveFromUsers}
-                    />
-                )}
-                useWindowScroll={true}
-            />
-        </>
+        <VirtualizedDndGrid
+            enableDnd={activeTag === null}
+            header={
+                <TagFilterBar
+                    activeTag={activeTag}
+                    items={externalSquads}
+                    onChange={(tag) => setSectionActiveTag('externalSquads', tag)}
+                />
+            }
+            items={visibleItems}
+            onReorder={handleReorder}
+            renderDragOverlay={(externalSquad) => (
+                <ExternalSquadCardWidget
+                    externalSquad={externalSquad}
+                    handleAddToUsers={handleAddToUsers}
+                    handleCloneExternalSquad={handleCloneExternalSquad}
+                    handleDeleteExternalSquad={handleDeleteExternalSquad}
+                    handleRemoveFromUsers={handleRemoveFromUsers}
+                    isDragOverlay
+                />
+            )}
+            renderItem={(externalSquad) => (
+                <ExternalSquadCardWidget
+                    disableReordering={activeTag !== null}
+                    externalSquad={externalSquad}
+                    handleAddToUsers={handleAddToUsers}
+                    handleCloneExternalSquad={handleCloneExternalSquad}
+                    handleDeleteExternalSquad={handleDeleteExternalSquad}
+                    handleRemoveFromUsers={handleRemoveFromUsers}
+                />
+            )}
+            useWindowScroll={true}
+        />
     )
 }

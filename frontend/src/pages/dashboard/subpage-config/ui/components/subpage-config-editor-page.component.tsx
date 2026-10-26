@@ -9,14 +9,22 @@ import {
     ThemeIcon,
     Tooltip
 } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
-import { GetSubpageConfigCommand } from '@remnawave/backend-contract'
+import type { GetSubpageConfigCommand } from '@remnawave/backend-contract'
 import {
     SubscriptionPageRawConfigSchema,
-    TSubscriptionPageRawConfig
+    type TSubscriptionPageRawConfig
 } from '@remnawave/subscription-page-types'
+import { QueryKeys, useUpdateSubpageConfig } from '@shared/api/hooks'
+import { queryClient } from '@shared/api/query-client'
+import { OPEN_ENTITY, ROUTES } from '@shared/constants'
+import { runAsync } from '@shared/lib/run-async'
+import { CopyEntityLinkButton, Page, PageHeaderShared } from '@shared/ui'
+import { useDownloadTemplate } from '@shared/ui/load-templates/use-download-template'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { sleep } from '@shared/utils/misc'
 import {
     BaseSettingsBlockComponent,
     BaseTranslationsBlockComponent,
@@ -28,7 +36,7 @@ import {
 } from '@widgets/dashboard/subpage-configs/subpage-config-editor/editor-base'
 import {
     ImportConfigSectionsModalContent,
-    ImportMode,
+    type ImportMode,
     showSubpageConfigSavedModal,
     showValidationErrorsModal
 } from '@widgets/dashboard/subpage-configs/subpage-config-editor/modals'
@@ -47,14 +55,6 @@ import {
     TbUpload
 } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
-
-import { QueryKeys, useUpdateSubpageConfig } from '@shared/api/hooks'
-import { queryClient } from '@shared/api/query-client'
-import { OPEN_ENTITY, ROUTES } from '@shared/constants'
-import { CopyEntityLinkButton, Page, PageHeaderShared } from '@shared/ui'
-import { useDownloadTemplate } from '@shared/ui/load-templates/use-download-template'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { sleep } from '@shared/utils/misc'
 
 import styles from './subpage-config-editor-page.module.css'
 
@@ -126,10 +126,7 @@ export const SubpageConfigEditorPageComponent = (props: Props) => {
         return { ...current, ...imported }
     }
 
-    const handleImportByMode = async (
-        importedConfig: TSubscriptionPageRawConfig,
-        mode: ImportMode
-    ) => {
+    const handleImportByMode = (importedConfig: TSubscriptionPageRawConfig, mode: ImportMode) => {
         notifications.show({
             id: 'import-config',
             loading: true,
@@ -239,8 +236,8 @@ export const SubpageConfigEditorPageComponent = (props: Props) => {
     const { openDownloadModal } = useDownloadTemplate({
         editorType: 'SUBPAGE_CONFIG',
         templateType: 'SUBPAGE_CONFIG',
-        onLoadTemplate: async (content) => {
-            handleImportConfig(new File([content], 'config.json'))
+        onLoadTemplate: (content) => {
+            runAsync(handleImportConfig(new File([content], 'config.json')))
         }
     })
 

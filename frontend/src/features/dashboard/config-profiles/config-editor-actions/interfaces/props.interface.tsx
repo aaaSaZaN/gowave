@@ -1,7 +1,6 @@
+import type { GetConfigProfilesCommand } from '@remnawave/backend-contract'
 import type { editor } from 'monaco-editor'
-
-import { GetConfigProfilesCommand } from '@remnawave/backend-contract'
-import { RefObject } from 'react'
+import type { RefObject } from 'react'
 
 export interface Props {
     configProfile: GetConfigProfilesCommand.Response['response']['configProfiles'][number]

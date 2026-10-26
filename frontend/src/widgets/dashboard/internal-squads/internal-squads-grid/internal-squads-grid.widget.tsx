@@ -1,9 +1,9 @@
+import {
+    useSectionActiveTag,
+    useViewPreferencesStoreActions
+} from '@entities/dashboard/view-preferences-store'
 import { Card, Stack, Text, Title } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
-import { PiEmpty } from 'react-icons/pi'
-
 import {
     QueryKeys,
     useAddUsersToInternalSquad,
@@ -13,18 +13,17 @@ import {
     useReorderInternalSquads
 } from '@shared/api/hooks'
 import { queryClient } from '@shared/api/query-client'
+import { runAsync } from '@shared/lib/run-async'
 import { filterByTag, TagFilterBar } from '@shared/ui'
 import { baseNotificationsMutations } from '@shared/ui/notifications/base-notification-mutations'
 import { VirtualizedDndGrid } from '@shared/ui/virtualized-dnd-grid'
 import { sToMs } from '@shared/utils/time-utils'
-
-import {
-    useSectionActiveTag,
-    useViewPreferencesStoreActions
-} from '@entities/dashboard/view-preferences-store'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import { PiEmpty } from 'react-icons/pi'
 
 import { InternalSquadCardWidget } from '../internal-squad-card/internal-squad-card.widget'
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export function InternalSquadsGridWidget(props: IProps) {
     const { internalSquads } = props
@@ -54,9 +53,11 @@ export function InternalSquadsGridWidget(props: IProps) {
     const { mutate: deleteInternalSquad } = useDeleteInternalSquad({
         mutationFns: {
             onSuccess: () => {
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.internalSquads.getInternalSquads.queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.internalSquads.getInternalSquads.queryKey
+                    })
+                )
             }
         }
     })

@@ -1,13 +1,12 @@
 import { ActionIcon, ActionIconGroup, Box, Flex, Group, Tooltip } from '@mantine/core'
-import { GetNodePluginCommand } from '@remnawave/backend-contract'
+import type { GetNodePluginCommand } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import { OPEN_ENTITY, ROUTES } from '@shared/constants'
+import { CopyEntityLinkButton, Page, PageHeaderShared } from '@shared/ui'
 import { NodePluginEditorWidget } from '@widgets/dashboard/node-plugins/node-plugin-editor'
 import { useTranslation } from 'react-i18next'
 import { TbArrowBackUp, TbBook, TbList, TbPackage } from 'react-icons/tb'
 import { useNavigate } from 'react-router'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { OPEN_ENTITY, ROUTES } from '@shared/constants'
-import { CopyEntityLinkButton, Page, PageHeaderShared } from '@shared/ui'
 
 interface Props {
     plugin: GetNodePluginCommand.Response['response']

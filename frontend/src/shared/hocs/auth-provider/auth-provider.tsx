@@ -1,18 +1,21 @@
-import consola from 'consola/browser'
-import { createContext, ReactNode, useEffect, useMemo, useState } from 'react'
-
+import { removeToken, useToken } from '@entities/auth'
 import { logoutEvents } from '@shared/emitters'
 import { resetAllStores } from '@shared/hocs/store-wrapper'
-
-import { removeToken, useToken } from '@entities/auth'
+import {
+    createContext,
+    type ReactNode,
+    useEffect,
+    useEffectEvent,
+    useMemo,
+    useRef,
+    useState
+} from 'react'
 
 interface AuthContextValues {
     isAuthenticated: boolean
     isInitialized: boolean
     setIsAuthenticated: (isAuthenticated: boolean) => void
 }
-
-// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext<AuthContextValues | null>(null)
 
 interface AuthProviderProps {
@@ -20,58 +23,33 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-    const [isAuthenticated, setIsAuthenticated] = useState(false)
-    const [isInitialized, setIsInitialized] = useState(false)
-    const [isLoggedOut, setIsLoggedOut] = useState(false)
     const token = useToken()
+    const [isAuthenticated, setIsAuthenticated] = useState(Boolean(token))
+    const [previousToken, setPreviousToken] = useState(token)
+    const loggingOut = useRef(false)
+    if (previousToken !== token) {
+        setPreviousToken(token)
+        setIsAuthenticated(Boolean(token))
+    }
 
-    const logoutUser = () => {
-        if (isLoggedOut) {
-            return
-        }
-
+    const logoutUser = useEffectEvent(() => {
+        if (loggingOut.current) return
+        loggingOut.current = true
         try {
-            setIsLoggedOut(true)
             setIsAuthenticated(false)
             removeToken()
             resetAllStores()
         } finally {
-            setIsLoggedOut(false)
+            loggingOut.current = false
         }
-    }
+    })
 
-    useEffect(() => {
-        const unsubscribe = logoutEvents.subscribe(() => {
-            logoutUser()
-        })
+    useEffect(() => logoutEvents.subscribe(logoutUser), [])
 
-        return unsubscribe
-    }, [])
-
-    useEffect(() => {
-        ;(async () => {
-            if (!token) {
-                setIsAuthenticated(false)
-                setIsInitialized(true)
-                return
-            }
-
-            try {
-                setIsAuthenticated(true)
-                setIsLoggedOut(false)
-            } catch (error) {
-                consola.error(error)
-                logoutUser()
-            } finally {
-                setIsInitialized(true)
-            }
-        })()
-    }, [])
-
+    // The token store hydrates synchronously from localStorage.
     const value = useMemo(
-        () => ({ isAuthenticated, isInitialized, setIsAuthenticated }),
-        [isAuthenticated, isInitialized]
+        () => ({ isAuthenticated, isInitialized: true, setIsAuthenticated }),
+        [isAuthenticated]
     )
-
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

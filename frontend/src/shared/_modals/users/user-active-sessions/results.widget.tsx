@@ -1,13 +1,12 @@
 import { Stack } from '@mantine/core'
+import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 import { useMemo } from 'react'
 import { TbRadar } from 'react-icons/tb'
-
-import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 
 import { IpStatsWidget } from './ip-stats.widget'
 import { NodeSessionsCardWidget } from './node-sessions-card.widget'
 import { SummaryCardWidget } from './summary-card.widget'
-import { ActiveSessionNode } from './use-user-active-sessions'
+import type { ActiveSessionNode } from './use-user-active-sessions'
 
 interface IProps {
     nodes: ActiveSessionNode[]

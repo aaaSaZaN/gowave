@@ -1,4 +1,7 @@
 import { SUBSCRIPTION_TEMPLATE_TYPE } from '@remnawave/backend-contract'
+import { ROUTES } from '@shared/constants'
+import { Logo } from '@shared/ui'
+import { MihomoLogo, SingboxLogo, StashLogo, XrayLogo } from '@shared/ui/logos'
 import { useTranslation } from 'react-i18next'
 import { HiChartPie, HiServer } from 'react-icons/hi'
 import {
@@ -11,13 +14,13 @@ import {
 } from 'react-icons/pi'
 import {
     TbApi,
-    TbLink,
     TbCirclesRelation,
     TbCreditCard,
     TbDeviceAnalytics,
     TbFlame,
     TbFolder,
     TbHexagon,
+    TbLink,
     TbPackage,
     TbRadar2,
     TbReportAnalytics,
@@ -25,11 +28,7 @@ import {
     TbWebhook
 } from 'react-icons/tb'
 
-import { ROUTES } from '@shared/constants'
-import { Logo } from '@shared/ui'
-import { MihomoLogo, SingboxLogo, StashLogo, XrayLogo } from '@shared/ui/logos'
-
-import { MenuItem } from './interfaces'
+import type { MenuItem } from './interfaces'
 
 export const useMobileMenuSections = (): MenuItem[] => {
     const { t } = useTranslation()

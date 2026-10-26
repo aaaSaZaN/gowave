@@ -1,5 +1,10 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import {
+    useExperimentalFeatures,
+    useQuickLinks,
+    useViewPreferencesStoreActions
+} from '@entities/dashboard/view-preferences-store'
+import {
     ActionIcon,
     Group,
     Menu,
@@ -11,10 +16,6 @@ import {
     TextInput,
     ThemeIcon
 } from '@mantine/core'
-import { ComponentType, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbBolt, TbChevronDown, TbChevronUp, TbDeviceFloppy, TbPlus, TbTrash } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { CompoundModalShared } from '@shared/ui/compound-modal/compound-modal.shared'
 import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
@@ -35,12 +36,9 @@ import {
     QUICK_MODALS
 } from '@shared/ui/quick-launcher'
 import { SectionCard } from '@shared/ui/section-card'
-
-import {
-    useExperimentalFeatures,
-    useQuickLinks,
-    useViewPreferencesStoreActions
-} from '@entities/dashboard/view-preferences-store'
+import { type ComponentType, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbBolt, TbChevronDown, TbChevronUp, TbDeviceFloppy, TbPlus, TbTrash } from 'react-icons/tb'
 
 const BODY_HEIGHT = 420
 
@@ -153,10 +151,12 @@ export const QuickLinksModalShared = NiceModal.create((props: IProps) => {
 
     const move = (row: number, delta: number) => {
         const target = rows[row + delta]
-        if (!target) return
+        const source = rows[row]
+        if (!target || !source) return
 
         const next = [...links]
-        const [moved] = next.splice(rows[row].index, 1)
+        const [moved] = next.splice(source.index, 1)
+        if (!moved) return
         next.splice(target.index, 0, moved)
 
         setLinks(next)

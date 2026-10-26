@@ -12,17 +12,16 @@ import {
     Transition
 } from '@mantine/core'
 import {
-    GetExternalSquadByUuidCommand,
+    type GetExternalSquadByUuidCommand,
     HwidSettingsSchema,
-    THwidSettings
+    type THwidSettings
 } from '@remnawave/backend-contract'
-import { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbDeviceFloppy, TbDevices2 } from 'react-icons/tb'
-
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateExternalSquad } from '@shared/api/hooks'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbDeviceFloppy, TbDevices2 } from 'react-icons/tb'
 
 interface IProps {
     externalSquad: GetExternalSquadByUuidCommand.Response['response']
@@ -40,7 +39,9 @@ export const ExternalSquadsHwidSettingsTabWidget = (props: IProps) => {
     })
     const [errors, setErrors] = useState<Record<string, string>>({})
 
-    useEffect(() => {
+    const [previousSquad, setPreviousSquad] = useState<typeof externalSquad | null>(null)
+    if (previousSquad !== externalSquad) {
+        setPreviousSquad(externalSquad)
         const currentSettings = externalSquad.hwidSettings
         if (currentSettings) {
             setIsOverrideEnabled(true)
@@ -58,7 +59,7 @@ export const ExternalSquadsHwidSettingsTabWidget = (props: IProps) => {
             })
         }
         setErrors({})
-    }, [externalSquad])
+    }
 
     const { mutate: updateExternalSquad, isPending: isUpdatingExternalSquad } =
         useUpdateExternalSquad({
@@ -192,7 +193,7 @@ export const ExternalSquadsHwidSettingsTabWidget = (props: IProps) => {
                             <Paper bg="dark.7" p="md" withBorder>
                                 <Box style={{ flex: 1 }}>
                                     <NumberInput
-                                        error={errors.fallbackDeviceLimit}
+                                        error={errors['fallbackDeviceLimit']}
                                         label={
                                             <Group gap={4} justify="flex-start">
                                                 <Text fw={600} size="sm">
@@ -218,7 +219,7 @@ export const ExternalSquadsHwidSettingsTabWidget = (props: IProps) => {
                             <Paper bg="dark.7" p="md" withBorder>
                                 <Box style={{ flex: 1 }}>
                                     <Textarea
-                                        error={errors.maxDevicesAnnounce}
+                                        error={errors['maxDevicesAnnounce']}
                                         label={t(
                                             'subscription-hwid-settings.widget.max-devices-announce'
                                         )}

@@ -1,5 +1,6 @@
 import { Box, Card } from '@mantine/core'
-import clsx from 'clsx'
+
+import clsx from '@shared/lib/classes'
 
 import classes from './entity-card.module.css'
 

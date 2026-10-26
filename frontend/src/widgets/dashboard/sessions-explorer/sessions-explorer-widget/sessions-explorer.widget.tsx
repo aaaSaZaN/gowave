@@ -14,6 +14,13 @@ import {
     Transition
 } from '@mantine/core'
 import { useDebouncedValue, useWindowScroll } from '@mantine/hooks'
+import { useGetNodes } from '@shared/api/hooks'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
+import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
+import { MetricCardShared } from '@shared/ui/metrics/metric-card'
+import { PageHeaderShared } from '@shared/ui/page-header'
+import { SectionCard } from '@shared/ui/section-card'
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiEmptyDuotone } from 'react-icons/pi'
@@ -31,13 +38,7 @@ import {
     TbUser,
     TbX
 } from 'react-icons/tb'
-import { VirtuosoGrid, VirtuosoGridHandle } from 'react-virtuoso'
-
-import { useGetNodes } from '@shared/api/hooks'
-import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
-import { MetricCardShared } from '@shared/ui/metrics/metric-card'
-import { PageHeaderShared } from '@shared/ui/page-header'
-import { SectionCard } from '@shared/ui/section-card'
+import { VirtuosoGrid, type VirtuosoGridHandle } from 'react-virtuoso'
 
 import { SessionsExplorerVirtualizedGridComponents } from './grid-components'
 import { SessionsExplorerCard } from './sessions-explorer-card'
@@ -70,8 +71,8 @@ export function SessionsExplorerWidget() {
 
     const ipThresholds = useMemo(() => {
         if (aggregatedUsers.length === 0) return { high: 0, mid: 0 }
-        const max = aggregatedUsers[0].uniqueIps
-        const min = aggregatedUsers[aggregatedUsers.length - 1].uniqueIps
+        const max = aggregatedUsers[0]?.uniqueIps ?? 0
+        const min = aggregatedUsers.at(-1)?.uniqueIps ?? 0
         const range = max - min
         if (range === 0) return { high: max + 1, mid: max + 1 }
         return {
@@ -88,7 +89,7 @@ export function SessionsExplorerWidget() {
             <div style={{ width: '100%' }}>
                 <SessionsExplorerCard
                     highThreshold={ipThresholds.high}
-                    ipSearchQuery={debouncedSearch.trim() || undefined}
+                    {...optionalProp('ipSearchQuery', debouncedSearch.trim() || undefined)}
                     midThreshold={ipThresholds.mid}
                     user={item}
                 />
@@ -98,7 +99,7 @@ export function SessionsExplorerWidget() {
 
     const handleStart = () => {
         setIpSearch('')
-        start()
+        runAsync(start())
     }
 
     const handleReset = () => {

@@ -1,7 +1,5 @@
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { UpdateHostCommand } from '@remnawave/backend-contract'
-import { useEffect } from 'react'
-
 import { queryClient } from '@shared/api'
 import {
     QueryKeys,
@@ -15,6 +13,7 @@ import {
 import { BaseHostForm } from '@shared/ui/forms/hosts/base-host-form'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { parseJsonField, stringifyJsonField } from '@shared/utils/misc'
+import { useEffect } from 'react'
 
 interface IProps {
     host: UpdateHostCommand.Response['response']
@@ -94,7 +93,43 @@ export const EditHostDrawerContent = (props: IProps) => {
                 excludeFromSubscriptionTypes: host.excludeFromSubscriptionTypes ?? undefined
             })
         }
-    }, [configProfiles])
+    }, [
+        configProfiles,
+        host.mihomoIpVersion,
+        host.mihomoX25519,
+        host.muxParams,
+        host.nodes,
+        host.overrideSniFromAddress,
+        host.path,
+        host.pinnedPeerCertSha256,
+        host.port,
+        host.remark,
+        host.securityLayer,
+        host.serverDescription,
+        host.shuffleHost,
+        host.sni,
+        host.sockoptParams,
+        host.tags,
+        host.uuid,
+        host.verifyPeerCertByName,
+        host.vlessRouteId,
+        host.xhttpExtraParams,
+        host.mapper,
+        host.xrayJsonTemplateUuid,
+        host.keepSniBlank,
+        host.isHidden,
+        host.isDisabled,
+        host.internalSquads,
+        host.inbound.configProfileUuid,
+        host.fingerprint,
+        host.inbound.configProfileInboundUuid,
+        host.finalMask,
+        host.address,
+        host.host,
+        host.excludeFromSubscriptionTypes,
+        host.alpn,
+        form.initialize
+    ])
 
     form.watch('inbound.configProfileInboundUuid', ({ value }) => {
         const { inbound } = form.getValues()
@@ -113,7 +148,7 @@ export const EditHostDrawerContent = (props: IProps) => {
         }
     })
 
-    const handleSubmit = form.onSubmit(async (values) => {
+    const handleSubmit = form.onSubmit((values) => {
         updateHost({
             variables: {
                 ...values,

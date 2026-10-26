@@ -1,5 +1,5 @@
+import { consola } from '@shared/lib/logger'
 import { isAxiosError } from 'axios'
-import { consola } from 'consola/browser'
 import { ZodError } from 'zod'
 
 /** Handle request errors */

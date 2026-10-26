@@ -1,5 +1,5 @@
-import { GetHostsCommand, GetConfigProfilesCommand } from '@remnawave/backend-contract'
-import { Dispatch, SetStateAction } from 'react'
+import type { GetConfigProfilesCommand, GetHostsCommand } from '@remnawave/backend-contract'
+import type { Dispatch, SetStateAction } from 'react'
 
 export interface IProps {
     configProfiles: GetConfigProfilesCommand.Response['response']['configProfiles'] | undefined

@@ -1,10 +1,9 @@
 import { ActionIcon, ActionIconGroup, Tooltip } from '@mantine/core'
-import { GetHttpStatsCommand } from '@remnawave/backend-contract'
+import type { GetHttpStatsCommand } from '@remnawave/backend-contract'
+import { Page, PageHeaderShared } from '@shared/ui'
 import { HttpStatsTableWidget } from '@widgets/dashboard/http-stats/http-stats-table/http-stats-table.widget'
 import { useTranslation } from 'react-i18next'
 import { TbApi, TbRefresh } from 'react-icons/tb'
-
-import { Page, PageHeaderShared } from '@shared/ui'
 
 interface IProps {
     refetch: () => void

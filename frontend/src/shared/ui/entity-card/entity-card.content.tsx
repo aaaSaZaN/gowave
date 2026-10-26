@@ -1,5 +1,5 @@
 import { Text } from '@mantine/core'
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 import classes from './entity-card.module.css'
 import { EntityCardTags } from './entity-card.tags'

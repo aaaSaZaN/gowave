@@ -10,7 +10,8 @@ import {
     Tooltip
 } from '@mantine/core'
 import { useClipboard } from '@mantine/hooks'
-import { ReactNode } from 'react'
+import { optionalProp } from '@shared/lib/optional-prop'
+import type { ReactNode } from 'react'
 import { PiCheckCircleDuotone, PiXCircleDuotone } from 'react-icons/pi'
 import { TbSearch, TbX } from 'react-icons/tb'
 
@@ -40,7 +41,7 @@ export function CopyableCell({ value }: { value: string }) {
     return (
         <Tooltip label={value} withArrow>
             <Text
-                c={clipboard.copied ? 'teal' : undefined}
+                {...optionalProp('c', clipboard.copied ? 'teal' : undefined)}
                 ff="monospace"
                 onClick={() => clipboard.copy(value)}
                 size="sm"

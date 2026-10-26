@@ -1,6 +1,6 @@
-import { UseListStateHandlers } from '@mantine/hooks'
-import { GetHostsCommand, GetConfigProfilesCommand } from '@remnawave/backend-contract'
-import { RefObject } from 'react'
+import type { UseListStateHandlers } from '@mantine/hooks'
+import type { GetConfigProfilesCommand, GetHostsCommand } from '@remnawave/backend-contract'
+import type { RefObject } from 'react'
 
 export interface IProps {
     configProfiles: GetConfigProfilesCommand.Response['response']['configProfiles'] | undefined

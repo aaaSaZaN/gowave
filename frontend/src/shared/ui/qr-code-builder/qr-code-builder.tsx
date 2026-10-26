@@ -1,15 +1,15 @@
 import { Box, Button, ColorPicker, Grid, Group, Stack } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbCopy, TbDownload } from 'react-icons/tb'
-import { renderSVG } from 'uqr'
-
+import { SafeSvg } from '@shared/ui/safe-svg'
 import {
     copyScreenshotToClipboard,
     downloadScreenshot,
     isScreenshotSupported
 } from '@shared/utils/copy-screenshot.util'
+import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbCopy, TbDownload } from 'react-icons/tb'
+import { renderSVG } from 'uqr'
 
 import classes from './qr-code-builder.module.css'
 
@@ -160,10 +160,7 @@ export function QrCodeBuilder({ data, title }: IProps) {
                     lineHeight: 0
                 }}
             >
-                <div
-                    dangerouslySetInnerHTML={{ __html: svgHtml }}
-                    style={{ lineHeight: 0, fontSize: 0 }}
-                />
+                <SafeSvg svg={svgHtml} style={{ lineHeight: 0, fontSize: 0 }} />
             </Box>
 
             {isScreenshotSupported && (

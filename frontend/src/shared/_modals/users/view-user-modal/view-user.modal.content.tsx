@@ -3,16 +3,8 @@ import { ResetUsageUserFeature } from '@features/ui/dashboard/users/reset-usage-
 import { RevokeSubscriptionUserFeature } from '@features/ui/dashboard/users/revoke-subscription-user'
 import { ToggleUserStatusButtonFeature } from '@features/ui/dashboard/users/toggle-user-status-button'
 import { Button, Group, Menu, px, Stack } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { UpdateUserCommand } from '@remnawave/backend-contract'
-import dayjs from 'dayjs'
-import { motion } from 'motion/react'
-import { useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
-import { PiFloppyDiskDuotone } from 'react-icons/pi'
-import { TbDots } from 'react-icons/tb'
-import { z } from 'zod'
-
 import { queryClient } from '@shared/api'
 import {
     useGetExternalSquads,
@@ -24,6 +16,8 @@ import {
     useUpdateUser
 } from '@shared/api/hooks'
 import { useIsMobile } from '@shared/hooks'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
 import {
     AccessSettingsCard,
     ContactInformationCard,
@@ -34,6 +28,13 @@ import {
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { ModalFooter } from '@shared/ui/modal-footer'
 import { handleFormErrors } from '@shared/utils/misc'
+import dayjs from 'dayjs'
+import { motion } from 'motion/react'
+import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
+import { PiFloppyDiskDuotone } from 'react-icons/pi'
+import { TbDots } from 'react-icons/tb'
+import { z } from 'zod'
 
 const MotionWrapper = motion.div
 const MotionStack = motion.create(Stack)
@@ -100,11 +101,13 @@ export const ViewUserModalContent = (props: IProps) => {
     const { mutate: updateUser, isPending: isUpdateUserPending } = useUpdateUser({
         mutationFns: {
             onSuccess: (data) => {
-                queryClient.refetchQueries({
-                    queryKey: usersQueryKeys.getUserAccessibleNodes({
-                        userId: userId
-                    }).queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: usersQueryKeys.getUserAccessibleNodes({
+                            userId: userId
+                        }).queryKey
+                    })
+                )
                 queryClient.setQueryData(
                     usersQueryKeys.getUserById({
                         userId: userId
@@ -140,31 +143,30 @@ export const ViewUserModalContent = (props: IProps) => {
                 externalSquadUuid: user.externalSquadUuid ?? undefined
             })
         }
-    }, [user, internalSquads])
+    }, [user, internalSquads, form.initialize])
 
-    const handleSubmit = form.onSubmit(async (values) => {
+    const handleSubmit = form.onSubmit((values) => {
         const touchedFields = form.getTouched()
 
         updateUser({
             variables: {
                 id: values.id,
-                trafficLimitStrategy: touchedFields.trafficLimitStrategy
+                trafficLimitStrategy: touchedFields['trafficLimitStrategy']
                     ? values.trafficLimitStrategy
                     : undefined,
-                trafficLimitBytes: touchedFields.trafficLimitBytes
+                trafficLimitBytes: touchedFields['trafficLimitBytes']
                     ? values.trafficLimitBytes
                     : undefined,
                 // @ts-expect-error - TODO: fix ZOD schema
                 expireAt: touchedFields.expireAt ? dayjs(values.expireAt).toISOString() : undefined,
                 activeInternalSquads: values.activeInternalSquads,
-                description: touchedFields.description ? values.description : undefined,
+                description: touchedFields['description'] ? values.description : undefined,
                 // @ts-expect-error - TODO: fix ZOD schema
                 telegramId: values.telegramId === '' ? null : values.telegramId,
                 email: values.email === '' ? null : values.email,
                 // @ts-expect-error - TODO: fix ZOD schema
                 hwidDeviceLimit: values.hwidDeviceLimit === '' ? null : values.hwidDeviceLimit,
-                // eslint-disable-next-line no-nested-ternary
-                tag: touchedFields.tag ? (values.tag === '' ? null : values.tag) : undefined,
+                tag: touchedFields['tag'] ? (values.tag === '' ? null : values.tag) : undefined,
                 externalSquadUuid: values.externalSquadUuid ?? null
             }
         })
@@ -202,7 +204,7 @@ export const ViewUserModalContent = (props: IProps) => {
                 >
                     <UserIdentificationCard
                         cardVariants={cardVariants}
-                        lastConnectedNode={lastConnectedNode}
+                        {...optionalProp('lastConnectedNode', lastConnectedNode)}
                         motionWrapper={MotionWrapper}
                         user={user}
                     />
@@ -243,7 +245,7 @@ export const ViewUserModalContent = (props: IProps) => {
                     >
                         <UserIdentificationCard
                             cardVariants={cardVariants}
-                            lastConnectedNode={lastConnectedNode}
+                            {...optionalProp('lastConnectedNode', lastConnectedNode)}
                             motionWrapper={MotionWrapper}
                             user={user}
                         />

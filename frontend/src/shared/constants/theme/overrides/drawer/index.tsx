@@ -1,4 +1,3 @@
-// oxlint-disable
 import { Drawer, DrawerOverlay } from '@mantine/core'
 
 import { scrollLockShards } from '@shared/utils/scroll-lock-shards'

@@ -1,35 +1,13 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "removeComments": true,
     "target": "ES2020",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "skipLibCheck": true,
-    /* ------------------------------------------------------------ */
-    /* Bundler mode */
-    /* ------------------------------------------------------------ */
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
     "jsx": "react-jsx",
-    /* ------------------------------------------------------------ */
-    /*     "useDefineForClassFields": true,
-    /*     "esModuleInterop": false,
-    /* "allowSyntheticDefaultImports": true,
-        "allowJs": false,
-
-    /* ------------------------------------------------------------ */
-    "strict": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false, // TURN THIS
-    "noFallthroughCasesInSwitch": true,
-    "strictPropertyInitialization": false,
-    "forceConsistentCasingInFileNames": false,
-    /* ------------------------------------------------------------ */
-    /* Paths */
-    /* ------------------------------------------------------------ */
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
       "@entities/*": ["./src/entities/*"],
@@ -38,8 +16,9 @@
       "@widgets/*": ["./src/widgets/*"],
       "@public/*": ["./public/*"],
       "@shared/*": ["./src/shared/*"]
-    }
+    },
+    "allowArbitraryExtensions": true
   },
-  "include": ["src/**/*", "@types/**/*"],
+  "include": ["src/**/*", "@types/**/*", "tests/**/*.tsx"],
   "exclude": ["node_modules", "dist", "build"]
 }

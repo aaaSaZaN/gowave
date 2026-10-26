@@ -1,13 +1,13 @@
-import { Stack, TextInput, Group, Button, Text } from '@mantine/core'
+import { Button, Group, Stack, Text, TextInput } from '@mantine/core'
 import { useField } from '@mantine/form'
 import { CreateConfigProfileCommand } from '@remnawave/backend-contract'
-import { t } from 'i18next'
-import { generatePath, NavigateFunction } from 'react-router'
-
 import { queryClient } from '@shared/api'
 import { useCreateConfigProfile } from '@shared/api/hooks/config-profiles/config-profiles.mutation.hooks'
 import { QueryKeys } from '@shared/api/hooks/keys-factory'
 import { ROUTES } from '@shared/constants/routes'
+import { runAsync } from '@shared/lib/run-async'
+import { t } from 'i18next'
+import { generatePath, type NavigateFunction } from 'react-router'
 
 interface IProps {
     onClose: () => void
@@ -77,11 +77,13 @@ export const CreateConfigProfileContent = (props: IProps) => {
             onSuccess: (data) => {
                 onClose()
 
-                handleUpdate()
-                navigate(
-                    generatePath(ROUTES.DASHBOARD.MANAGEMENT.CONFIG_PROFILE_BY_UUID, {
-                        uuid: data.uuid
-                    })
+                runAsync(handleUpdate())
+                runAsync(
+                    navigate(
+                        generatePath(ROUTES.DASHBOARD.MANAGEMENT.CONFIG_PROFILE_BY_UUID, {
+                            uuid: data.uuid
+                        })
+                    )
                 )
             }
         }

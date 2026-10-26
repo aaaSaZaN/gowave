@@ -1,12 +1,11 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Modal } from '@mantine/core'
-import { motion } from 'motion/react'
-import { TbTerminal } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { useGetNodes } from '@shared/api/hooks'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { motion } from 'motion/react'
+import { TbTerminal } from 'react-icons/tb'
 
 import { NodePluginExecutorContent } from './node-plugin-executor.content'
 

@@ -1,10 +1,11 @@
-import type { ModalArgs, ModalId } from './modal-registry'
-
 import NiceModal from '@ebay/nice-modal-react'
+import type { ModalArgs, ModalId } from './modal-registry'
 
 export function showModal<K extends ModalId>(
     id: K,
-    ...[args]: {} extends ModalArgs<K> ? [args?: ModalArgs<K>] : [args: ModalArgs<K>]
+    ...[args]: Record<never, never> extends ModalArgs<K>
+        ? [args?: ModalArgs<K>]
+        : [args: ModalArgs<K>]
 ) {
     return NiceModal.show(id, args as Record<string, unknown>)
 }

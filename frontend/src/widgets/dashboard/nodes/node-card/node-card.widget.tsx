@@ -3,9 +3,16 @@ import { useSortable } from '@dnd-kit/react/sortable'
 import { Avatar, Badge, Box, Flex, Progress, Stack, Text, Tooltip } from '@mantine/core'
 import { useClipboard } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
-import clsx from 'clsx'
-import { CSSProperties, memo, useMemo } from 'react'
-import ReactCountryFlag from 'react-country-flag'
+import { useGetNodesTrafficSummary } from '@shared/api/hooks'
+import clsx from '@shared/lib/classes'
+import ReactCountryFlag from '@shared/ui/country-flag'
+import { Logo } from '@shared/ui/logo'
+import { XrayLogo } from '@shared/ui/logos'
+import { prettifyBytesUtil, prettySiRealtimeBytesUtil } from '@shared/utils/bytes'
+import { faviconResolver, hasNodeStatusMessage, isNodeConfigRejected } from '@shared/utils/misc'
+import { isCustomXrayVersion } from '@shared/utils/misc/node-versions'
+import { getNodeResetDaysUtil, getXrayUptimeUtil } from '@shared/utils/time-utils'
+import { type CSSProperties, memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     PiArrowDownDuotone,
@@ -19,15 +26,8 @@ import {
 } from 'react-icons/pi'
 import { TbAlertCircle, TbPackage, TbPlugConnected } from 'react-icons/tb'
 
-import { useGetNodesTrafficSummary } from '@shared/api/hooks'
-import { Logo } from '@shared/ui/logo'
-import { XrayLogo } from '@shared/ui/logos'
-import { prettifyBytesUtil, prettySiRealtimeBytesUtil } from '@shared/utils/bytes'
-import { faviconResolver, hasNodeStatusMessage, isNodeConfigRejected } from '@shared/utils/misc'
-import { getNodeResetDaysUtil, getXrayUptimeUtil } from '@shared/utils/time-utils'
-
 import { NodeStatusBadgeWidget } from '../node-status-badge'
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 import classes from './NodeCard.module.css'
 
 const getNodeColors = (node: IProps['node']) => {
@@ -239,7 +239,7 @@ export const NodeCardWidget = memo((props: IProps) => {
                                     <>
                                         <NodeStatusBadgeWidget node={node} withText={false} />
                                         <Badge
-                                            color={node.usersOnline! > 0 ? 'teal' : 'gray'}
+                                            color={(node.usersOnline ?? 0) > 0 ? 'teal' : 'gray'}
                                             leftSection={<PiUsersDuotone size={14} />}
                                             miw="7ch"
                                             size="lg"
@@ -439,13 +439,13 @@ export const NodeCardWidget = memo((props: IProps) => {
                                             {`Load Average (${cpus} ${cpus === 1 ? 'core' : 'cores'})`}
                                         </Text>
                                         <Text size="xs">
-                                            {`1 min: ${loadAvg[0].toFixed(2)} (${Math.round((loadAvg[0] / cpus) * 100)}%)`}
+                                            {`1 min: ${(loadAvg[0] ?? 0).toFixed(2)} (${Math.round(((loadAvg[0] ?? 0) / cpus) * 100)}%)`}
                                         </Text>
                                         <Text size="xs">
-                                            {`5 min: ${loadAvg[1].toFixed(2)} (${Math.round((loadAvg[1] / cpus) * 100)}%)`}
+                                            {`5 min: ${(loadAvg[1] ?? 0).toFixed(2)} (${Math.round(((loadAvg[1] ?? 0) / cpus) * 100)}%)`}
                                         </Text>
                                         <Text size="xs">
-                                            {`15 min: ${loadAvg[2].toFixed(2)} (${Math.round((loadAvg[2] / cpus) * 100)}%)`}
+                                            {`15 min: ${(loadAvg[2] ?? 0).toFixed(2)} (${Math.round(((loadAvg[2] ?? 0) / cpus) * 100)}%)`}
                                         </Text>
                                         <Text c="dimmed" mt={4} size="xs">
                                             {'0–70% normal · 70–100% high · >100% overloaded'}
@@ -468,6 +468,7 @@ export const NodeCardWidget = memo((props: IProps) => {
                                                 c={getLoadColor(load, cpus)}
                                                 component="span"
                                                 ff="monospace"
+                                                // biome-ignore lint/suspicious/noArrayIndexKey: These fixed slots display the one, five, and fifteen minute load averages.
                                                 key={i}
                                                 size="xs"
                                             >
@@ -531,28 +532,14 @@ export const NodeCardWidget = memo((props: IProps) => {
                             <Flex align="center" gap={4}>
                                 <XrayLogo
                                     color={
-                                        Boolean(
-                                            (node.versions as any)?.isCustom ||
-                                            (node.versions as any)?.isCustomXray ||
-                                            node.versions?.xray?.toLowerCase().includes('custom') ||
-                                            node.versions?.xray?.toLowerCase().includes('mod')
-                                        )
+                                        isCustomXrayVersion(node.versions)
                                             ? 'var(--mantine-color-blue-5)'
                                             : 'var(--mantine-color-dimmed)'
                                     }
                                     size={12}
                                 />
                                 <Text
-                                    c={
-                                        Boolean(
-                                            (node.versions as any)?.isCustom ||
-                                            (node.versions as any)?.isCustomXray ||
-                                            node.versions?.xray?.toLowerCase().includes('custom') ||
-                                            node.versions?.xray?.toLowerCase().includes('mod')
-                                        )
-                                            ? 'blue.4'
-                                            : 'dimmed'
-                                    }
+                                    c={isCustomXrayVersion(node.versions) ? 'blue.4' : 'dimmed'}
                                     ff="monospace"
                                     size="xs"
                                 >
@@ -588,7 +575,7 @@ export const NodeCardWidget = memo((props: IProps) => {
 
                         {!isConfigMissing && (
                             <Badge
-                                color={node.usersOnline! > 0 ? 'teal' : 'gray'}
+                                color={(node.usersOnline ?? 0) > 0 ? 'teal' : 'gray'}
                                 leftSection={<PiUsersDuotone size={14} />}
                                 miw="7ch"
                                 size="lg"

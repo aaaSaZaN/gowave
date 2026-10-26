@@ -1,12 +1,18 @@
-import type { editor } from 'monaco-editor'
-
 import { ActionIcon, Button, Group, Menu } from '@mantine/core'
 import { useClipboard, useDisclosure } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
-import { Monaco } from '@monaco-editor/react'
-import { UpdateNodePluginCommand } from '@remnawave/backend-contract'
-import consola from 'consola/browser'
-import { RefObject } from 'react'
+import type { Monaco } from '@monaco-editor/react'
+import type { UpdateNodePluginCommand } from '@remnawave/backend-contract'
+import { openApplyToNodesModal } from '@shared/_modals/universal'
+import { queryClient } from '@shared/api'
+import { QueryKeys, useSyncNodePlugin, useUpdateNodePlugin } from '@shared/api/hooks'
+import { useIsMobile } from '@shared/hooks'
+import consola from '@shared/lib/logger'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
+import { useDownloadTemplate } from '@shared/ui/load-templates/use-download-template'
+import type { editor } from 'monaco-editor'
+import type { RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiCheckSquareOffset, PiFloppyDisk } from 'react-icons/pi'
 import {
@@ -18,12 +24,6 @@ import {
     TbPackage,
     TbSelectAll
 } from 'react-icons/tb'
-
-import { openApplyToNodesModal } from '@shared/_modals/universal'
-import { queryClient } from '@shared/api'
-import { QueryKeys, useSyncNodePlugin, useUpdateNodePlugin } from '@shared/api/hooks'
-import { useIsMobile } from '@shared/hooks'
-import { useDownloadTemplate } from '@shared/ui/load-templates/use-download-template'
 
 interface Props {
     editorRef: RefObject<editor.IStandaloneCodeEditor | null>
@@ -191,7 +191,7 @@ export function NodePluginsEditorActionsFeature(props: Props) {
     const formatDocument = () => {
         if (!editorRef.current) return
 
-        editorRef.current.getAction('editor.action.formatDocument')?.run()
+        runAsync(editorRef.current.getAction('editor.action.formatDocument')?.run())
     }
 
     return (
@@ -230,7 +230,7 @@ export function NodePluginsEditorActionsFeature(props: Props) {
 
                     <Menu.Dropdown>
                         <Menu.Item
-                            color={clipboard.copied ? 'teal' : undefined}
+                            {...optionalProp('color', clipboard.copied ? 'teal' : undefined)}
                             leftSection={<TbClipboardCopy size={14} />}
                             onClick={handleCopyConfig}
                         >

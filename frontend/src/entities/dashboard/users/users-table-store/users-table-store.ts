@@ -1,5 +1,4 @@
-/* eslint-disable camelcase */
-import { MRT_ColumnSizingState, MRT_VisibilityState } from '@kastov/mantine-react-table-open'
+import type { MRT_ColumnSizingState, MRT_VisibilityState } from '@kastov/mantine-react-table-open'
 
 import { createMrtTableStore } from '@shared/lib/mrt-table-store'
 

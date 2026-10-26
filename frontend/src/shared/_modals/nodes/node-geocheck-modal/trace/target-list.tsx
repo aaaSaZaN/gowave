@@ -1,8 +1,6 @@
-import type { IGeocheckTarget } from './trace.types'
-
 import { Badge, Box, Group, Text, UnstyledButton } from '@mantine/core'
-
 import classes from './Trace.module.css'
+import type { IGeocheckTarget } from './trace.types'
 import { resolveVerdictColor } from './trace.types'
 
 const formatMs = (value: number): string => (value >= 100 ? value.toFixed(0) : value.toFixed(2))

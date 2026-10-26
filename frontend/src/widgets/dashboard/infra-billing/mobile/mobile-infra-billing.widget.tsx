@@ -1,15 +1,15 @@
 import { ActionIcon, Group, Stack, Tabs, Transition } from '@mantine/core'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbCloud, TbCreditCard, TbPlus, TbRefresh, TbServer } from 'react-icons/tb'
-
 import { showModal } from '@shared/_modals/show-modal'
 import {
     useGetInfraBillingHistoryRecordsInfinite,
     useGetInfraBillingNodes,
     useGetInfraProviders
 } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
 import { LoadingScreen } from '@shared/ui'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbCloud, TbCreditCard, TbPlus, TbRefresh, TbServer } from 'react-icons/tb'
 
 import { MobileNodesListWidget } from './mobile-nodes-list.widget'
 import { MobileProvidersListWidget } from './mobile-providers-list.widget'
@@ -57,13 +57,13 @@ export function MobileInfraBillingWidget() {
     const handleAdd = () => {
         switch (activeTab) {
             case 'nodes':
-                showModal('infraBilling_createInfraBillingNodeModal')
+                runAsync(showModal('infraBilling_createInfraBillingNodeModal'))
                 break
             case 'providers':
-                showModal('infraBilling_createInfraProviderModal')
+                runAsync(showModal('infraBilling_createInfraProviderModal'))
                 break
             case 'records':
-                showModal('infraBilling_createInfraBillingRecordModal')
+                runAsync(showModal('infraBilling_createInfraBillingRecordModal'))
                 break
             default:
                 break

@@ -1,5 +1,5 @@
 import { Divider } from '@mantine/core'
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 interface SettingsCardBottomProps {
     children: ReactNode

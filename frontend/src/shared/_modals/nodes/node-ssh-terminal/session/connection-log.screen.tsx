@@ -1,10 +1,8 @@
-import type { TSshStage } from './ssh-connection'
-
 import { Box, Button, Group, Stack, Text } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import { TbAlertTriangle, TbPlugConnected, TbSettings } from 'react-icons/tb'
-
 import classes from '../NodeSshTerminal.module.css'
+import type { TSshStage } from './ssh-connection'
 
 const STAGES: { label: string; stage: TSshStage }[] = [
     { label: 'session ticket', stage: 'ticket' },

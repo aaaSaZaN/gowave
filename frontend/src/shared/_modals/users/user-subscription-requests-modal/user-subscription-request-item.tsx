@@ -1,11 +1,10 @@
 import { ActionIcon, Box, Divider, Group, Stack, Text, ThemeIcon } from '@mantine/core'
-import { GetUserSubscriptionRequestHistoryCommand } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
-import { TbExternalLink, TbViewfinder } from 'react-icons/tb'
-
+import type { GetUserSubscriptionRequestHistoryCommand } from '@remnawave/backend-contract'
 import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 import { formatTimeUtil } from '@shared/utils/time-utils'
+import { useTranslation } from 'react-i18next'
+import { TbExternalLink, TbViewfinder } from 'react-icons/tb'
 
 interface IProps {
     request: GetUserSubscriptionRequestHistoryCommand.Response['response']['records'][number]

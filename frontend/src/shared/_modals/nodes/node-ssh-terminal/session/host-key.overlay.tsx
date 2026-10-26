@@ -1,13 +1,11 @@
-import type { ISshHostKeyPrompt } from './ssh-connection'
-
 import { ActionIcon, Box, Button, CopyButton, Group, Stack, Text, ThemeIcon } from '@mantine/core'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { SectionCard } from '@shared/ui/section-card'
 import { useTranslation } from 'react-i18next'
 import { TbAlertTriangle, TbCheck, TbCopy, TbFingerprint } from 'react-icons/tb'
-
-import { SectionCard } from '@shared/ui/section-card'
-
 import classes from '../NodeSshTerminal.module.css'
 import { TerminalOverlay } from '../window/terminal-overlay'
+import type { ISshHostKeyPrompt } from './ssh-connection'
 
 interface IProps {
     onAbort: () => void
@@ -23,7 +21,7 @@ const Fingerprint = (props: { color?: string; label: string; value: string }) =>
         <CopyButton timeout={2000} value={props.value}>
             {({ copied, copy }) => (
                 <Box className={classes.fingerprint} onClick={copy}>
-                    <Text c={props.color} className={classes.fingerprintValue}>
+                    <Text {...optionalProp('c', props.color)} className={classes.fingerprintValue}>
                         {props.value}
                     </Text>
                     <ActionIcon c={copied ? 'teal' : 'dimmed'} size="sm" variant="transparent">

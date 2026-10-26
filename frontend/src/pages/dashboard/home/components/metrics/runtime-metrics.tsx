@@ -1,5 +1,7 @@
-import { GetRemnawaveHealthCommand } from '@remnawave/backend-contract'
-import { TFunction } from 'i18next'
+import type { GetRemnawaveHealthCommand } from '@remnawave/backend-contract'
+import type { IMetricCardProps } from '@shared/ui/metrics/metric-card'
+import { prettifyBytesUtil } from '@shared/utils/bytes'
+import type { TFunction } from 'i18next'
 import {
     PiClockDuotone,
     PiCloudDuotone,
@@ -9,9 +11,6 @@ import {
     PiTimerDuotone,
     PiTreeStructureDuotone
 } from 'react-icons/pi'
-
-import { IMetricCardProps } from '@shared/ui/metrics/metric-card'
-import { prettifyBytesUtil } from '@shared/utils/bytes'
 
 const PROCESS_CONFIG: Record<string, { Icon: typeof PiGearSixDuotone; name: string }> = {
     api: { Icon: PiCloudDuotone, name: 'API' },

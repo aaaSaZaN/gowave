@@ -1,8 +1,7 @@
-import type { editor } from 'monaco-editor'
+import { decodeBase64 } from '@shared/utils/misc/base64'
 
 import { findNodeAtOffset, getLocation, parseTree } from 'jsonc-parser'
-
-import { decodeBase64 } from '@shared/utils/misc/base64'
+import type { editor } from 'monaco-editor'
 
 const ACTION_ID = 'gowave.openBase64Editor'
 
@@ -24,7 +23,7 @@ const resolveStringNode = (text: string, offset: number) => {
     const isPropertyKey = node.parent?.type === 'property' && node.parent.children?.[0] === node
     const target = isPropertyKey ? node.parent?.children?.[1] : node
 
-    if (!target || target.type !== 'string') return null
+    if (target?.type !== 'string') return null
 
     return target
 }

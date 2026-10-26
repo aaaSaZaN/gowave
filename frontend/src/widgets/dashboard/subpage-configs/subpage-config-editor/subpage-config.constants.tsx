@@ -1,23 +1,23 @@
-import { TSubscriptionPagePlatformKey } from '@remnawave/subscription-page-types'
+import type { TSubscriptionPagePlatformKey } from '@remnawave/subscription-page-types'
 import {
-    IconBrandAndroid,
-    IconBrandApple,
-    IconBrandWindows,
-    IconDeviceDesktop,
-    IconDeviceTv
-} from '@tabler/icons-react'
+    TbBrandAndroid,
+    TbBrandApple,
+    TbBrandWindows,
+    TbDeviceDesktop,
+    TbDeviceTv
+} from 'react-icons/tb'
 
 export const PLATFORM_ICONS: Record<
     TSubscriptionPagePlatformKey,
     React.ComponentType<{ size: number }>
 > = {
-    android: IconBrandAndroid,
-    androidTV: IconDeviceTv,
-    appleTV: IconDeviceTv,
-    ios: IconBrandApple,
-    linux: IconDeviceDesktop,
-    macos: IconBrandApple,
-    windows: IconBrandWindows
+    android: TbBrandAndroid,
+    androidTV: TbDeviceTv,
+    appleTV: TbDeviceTv,
+    ios: TbBrandApple,
+    linux: TbDeviceDesktop,
+    macos: TbBrandApple,
+    windows: TbBrandWindows
 }
 
 export const PLATFORM_LABELS: Record<TSubscriptionPagePlatformKey, string> = {

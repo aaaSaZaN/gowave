@@ -2,32 +2,17 @@ import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import {
     ActionIcon,
     Badge,
+    Box,
+    Button,
     CopyButton,
     Drawer,
     Group,
     Stack,
-    TextInput,
-    ThemeIcon,
     Text,
-    Box,
-    Button
+    TextInput,
+    ThemeIcon
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { githubDarkTheme } from 'json-edit-react'
-import { JsonEditor } from 'json-edit-react'
-import { useTranslation } from 'react-i18next'
-import {
-    PiEyeSlashDuotone,
-    PiWifiHighDuotone,
-    PiLinkBreakDuotone,
-    PiProhibitDuotone,
-    PiCheck,
-    PiCopy,
-    PiEmptyDuotone,
-    PiQrCodeDuotone
-} from 'react-icons/pi'
-import { TbJson } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { useGetConnectionKeysByUserId, useGetRawSubscription } from '@shared/api/hooks'
 import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
@@ -36,6 +21,19 @@ import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { QrCodeBuilder } from '@shared/ui/qr-code-builder'
 import { SectionCardRoot } from '@shared/ui/section-card/section-card.root'
 import { SectionCardSection } from '@shared/ui/section-card/section-card.section'
+import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { useTranslation } from 'react-i18next'
+import {
+    PiCheck,
+    PiCopy,
+    PiEmptyDuotone,
+    PiEyeSlashDuotone,
+    PiLinkBreakDuotone,
+    PiProhibitDuotone,
+    PiQrCodeDuotone,
+    PiWifiHighDuotone
+} from 'react-icons/pi'
+import { TbJson } from 'react-icons/tb'
 
 interface IProps {
     userId: number

@@ -1,10 +1,8 @@
-import { MRT_ColumnDef } from '@kastov/mantine-react-table-open'
-/* eslint-disable camelcase */
-import { GetSubscriptionRequestHistoryCommand } from '@remnawave/backend-contract'
+import type { MRT_ColumnDef } from '@kastov/mantine-react-table-open'
+import type { GetSubscriptionRequestHistoryCommand } from '@remnawave/backend-contract'
+import { formatTimeUtil } from '@shared/utils/time-utils'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-
-import { formatTimeUtil } from '@shared/utils/time-utils'
 
 export const useSrhInspectorTableColumns = () => {
     const { t, i18n } = useTranslation()

@@ -1,13 +1,14 @@
+import { useExperimentalFeature } from '@entities/dashboard/view-preferences-store'
 import {
     ActionIcon,
     Button,
     CheckIcon,
-    ComboboxItem,
+    type ComboboxItem,
     Group,
     HoverCard,
     MultiSelect,
     NumberInput,
-    NumberInputHandlers,
+    type NumberInputHandlers,
     rem,
     Select,
     Stack,
@@ -15,16 +16,9 @@ import {
     Text,
     Textarea
 } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { modals } from '@mantine/modals'
-import { BulkNodesUpdateCommand, GetNodesCommand } from '@remnawave/backend-contract'
-import { motion } from 'motion/react'
-import { useRef } from 'react'
-import { useTranslation } from 'react-i18next'
-import { HiQuestionMarkCircle } from 'react-icons/hi'
-import { PiTagDuotone } from 'react-icons/pi'
-import { TbCheck, TbMapPin, TbMinus, TbPackage, TbPlus, TbPlugConnected } from 'react-icons/tb'
-
+import { BulkNodesUpdateCommand, type GetNodesCommand } from '@remnawave/backend-contract'
 import {
     QueryKeys,
     useBulkNodesUpdate,
@@ -33,14 +27,20 @@ import {
     useGetNodesTags
 } from '@shared/api/hooks'
 import { queryClient } from '@shared/api/query-client'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
 import { COUNTRIES } from '@shared/ui/forms/nodes/base-node-form/constants'
 import integrationsClasses from '@shared/ui/forms/nodes/base-node-form/integrations-select.module.css'
 import { SelectInfraProviderShared } from '@shared/ui/infra-billing/select-infra-provider/select-infra-provider.shared'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { SectionCard } from '@shared/ui/section-card'
 import { TagInputPill } from '@shared/ui/tag-input-pill'
-
-import { useExperimentalFeature } from '@entities/dashboard/view-preferences-store'
+import { motion } from 'motion/react'
+import { useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+import { HiQuestionMarkCircle } from 'react-icons/hi'
+import { PiTagDuotone } from 'react-icons/pi'
+import { TbCheck, TbMapPin, TbMinus, TbPackage, TbPlugConnected, TbPlus } from 'react-icons/tb'
 
 type NodeType = GetNodesCommand.Response['response'][number]
 
@@ -96,7 +96,7 @@ export const BulkUpdateNodesModalContent = (props: IProps) => {
             }
         })
 
-        queryClient.refetchQueries({ queryKey: QueryKeys.nodes.getAllNodes.queryKey })
+        runAsync(queryClient.refetchQueries({ queryKey: QueryKeys.nodes.getAllNodes.queryKey }))
         modals.closeAll()
         setSelectedRecords([])
     }
@@ -200,7 +200,7 @@ export const BulkUpdateNodesModalContent = (props: IProps) => {
                                 }}
                                 renderPill={({ option, value, onRemove }) => (
                                     <TagInputPill
-                                        onRemove={onRemove}
+                                        {...optionalProp('onRemove', onRemove)}
                                         value={option?.label ?? value}
                                     />
                                 )}
@@ -216,7 +216,10 @@ export const BulkUpdateNodesModalContent = (props: IProps) => {
                 <SectionCard.Section>
                     <Stack gap="md">
                         <SelectInfraProviderShared
-                            selectedInfraProviderUuid={form.getValues().fields.providerUuid}
+                            {...optionalProp(
+                                'selectedInfraProviderUuid',
+                                form.getValues().fields.providerUuid
+                            )}
                             setSelectedInfraProviderUuid={(providerUuid) => {
                                 form.setFieldValue('fields.providerUuid', providerUuid)
                             }}
@@ -239,7 +242,10 @@ export const BulkUpdateNodesModalContent = (props: IProps) => {
                                     .join(', ') || form.getInputProps('fields.tags').error
                             }
                             renderPill={({ value, onRemove }) => (
-                                <TagInputPill onRemove={onRemove} value={value} />
+                                <TagInputPill
+                                    {...optionalProp('onRemove', onRemove)}
+                                    value={value}
+                                />
                             )}
                         />
 

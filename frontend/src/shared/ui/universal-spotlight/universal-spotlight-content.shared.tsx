@@ -1,4 +1,4 @@
-import { Spotlight, SpotlightProps } from '@mantine/spotlight'
+import { Spotlight, type SpotlightProps } from '@mantine/spotlight'
 import { useTranslation } from 'react-i18next'
 import { TbSearch } from 'react-icons/tb'
 

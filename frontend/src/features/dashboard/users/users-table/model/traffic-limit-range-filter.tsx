@@ -1,17 +1,15 @@
-import { MRT_Column } from '@kastov/mantine-react-table-open'
-/* eslint-disable camelcase */
+import type { MRT_Column } from '@kastov/mantine-react-table-open'
 import { Group, NativeSelect, NumberInput } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
-import { GetUsersCommand } from '@remnawave/backend-contract'
-import { useEffect, useRef, useState } from 'react'
-
+import type { GetUsersCommand } from '@remnawave/backend-contract'
 import {
     bestFitIecUnitUtil,
     bytesToUnitUtil,
     IEC_UNITS,
-    TIecUnit,
+    type TIecUnit,
     unitToBytesUtil
 } from '@shared/utils/bytes'
+import { useEffect, useRef, useState } from 'react'
 
 type TUser = GetUsersCommand.Response['response']['users'][number]
 type TRange = [null | string, null | string]
@@ -83,7 +81,7 @@ export const TrafficLimitRangeFilter = ({ column }: IProps) => {
         if (!unchanged) {
             column.setFilterValue(normalized)
         }
-    }, [debouncedValues, debouncedUnit])
+    }, [debouncedValues, debouncedUnit, column.setFilterValue, column.getFilterValue])
 
     return (
         <Group align="center" gap={6} style={{ gridColumn: '1 / -1' }} w="100%" wrap="nowrap">

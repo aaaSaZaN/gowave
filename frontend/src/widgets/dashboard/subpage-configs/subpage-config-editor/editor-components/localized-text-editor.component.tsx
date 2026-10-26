@@ -12,13 +12,13 @@ import {
 import { useDisclosure } from '@mantine/hooks'
 import {
     getLanguageName,
-    TSubscriptionPageLanguageCode,
-    TSubscriptionPageLocalizedText
+    type TSubscriptionPageLanguageCode,
+    type TSubscriptionPageLocalizedText
 } from '@remnawave/subscription-page-types'
-import { IconLanguage } from '@tabler/icons-react'
-import { useTranslation } from 'react-i18next'
-
+import { optionalProp } from '@shared/lib/optional-prop'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useTranslation } from 'react-i18next'
+import { TbLanguage } from 'react-icons/tb'
 
 import styles from '../subpage-config-visual-editor.module.css'
 
@@ -44,15 +44,14 @@ export function LocalizedTextEditor(props: IProps) {
 
     const filledCount = enabledLocales.filter((locale) => value[locale]?.trim()).length
     const previewLocale = enabledLocales[0]
-    const previewText =
-        (previewLocale && value[previewLocale]) || t('common.message.not-set')
+    const previewText = (previewLocale && value[previewLocale]) || t('common.message.not-set')
 
     return (
         <>
             <UnstyledButton className={styles.localizedTextButton} onClick={open} w="100%">
                 <Group gap="sm" justify="space-between" wrap="nowrap">
                     <Group gap="xs" style={{ flex: 1, minWidth: 0 }} wrap="nowrap">
-                        <IconLanguage
+                        <TbLanguage
                             className={styles.localizedTextIcon}
                             size={16}
                             style={{ flexShrink: 0 }}
@@ -86,7 +85,7 @@ export function LocalizedTextEditor(props: IProps) {
                 size="lg"
                 title={
                     <BaseOverlayHeader
-                        IconComponent={IconLanguage}
+                        IconComponent={TbLanguage}
                         iconSize={18}
                         iconVariant="default"
                         title={label}
@@ -103,7 +102,7 @@ export function LocalizedTextEditor(props: IProps) {
                             description={index === 0 ? 'Primary language' : undefined}
                             key={locale}
                             label={getLanguageName(locale)}
-                            minRows={multiline ? 3 : undefined}
+                            {...optionalProp('minRows', multiline ? 3 : undefined)}
                             onChange={(e) => handleChange(locale, e.target.value)}
                             placeholder={`Enter ${label.toLowerCase()}...`}
                             resize={multiline ? 'vertical' : undefined}

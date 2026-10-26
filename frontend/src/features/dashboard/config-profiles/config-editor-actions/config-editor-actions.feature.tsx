@@ -2,9 +2,16 @@ import { ActionIcon, Button, CopyButton, Group, Menu, Text } from '@mantine/core
 import { useClipboard, useDisclosure } from '@mantine/hooks'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
-import { UpdateConfigProfileCommand } from '@remnawave/backend-contract'
+import type { UpdateConfigProfileCommand } from '@remnawave/backend-contract'
+import { queryClient } from '@shared/api'
+import { QueryKeys, useUpdateConfigProfile } from '@shared/api/hooks'
+import { useIsMobile } from '@shared/hooks'
+import consola from '@shared/lib/logger'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
+import { useDownloadTemplate } from '@shared/ui/load-templates/use-download-template'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { KeypairGeneratorWidget } from '@widgets/dashboard/config-profiles/keypair-generator/keypair-generator.widget'
-import consola from 'consola/browser'
 import { useTranslation } from 'react-i18next'
 import { PiCheck, PiCheckSquareOffset, PiCopy, PiFloppyDisk } from 'react-icons/pi'
 import {
@@ -17,14 +24,8 @@ import {
     TbTools
 } from 'react-icons/tb'
 
-import { queryClient } from '@shared/api'
-import { QueryKeys, useUpdateConfigProfile } from '@shared/api/hooks'
-import { useIsMobile } from '@shared/hooks'
-import { useDownloadTemplate } from '@shared/ui/load-templates/use-download-template'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-
 import classes from './config-editor-actions.module.css'
-import { Props } from './interfaces'
+import type { Props } from './interfaces'
 
 export function ConfigEditorActionsFeature(props: Props) {
     const {
@@ -178,7 +179,7 @@ export function ConfigEditorActionsFeature(props: Props) {
     const formatDocument = () => {
         if (!editorRef.current) return
 
-        editorRef.current.getAction('editor.action.formatDocument')?.run()
+        runAsync(editorRef.current.getAction('editor.action.formatDocument')?.run())
     }
 
     return (
@@ -247,7 +248,7 @@ export function ConfigEditorActionsFeature(props: Props) {
                         <CopyButton timeout={2000} value={configProfile.uuid}>
                             {({ copied, copy }) => (
                                 <Menu.Item
-                                    color={copied ? 'teal' : undefined}
+                                    {...optionalProp('color', copied ? 'teal' : undefined)}
                                     leftSection={
                                         copied ? <PiCheck size={14} /> : <PiCopy size={14} />
                                     }
@@ -259,7 +260,7 @@ export function ConfigEditorActionsFeature(props: Props) {
                         </CopyButton>
 
                         <Menu.Item
-                            color={clipboard.copied ? 'teal' : undefined}
+                            {...optionalProp('color', clipboard.copied ? 'teal' : undefined)}
                             leftSection={<TbClipboardCopy size={14} />}
                             onClick={handleCopyConfig}
                         >

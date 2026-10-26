@@ -25,7 +25,7 @@ export function LanguagePicker() {
                 }
             }
         }
-    }, [i18n])
+    }, [i18n, toggleDirection, dir])
 
     const changeLanguage = (value: string) => {
         i18n.changeLanguage(value)

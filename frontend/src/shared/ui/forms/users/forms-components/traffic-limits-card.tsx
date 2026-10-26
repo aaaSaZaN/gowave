@@ -1,15 +1,14 @@
 import { Select, Stack } from '@mantine/core'
-import { UseFormReturnType } from '@mantine/form'
-import { CreateUserCommand, UpdateUserCommand } from '@remnawave/backend-contract'
-import { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
-import { useTranslation } from 'react-i18next'
-import { PiClockDuotone } from 'react-icons/pi'
-import { TbChartLine } from 'react-icons/tb'
-
+import type { UseFormReturnType } from '@mantine/form'
+import type { CreateUserCommand, UpdateUserCommand } from '@remnawave/backend-contract'
 import { resetDataStrategy } from '@shared/constants/forms'
 import { TrafficLimitInput } from '@shared/ui/forms/traffic-limit-input'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
+import type { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
+import { useTranslation } from 'react-i18next'
+import { PiClockDuotone } from 'react-icons/pi'
+import { TbChartLine } from 'react-icons/tb'
 
 interface IProps<T extends CreateUserCommand.RequestBody | UpdateUserCommand.RequestBody> {
     cardVariants: Variants

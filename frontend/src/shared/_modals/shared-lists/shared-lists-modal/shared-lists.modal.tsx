@@ -1,9 +1,5 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { ActionIcon, Box, Group, Modal, Stack, Tooltip } from '@mantine/core'
-import { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbList, TbPlus, TbRefresh } from 'react-icons/tb'
-
 import { showModal } from '@shared/_modals/show-modal'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { useGetSharedLists } from '@shared/api/hooks'
@@ -11,8 +7,11 @@ import { EmptyPageLayout } from '@shared/ui/layouts/empty-page/empty-page.layout
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { buildTree, TreeBrowser } from '@shared/ui/tree-browser'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbList, TbPlus, TbRefresh } from 'react-icons/tb'
 
-import { sharedListRow, TSharedList } from './shared-list-row'
+import { sharedListRow, type TSharedList } from './shared-list-row'
 import { useSharedListActions } from './use-shared-list-actions'
 
 const getName = (sharedList: TSharedList) => sharedList.name
@@ -27,7 +26,7 @@ export const SharedListsModal = NiceModal.create(() => {
 
     const lists = sharedLists?.sharedLists ?? []
 
-    const tree = useMemo(() => buildTree(lists, getName), [sharedLists])
+    const tree = useMemo(() => buildTree(lists, getName), [lists])
 
     const { deletingName, handleDelete } = useSharedListActions()
 

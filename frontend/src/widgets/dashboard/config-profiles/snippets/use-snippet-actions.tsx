@@ -1,17 +1,17 @@
 import { modals } from '@mantine/modals'
-import { t } from 'i18next'
-import { useState } from 'react'
-import { TbCode } from 'react-icons/tb'
-
 import { queryClient } from '@shared/api'
 import { useDeleteSnippet, useSyncSnippet } from '@shared/api/hooks'
 import { QueryKeys } from '@shared/api/hooks/keys-factory'
 import { useIsMobile } from '@shared/hooks'
+import { runAsync } from '@shared/lib/run-async'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { t } from 'i18next'
+import { useState } from 'react'
+import { TbCode } from 'react-icons/tb'
 
 import { openConfirmSnippetSyncModal } from './confirm-snippet-sync.modal'
 import { EDIT_SNIPPET_MODAL_ID, EditSnippetModal } from './edit-snippet.modal'
-import { TSnippet } from './types'
+import type { TSnippet } from './types'
 
 export function useSnippetActions() {
     const isMobile = useIsMobile()
@@ -21,7 +21,11 @@ export function useSnippetActions() {
     const { mutate: deleteSnippet } = useDeleteSnippet({
         mutationFns: {
             onSuccess: () => {
-                queryClient.refetchQueries({ queryKey: QueryKeys.snippets.getSnippets.queryKey })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.snippets.getSnippets.queryKey
+                    })
+                )
             }
         }
     })

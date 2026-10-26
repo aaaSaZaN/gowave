@@ -1,5 +1,5 @@
 import { Group, Stack, Text, ThemeIcon } from '@mantine/core'
-import { ComponentType, ReactNode } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 
 interface IProps {
     color: string

@@ -11,9 +11,13 @@ import {
     Textarea,
     ThemeIcon
 } from '@mantine/core'
-import { GetNodesCommand } from '@remnawave/backend-contract'
+import type { GetNodesCommand, PluginExecutorCommand } from '@remnawave/backend-contract'
+import { useNodePluginExecutor } from '@shared/api/hooks'
+import { ActionCardShared } from '@shared/ui/action-card'
+import ReactCountryFlag from '@shared/ui/country-flag'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
 import { useCallback, useState } from 'react'
-import ReactCountryFlag from 'react-country-flag'
 import { useTranslation } from 'react-i18next'
 import {
     TbAlertTriangle,
@@ -25,11 +29,6 @@ import {
     TbServer2
 } from 'react-icons/tb'
 import { z } from 'zod'
-
-import { useNodePluginExecutor } from '@shared/api/hooks'
-import { ActionCardShared } from '@shared/ui/action-card'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
 
 interface IProps {
     nodes: GetNodesCommand.Response['response']
@@ -124,7 +123,9 @@ export const NodePluginExecutorContent = (props: IProps) => {
 
             const result = ipSchema.safeParse(ip)
             if (!result.success) {
-                errors.push(`Line ${i + 1}: "${ip}" — ${result.error.issues[0].message}`)
+                errors.push(
+                    `Line ${i + 1}: "${ip}" — ${result.error.issues[0]?.message ?? 'Invalid value'}`
+                )
             } else {
                 entries.push({ ip, timeout: Number.isNaN(timeout) ? 0 : timeout })
             }
@@ -144,7 +145,9 @@ export const NodePluginExecutorContent = (props: IProps) => {
         lines.forEach((line, i) => {
             const result = ipSchema.safeParse(line)
             if (!result.success) {
-                errors.push(`Line ${i + 1}: "${line}" — ${result.error.issues[0].message}`)
+                errors.push(
+                    `Line ${i + 1}: "${line}" — ${result.error.issues[0]?.message ?? 'Invalid value'}`
+                )
             } else {
                 ips.push(line)
             }
@@ -191,7 +194,7 @@ export const NodePluginExecutorContent = (props: IProps) => {
             nodeUuids: Array.from(selectedNodeUuids)
         }
 
-        let commandPayload
+        let commandPayload: PluginExecutorCommand.RequestBody['command']
 
         switch (command) {
             case 'blockIps': {

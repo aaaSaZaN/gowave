@@ -1,10 +1,9 @@
+import type { IProps } from '@entities/dashboard/users/ui/table-columns/username/interface'
 import { Box, Group, Progress, Text } from '@mantine/core'
 import { RESET_PERIODS } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
 
 import { prettifyBytesUtil } from '@shared/utils/bytes'
-
-import { IProps } from '@entities/dashboard/users/ui/table-columns/username/interface'
+import { useTranslation } from 'react-i18next'
 
 export function DataUsageColumnEntity(props: IProps) {
     const { t } = useTranslation()

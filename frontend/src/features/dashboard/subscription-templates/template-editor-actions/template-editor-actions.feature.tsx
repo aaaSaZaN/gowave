@@ -1,11 +1,16 @@
-import type { editor } from 'monaco-editor'
-
 import { ActionIcon, Button, Group, Menu } from '@mantine/core'
 import { useClipboard, useDisclosure } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
-import { GetSubscriptionTemplateCommand } from '@remnawave/backend-contract'
-import { encode } from '@stablelib/base64'
-import { RefObject } from 'react'
+import type { GetSubscriptionTemplateCommand } from '@remnawave/backend-contract'
+import { queryClient } from '@shared/api'
+import { QueryKeys, useUpdateSubscriptionTemplate } from '@shared/api/hooks'
+import { useIsMobile } from '@shared/hooks'
+import { encode } from '@shared/lib/base64'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
+import { useDownloadTemplate } from '@shared/ui/load-templates/use-download-template'
+import type { editor } from 'monaco-editor'
+import type { RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiCheckSquareOffset, PiFloppyDisk } from 'react-icons/pi'
 import {
@@ -16,11 +21,6 @@ import {
     TbMenuDeep,
     TbSelectAll
 } from 'react-icons/tb'
-
-import { queryClient } from '@shared/api'
-import { QueryKeys, useUpdateSubscriptionTemplate } from '@shared/api/hooks'
-import { useIsMobile } from '@shared/hooks'
-import { useDownloadTemplate } from '@shared/ui/load-templates/use-download-template'
 
 import classes from './template-editor-actions.module.css'
 
@@ -64,7 +64,7 @@ export function TemplateEditorActionsFeature(props: Props) {
 
         const currentValue = editorRef.current.getValue()
 
-        if (currentValue && currentValue.trim()) {
+        if (currentValue?.trim()) {
             if (editorType === 'yaml') {
                 updateConfig({
                     variables: {
@@ -100,7 +100,7 @@ export function TemplateEditorActionsFeature(props: Props) {
     const formatDocument = () => {
         if (!editorRef.current) return
 
-        editorRef.current.getAction('editor.action.formatDocument')?.run()
+        runAsync(editorRef.current.getAction('editor.action.formatDocument')?.run())
     }
 
     const handleSelectAll = () => {
@@ -184,7 +184,7 @@ export function TemplateEditorActionsFeature(props: Props) {
 
                     <Menu.Dropdown>
                         <Menu.Item
-                            color={clipboard.copied ? 'teal' : undefined}
+                            {...optionalProp('color', clipboard.copied ? 'teal' : undefined)}
                             leftSection={<TbClipboardCopy size={14} />}
                             onClick={handleCopyConfig}
                         >

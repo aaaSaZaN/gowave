@@ -1,6 +1,6 @@
-import { createQueryKeys } from '@lukemorales/query-key-factory'
 import { GetHostCommand, GetHostsCommand, GetHostsTagsCommand } from '@remnawave/backend-contract'
 
+import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'
@@ -44,7 +44,8 @@ export const useGetHost = createGetQueryHook({
     endpoint: GetHostCommand.TSQ_url,
     responseSchema: GetHostCommand.ResponseSchema,
     routeParamsSchema: GetHostCommand.RequestParamSchema,
-    getQueryKey: ({ route }) => hostsQueryKeys.getHost(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route ? hostsQueryKeys.getHost(route).queryKey : hostsQueryKeys.getHost._def,
     rQueryParams: {},
     errorHandler: (error) => errorHandler(error, 'Get Host')
 })

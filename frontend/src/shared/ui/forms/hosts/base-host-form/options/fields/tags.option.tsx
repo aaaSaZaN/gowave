@@ -1,4 +1,5 @@
 import { TagsInput } from '@mantine/core'
+import { optionalProp } from '@shared/lib/optional-prop'
 
 import { useSettingsRowControl } from '@shared/ui/settings-row'
 import { TagInputPill } from '@shared/ui/tag-input-pill'
@@ -27,7 +28,9 @@ export function TagsOption() {
                     .join(', ') || tagsInputProps.error
             }
             onChange={handleTagsChange}
-            renderPill={({ value, onRemove }) => <TagInputPill onRemove={onRemove} value={value} />}
+            renderPill={({ value, onRemove }) => (
+                <TagInputPill {...optionalProp('onRemove', onRemove)} value={value} />
+            )}
         />
     )
 }

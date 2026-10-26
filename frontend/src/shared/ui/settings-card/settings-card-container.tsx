@@ -1,4 +1,4 @@
-import { Card, CardProps, Flex } from '@mantine/core'
+import { Card, type CardProps, Flex } from '@mantine/core'
 
 import classes from './settings-card.module.css'
 

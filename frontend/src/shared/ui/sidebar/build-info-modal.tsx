@@ -14,7 +14,8 @@ import {
     Text,
     Tooltip
 } from '@mantine/core'
-import { GetMetadataCommand } from '@remnawave/backend-contract'
+import type { GetMetadataCommand } from '@remnawave/backend-contract'
+import { instance } from '@shared/api'
 import { useState } from 'react'
 import {
     TbAlertTriangle,
@@ -26,11 +27,9 @@ import {
     TbGitCommit
 } from 'react-icons/tb'
 
-import { instance } from '@shared/api'
-
 import { Logo } from '../logo'
 import classes from './build-info-modal.module.css'
-import { UpdateChannel, usePanelUpdateCheck } from './panel-update-check'
+import { type UpdateChannel, usePanelUpdateCheck } from './panel-update-check'
 
 interface BuildInfoModalProps {
     gowaveMetadata: GetMetadataCommand.Response['response']
@@ -148,7 +147,7 @@ export function BuildInfoModal({ gowaveMetadata }: BuildInfoModalProps) {
                                 size="xs"
                                 variant="light"
                                 loading={isUpdating}
-                                onClick={handleUpdate}
+                                onClick={() => void handleUpdate()}
                             >
                                 {isSwitching ? 'Switch' : 'Update panel'}
                             </Button>

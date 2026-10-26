@@ -1,15 +1,15 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Button, Modal, Stack, TextInput } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { CreateInfraProviderCommand } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
-import { TbServer } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useCreateInfraProvider } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { handleFormErrors } from '@shared/utils/misc'
+import { useTranslation } from 'react-i18next'
+import { TbServer } from 'react-icons/tb'
 
 export const CreateInfraProviderModal = NiceModal.create(() => {
     const modal = useModal()
@@ -27,9 +27,11 @@ export const CreateInfraProviderModal = NiceModal.create(() => {
         useCreateInfraProvider({
             mutationFns: {
                 onSuccess: () => {
-                    queryClient.refetchQueries({
-                        queryKey: QueryKeys.infraBilling.getInfraProviders.queryKey
-                    })
+                    runAsync(
+                        queryClient.refetchQueries({
+                            queryKey: QueryKeys.infraBilling.getInfraProviders.queryKey
+                        })
+                    )
 
                     hide()
                 },
@@ -39,7 +41,7 @@ export const CreateInfraProviderModal = NiceModal.create(() => {
             }
         })
 
-    const handleSubmit = form.onSubmit(async (values) => {
+    const handleSubmit = form.onSubmit((values) => {
         createInfraProvider({
             variables: {
                 name: values.name,

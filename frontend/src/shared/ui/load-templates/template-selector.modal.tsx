@@ -1,19 +1,19 @@
 import { Button, Center, Group, LoadingOverlay, Stack, Text } from '@mantine/core'
 import { useFetch } from '@mantine/hooks'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-
 import {
-    IDownloadableSubscriptionTemplate,
-    IDownloadableSubscriptionTemplateList,
+    type IDownloadableSubscriptionTemplate,
+    type IDownloadableSubscriptionTemplateList,
     NODE_PLUGIN_TEMPLATE_LIST_LINK,
     SRR_TEMPLATES_LIST_LINK,
     SUBPAGE_CONFIG_TEMPLATE_LIST_LINK,
     SUBSCRIPTION_TEMPLATE_LIST_LINK,
     XRAY_CORE_TEMPLATE_LIST_LINK
 } from '@shared/constants/templates'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
-import { TemplateSelectorModalProps } from './interfaces'
+import type { TemplateSelectorModalProps } from './interfaces'
 import { TemplateSelector } from './template-selector'
 
 export const TemplateDownloadModal = (props: TemplateSelectorModalProps) => {
@@ -81,7 +81,7 @@ export const TemplateDownloadModal = (props: TemplateSelectorModalProps) => {
             <TemplateSelector
                 editorType={editorType}
                 onSelect={setSelectedTemplate}
-                selectedTemplate={selectedTemplate}
+                {...optionalProp('selectedTemplate', selectedTemplate)}
                 templates={templatesList.templates}
                 templateType={templateType}
             />

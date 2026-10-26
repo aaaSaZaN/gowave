@@ -1,7 +1,7 @@
-import type { TQuickIconName, TQuickModalId } from './quick-links.types'
+import type { IExperimentalFeatures } from '@entities/dashboard/view-preferences-store'
+import { showModal } from '@shared/_modals/show-modal'
 import type { ParseKeys } from 'i18next'
 import type { IconType } from 'react-icons'
-
 import {
     TbActivity,
     TbBell,
@@ -45,10 +45,7 @@ import {
     TbUsers,
     TbWorld
 } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-
-import type { IExperimentalFeatures } from '@entities/dashboard/view-preferences-store'
+import type { TQuickIconName, TQuickModalId } from './quick-links.types'
 
 export interface IQuickModalEntry {
     experimental?: keyof IExperimentalFeatures

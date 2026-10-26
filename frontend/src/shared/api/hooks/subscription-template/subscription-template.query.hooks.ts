@@ -1,10 +1,10 @@
-import { createQueryKeys } from '@lukemorales/query-key-factory'
 import {
     GetSubscriptionTemplateCommand,
     GetSubscriptionTemplatesCommand,
     GetSubscriptionTemplatesTagsCommand
 } from '@remnawave/backend-contract'
 
+import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'
@@ -26,7 +26,9 @@ export const useGetSubscriptionTemplate = createGetQueryHook({
     routeParamsSchema: GetSubscriptionTemplateCommand.RequestParamSchema,
     responseSchema: GetSubscriptionTemplateCommand.ResponseSchema,
     getQueryKey: ({ route }) =>
-        subscriptionTemplateQueryKeys.getSubscriptionTemplate(route!).queryKey,
+        route
+            ? subscriptionTemplateQueryKeys.getSubscriptionTemplate(route).queryKey
+            : subscriptionTemplateQueryKeys.getSubscriptionTemplate._def,
     rQueryParams: {
         refetchOnMount: false,
         staleTime: sToMs(30)

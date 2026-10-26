@@ -1,5 +1,10 @@
 import { ActionIcon, Select, SimpleGrid, Stack } from '@mantine/core'
-import { DatePickerInput, DatesRangeValue } from '@mantine/dates'
+import { DatePickerInput, type DatesRangeValue } from '@mantine/dates'
+import { useGetStatsNodesUsage } from '@shared/api/hooks'
+import { Page, PageHeaderShared } from '@shared/ui'
+import { CountryFlag } from '@shared/ui/get-country-flag'
+import { TopLeaderboardCardShared } from '@shared/ui/leaderboard-item-card'
+import { getDefaultDateRange } from '@shared/utils/time-utils'
 import { NodesStatisticBarchartWidget } from '@widgets/dashboard/nodes-statistic/statistic-barchart'
 import { NodesStatisticSparklineCardWidget } from '@widgets/dashboard/nodes-statistic/statistic-sparkline-card'
 import dayjs from 'dayjs'
@@ -7,12 +12,6 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HiChartPie } from 'react-icons/hi'
 import { TbCalendar, TbRefresh, TbServer2 } from 'react-icons/tb'
-
-import { useGetStatsNodesUsage } from '@shared/api/hooks'
-import { Page, PageHeaderShared } from '@shared/ui'
-import { CountryFlag } from '@shared/ui/get-country-flag'
-import { TopLeaderboardCardShared } from '@shared/ui/leaderboard-item-card'
-import { getDefaultDateRange } from '@shared/utils/time-utils'
 
 const TOP_NODES_LIMIT_OPTIONS = [
     { value: '5', label: 'Top 5' },
@@ -32,6 +31,7 @@ const DEFAULT_TOP_NODES_LIMIT = 20
 
 export const StatisticNodesPage = () => {
     const { t, i18n } = useTranslation()
+    const [maximumDate] = useState(() => new Date())
     const defaultRange = getDefaultDateRange()
 
     const [rawRange, setRawRange] = useState<[null | string, null | string]>([
@@ -99,7 +99,7 @@ export const StatisticNodesPage = () => {
                             headerControlsOrder={['previous', 'next', 'level']}
                             leftSection={<TbCalendar size="24px" />}
                             locale={i18n.language}
-                            maxDate={new Date()}
+                            maxDate={maximumDate}
                             onChange={handleDateRangeChange}
                             presets={[
                                 {

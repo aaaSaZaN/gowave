@@ -1,11 +1,10 @@
-import { createQueryKeys } from '@lukemorales/query-key-factory'
 import {
     GetSubscriptionRequestHistoryCommand,
     GetSubscriptionRequestHistoryStatsCommand
 } from '@remnawave/backend-contract'
-import { keepPreviousData } from '@tanstack/react-query'
-
+import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
+import { keepPreviousData } from '@tanstack/react-query'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'
 
@@ -28,7 +27,9 @@ export const useGetSubscriptionRequestHistory = createGetQueryHook({
     responseSchema: GetSubscriptionRequestHistoryCommand.ResponseSchema,
     requestQuerySchema: GetSubscriptionRequestHistoryCommand.RequestQuerySchema,
     getQueryKey: ({ query }) =>
-        subscriptionRequestHistoryQueryKeys.getSubscriptionRequestHistory(query!).queryKey,
+        query
+            ? subscriptionRequestHistoryQueryKeys.getSubscriptionRequestHistory(query).queryKey
+            : subscriptionRequestHistoryQueryKeys.getSubscriptionRequestHistory._def,
     rQueryParams: {
         staleTime: sToMs(20),
         refetchInterval: sToMs(25),

@@ -10,14 +10,13 @@ import {
     TextInput,
     UnstyledButton
 } from '@mantine/core'
-import { IconSearch } from '@tabler/icons-react'
-import ColorHash from 'color-hash'
+import type { IDownloadableSubscriptionTemplate } from '@shared/constants/templates'
+import ColorHash from '@shared/lib/color'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { TbSearch } from 'react-icons/tb'
 
-import { IDownloadableSubscriptionTemplate } from '@shared/constants/templates'
-
-import { TemplateSelectorProps } from './interfaces'
+import type { TemplateSelectorProps } from './interfaces'
 
 export const TemplateSelector = (props: TemplateSelectorProps) => {
     const { onSelect, selectedTemplate, templates, templateType } = props
@@ -46,7 +45,9 @@ export const TemplateSelector = (props: TemplateSelectorProps) => {
             if (!acc[template.author]) {
                 acc[template.author] = []
             }
-            acc[template.author].push(template)
+            const templates = acc[template.author] ?? []
+            templates.push(template)
+            acc[template.author] = templates
             return acc
         },
         {} as Record<string, IDownloadableSubscriptionTemplate[]>
@@ -65,7 +66,7 @@ export const TemplateSelector = (props: TemplateSelectorProps) => {
                 </Button>
             </Group>
             <TextInput
-                leftSection={<IconSearch size={16} />}
+                leftSection={<TbSearch size={16} />}
                 onChange={(event) => setSearchQuery(event.currentTarget.value)}
                 placeholder={t('template-selector.search-templates')}
                 value={searchQuery}

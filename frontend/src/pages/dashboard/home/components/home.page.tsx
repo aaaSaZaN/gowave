@@ -1,10 +1,6 @@
 import { ActionIcon, Box, Group, SimpleGrid, Stack, Title } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
-import { useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbCamera, TbInfoCircle } from 'react-icons/tb'
-
 import { useIsMobile } from '@shared/hooks'
 import { LoadingScreen } from '@shared/ui'
 import { DisclaimerOverlay } from '@shared/ui/disclaimer-overlay'
@@ -12,9 +8,12 @@ import { MetricCardShared, MetricCardWithTrendShared } from '@shared/ui/metrics/
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { Page } from '@shared/ui/page'
 import { copyScreenshotToClipboard } from '@shared/utils/copy-screenshot.util'
+import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbCamera, TbInfoCircle } from 'react-icons/tb'
 
 import classes from './home.module.css'
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 import {
     getBandwidthMetrics,
     getOnlineMetrics,

@@ -1,7 +1,8 @@
+import {
+    useSectionActiveTag,
+    useViewPreferencesStoreActions
+} from '@entities/dashboard/view-preferences-store'
 import { modals } from '@mantine/modals'
-import { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
-
 import {
     QueryKeys,
     useCloneSubpageConfig,
@@ -9,16 +10,14 @@ import {
     useReorderSubpageConfigs
 } from '@shared/api/hooks'
 import { queryClient } from '@shared/api/query-client'
+import { runAsync } from '@shared/lib/run-async'
 import { filterByTag, TagFilterBar } from '@shared/ui'
 import { VirtualizedDndGrid } from '@shared/ui/virtualized-dnd-grid'
-
-import {
-    useSectionActiveTag,
-    useViewPreferencesStoreActions
-} from '@entities/dashboard/view-preferences-store'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { SubpageConfigCardWidget } from '../subpage-config-card/subpage-config-card.widget'
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export function SubpageConfigsGridWidget(props: IProps) {
     const { t } = useTranslation()
@@ -31,9 +30,11 @@ export function SubpageConfigsGridWidget(props: IProps) {
     const { mutate: deleteSubpageConfig } = useDeleteSubpageConfig({
         mutationFns: {
             onSuccess: () => {
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.subpageConfigs.getSubpageConfigs.queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.subpageConfigs.getSubpageConfigs.queryKey
+                    })
+                )
             }
         }
     })
@@ -48,9 +49,11 @@ export function SubpageConfigsGridWidget(props: IProps) {
     const { mutate: cloneSubpageConfig } = useCloneSubpageConfig({
         mutationFns: {
             onSuccess: () => {
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.subpageConfigs.getSubpageConfigs.queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.subpageConfigs.getSubpageConfigs.queryKey
+                    })
+                )
             }
         }
     })

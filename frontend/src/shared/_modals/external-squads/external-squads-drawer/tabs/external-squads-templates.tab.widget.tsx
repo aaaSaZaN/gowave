@@ -1,17 +1,16 @@
 import { Button, Card, Select, Stack, Text } from '@mantine/core'
 import {
-    GetExternalSquadByUuidCommand,
+    type GetExternalSquadByUuidCommand,
     SUBSCRIPTION_TEMPLATE_TYPE,
-    TSubscriptionTemplateType
+    type TSubscriptionTemplateType
 } from '@remnawave/backend-contract'
-import { useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbDeviceFloppy } from 'react-icons/tb'
-
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateExternalSquad } from '@shared/api/hooks'
 import { useGetSubscriptionTemplates } from '@shared/api/hooks/subscription-template/subscription-template.query.hooks'
 import { MihomoLogo, SingboxLogo, StashLogo, XrayLogo } from '@shared/ui/logos'
+import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbDeviceFloppy } from 'react-icons/tb'
 
 interface IProps {
     externalSquad: GetExternalSquadByUuidCommand.Response['response']
@@ -66,7 +65,9 @@ export const ExternalSquadsTemplatesTabWidget = (props: IProps) => {
         )
     }, [templatesData?.templates])
 
-    useEffect(() => {
+    const [previousSquad, setPreviousSquad] = useState<typeof externalSquad | null>(null)
+    if (previousSquad !== externalSquad) {
+        setPreviousSquad(externalSquad)
         const initialTemplates: Record<TSubscriptionTemplateType, null | string> = {
             [SUBSCRIPTION_TEMPLATE_TYPE.CLASH]: null,
             [SUBSCRIPTION_TEMPLATE_TYPE.MIHOMO]: null,
@@ -83,7 +84,7 @@ export const ExternalSquadsTemplatesTabWidget = (props: IProps) => {
         }
 
         setSelectedTemplates(initialTemplates)
-    }, [externalSquad])
+    }
 
     const { mutate: updateExternalSquad, isPending: isUpdatingExternalSquad } =
         useUpdateExternalSquad({

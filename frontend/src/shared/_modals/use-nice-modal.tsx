@@ -1,8 +1,8 @@
-import { NiceModalHandler } from '@ebay/nice-modal-react'
-import { useCallback, useEffect, useEffectEvent, useState } from 'react'
-
+import type { NiceModalHandler } from '@ebay/nice-modal-react'
 import { useIsMobile } from '@shared/hooks/use-is-mobile'
 import { isPseudoFullscreenActive } from '@shared/hooks/use-pseudo-fullscreen'
+import { runAsync } from '@shared/lib/run-async'
+import { useCallback, useEffect, useEffectEvent, useState } from 'react'
 
 const stack: { id: string; hide: () => void }[] = []
 let listening = false
@@ -59,7 +59,7 @@ export function useNiceMantineModal(props: IProps) {
 
     const hide = useCallback(() => {
         onClose?.()
-        modal.hide()
+        runAsync(modal.hide())
     }, [onClose, modal])
 
     const stackHide = useEffectEvent(() => hide())

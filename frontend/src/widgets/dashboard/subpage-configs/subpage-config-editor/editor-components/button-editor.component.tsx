@@ -13,16 +13,14 @@ import { useDisclosure } from '@mantine/hooks'
 import {
     BUTTON_TYPES_VALUES,
     SUBSCRIPTION_PAGE_TEMPLATE_KEYS,
-    TButtonType,
-    TSubscriptionPageButtonConfig,
-    TSubscriptionPageLanguageCode,
-    TSubscriptionPageSvgLibrary
+    type TButtonType,
+    type TSubscriptionPageButtonConfig,
+    type TSubscriptionPageLanguageCode,
+    type TSubscriptionPageSvgLibrary
 } from '@remnawave/subscription-page-types'
-import { IconArrowDown, IconArrowUp, IconChevronRight, IconTrash } from '@tabler/icons-react'
-import { useTranslation } from 'react-i18next'
-import { TbExternalLink } from 'react-icons/tb'
-
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers'
+import { useTranslation } from 'react-i18next'
+import { TbArrowDown, TbArrowUp, TbChevronRight, TbExternalLink, TbTrash } from 'react-icons/tb'
 
 import styles from '../subpage-config-visual-editor.module.css'
 import { LocalizedTextEditor } from './localized-text-editor.component'
@@ -70,7 +68,7 @@ export function ButtonEditor(props: IProps) {
                     wrap="nowrap"
                 >
                     <Group gap="xs">
-                        <IconChevronRight
+                        <TbChevronRight
                             className={`${styles.chevron} ${opened ? styles.chevronOpen : ''}`}
                             size={16}
                         />
@@ -96,7 +94,7 @@ export function ButtonEditor(props: IProps) {
                             size="sm"
                             variant="subtle"
                         >
-                            <IconArrowUp size={14} />
+                            <TbArrowUp size={14} />
                         </ActionIcon>
                         <ActionIcon
                             color="gray"
@@ -108,7 +106,7 @@ export function ButtonEditor(props: IProps) {
                             size="sm"
                             variant="subtle"
                         >
-                            <IconArrowDown size={14} />
+                            <TbArrowDown size={14} />
                         </ActionIcon>
                         <ActionIcon
                             className={styles.deleteButton}
@@ -120,7 +118,7 @@ export function ButtonEditor(props: IProps) {
                             size="sm"
                             variant="subtle"
                         >
-                            <IconTrash size={14} />
+                            <TbTrash size={14} />
                         </ActionIcon>
                     </Group>
                 </Group>

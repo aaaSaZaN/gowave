@@ -8,17 +8,16 @@ import {
     TextInput,
     Title
 } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { useClipboard } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
 import { RegisterCommand } from '@remnawave/backend-contract'
-import { useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
-import { PiShuffleDuotone, PiSignpostDuotone } from 'react-icons/pi'
-
 import { useRegister } from '@shared/api/hooks'
 import { useAuth } from '@shared/hooks/use-auth'
 import { handleFormErrors } from '@shared/utils/misc'
+import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
+import { PiShuffleDuotone, PiSignpostDuotone } from 'react-icons/pi'
 
 export const RegisterFormFeature = () => {
     const { t } = useTranslation()
@@ -81,7 +80,7 @@ export const RegisterFormFeature = () => {
                 message: t('register-form.feature.password-copied-message')
             })
         }
-    }, [error, copied])
+    }, [error, copied, t])
 
     const handleSubmit = form.onSubmit((variables) => {
         register({

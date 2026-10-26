@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { ITreeNode, resolvePath } from './build-tree'
+import { type ITreeNode, resolvePath } from './build-tree'
 
 const ARROWS = new Set(['ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowUp'])
 
@@ -26,7 +26,7 @@ export function useTreeNavigation<T>(tree: ITreeNode<T>[]) {
 
     useEffect(() => {
         rowsRef.current.length = level.length
-    }, [levelKey, level.length])
+    }, [level.length])
 
     const navigate = (next: string[], focusIndex = 0) => {
         pendingFocus.current = focusIndex

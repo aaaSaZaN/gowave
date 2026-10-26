@@ -1,4 +1,4 @@
-import { User } from '@entities/dashboard/users/models'
+import type { User } from '@entities/dashboard/users/models'
 
 export interface IProps {
     need?: 'badge' | 'both' | 'date'

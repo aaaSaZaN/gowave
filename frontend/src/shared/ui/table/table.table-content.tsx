@@ -1,4 +1,4 @@
-import { CardSection, CardSectionProps, ElementProps } from '@mantine/core'
+import { CardSection, type CardSectionProps, type ElementProps } from '@mantine/core'
 import { forwardRef } from 'react'
 
 export const DataTableContent = forwardRef<

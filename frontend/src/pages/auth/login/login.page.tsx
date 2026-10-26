@@ -3,12 +3,12 @@ import { OAuth2LoginButtonsFeature } from '@features/auth/oauth2-login-button/oa
 import { PasskeyLoginButtonFeature } from '@features/auth/passkey-login-button'
 import { RegisterFormFeature } from '@features/auth/register-form'
 import { Badge, Box, Center, Divider, Group, Image, Stack, Text, Title } from '@mantine/core'
-import { GetStatusCommand } from '@remnawave/backend-contract'
-import { useMemo } from 'react'
-
+import type { GetStatusCommand } from '@remnawave/backend-contract'
 import { useGetAuthStatus } from '@shared/api/hooks/auth/auth.query.hooks'
+import { optionalProp } from '@shared/lib/optional-prop'
 import { Logo, Page } from '@shared/ui'
 import { parseColoredTextUtil } from '@shared/utils/misc'
+import { useMemo } from 'react'
 
 const getAuthMethods = (authStatus: GetStatusCommand.Response['response'] | undefined) => {
     const isPasswordEnabled = authStatus?.authentication?.password?.enabled ?? false
@@ -48,14 +48,14 @@ const BrandLogo = ({ logoUrl }: { logoUrl?: null | string }) => {
 const BrandTitle = ({ titleParts }: { titleParts: Array<{ color: string; text: string }> }) => {
     return (
         <Title ff="Unbounded" order={1} pos="relative">
-            {titleParts.map((part, index) => (
+            {titleParts.map((part) => (
                 <Text
                     c={part.color || 'white'}
                     component="span"
                     fw="inherit"
                     fz="inherit"
                     inherit
-                    key={index}
+                    key={part.text}
                     pos="relative"
                 >
                     {part.text}
@@ -109,7 +109,7 @@ export const LoginPage = () => {
         <Page title="Login">
             <Stack align="center" gap="xs">
                 <Group align="center" gap={4} justify="center">
-                    <BrandLogo logoUrl={authStatus?.branding.logoUrl} />
+                    <BrandLogo {...optionalProp('logoUrl', authStatus?.branding.logoUrl)} />
                     <BrandTitle titleParts={titleParts} />
                 </Group>
 

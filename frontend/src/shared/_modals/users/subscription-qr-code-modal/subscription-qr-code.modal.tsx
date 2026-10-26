@@ -1,11 +1,10 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Modal } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { TbQrcode } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { QrCodeBuilder } from '@shared/ui/qr-code-builder'
+import { useTranslation } from 'react-i18next'
+import { TbQrcode } from 'react-icons/tb'
 
 interface IProps {
     subscriptionUrl: string

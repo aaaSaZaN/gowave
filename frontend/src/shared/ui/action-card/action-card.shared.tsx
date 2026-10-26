@@ -1,6 +1,15 @@
-import { Group, Paper, Stack, Text, ThemeIcon, ThemeIconProps, UnstyledButton } from '@mantine/core'
+import {
+    Group,
+    Paper,
+    Stack,
+    Text,
+    ThemeIcon,
+    type ThemeIconProps,
+    UnstyledButton
+} from '@mantine/core'
 import { useClickOutside } from '@mantine/hooks'
-import clsx from 'clsx'
+import clsx from '@shared/lib/classes'
+import { optionalProp } from '@shared/lib/optional-prop'
 import { useState } from 'react'
 import { TbArrowRight, TbChevronRight } from 'react-icons/tb'
 
@@ -49,7 +58,12 @@ export function ActionCardShared(props: IProps) {
             >
                 <Group gap="md" justify="space-between" wrap="nowrap">
                     <Group gap="md" wrap="nowrap">
-                        <ThemeIcon color={iconColor} radius="md" size="xl" variant={variant}>
+                        <ThemeIcon
+                            {...optionalProp('color', iconColor)}
+                            radius="md"
+                            size="xl"
+                            {...optionalProp('variant', variant)}
+                        >
                             {icon}
                         </ThemeIcon>
                         <Stack gap={2}>

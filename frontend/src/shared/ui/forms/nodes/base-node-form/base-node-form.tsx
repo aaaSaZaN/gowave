@@ -3,29 +3,29 @@ import { ResetNodeTrafficFeature } from '@features/ui/dashboard/nodes/reset-node
 import { RestartNodeButtonFeature } from '@features/ui/dashboard/nodes/restart-node-button'
 import { ToggleNodeStatusButtonFeature } from '@features/ui/dashboard/nodes/toggle-node-status-button'
 import { Button, CopyButton, Group, Menu, px, Stack } from '@mantine/core'
-import { UseFormReturnType } from '@mantine/form'
-import {
+import type { UseFormReturnType } from '@mantine/form'
+import type {
+    GetNodeCommand,
     GetNodeIntegrationsCommand,
     GetNodePluginsCommand,
     GetNodeSecretKeyCommand,
-    GetNodeCommand,
     UpdateNodeCommand
 } from '@remnawave/backend-contract'
+import { useIsMobile } from '@shared/hooks'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { ModalFooter } from '@shared/ui/modal-footer'
 import { NodeErrorMessageWidget } from '@widgets/dashboard/nodes/node-error-message'
 import { t } from 'i18next'
 import { motion } from 'motion/react'
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { PiFloppyDiskDuotone } from 'react-icons/pi'
 import { TbCopy, TbDots } from 'react-icons/tb'
-
-import { useIsMobile } from '@shared/hooks'
-import { ModalFooter } from '@shared/ui/modal-footer'
 
 import { NodeConfigProfilesCard } from './node-config-profiles.card'
 import { NodeConsumptionCard } from './node-consumption.card'
 import { NodeIpsCard } from './node-ips.card'
 import {
-    ITrafficTrackingStartControl,
+    type ITrafficTrackingStartControl,
     NodeTrackingAndBillingCard
 } from './node-tracking-and-billing.card'
 import { NodeVitalsCard } from './node-vitals.card'
@@ -127,7 +127,7 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
                         cardVariants={cardVariants}
                         form={form}
                         motionWrapper={MotionWrapper}
-                        trafficTrackingStart={trafficTrackingStart}
+                        {...optionalProp('trafficTrackingStart', trafficTrackingStart)}
                     />
 
                     <NodeConsumptionCard
@@ -197,7 +197,7 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
                             cardVariants={cardVariants}
                             form={form}
                             motionWrapper={MotionWrapper}
-                            trafficTrackingStart={trafficTrackingStart}
+                            {...optionalProp('trafficTrackingStart', trafficTrackingStart)}
                         />
                     </MotionStack>
                 </Group>

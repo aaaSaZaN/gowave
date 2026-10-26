@@ -1,10 +1,9 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Box, Drawer, Transition } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { TbRadar } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useTranslation } from 'react-i18next'
+import { TbRadar } from 'react-icons/tb'
 
 import { FailedStateWidget } from './failed-state.widget'
 import { ProgressWidget } from './progress.widget'

@@ -1,4 +1,4 @@
-import { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
+import type { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
 
 export const processRemarks = (remarksData: string | string[] | undefined): string[] => {
     if (!remarksData) return ['']
@@ -11,7 +11,7 @@ export const processRemarks = (remarksData: string | string[] | undefined): stri
 
 export const computeRemarks = (
     settings: UpdateSubscriptionSettingsCommand.Response['response']
-): Record<string, string[]> => {
+) => {
     return {
         expired: processRemarks(settings.customRemarks.expiredUsers),
         limited: processRemarks(settings.customRemarks.limitedUsers),

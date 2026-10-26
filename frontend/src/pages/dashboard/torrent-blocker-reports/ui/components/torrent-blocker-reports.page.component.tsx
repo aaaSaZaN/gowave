@@ -1,10 +1,9 @@
 import { Stack } from '@mantine/core'
+import { Page } from '@shared/ui'
 import { TorrentBlockerReportsTableWidget } from '@widgets/dashboard/torrent-blocker-reports/torrent-blocker-reports-table'
 import { TorrentBlockerStatsWidget } from '@widgets/dashboard/torrent-blocker-reports/torrent-blocker-stats'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
-
-import { Page } from '@shared/ui'
 
 export default function TorrentBlockerReportsPageComponent() {
     const { t } = useTranslation()

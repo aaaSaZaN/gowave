@@ -1,26 +1,24 @@
-import type { editor } from 'monaco-editor'
-
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { MonacoSetupHostMapperEditorFeature } from '@features/dashboard/config-profiles/monaco-setup'
 import { Box, Button, Group, Modal, Paper } from '@mantine/core'
-import { Monaco } from '@monaco-editor/react'
+import type { Monaco } from '@monaco-editor/react'
 import { HostMapperSchema } from '@remnawave/backend-contract'
-import clsx from 'clsx'
-import { useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbArrowsExchange } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { COMPACT_MONACO_OPTIONS } from '@shared/constants/monaco-theme'
 import { usePseudoFullscreen } from '@shared/hooks'
-import { CodeEditor, editorClasses, EditorFooter, EditorStatusBar } from '@shared/ui/code-editor'
-import { THostForm } from '@shared/ui/forms/hosts/base-host-form/host-form.types'
-import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui/fullscreen-toggle-button'
+import clsx from '@shared/lib/classes'
+import { CodeEditor, EditorFooter, EditorStatusBar, editorClasses } from '@shared/ui/code-editor'
+import type { THostForm } from '@shared/ui/forms/hosts/base-host-form/host-form.types'
+import { FullscreenToggleButton, fullscreenClasses } from '@shared/ui/fullscreen-toggle-button'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { forceMonacoRetokenize } from '@shared/utils/monaco/force-retokenize'
 import { formatFirstErrorMarker } from '@shared/utils/monaco/markers'
 import { useMonaco } from '@shared/utils/setup-monaco/load-monaco'
 import { setupSuggestWidget } from '@shared/utils/setup-monaco/setup-suggest-monaco'
+import type { editor } from 'monaco-editor'
+import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbArrowsExchange } from 'react-icons/tb'
 
 import classes from './HostMapperModal.module.css'
 
@@ -83,7 +81,7 @@ export const HostMapperModal = NiceModal.create((props: IProps) => {
 
         if (!result.success) {
             const issue = result.error.issues[0]
-            setError(`${issue.path.join('.') || 'mapper'}: ${issue.message}`)
+            setError(`${issue?.path.join('.') || 'mapper'}: ${issue?.message ?? 'Invalid mapper'}`)
             return
         }
 

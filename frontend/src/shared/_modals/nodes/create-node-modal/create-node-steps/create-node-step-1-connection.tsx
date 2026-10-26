@@ -12,8 +12,14 @@ import {
     TextInput,
     UnstyledButton
 } from '@mantine/core'
-import { UseFormReturnType } from '@mantine/form'
-import { CreateNodeCommand } from '@remnawave/backend-contract'
+import type { UseFormReturnType } from '@mantine/form'
+import type { CreateNodeCommand } from '@remnawave/backend-contract'
+import { useGetNodePlugins, useGetNodesTags } from '@shared/api/hooks'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
+import { COUNTRIES } from '@shared/ui/forms/nodes/base-node-form/constants'
+import { SelectInfraProviderShared } from '@shared/ui/infra-billing/select-infra-provider/select-infra-provider.shared'
+import { TagInputPill } from '@shared/ui/tag-input-pill'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiArrowRight, PiTagDuotone } from 'react-icons/pi'
@@ -27,17 +33,10 @@ import {
     TbWorld
 } from 'react-icons/tb'
 
-import { useGetNodePlugins, useGetNodesTags } from '@shared/api/hooks'
-import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
-import { COUNTRIES } from '@shared/ui/forms/nodes/base-node-form/constants'
-import { SelectInfraProviderShared } from '@shared/ui/infra-billing/select-infra-provider/select-infra-provider.shared'
-import { TagInputPill } from '@shared/ui/tag-input-pill'
-
 import { CopyNodeInstallCommandWidget } from './copy-node-install-command.widget'
 
 interface IProps {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    form: UseFormReturnType<CreateNodeCommand.RequestBody, any>
+    form: UseFormReturnType<CreateNodeCommand.RequestBody>
     onNext: () => void
     port: number
     secretKey: string | undefined
@@ -51,7 +50,7 @@ export const CreateNodeStep1Connection = ({ form, onNext, secretKey, port }: IPr
 
     const [additionalOpened, setAdditionalOpened] = useState(false)
 
-    const handleNext = async () => {
+    const handleNext = () => {
         const nameErrors = form.validateField('name')
         const countryCodeErrors = form.validateField('countryCode')
         const addressErrors = form.validateField('address')
@@ -210,7 +209,10 @@ export const CreateNodeStep1Connection = ({ form, onNext, secretKey, port }: IPr
                         <Popover.Dropdown>
                             <Stack gap="sm">
                                 <SelectInfraProviderShared
-                                    selectedInfraProviderUuid={form.getValues().providerUuid}
+                                    {...optionalProp(
+                                        'selectedInfraProviderUuid',
+                                        form.getValues().providerUuid
+                                    )}
                                     setSelectedInfraProviderUuid={(providerUuid) => {
                                         form.setValues({ providerUuid })
                                         form.setTouched({ providerUuid: true })
@@ -259,7 +261,10 @@ export const CreateNodeStep1Connection = ({ form, onNext, secretKey, port }: IPr
                                             .join(', ') || form.getInputProps('tags').error
                                     }
                                     renderPill={({ value, onRemove }) => (
-                                        <TagInputPill onRemove={onRemove} value={value} />
+                                        <TagInputPill
+                                            {...optionalProp('onRemove', onRemove)}
+                                            value={value}
+                                        />
                                     )}
                                     styles={{
                                         label: { fontWeight: 500 }

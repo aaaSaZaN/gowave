@@ -1,13 +1,12 @@
 import { ActionIcon, ActionIconGroup, Group, Tooltip } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { TbCode, TbPlus, TbRefresh } from 'react-icons/tb'
-import { useNavigate } from 'react-router'
-
 import { showModal } from '@shared/_modals/show-modal'
 import { HelpActionIconShared } from '@shared/_modals/universal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useGetConfigProfiles } from '@shared/api/hooks'
 import { UniversalSpotlightActionIconShared } from '@shared/ui/universal-spotlight'
+import { useTranslation } from 'react-i18next'
+import { TbCode, TbPlus, TbRefresh } from 'react-icons/tb'
+import { useNavigate } from 'react-router'
 
 interface IProps {
     configProfileCount: number
@@ -59,10 +58,7 @@ export const ConfigProfilesHeaderActionButtonsFeature = (props: IProps) => {
             </ActionIconGroup>
 
             <ActionIconGroup>
-                <Tooltip
-                    label={t('common.action.create')}
-                    withArrow
-                >
+                <Tooltip label={t('common.action.create')} withArrow>
                     <ActionIcon
                         color="teal"
                         onClick={() =>

@@ -1,7 +1,6 @@
 import { Select } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-
 import { useSettingsRowControl } from '@shared/ui/settings-row'
+import { useTranslation } from 'react-i18next'
 
 import { useHostFormData } from '../host-form-data.context'
 

@@ -1,5 +1,5 @@
-import { Box, BoxProps } from '@mantine/core'
-import { ReactNode, Ref } from 'react'
+import { Box, type BoxProps } from '@mantine/core'
+import type { ReactNode, Ref } from 'react'
 
 interface ISectionCardSectionProps extends BoxProps {
     children: ReactNode

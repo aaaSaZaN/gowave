@@ -1,11 +1,11 @@
 import { ActionIcon, Tooltip } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { useTranslation } from 'react-i18next'
-import { TbTrash } from 'react-icons/tb'
-
 import { hideModal } from '@shared/_modals/show-modal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useDeleteHost } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
+import { useTranslation } from 'react-i18next'
+import { TbTrash } from 'react-icons/tb'
 
 interface IProps {
     hostUuid: string
@@ -19,13 +19,15 @@ export function DeleteHostFeature(props: IProps) {
     const { mutate: deleteHost, isPending: isDeleteHostPending } = useDeleteHost({
         mutationFns: {
             onSuccess: () => {
-                hideModal('hosts_editHostDrawer')
-                queryClient.refetchQueries({ queryKey: QueryKeys.hosts.getAllHosts.queryKey })
+                runAsync(hideModal('hosts_editHostDrawer'))
+                runAsync(
+                    queryClient.refetchQueries({ queryKey: QueryKeys.hosts.getAllHosts.queryKey })
+                )
             }
         }
     })
 
-    const handleDeleteHost = async () => {
+    const handleDeleteHost = () => {
         deleteHost({ route: { uuid: hostUuid } })
     }
 

@@ -10,15 +10,14 @@ import {
     Transition
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { GetApiTokensCommand } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
-import { PiEmpty } from 'react-icons/pi'
-import { TbCookie, TbPlus, TbRefresh } from 'react-icons/tb'
-
+import type { GetApiTokensCommand } from '@remnawave/backend-contract'
 import { useGetApiTokens } from '@shared/api/hooks'
 import { useIsMobile } from '@shared/hooks'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SettingsCardShared } from '@shared/ui/settings-card'
+import { useTranslation } from 'react-i18next'
+import { PiEmpty } from 'react-icons/pi'
+import { TbCookie, TbPlus, TbRefresh } from 'react-icons/tb'
 
 import classes from './api-token-card.module.css'
 import { ApiTokenItem } from './api-token-item'

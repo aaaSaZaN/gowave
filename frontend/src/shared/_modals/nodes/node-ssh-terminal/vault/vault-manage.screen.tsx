@@ -1,12 +1,10 @@
+import { decodeVaultFile, isValidSeedPhrase, VAULT_FILE_EXTENSION } from '@entities/ssh-vault'
 import { Button, FileButton, Stack, Text, Textarea } from '@mantine/core'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbDownload, TbPlus, TbTrash, TbUpload } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
-
-import { decodeVaultFile, isValidSeedPhrase, VAULT_FILE_EXTENSION } from '@entities/ssh-vault'
 
 interface IProps {
     canExport: boolean

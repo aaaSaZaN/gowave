@@ -1,6 +1,6 @@
 import { ActionIcon, HoverCard, Stack, Text } from '@mantine/core'
-import { ExternalSquadSubscriptionSettingsSchema } from '@remnawave/backend-contract'
-import { TFunction } from 'i18next'
+import type { ExternalSquadSubscriptionSettingsSchema } from '@remnawave/backend-contract'
+import type { TFunction } from 'i18next'
 import { HiQuestionMarkCircle } from 'react-icons/hi'
 
 const hoverCard = (text: string) => {

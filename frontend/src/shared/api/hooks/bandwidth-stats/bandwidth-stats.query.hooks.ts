@@ -1,12 +1,12 @@
-import { createQueryKeys } from '@lukemorales/query-key-factory'
 import {
+    GetInternalSquadUsageCommand,
     GetStatsNodesUsageCommand,
     GetStatsNodesUsersUsageCommand,
     GetStatsNodeUsersUsageCommand,
-    GetStatsUserUsageCommand,
-    GetInternalSquadUsageCommand
+    GetStatsUserUsageCommand
 } from '@remnawave/backend-contract'
 
+import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
 
 import {
@@ -49,7 +49,10 @@ export const useGetStatsNodesUsage = createGetQueryHook({
     endpoint: GetStatsNodesUsageCommand.TSQ_url,
     responseSchema: GetStatsNodesUsageCommand.ResponseSchema,
     requestQuerySchema: GetStatsNodesUsageCommand.RequestQuerySchema,
-    getQueryKey: ({ query }) => bandwidthStatsQueryKeys.getStatsNodesUsageCommand(query!).queryKey,
+    getQueryKey: ({ query }) =>
+        query
+            ? bandwidthStatsQueryKeys.getStatsNodesUsageCommand(query).queryKey
+            : bandwidthStatsQueryKeys.getStatsNodesUsageCommand._def,
     rQueryParams: {
         staleTime: sToMs(60)
     },
@@ -62,7 +65,9 @@ export const useGetStatsUserUsage = createGetQueryHook({
     requestQuerySchema: GetStatsUserUsageCommand.RequestQuerySchema,
     routeParamsSchema: GetStatsUserUsageCommand.RequestParamSchema,
     getQueryKey: ({ route, query }) =>
-        bandwidthStatsQueryKeys.getStatsUserUsageCommand({ ...route!, ...query! }).queryKey,
+        route && query
+            ? bandwidthStatsQueryKeys.getStatsUserUsageCommand({ ...route, ...query }).queryKey
+            : bandwidthStatsQueryKeys.getStatsUserUsageCommand._def,
     rQueryParams: {
         staleTime: sToMs(30)
     },
@@ -75,7 +80,9 @@ export const useGetStatsNodeUsersUsage = createGetQueryHook({
     requestQuerySchema: GetStatsNodeUsersUsageCommand.RequestQuerySchema,
     routeParamsSchema: GetStatsNodeUsersUsageCommand.RequestParamSchema,
     getQueryKey: ({ route, query }) =>
-        bandwidthStatsQueryKeys.getStatsNodeUsersUsageCommand({ ...route!, ...query! }).queryKey,
+        route && query
+            ? bandwidthStatsQueryKeys.getStatsNodeUsersUsageCommand({ ...route, ...query }).queryKey
+            : bandwidthStatsQueryKeys.getStatsNodeUsersUsageCommand._def,
     rQueryParams: {
         staleTime: sToMs(60)
     },
@@ -89,7 +96,9 @@ export const useGetStatsNodesUsersUsage = createBodyQueryHook({
     requestQuerySchema: GetStatsNodesUsersUsageCommand.RequestQuerySchema,
     bodySchema: GetStatsNodesUsersUsageCommand.RequestBodySchema,
     getQueryKey: ({ query, body }) =>
-        bandwidthStatsQueryKeys.getStatsNodesUsersUsageCommand({ ...query!, ...body! }).queryKey,
+        query && body
+            ? bandwidthStatsQueryKeys.getStatsNodesUsersUsageCommand({ ...query, ...body }).queryKey
+            : bandwidthStatsQueryKeys.getStatsNodesUsersUsageCommand._def,
     rQueryParams: {
         staleTime: sToMs(60)
     },
@@ -102,7 +111,9 @@ export const useGetInternalSquadUsage = createGetQueryHook({
     requestQuerySchema: GetInternalSquadUsageCommand.RequestQuerySchema,
     routeParamsSchema: GetInternalSquadUsageCommand.RequestParamSchema,
     getQueryKey: ({ route, query }) =>
-        bandwidthStatsQueryKeys.getInternalSquadUsageCommand({ ...route!, ...query! }).queryKey,
+        route && query
+            ? bandwidthStatsQueryKeys.getInternalSquadUsageCommand({ ...route, ...query }).queryKey
+            : bandwidthStatsQueryKeys.getInternalSquadUsageCommand._def,
     rQueryParams: {
         staleTime: sToMs(60)
     },
@@ -115,7 +126,9 @@ export const useGetInternalSquadUsageInfinite = createGetInfiniteQueryHook({
     requestQuerySchema: GetInternalSquadUsageCommand.RequestQuerySchema,
     routeParamsSchema: GetInternalSquadUsageCommand.RequestParamSchema,
     getQueryKey: ({ route, query }) => [
-        ...bandwidthStatsQueryKeys.getInternalSquadUsageCommand({ ...route!, ...query! }).queryKey,
+        ...(route && query
+            ? bandwidthStatsQueryKeys.getInternalSquadUsageCommand({ ...route, ...query }).queryKey
+            : bandwidthStatsQueryKeys.getInternalSquadUsageCommand._def),
         'infinite'
     ],
     pageParamKey: 'cursor',

@@ -1,5 +1,5 @@
 import { Code, Divider, Group, List, Stack, Text, ThemeIcon, Title } from '@mantine/core'
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { TbAlertTriangle, TbServer, TbStack2 } from 'react-icons/tb'
 

@@ -1,4 +1,5 @@
 import { ActionIcon, CopyButton, Input } from '@mantine/core'
+import { optionalProp } from '@shared/lib/optional-prop'
 import { PiCheck, PiCopy } from 'react-icons/pi'
 
 import classes from './copyable-field.module.css'
@@ -38,7 +39,7 @@ export const CopyableFieldShared = ({
                                     {copied ? <PiCheck size="16px" /> : <PiCopy size="16px" />}
                                 </ActionIcon>
                             }
-                            size={size}
+                            {...optionalProp('size', size)}
                             value={value.toString()}
                         />
                     </div>

@@ -1,6 +1,5 @@
-import type { IEncryptedBlob } from './ssh-crypto'
-
 import { concatBytes } from '@noble/curves/utils.js'
+import type { IEncryptedBlob } from './ssh-crypto'
 
 import { fromBase64, toBase64 } from './ssh-crypto'
 
@@ -108,7 +107,8 @@ class Reader {
     }
 
     uint8(): number {
-        return this.take(1)[0]
+        const bytes = this.take(1)
+        return new DataView(bytes.buffer, bytes.byteOffset, 1).getUint8(0)
     }
 
     uint64(): bigint {

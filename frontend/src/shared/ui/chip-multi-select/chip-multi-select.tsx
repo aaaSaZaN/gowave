@@ -1,15 +1,18 @@
-import type { IProps } from './interfaces'
-
 import { Checkbox, Group, Input, SimpleGrid, Text } from '@mantine/core'
-
+import { optionalProp } from '@shared/lib/optional-prop'
 import classes from './ChipMultiSelect.module.css'
+import type { IProps } from './interfaces'
 
 export function ChipMultiSelect(props: IProps) {
     const { data, value, defaultValue, onChange, label, description, error } = props
 
     return (
         <Input.Wrapper description={description} error={error} label={label}>
-            <Checkbox.Group defaultValue={defaultValue} onChange={onChange} value={value}>
+            <Checkbox.Group
+                {...optionalProp('defaultValue', defaultValue)}
+                {...optionalProp('onChange', onChange)}
+                {...optionalProp('value', value)}
+            >
                 <SimpleGrid
                     cols={{
                         base: 1,

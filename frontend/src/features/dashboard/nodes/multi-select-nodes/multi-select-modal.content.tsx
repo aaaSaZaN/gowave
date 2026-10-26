@@ -1,13 +1,17 @@
 import { Stack } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { GetNodesCommand, NODES_BULK_ACTIONS, TNodesBulkActions } from '@remnawave/backend-contract'
+import {
+    type GetNodesCommand,
+    NODES_BULK_ACTIONS,
+    type TNodesBulkActions
+} from '@remnawave/backend-contract'
+import { QueryKeys, useBulkNodesActions } from '@shared/api/hooks'
+import { queryClient } from '@shared/api/query-client'
+import { runAsync } from '@shared/lib/run-async'
+import { ActionCardShared } from '@shared/ui'
 import { useTranslation } from 'react-i18next'
 import { PiPulse } from 'react-icons/pi'
 import { TbCancel, TbRefresh, TbRocket } from 'react-icons/tb'
-
-import { QueryKeys, useBulkNodesActions } from '@shared/api/hooks'
-import { queryClient } from '@shared/api/query-client'
-import { ActionCardShared } from '@shared/ui'
 
 type NodeType = GetNodesCommand.Response['response'][number]
 
@@ -27,7 +31,7 @@ export const MultiSelectNodesModalContent = (props: IProps) => {
         if (isPending || uuids.length === 0) return
         await bulkAction({ variables: { uuids, action } })
 
-        queryClient.refetchQueries({ queryKey: QueryKeys.nodes.getAllNodes.queryKey })
+        runAsync(queryClient.refetchQueries({ queryKey: QueryKeys.nodes.getAllNodes.queryKey }))
         modals.closeAll()
         setSelectedRecords([])
     }

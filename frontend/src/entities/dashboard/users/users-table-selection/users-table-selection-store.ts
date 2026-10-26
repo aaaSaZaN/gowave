@@ -1,9 +1,8 @@
-import { MRT_RowSelectionState } from '@kastov/mantine-react-table-open'
+import type { MRT_RowSelectionState } from '@kastov/mantine-react-table-open'
+import { create } from '@shared/hocs/store-wrapper'
 import { devtools } from 'zustand/middleware'
 
-import { create } from '@shared/hocs/store-wrapper'
-
-import { IActions, IState } from './interfaces'
+import type { IActions, IState } from './interfaces'
 
 const initialState: IState = {
     userIds: [],
@@ -37,7 +36,7 @@ export const useUsersTableSelectionStore = create<IActions & IState>()(
                 getInitialState: () => {
                     return initialState
                 },
-                resetState: async (): Promise<void> => {
+                resetState: (): void => {
                     set({ ...initialState })
                 }
             }

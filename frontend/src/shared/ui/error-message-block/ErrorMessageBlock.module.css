@@ -30,6 +30,6 @@
     opacity: 1;
 }
 
-.copyButton[data-copied='true'] {
+.copyButton[data-copied="true"] {
     opacity: 1;
 }

@@ -2,30 +2,29 @@ import { RestrictToVerticalAxis } from '@dnd-kit/abstract/modifiers'
 import { move } from '@dnd-kit/helpers'
 import {
     DragDropProvider,
-    DragEndEvent,
-    DragOverEvent,
+    type DragEndEvent,
+    type DragOverEvent,
     DragOverlay,
-    DragStartEvent
+    type DragStartEvent
 } from '@dnd-kit/react'
-import { Box, Container, Stack } from '@mantine/core'
-import { GetHostsCommand } from '@remnawave/backend-contract'
-import { useWindowVirtualizer } from '@tanstack/react-virtual'
-import { HostCardWidget } from '@widgets/dashboard/hosts/host-card'
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { TbListCheck } from 'react-icons/tb'
-
-import { useGetNodes } from '@shared/api/hooks'
-import { useIsMobile } from '@shared/hooks'
-import { NO_TAG, TagFilterBar } from '@shared/ui'
-import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
-
 import {
     useHostsActiveTag,
     useViewPreferencesStoreActions
 } from '@entities/dashboard/view-preferences-store'
+import { Box, Container, Stack } from '@mantine/core'
+import type { GetHostsCommand } from '@remnawave/backend-contract'
+import { useGetNodes } from '@shared/api/hooks'
+import { useIsMobile } from '@shared/hooks'
+import { useVirtualList } from '@shared/hooks/use-virtual-list'
+import { requireValue } from '@shared/lib/invariant'
+import { NO_TAG, TagFilterBar } from '@shared/ui'
+import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
+import { HostCardWidget } from '@widgets/dashboard/hosts/host-card'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { TbListCheck } from 'react-icons/tb'
 
 import classes from './hosts-table.module.css'
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export const HostsTableWidget = memo((props: IProps) => {
     const {
@@ -63,12 +62,12 @@ export const HostsTableWidget = memo((props: IProps) => {
         }
     }, [])
 
-    const virtualizer = useWindowVirtualizer({
+    const virtualizer = useVirtualList({
         count: visibleState.length,
         estimateSize: () => (isMobile ? 202 : 88),
         overscan: 7,
         scrollMargin,
-        getItemKey: (index) => visibleState[index].uuid
+        getItemKey: (index) => visibleState[index]?.uuid ?? index
     })
 
     const nodesByUuid = useMemo(
@@ -94,7 +93,9 @@ export const HostsTableWidget = memo((props: IProps) => {
                 if (newIds === ids) return prev
 
                 const hostsByUuid = new Map(prev.map((host) => [host.uuid, host]))
-                return newIds.map((uuid) => hostsByUuid.get(uuid)!)
+                return newIds.map((uuid) =>
+                    requireValue(hostsByUuid.get(uuid), 'Reordered host is missing')
+                )
             })
         },
         [handlers]
@@ -147,14 +148,14 @@ export const HostsTableWidget = memo((props: IProps) => {
                     <div ref={listRef}>
                         <div
                             style={{
-                                height: `${virtualizer.getTotalSize()}px`,
+                                height: `${virtualizer.totalSize}px`,
                                 width: '100%',
                                 position: 'relative'
                             }}
                         >
                             <Container fluid>
                                 <Stack gap={0}>
-                                    {virtualizer.getVirtualItems().map((virtualItem) => {
+                                    {virtualizer.virtualItems.map((virtualItem) => {
                                         const item = visibleState[virtualItem.index]
                                         if (!item) return null
 
@@ -170,8 +171,7 @@ export const HostsTableWidget = memo((props: IProps) => {
                                                     left: 0,
                                                     right: 0,
                                                     transform: `translateY(${
-                                                        virtualItem.start -
-                                                        virtualizer.options.scrollMargin
+                                                        virtualItem.start - virtualizer.scrollMargin
                                                     }px)`,
                                                     willChange: 'transform'
                                                 }}

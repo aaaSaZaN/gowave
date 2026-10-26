@@ -1,8 +1,7 @@
 import { ActionIcon, Tooltip } from '@mantine/core'
+import { showModal } from '@shared/_modals/show-modal'
 import { useTranslation } from 'react-i18next'
 import { TbRadar } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
 
 interface IProps {
     nodeUuid: string

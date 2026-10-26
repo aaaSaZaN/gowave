@@ -1,6 +1,6 @@
 import type { Monaco } from '@monaco-editor/react'
-
 import { loader } from '@monaco-editor/react'
+import { runAsync } from '@shared/lib/run-async'
 import { useEffect, useState } from 'react'
 
 let monacoPromise: null | Promise<Monaco> = null
@@ -25,9 +25,11 @@ export function useMonaco(): Monaco | null {
     useEffect(() => {
         let isActive = true
 
-        loadMonaco().then((instance) => {
-            if (isActive) setMonaco(instance)
-        })
+        runAsync(
+            loadMonaco().then((instance) => {
+                if (isActive) setMonaco(instance)
+            })
+        )
 
         return () => {
             isActive = false

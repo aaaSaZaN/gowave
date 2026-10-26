@@ -1,31 +1,37 @@
-import { MultiSelectHostsFeature } from '@features/dashboard/hosts/multi-select-hosts/multi-select-hosts.feature'
-import { HeaderActionButtonsFeature } from '@features/ui/dashboard/hosts/header-action-buttons'
-import { useListState } from '@mantine/hooks'
-import { HostsDataTableWidget } from '@widgets/dashboard/hosts/hosts-datatable/hosts-datatable.widget'
-import { HostsSpotlightWidget } from '@widgets/dashboard/hosts/hosts-spotlight'
-import { HostsTableWidget } from '@widgets/dashboard/hosts/hosts-table'
-import { motion } from 'motion/react'
-/* eslint-disable no-nested-ternary */
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbListCheck } from 'react-icons/tb'
-
-import { queryClient } from '@shared/api'
-import { hostsQueryKeys, useReorderHosts } from '@shared/api/hooks'
-import { LoadingScreen, Page, PageHeaderShared } from '@shared/ui'
-
 import {
     HOSTS_VIEW_MODE,
     useHostsViewMode,
     useViewPreferencesStoreActions
 } from '@entities/dashboard/view-preferences-store'
+import { MultiSelectHostsFeature } from '@features/dashboard/hosts/multi-select-hosts/multi-select-hosts.feature'
+import { HeaderActionButtonsFeature } from '@features/ui/dashboard/hosts/header-action-buttons'
+import { useListState } from '@mantine/hooks'
+import { queryClient } from '@shared/api'
+import { hostsQueryKeys, useReorderHosts } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
+import { LoadingScreen, Page, PageHeaderShared } from '@shared/ui'
+import { HostsDataTableWidget } from '@widgets/dashboard/hosts/hosts-datatable/hosts-datatable.widget'
+import { HostsSpotlightWidget } from '@widgets/dashboard/hosts/hosts-spotlight'
+import { HostsTableWidget } from '@widgets/dashboard/hosts/hosts-table'
+import { motion } from 'motion/react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbListCheck } from 'react-icons/tb'
 
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export default function HostsPageComponent(props: IProps) {
     const { t } = useTranslation()
     const { configProfiles, hosts, hostTags, isLoading } = props
     const [selectedHosts, setSelectedHosts] = useState<string[]>([])
+    const [previousHosts, setPreviousHosts] = useState(hosts)
+    if (previousHosts !== hosts) {
+        setPreviousHosts(hosts)
+        if (hosts) {
+            const existing = new Set(hosts.map((host) => host.uuid))
+            setSelectedHosts((selected) => selected.filter((uuid) => existing.has(uuid)))
+        }
+    }
     const [state, handlers] = useListState(hosts || [])
     const isDraggingRef = useRef(false)
 
@@ -33,7 +39,9 @@ export default function HostsPageComponent(props: IProps) {
     const { mutate: reorderHosts } = useReorderHosts({
         mutationFns: {
             onError: () => {
-                queryClient.invalidateQueries({ queryKey: hostsQueryKeys.getAllHosts.queryKey })
+                runAsync(
+                    queryClient.invalidateQueries({ queryKey: hostsQueryKeys.getAllHosts.queryKey })
+                )
             }
         }
     })
@@ -41,7 +49,7 @@ export default function HostsPageComponent(props: IProps) {
     const { setHostsViewMode } = useViewPreferencesStoreActions()
 
     useEffect(() => {
-        ;(async () => {
+        ;(() => {
             if (!hosts || !state) {
                 return
             }
@@ -58,7 +66,7 @@ export default function HostsPageComponent(props: IProps) {
             }))
 
             const hasOrderChanged = hostsToReorder?.some(
-                (host, index) => host.uuid !== state[index].uuid
+                (host, index) => host.uuid !== state[index]?.uuid
             )
 
             if (hasOrderChanged) {
@@ -66,11 +74,11 @@ export default function HostsPageComponent(props: IProps) {
                 queryClient.setQueryData(hostsQueryKeys.getAllHosts.queryKey, state)
             }
         })()
-    }, [state])
+    }, [state, hosts, reorderHosts])
 
     useEffect(() => {
         handlers.setState(hosts || [])
-    }, [hosts])
+    }, [hosts, handlers.setState])
 
     const moveSelected = useCallback(
         (mode: 'bottom' | 'down' | 'top' | 'up') => {
@@ -92,8 +100,16 @@ export default function HostsPageComponent(props: IProps) {
 
                 for (let i = start; i !== end; i += step) {
                     const j = i + offset
-                    if (selected.has(next[i].uuid) && !selected.has(next[j].uuid)) {
-                        ;[next[i], next[j]] = [next[j], next[i]]
+                    const currentItem = next[i]
+                    const adjacentItem = next[j]
+                    if (
+                        currentItem &&
+                        adjacentItem &&
+                        selected.has(currentItem.uuid) &&
+                        !selected.has(adjacentItem.uuid)
+                    ) {
+                        next[i] = adjacentItem
+                        next[j] = currentItem
                     }
                 }
                 return next

@@ -1,13 +1,23 @@
+import {
+    useSrhInspectorTableStore,
+    useSrhInspectorTableStoreActions
+} from '@entities/dashboard/srh-inspector/srh-inspector-table-store'
 import { useSrhInspectorTableColumns } from '@features/dashboard/srh-inspector/srh-inspector-table/model/use-srh-inspector-table-columns'
 import {
     MantineReactTable,
-    MRT_ColumnFilterFnsState,
+    type MRT_ColumnFilterFnsState,
     MRT_ShowHideColumnsButton,
     MRT_ToggleDensePaddingButton,
     MRT_ToggleFullScreenButton,
     useMantineReactTable
 } from '@kastov/mantine-react-table-open'
 import { ActionIcon, ActionIconGroup, Tooltip } from '@mantine/core'
+import { useGetSubscriptionRequestHistory } from '@shared/api/hooks'
+import { usePreventTableBackScroll } from '@shared/hooks'
+import { DEFAULT_PAGINATION_STATE, useMrtTableBinding } from '@shared/lib/mrt-table-store'
+import { ResolveUserActionShared } from '@shared/ui/resolve-user-action-icon'
+import { DataTableShared } from '@shared/ui/table'
+import { sToMs } from '@shared/utils/time-utils'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -18,26 +28,18 @@ import {
     TbRestore
 } from 'react-icons/tb'
 
-import { useGetSubscriptionRequestHistory } from '@shared/api/hooks'
-import { usePreventTableBackScroll } from '@shared/hooks'
-import { DEFAULT_PAGINATION_STATE, useMrtTableBinding } from '@shared/lib/mrt-table-store'
-import { ResolveUserActionShared } from '@shared/ui/resolve-user-action-icon'
-import { DataTableShared } from '@shared/ui/table'
-import { sToMs } from '@shared/utils/time-utils'
-
-import {
-    useSrhInspectorTableStore,
-    useSrhInspectorTableStoreActions
-} from '@entities/dashboard/srh-inspector/srh-inspector-table-store'
-
 export function SrhInspectorTableWidget() {
     const { t } = useTranslation()
 
     const actions = useSrhInspectorTableStoreActions()
     const tableColumns = useSrhInspectorTableColumns()
 
-    const { state: persistedTableState, handlers: persistedTableHandlers } =
-        useMrtTableBinding(useSrhInspectorTableStore)
+    const { state: persistedTableState, handlers: persistedTableHandlers } = useMrtTableBinding({
+        getState: useSrhInspectorTableStore.getState,
+        getInitialState: useSrhInspectorTableStore.getInitialState,
+        setState: useSrhInspectorTableStore.setState,
+        subscribe: useSrhInspectorTableStore.subscribe
+    })
 
     const [columnFilterFns, setColumnFilterFns] = useState<MRT_ColumnFilterFnsState>(
         Object.fromEntries(tableColumns.map(({ accessorKey }) => [accessorKey, 'contains']))
@@ -87,10 +89,14 @@ export function SrhInspectorTableWidget() {
         enableColumnResizing: true,
 
         /* prettier-ignore */
-        mantineToolbarAlertBannerProps: isError ? {
-            color: 'red',
-            children: t('user-table.widget.error-loading-data')
-        } : undefined,
+        ...(isError
+            ? {
+                  mantineToolbarAlertBannerProps: {
+                      color: 'red',
+                      children: t('user-table.widget.error-loading-data')
+                  }
+              }
+            : {}),
 
         ...persistedTableHandlers,
         onColumnFilterFnsChange: setColumnFilterFns,
@@ -137,7 +143,7 @@ export function SrhInspectorTableWidget() {
                 <ResolveUserActionShared userId={row.original.userId} />
                 <ActionIcon
                     color="grape"
-                    onClick={async () => {
+                    onClick={() => {
                         window.open(`https://ipinfo.io/${row.original.requestIp}`, '_blank')
                     }}
                     size="input-sm"

@@ -1,5 +1,6 @@
 import { Card, Center, ScrollArea, Skeleton, Stack, Text } from '@mantine/core'
-import { ReactNode } from 'react'
+import { optionalProp } from '@shared/lib/optional-prop'
+import type { ReactNode } from 'react'
 import { PiEmpty } from 'react-icons/pi'
 import { Virtuoso } from 'react-virtuoso'
 
@@ -8,6 +9,7 @@ import { LeaderboardItemCardShared } from './leaderboard-item-card.shared'
 const LoadingMoreFooter = () => (
     <Stack gap={6}>
         {Array.from({ length: 3 }, (_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: Skeletons are stateless placeholder slots.
             <Skeleton height={40} key={`more-${i}`} />
         ))}
     </Stack>
@@ -57,7 +59,7 @@ export function TopLeaderboardCardShared<T extends ITopLeaderboardItem>(props: I
     let maxTraffic = 1
     if (items && items.length > 0) {
         if (ordered) {
-            maxTraffic = items[0].total
+            maxTraffic = items[0]?.total ?? 0
         } else {
             maxTraffic = items.reduce((max, item) => Math.max(max, item.total), 1)
         }
@@ -69,12 +71,15 @@ export function TopLeaderboardCardShared<T extends ITopLeaderboardItem>(props: I
                 <LeaderboardItemCardShared
                     color={item.color}
                     countryFlag={renderCountryFlag?.(item)}
-                    formatValue={formatValue}
+                    {...optionalProp('formatValue', formatValue)}
                     key={item.name}
                     name={item.name}
-                    onItemClick={onItemClick ? () => onItemClick(item) : undefined}
+                    {...optionalProp(
+                        'onItemClick',
+                        onItemClick ? () => onItemClick(item) : undefined
+                    )}
                     total={item.total}
-                    uuid={item.uuid}
+                    {...optionalProp('uuid', item.uuid)}
                     value={maxTraffic}
                 />
             ))}
@@ -89,6 +94,7 @@ export function TopLeaderboardCardShared<T extends ITopLeaderboardItem>(props: I
                 {isLoading && (
                     <Stack gap={6}>
                         {Array.from({ length: skeletonCount }, (_, i) => (
+                            // biome-ignore lint/suspicious/noArrayIndexKey: Skeletons are stateless placeholder slots.
                             <Skeleton height={40} key={i} />
                         ))}
                     </Stack>
@@ -96,21 +102,24 @@ export function TopLeaderboardCardShared<T extends ITopLeaderboardItem>(props: I
 
                 {!isLoading && items && items.length > 0 && virtualized && (
                     <Virtuoso
-                        components={{ Footer: isFetchingMore ? LoadingMoreFooter : undefined }}
+                        components={isFetchingMore ? { Footer: LoadingMoreFooter } : {}}
                         computeItemKey={(_, item) => item.name}
                         data={items}
-                        endReached={onEndReached}
+                        {...optionalProp('endReached', onEndReached)}
                         increaseViewportBy={200}
                         itemContent={(_, item) => (
                             <div style={{ paddingBottom: 6 }}>
                                 <LeaderboardItemCardShared
                                     color={item.color}
                                     countryFlag={renderCountryFlag?.(item)}
-                                    formatValue={formatValue}
+                                    {...optionalProp('formatValue', formatValue)}
                                     name={item.name}
-                                    onItemClick={onItemClick ? () => onItemClick(item) : undefined}
+                                    {...optionalProp(
+                                        'onItemClick',
+                                        onItemClick ? () => onItemClick(item) : undefined
+                                    )}
                                     total={item.total}
-                                    uuid={item.uuid}
+                                    {...optionalProp('uuid', item.uuid)}
                                     value={maxTraffic}
                                 />
                             </div>
@@ -119,22 +128,22 @@ export function TopLeaderboardCardShared<T extends ITopLeaderboardItem>(props: I
                     />
                 )}
 
-                {!isLoading && items && items.length > 0 && !virtualized && (
-                    <>
-                        {maxHeight ? (
-                            <ScrollArea.Autosize
-                                mah={maxHeight}
-                                scrollbars="y"
-                                styles={{ content: { minWidth: 0 }, scrollbar: { width: '10px' } }}
-                                type="hover"
-                            >
-                                {content}
-                            </ScrollArea.Autosize>
-                        ) : (
-                            content
-                        )}
-                    </>
-                )}
+                {!isLoading &&
+                    items &&
+                    items.length > 0 &&
+                    !virtualized &&
+                    (maxHeight ? (
+                        <ScrollArea.Autosize
+                            mah={maxHeight}
+                            scrollbars="y"
+                            styles={{ content: { minWidth: 0 }, scrollbar: { width: '10px' } }}
+                            type="hover"
+                        >
+                            {content}
+                        </ScrollArea.Autosize>
+                    ) : (
+                        content
+                    ))}
 
                 {!isLoading && items && items.length === 0 && (
                     <Center flex={1}>

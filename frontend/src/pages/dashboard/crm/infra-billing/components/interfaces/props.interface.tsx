@@ -1,1 +1,1 @@
-export interface Props {}
+export type Props = Record<string, never>

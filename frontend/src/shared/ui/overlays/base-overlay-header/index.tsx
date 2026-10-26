@@ -1,10 +1,18 @@
-import { Group, Stack, Text, ThemeIcon, ThemeIconProps, Title, TitleProps } from '@mantine/core'
+import {
+    Group,
+    Stack,
+    Text,
+    ThemeIcon,
+    type ThemeIconProps,
+    Title,
+    type TitleProps
+} from '@mantine/core'
 import { useClipboard } from '@mantine/hooks'
-import { ReactNode } from 'react'
-import ReactCountryFlag from 'react-country-flag'
-
-import { TOpenEntity } from '@shared/constants'
+import type { TOpenEntity } from '@shared/constants'
+import { optionalProp } from '@shared/lib/optional-prop'
 import { CopyEntityLinkButton } from '@shared/ui/copy-entity-link-button'
+import ReactCountryFlag from '@shared/ui/country-flag'
+import type { ReactNode } from 'react'
 
 type IProps = {
     countryCode?: string
@@ -46,7 +54,12 @@ export const BaseOverlayHeader = (props: IProps) => {
     return (
         <Group gap="sm" style={truncateTitle ? { minWidth: 0 } : undefined} wrap="nowrap">
             {!hideIcon && (
-                <ThemeIcon color={iconColor} size="lg" variant={iconVariant} {...themeIconProps}>
+                <ThemeIcon
+                    color={iconColor}
+                    size="lg"
+                    {...optionalProp('variant', iconVariant)}
+                    {...themeIconProps}
+                >
                     <IconComponent size={iconSize} />
                 </ThemeIcon>
             )}

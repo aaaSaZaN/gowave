@@ -1,18 +1,18 @@
 import { ActionIcon, Alert, Button, Card, Group, Stack, Textarea, TextInput } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { PiChatsCircle, PiInfo, PiPlus, PiTrash } from 'react-icons/pi'
-
 import { HelpActionIconShared } from '@shared/_modals/universal/help-drawer/help-action-icon.shared'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useUpdateSubscriptionSettings } from '@shared/api/hooks'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers/template-info-popover/template-info-popover.shared'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 import { handleFormErrors, sortResponseHeadersByPriority } from '@shared/utils/misc'
+import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { PiChatsCircle, PiInfo, PiPlus, PiTrash } from 'react-icons/pi'
 
 interface HeaderItem {
+    id: string
     key: string
     value: string
 }
@@ -28,13 +28,24 @@ export const SubscriptionResponseHeadersCardWidget = (props: IProps) => {
     const { subscriptionSettings } = props
     const { t } = useTranslation()
 
-    const [headers, setHeaders] = useState<HeaderItem[]>([])
-
-    const updateHeaders = useCallback((newHeaders: HeaderItem[]) => {
-        setHeaders(newHeaders)
-    }, [])
-
-    const [localHeaders, setLocalHeaders] = useState<HeaderItem[]>(headers)
+    const [localHeaders, setLocalHeaders] = useState<HeaderItem[]>(() =>
+        sortResponseHeadersByPriority(
+            Object.entries(subscriptionSettings.customResponseHeaders ?? {}).map(
+                ([key, value]) => ({ id: `stored:${key}`, key, value })
+            )
+        )
+    )
+    const [previousSettings, setPreviousSettings] = useState(subscriptionSettings)
+    if (previousSettings !== subscriptionSettings) {
+        setPreviousSettings(subscriptionSettings)
+        setLocalHeaders(
+            sortResponseHeadersByPriority(
+                Object.entries(subscriptionSettings.customResponseHeaders ?? {}).map(
+                    ([key, value]) => ({ id: `stored:${key}`, key, value })
+                )
+            )
+        )
+    }
 
     const form = useForm<UpdateSubscriptionSettingsCommand.RequestBody>({
         name: 'subscription-user-remarks-card-form',
@@ -61,8 +72,9 @@ export const SubscriptionResponseHeadersCardWidget = (props: IProps) => {
     })
 
     const handleSubmit = form.onSubmit((values) => {
-        const headersFiltered = headers
+        const headersFiltered = localHeaders
             .map((header) => ({
+                id: header.id,
                 key: header.key.trim(),
                 value: header.value.trim()
             }))
@@ -72,6 +84,7 @@ export const SubscriptionResponseHeadersCardWidget = (props: IProps) => {
         const uniqueHeaders: HeaderItem[] = []
         for (let i = headersFiltered.length - 1; i >= 0; i--) {
             const header = headersFiltered[i]
+            if (!header) continue
             if (!seen.has(header.key)) {
                 uniqueHeaders.unshift(header)
                 seen.add(header.key)
@@ -112,52 +125,8 @@ export const SubscriptionResponseHeadersCardWidget = (props: IProps) => {
         })
     })
 
-    useEffect(() => {
-        if (
-            subscriptionSettings.customResponseHeaders &&
-            typeof subscriptionSettings.customResponseHeaders === 'object' &&
-            subscriptionSettings.customResponseHeaders !== null
-        ) {
-            const headerItems = Object.entries(subscriptionSettings.customResponseHeaders).map(
-                ([key, value]) => ({ key, value })
-            )
-            setHeaders(sortResponseHeadersByPriority(headerItems))
-        } else {
-            setHeaders([])
-        }
-    }, [subscriptionSettings])
-
-    const isInitializedRef = useRef(false)
-
-    useEffect(() => {
-        if (!isInitializedRef.current && headers.length > 0) {
-            if (!(headers.length === 1 && headers[0].key === '' && headers[0].value === '')) {
-                setLocalHeaders(headers)
-            }
-            isInitializedRef.current = true
-        }
-    }, [headers])
-
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-    useEffect(() => {
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current)
-        }
-
-        timeoutRef.current = setTimeout(() => {
-            updateHeaders(localHeaders)
-        }, 100)
-
-        return () => {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current)
-            }
-        }
-    }, [localHeaders, updateHeaders])
-
     const addLocalHeader = useCallback(() => {
-        setLocalHeaders((prev) => [...prev, { key: '', value: '' }])
+        setLocalHeaders((prev) => [...prev, { id: crypto.randomUUID(), key: '', value: '' }])
     }, [])
 
     const removeLocalHeader = useCallback((index: number) => {
@@ -171,7 +140,9 @@ export const SubscriptionResponseHeadersCardWidget = (props: IProps) => {
     const updateLocalHeaderKey = useCallback((index: number, key: string) => {
         setLocalHeaders((prev) => {
             const newHeaders = [...prev]
-            newHeaders[index] = { ...newHeaders[index], key }
+            const current = newHeaders[index]
+            if (!current) return prev
+            newHeaders[index] = { ...current, key }
             return newHeaders
         })
     }, [])
@@ -179,7 +150,9 @@ export const SubscriptionResponseHeadersCardWidget = (props: IProps) => {
     const updateLocalHeaderValue = useCallback((index: number, value: string) => {
         setLocalHeaders((prev) => {
             const newHeaders = [...prev]
-            newHeaders[index] = { ...newHeaders[index], value }
+            const current = newHeaders[index]
+            if (!current) return prev
+            newHeaders[index] = { ...current, value }
             return newHeaders
         })
     }, [])
@@ -201,7 +174,7 @@ export const SubscriptionResponseHeadersCardWidget = (props: IProps) => {
                     <Stack gap="md">
                         <Card.Section p="lg">
                             {localHeaders.map((header, index) => (
-                                <Group align="flex-start" gap="sm" key={index} mb="xs">
+                                <Group align="flex-start" gap="sm" key={header.id} mb="xs">
                                     <ActionIcon
                                         color="red"
                                         onClick={() => removeLocalHeader(index)}
@@ -234,14 +207,14 @@ export const SubscriptionResponseHeadersCardWidget = (props: IProps) => {
                             ))}
                         </Card.Section>
 
-                        {form.errors.customResponseHeaders && (
+                        {form.errors['customResponseHeaders'] && (
                             <Card.Section p="lg">
                                 <Alert
                                     color="red"
                                     icon={<PiInfo />}
                                     title={t('common.message.error')}
                                 >
-                                    {form.errors.customResponseHeaders}
+                                    {form.errors['customResponseHeaders']}
                                 </Alert>
                             </Card.Section>
                         )}

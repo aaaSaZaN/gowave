@@ -1,5 +1,8 @@
 import { Badge, Group, Text, UnstyledButton } from '@mantine/core'
-import { getLanguageInfo, TSubscriptionPageLanguageCode } from '@remnawave/subscription-page-types'
+import {
+    getLanguageInfo,
+    type TSubscriptionPageLanguageCode
+} from '@remnawave/subscription-page-types'
 
 import styles from '../subpage-config-visual-editor.module.css'
 

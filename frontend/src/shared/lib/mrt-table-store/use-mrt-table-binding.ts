@@ -1,10 +1,10 @@
-import type { MrtTableStore } from './create-mrt-table-store'
-import type { StoreApi, UseBoundStore } from 'zustand'
-
+import { type StoreApi, useStore } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
+import type { MrtTableStore } from './create-mrt-table-store'
 
-export const useMrtTableBinding = (useStore: UseBoundStore<StoreApi<MrtTableStore>>) => {
+export const useMrtTableBinding = (store: StoreApi<MrtTableStore>) => {
     const state = useStore(
+        store,
         useShallow((s) => ({
             columnFilters: s.columnFilter,
             columnOrder: s.columnOrder,
@@ -16,7 +16,7 @@ export const useMrtTableBinding = (useStore: UseBoundStore<StoreApi<MrtTableStor
             sorting: s.sorting
         }))
     )
-    const actions = useStore((s) => s.actions)
+    const actions = useStore(store, (s) => s.actions)
 
     return {
         state,

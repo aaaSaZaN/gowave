@@ -1,7 +1,6 @@
 import { Center, Stack, Text, ThemeIcon } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-
 import { SectionCard } from '@shared/ui/section-card'
+import { useTranslation } from 'react-i18next'
 
 interface IProps {
     icon: React.ReactNode

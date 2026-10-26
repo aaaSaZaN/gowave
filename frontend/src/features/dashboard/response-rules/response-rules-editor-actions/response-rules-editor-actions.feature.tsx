@@ -1,3 +1,4 @@
+import { useToken } from '@entities/auth/session-store/use-session-store'
 import {
     ActionIcon,
     Anchor,
@@ -16,9 +17,16 @@ import {
     REMNAWAVE_CLIENT_TYPE_BROWSER,
     REMNAWAVE_CLIENT_TYPE_HEADER,
     TestSrrMatcherCommand,
-    UpdateSubscriptionSettingsCommand
+    type UpdateSubscriptionSettingsCommand
 } from '@remnawave/backend-contract'
-import consola from 'consola/browser'
+import { queryClient } from '@shared/api'
+import { QueryKeys, useUpdateSubscriptionSettings } from '@shared/api/hooks'
+import { useIsMobile } from '@shared/hooks'
+import consola from '@shared/lib/logger'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
+import { useDownloadTemplate } from '@shared/ui/load-templates/use-download-template'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { useTranslation } from 'react-i18next'
 import { PiCheck, PiCheckSquareOffset, PiCopy, PiFloppyDisk } from 'react-icons/pi'
 import {
@@ -31,15 +39,7 @@ import {
     TbSelectAll
 } from 'react-icons/tb'
 
-import { queryClient } from '@shared/api'
-import { QueryKeys, useUpdateSubscriptionSettings } from '@shared/api/hooks'
-import { useIsMobile } from '@shared/hooks'
-import { useDownloadTemplate } from '@shared/ui/load-templates/use-download-template'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-
-import { useToken } from '@entities/auth/session-store/use-session-store'
-
-import { Props } from './interfaces'
+import type { Props } from './interfaces'
 
 export function ResponseRulesEditorActionsFeature(props: Props) {
     const {
@@ -187,14 +187,14 @@ export function ResponseRulesEditorActionsFeature(props: Props) {
     const formatDocument = () => {
         if (!editorRef.current) return
 
-        editorRef.current.getAction('editor.action.formatDocument')?.run()
+        runAsync(editorRef.current.getAction('editor.action.formatDocument')?.run())
     }
 
     const handleOpenDebugger = () => {
         if (!editorRef.current) return
 
         const currentValue = editorRef.current.getValue()
-        let parsedRules
+        let parsedRules: unknown
 
         try {
             parsedRules = JSON.parse(currentValue)
@@ -348,7 +348,7 @@ export function ResponseRulesEditorActionsFeature(props: Props) {
 
                     <Menu.Dropdown>
                         <Menu.Item
-                            color={clipboard.copied ? 'teal' : undefined}
+                            {...optionalProp('color', clipboard.copied ? 'teal' : undefined)}
                             leftSection={<TbClipboardCopy size={14} />}
                             onClick={handleCopyConfig}
                         >

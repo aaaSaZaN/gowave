@@ -1,8 +1,7 @@
 import { Group, Text } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import clsx from 'clsx'
-
 import { useGetGowaveMetadata } from '@shared/api/hooks'
+import clsx from '@shared/lib/classes'
 
 import { Logo } from '../logo'
 import { BaseOverlayHeader } from '../overlays/base-overlay-header'

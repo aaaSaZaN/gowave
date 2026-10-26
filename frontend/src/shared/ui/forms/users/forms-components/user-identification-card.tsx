@@ -13,11 +13,21 @@ import {
     Tooltip
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { GetUserByIdCommand, USERS_STATUS } from '@remnawave/backend-contract'
+import { type GetUserByIdCommand, USERS_STATUS } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import { useGetUserMetadata } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
+import { CopyableCodeBlock } from '@shared/ui/copyable-code-block'
+import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
+import { prettifyBytesUtil } from '@shared/utils/bytes'
+import { resolveCountryCode } from '@shared/utils/misc/resolve-country-code'
+import { formatRelativeDateUtil, formatTimeUtil, getTimeAgoUtil } from '@shared/utils/time-utils'
 import { UserStatusBadge } from '@widgets/dashboard/users/user-status-badge'
 import dayjs from 'dayjs'
 import { githubDarkTheme, JsonEditor } from 'json-edit-react'
-import { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
+import type { ForwardRefComponent, HTMLMotionProps, Variants } from 'motion/react'
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HiQuestionMarkCircle } from 'react-icons/hi'
@@ -35,16 +45,6 @@ import {
     TbUser,
     TbWifi
 } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { useGetUserMetadata } from '@shared/api/hooks'
-import { CopyableCodeBlock } from '@shared/ui/copyable-code-block'
-import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
-import { prettifyBytesUtil } from '@shared/utils/bytes'
-import { resolveCountryCode } from '@shared/utils/misc/resolve-country-code'
-import { formatRelativeDateUtil, formatTimeUtil, getTimeAgoUtil } from '@shared/utils/time-utils'
 
 interface IProps {
     cardVariants: Variants
@@ -162,10 +162,12 @@ export const UserIdentificationCard = memo((props: IProps) => {
                                 <ActionIcon
                                     color="teal"
                                     onClick={() => {
-                                        showModal('users_subscriptionQrCodeModal', {
-                                            subscriptionUrl: user.subscriptionUrl,
-                                            username: user.username
-                                        })
+                                        runAsync(
+                                            showModal('users_subscriptionQrCodeModal', {
+                                                subscriptionUrl: user.subscriptionUrl,
+                                                username: user.username
+                                            })
+                                        )
                                     }}
                                     size="lg"
                                     variant="soft"
@@ -180,10 +182,12 @@ export const UserIdentificationCard = memo((props: IProps) => {
                                 <ActionIcon
                                     color="teal"
                                     onClick={() => {
-                                        showModal('users_connectionKeysDrawer', {
-                                            userId: user.id,
-                                            shortUuid: user.shortUuid
-                                        })
+                                        runAsync(
+                                            showModal('users_connectionKeysDrawer', {
+                                                userId: user.id,
+                                                shortUuid: user.shortUuid
+                                            })
+                                        )
                                     }}
                                     size="lg"
                                     variant="soft"
@@ -255,9 +259,11 @@ export const UserIdentificationCard = memo((props: IProps) => {
                                 <ActionIcon
                                     color="cyan"
                                     onClick={() => {
-                                        showModal('users_userAccessibleNodesModal', {
-                                            userId: user.id
-                                        })
+                                        runAsync(
+                                            showModal('users_userAccessibleNodesModal', {
+                                                userId: user.id
+                                            })
+                                        )
                                     }}
                                     size="lg"
                                     variant="soft"
@@ -274,9 +280,11 @@ export const UserIdentificationCard = memo((props: IProps) => {
                                 <ActionIcon
                                     color="indigo"
                                     onClick={() => {
-                                        showModal('users_userUsageModal', {
-                                            userId: user.id
-                                        })
+                                        runAsync(
+                                            showModal('users_userUsageModal', {
+                                                userId: user.id
+                                            })
+                                        )
                                     }}
                                     size="lg"
                                     variant="soft"
@@ -326,9 +334,11 @@ export const UserIdentificationCard = memo((props: IProps) => {
                                 <ActionIcon
                                     color="indigo"
                                     onClick={() => {
-                                        showModal('users_userHwidDevicesModal', {
-                                            userId: user.id
-                                        })
+                                        runAsync(
+                                            showModal('users_userHwidDevicesModal', {
+                                                userId: user.id
+                                            })
+                                        )
                                     }}
                                     size="lg"
                                     variant="soft"
@@ -341,9 +351,11 @@ export const UserIdentificationCard = memo((props: IProps) => {
                                 <ActionIcon
                                     color="indigo"
                                     onClick={() => {
-                                        showModal('users_userActiveSessionDrawer', {
-                                            userId: user.id
-                                        })
+                                        runAsync(
+                                            showModal('users_userActiveSessionDrawer', {
+                                                userId: user.id
+                                            })
+                                        )
                                     }}
                                     size="lg"
                                     variant="soft"
@@ -473,9 +485,11 @@ export const UserIdentificationCard = memo((props: IProps) => {
                                 p="xs"
                                 radius="md"
                                 onClick={() => {
-                                    showModal('nodes_editNodeModal', {
-                                        nodeUuid: lastConnectedNode.uuid
-                                    })
+                                    runAsync(
+                                        showModal('nodes_editNodeModal', {
+                                            nodeUuid: lastConnectedNode.uuid
+                                        })
+                                    )
                                 }}
                                 style={{ cursor: 'pointer' }}
                             >

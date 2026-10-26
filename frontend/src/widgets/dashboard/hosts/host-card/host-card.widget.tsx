@@ -14,16 +14,24 @@ import {
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import {
-    GetHostsCommand,
-    GetNodesCommand,
-    GetConfigProfilesCommand,
+    type GetConfigProfilesCommand,
+    type GetHostsCommand,
+    type GetNodesCommand,
     INTERNAL_SQUADS_MODE,
     SUBSCRIPTION_TEMPLATE_TYPE
 } from '@remnawave/backend-contract'
-import cx from 'clsx'
-import ColorHash from 'color-hash'
+import { showModal } from '@shared/_modals/show-modal'
+import { ROUTES } from '@shared/constants'
+import { useIsMobile } from '@shared/hooks'
+import cx from '@shared/lib/classes'
+import ColorHash from '@shared/lib/color'
+import { runAsync } from '@shared/lib/run-async'
+import { XrayLogo } from '@shared/ui/logos'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SingleRowOverflowList } from '@shared/ui/single-row-overflow-list'
+import { resolveCountryCode } from '@shared/utils/misc/resolve-country-code'
 import { githubDarkTheme, JsonEditor } from 'json-edit-react'
-import { CSSProperties, useState } from 'react'
+import { type CSSProperties, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiNetwork, PiProhibit, PiPulse } from 'react-icons/pi'
 import { RiDraggable } from 'react-icons/ri'
@@ -37,14 +45,6 @@ import {
     TbStar
 } from 'react-icons/tb'
 import { generatePath } from 'react-router'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { ROUTES } from '@shared/constants'
-import { useIsMobile } from '@shared/hooks'
-import { XrayLogo } from '@shared/ui/logos'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SingleRowOverflowList } from '@shared/ui/single-row-overflow-list'
-import { resolveCountryCode } from '@shared/utils/misc/resolve-country-code'
 
 import classes from './HostCard.module.css'
 
@@ -104,9 +104,11 @@ export function HostCardWidget(props: IProps) {
     }
 
     const handleEdit = () => {
-        showModal('hosts_editHostDrawer', {
-            hostUuid: item.uuid
-        })
+        runAsync(
+            showModal('hosts_editHostDrawer', {
+                hostUuid: item.uuid
+            })
+        )
     }
 
     if (!configProfiles) {

@@ -15,13 +15,7 @@ import {
     TextInput,
     Tooltip
 } from '@mantine/core'
-import { GetConfigProfilesCommand } from '@remnawave/backend-contract'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { PiCheck, PiCopy, PiList, PiTag, PiTreeView, PiUsers } from 'react-icons/pi'
-import { TbCirclesRelation, TbDeviceFloppy, TbSearch } from 'react-icons/tb'
-import { Virtuoso } from 'react-virtuoso'
-
+import type { GetConfigProfilesCommand } from '@remnawave/backend-contract'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import {
     internalSquadsQueryKeys,
@@ -31,11 +25,17 @@ import {
 } from '@shared/api/hooks'
 import { queryClient } from '@shared/api/query-client'
 import { OPEN_ENTITY } from '@shared/constants'
+import { runAsync } from '@shared/lib/run-async'
 import { ConfigProfileCardShared } from '@shared/ui/config-profiles/config-profile-card/config-profile-card.shared'
 import { VirtualizedFlatInboundsListShared } from '@shared/ui/config-profiles/virtualized-flat-inbounds-list/virtualized-flat-inbounds-list.shared'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { formatInt } from '@shared/utils/misc'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { PiCheck, PiCopy, PiList, PiTag, PiTreeView, PiUsers } from 'react-icons/pi'
+import { TbCirclesRelation, TbDeviceFloppy, TbSearch } from 'react-icons/tb'
+import { Virtuoso } from 'react-virtuoso'
 
 import classes from './internal-squads-inbounds.module.css'
 
@@ -81,7 +81,7 @@ export const InternalSquadsInboundsDrawer = NiceModal.create((props: IProps) => 
     const [filterType, setFilterType] = useState<'all' | 'selected' | 'unselected'>('all')
 
     const allInbounds = useMemo(() => {
-        if (!configProfiles || !configProfiles.configProfiles) return []
+        if (!configProfiles?.configProfiles) return []
 
         return configProfiles.configProfiles.flatMap((profile) =>
             profile.inbounds.map((inbound) => ({
@@ -107,7 +107,7 @@ export const InternalSquadsInboundsDrawer = NiceModal.create((props: IProps) => 
     }, [allInbounds, debouncedSearchQuery])
 
     const filteredProfiles = useMemo(() => {
-        if (!configProfiles || !configProfiles.configProfiles) return []
+        if (!configProfiles?.configProfiles) return []
 
         if (!debouncedSearchQuery.trim()) {
             return configProfiles.configProfiles
@@ -171,7 +171,9 @@ export const InternalSquadsInboundsDrawer = NiceModal.create((props: IProps) => 
             if (profileInbounds) {
                 setSelectedInbounds((prev) => {
                     const next = new Set(prev)
-                    profileInbounds.forEach((inbound) => next.delete(inbound))
+                    profileInbounds.forEach((inbound) => {
+                        next.delete(inbound)
+                    })
                     return next
                 })
             }
@@ -189,9 +191,11 @@ export const InternalSquadsInboundsDrawer = NiceModal.create((props: IProps) => 
         useUpdateInternalSquad({
             mutationFns: {
                 onSuccess: (data) => {
-                    queryClient.refetchQueries({
-                        queryKey: internalSquadsQueryKeys.getInternalSquads.queryKey
-                    })
+                    runAsync(
+                        queryClient.refetchQueries({
+                            queryKey: internalSquadsQueryKeys.getInternalSquads.queryKey
+                        })
+                    )
                     queryClient.setQueryData(
                         internalSquadsQueryKeys.getInternalSquad({
                             uuid: data.uuid

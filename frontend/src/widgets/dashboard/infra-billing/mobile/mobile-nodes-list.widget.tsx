@@ -6,23 +6,23 @@ import {
     Checkbox,
     Divider,
     Group,
-    MantineStyleProp,
+    type MantineStyleProp,
     Stack,
     Text,
     ThemeIcon
 } from '@mantine/core'
-import { GetInfraBillingNodesCommand } from '@remnawave/backend-contract'
+import type { GetInfraBillingNodesCommand } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import { queryClient } from '@shared/api'
+import { QueryKeys, useUpdateInfraBillingNode } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
+import { formatTimeUtil } from '@shared/utils/time-utils'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbCalendar, TbCheck, TbCpu, TbCreditCard, TbExternalLink, TbServer } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { queryClient } from '@shared/api'
-import { QueryKeys, useUpdateInfraBillingNode } from '@shared/api/hooks'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
-import { formatTimeUtil } from '@shared/utils/time-utils'
 
 type BillingNode = GetInfraBillingNodesCommand.Response['response']['billingNodes'][number]
 
@@ -73,18 +73,22 @@ export function MobileNodesListWidget(props: IProps) {
     }
 
     const handleClickBillingAt = (node: BillingNode) => {
-        showModal('infraBilling_updateBillingDateModal', {
-            uuids: [node.uuid],
-            nextBillingAt: node.nextBillingAt
-        })
+        runAsync(
+            showModal('infraBilling_updateBillingDateModal', {
+                uuids: [node.uuid],
+                nextBillingAt: node.nextBillingAt
+            })
+        )
     }
 
     const handleOpenNode = (node: BillingNode) => {
         if (!node.nodeUuid) return
 
-        showModal('nodes_editNodeModal', {
-            nodeUuid: node.nodeUuid
-        })
+        runAsync(
+            showModal('nodes_editNodeModal', {
+                nodeUuid: node.nodeUuid
+            })
+        )
     }
 
     const handleOpenProvider = (node: BillingNode) => {
@@ -197,7 +201,7 @@ export function MobileNodesListWidget(props: IProps) {
                                                         IconComponent={TbServer}
                                                         iconVariant="soft"
                                                         subtitle={node.provider.name}
-                                                        title={node.name!}
+                                                        title={node.name ?? node.uuid}
                                                     />
                                                 )}
                                             </Group>

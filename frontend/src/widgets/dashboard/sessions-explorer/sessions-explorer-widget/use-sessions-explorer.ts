@@ -1,7 +1,6 @@
-import { ConnectionsByNodeResultCommand, GetNodesCommand } from '@remnawave/backend-contract'
+import type { ConnectionsByNodeResultCommand, GetNodesCommand } from '@remnawave/backend-contract'
+import { useConnectionsByNode, useConnectionsByNodeResultMutation } from '@shared/api/hooks'
 import { useEffect, useRef, useState } from 'react'
-
-import { useConnectionsByNodeResultMutation, useConnectionsByNode } from '@shared/api/hooks'
 
 type NodeType = GetNodesCommand.Response['response'][number]
 type NodeIpEntry = NonNullable<
@@ -78,7 +77,7 @@ async function runWithConcurrency<T>(
         pool.add(p)
 
         if (pool.size >= maxConcurrent) {
-            await Promise.race(pool) // eslint-disable-line no-await-in-loop
+            await Promise.race(pool)
         }
     }
 

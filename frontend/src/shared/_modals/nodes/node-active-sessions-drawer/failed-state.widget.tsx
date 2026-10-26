@@ -1,8 +1,7 @@
 import { Button, Center, Stack, Text, ThemeIcon } from '@mantine/core'
+import { SectionCard } from '@shared/ui/section-card'
 import { useTranslation } from 'react-i18next'
 import { TbAlertTriangle, TbRefresh } from 'react-icons/tb'
-
-import { SectionCard } from '@shared/ui/section-card'
 
 import { SummaryCardWidget } from './summary-card.widget'
 

@@ -1,9 +1,9 @@
 import { ActionIcon, Badge, Card, Group, Text } from '@mantine/core'
-import {
+import type {
     TSubscriptionPageBlockConfig,
     TSubscriptionPageLanguageCode
 } from '@remnawave/subscription-page-types'
-import { IconArrowDown, IconArrowUp, IconTrash } from '@tabler/icons-react'
+import { TbArrowDown, TbArrowUp, TbTrash } from 'react-icons/tb'
 
 import styles from '../subpage-config-visual-editor.module.css'
 
@@ -56,7 +56,7 @@ export function BlockCard(props: IProps) {
                         size="sm"
                         variant="subtle"
                     >
-                        <IconArrowUp size={14} />
+                        <TbArrowUp size={14} />
                     </ActionIcon>
                     <ActionIcon
                         color="gray"
@@ -68,7 +68,7 @@ export function BlockCard(props: IProps) {
                         size="sm"
                         variant="subtle"
                     >
-                        <IconArrowDown size={14} />
+                        <TbArrowDown size={14} />
                     </ActionIcon>
                     <ActionIcon
                         className={styles.deleteButton}
@@ -80,7 +80,7 @@ export function BlockCard(props: IProps) {
                         size="sm"
                         variant="subtle"
                     >
-                        <IconTrash size={14} />
+                        <TbTrash size={14} />
                     </ActionIcon>
                 </Group>
             </Group>

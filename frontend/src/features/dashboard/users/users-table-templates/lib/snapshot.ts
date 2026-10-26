@@ -1,7 +1,6 @@
-import { MRT_TableInstance } from '@kastov/mantine-react-table-open'
-import { GetUsersCommand } from '@remnawave/backend-contract'
-
-import { UsersTableTemplateSnapshot } from '@entities/dashboard/users/users-table-templates-store'
+import type { UsersTableTemplateSnapshot } from '@entities/dashboard/users/users-table-templates-store'
+import type { MRT_TableInstance } from '@kastov/mantine-react-table-open'
+import type { GetUsersCommand } from '@remnawave/backend-contract'
 
 type UserRow = GetUsersCommand.Response['response']['users'][number]
 type UsersTable = MRT_TableInstance<UserRow>

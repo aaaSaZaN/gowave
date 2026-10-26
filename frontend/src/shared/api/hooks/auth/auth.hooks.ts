@@ -1,3 +1,4 @@
+import { setToken } from '@entities/auth/session-store'
 import { notifications } from '@mantine/notifications'
 import {
     LoginCommand,
@@ -6,8 +7,6 @@ import {
     RegisterCommand,
     VerifyPasskeyAuthenticationCommand
 } from '@remnawave/backend-contract'
-
-import { setToken } from '@entities/auth/session-store'
 
 import { createMutationHook } from '../../tsq-helpers'
 

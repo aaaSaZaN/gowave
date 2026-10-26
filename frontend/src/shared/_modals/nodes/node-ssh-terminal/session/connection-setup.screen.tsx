@@ -1,4 +1,4 @@
-import type { ISshTarget } from '../ssh-terminal.types'
+import type { INodeKeyInfo } from '@entities/ssh-vault'
 
 import {
     Autocomplete,
@@ -11,18 +11,15 @@ import {
     Text,
     TextInput
 } from '@mantine/core'
-import { useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbKey, TbPlugConnected, TbRefresh, TbServer, TbTerminal2 } from 'react-icons/tb'
-
 import { CopyableCodeBlock } from '@shared/ui/copyable-code-block'
 import { NodeIpStatusIcon, resolveNodeIpStatusMeta } from '@shared/ui/node-ips'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
-
-import { INodeKeyInfo } from '@entities/ssh-vault'
-
+import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbKey, TbPlugConnected, TbRefresh, TbServer, TbTerminal2 } from 'react-icons/tb'
 import classes from '../NodeSshTerminal.module.css'
+import type { ISshTarget } from '../ssh-terminal.types'
 
 export interface INodeIp {
     ip: string

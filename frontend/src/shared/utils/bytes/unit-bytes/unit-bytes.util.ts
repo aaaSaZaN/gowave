@@ -35,8 +35,8 @@ export function bytesToUnitUtil(
 export function bestFitIecUnitUtil(bytes: null | number | undefined): TIecUnit {
     if (!bytes || bytes <= 0) return 'GiB'
 
-    for (let i = IEC_UNITS.length - 1; i >= 0; i -= 1) {
-        if (bytes >= FACTOR[IEC_UNITS[i]]) return IEC_UNITS[i]
+    for (const unit of [...IEC_UNITS].reverse()) {
+        if (bytes >= FACTOR[unit]) return unit
     }
 
     return 'KiB'

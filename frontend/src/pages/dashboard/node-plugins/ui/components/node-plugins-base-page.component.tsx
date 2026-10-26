@@ -1,12 +1,11 @@
 import { NodePluginsHeaderActionButtonsFeature } from '@features/ui/dashboard/node-plugins/header-action-buttons'
-import { GetNodesCommand, GetNodePluginsCommand } from '@remnawave/backend-contract'
+import type { GetNodePluginsCommand, GetNodesCommand } from '@remnawave/backend-contract'
+import { Page, PageHeaderShared } from '@shared/ui'
 import { NodePluginsGridWidget } from '@widgets/dashboard/node-plugins/node-plugins-grid/node-plugins-grid.widget'
 import { NodePluginsSpotlightWidget } from '@widgets/dashboard/node-plugins/node-plugins-spotlight'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { TbPackage } from 'react-icons/tb'
-
-import { Page, PageHeaderShared } from '@shared/ui'
 
 interface Props {
     nodes: GetNodesCommand.Response['response']

@@ -1,7 +1,6 @@
-import { AppShell, Group, GroupProps } from '@mantine/core'
-import { Outlet, ScrollRestoration } from 'react-router'
-
+import { AppShell, Group, type GroupProps } from '@mantine/core'
 import { SidebarLogoShared, SidebarTitleShared } from '@shared/ui/sidebar'
+import { Outlet, ScrollRestoration } from 'react-router'
 
 export const DASHBOARD_LINKS = {
     githubLink: 'https://github.com/aaaSaZaN/gowave'

@@ -1,10 +1,9 @@
 import { Divider, Group, Stack } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { PiListChecks } from 'react-icons/pi'
-
 import { useDrawerStickyOffset } from '@shared/hooks'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
+import { useTranslation } from 'react-i18next'
+import { PiListChecks } from 'react-icons/pi'
 
 import { AddOptionButton } from './add-option-button'
 import {
@@ -13,9 +12,9 @@ import {
     HOST_OPTION_NAMES_BY_GROUP
 } from './host-option-fields'
 import { useHostOptions } from './host-options.context'
+import classes from './Options.module.css'
 import { OptionField, OptionGroup } from './option-field'
 import { OptionsEmptyState } from './options-empty-state'
-import classes from './Options.module.css'
 
 export function HostOptionsSection() {
     const { inactiveFields } = useHostOptions()

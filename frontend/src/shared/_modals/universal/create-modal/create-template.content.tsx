@@ -1,16 +1,16 @@
-import { Stack, TextInput, Group, Button } from '@mantine/core'
+import { Button, Group, Stack, TextInput } from '@mantine/core'
 import { useField } from '@mantine/form'
 import {
     CreateSubscriptionTemplateCommand,
-    TSubscriptionTemplateType
+    type TSubscriptionTemplateType
 } from '@remnawave/backend-contract'
-import { t } from 'i18next'
-import { generatePath, NavigateFunction } from 'react-router'
-
 import { queryClient } from '@shared/api'
 import { QueryKeys } from '@shared/api/hooks/keys-factory'
 import { useCreateSubscriptionTemplate } from '@shared/api/hooks/subscription-template/subscription-template.mutation.hooks'
 import { ROUTES } from '@shared/constants/routes'
+import { runAsync } from '@shared/lib/run-async'
+import { t } from 'i18next'
+import { generatePath, type NavigateFunction } from 'react-router'
 
 interface IProps {
     templateType: TSubscriptionTemplateType
@@ -42,12 +42,14 @@ export const CreateTemplateContent = (props: IProps) => {
             onSuccess: (data) => {
                 onClose()
 
-                handleUpdate()
-                navigate(
-                    generatePath(ROUTES.DASHBOARD.TEMPLATES.TEMPLATE_EDITOR, {
-                        type: data.templateType,
-                        uuid: data.uuid
-                    })
+                runAsync(handleUpdate())
+                runAsync(
+                    navigate(
+                        generatePath(ROUTES.DASHBOARD.TEMPLATES.TEMPLATE_EDITOR, {
+                            type: data.templateType,
+                            uuid: data.uuid
+                        })
+                    )
                 )
             }
         }

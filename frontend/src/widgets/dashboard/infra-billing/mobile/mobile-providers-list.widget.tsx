@@ -4,25 +4,25 @@ import {
     Badge,
     Center,
     Group,
-    MantineStyleProp,
+    type MantineStyleProp,
     Stack,
     Text,
     ThemeIcon,
     Tooltip
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { GetInfraProvidersCommand } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
-import { TbCloud, TbEdit, TbLink, TbServer, TbTrash } from 'react-icons/tb'
-
+import type { GetInfraProvidersCommand } from '@remnawave/backend-contract'
 import { showModal } from '@shared/_modals/show-modal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useDeleteInfraProvider } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { SingleRowOverflowList } from '@shared/ui/single-row-overflow-list'
 import { faviconResolver, formatCurrencyWithIntl } from '@shared/utils/misc'
 import { resolveCountryCode } from '@shared/utils/misc/resolve-country-code'
+import { useTranslation } from 'react-i18next'
+import { TbCloud, TbEdit, TbLink, TbServer, TbTrash } from 'react-icons/tb'
 
 interface IProps {
     providers: GetInfraProvidersCommand.Response['response']['providers']
@@ -36,12 +36,16 @@ export function MobileProvidersListWidget(props: IProps) {
     const { mutate: deleteProvider } = useDeleteInfraProvider({
         mutationFns: {
             onSuccess: () => {
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.infraBilling.getInfraProviders.queryKey
-                })
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.infraBilling.getInfraBillingNodes.queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.infraBilling.getInfraProviders.queryKey
+                    })
+                )
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.infraBilling.getInfraBillingNodes.queryKey
+                    })
+                )
             }
         }
     })
@@ -117,8 +121,9 @@ export function MobileProvidersListWidget(props: IProps) {
                                     <ActionIcon
                                         color="teal"
                                         onClick={() => {
+                                            if (!provider.loginUrl) return
                                             window.open(
-                                                provider.loginUrl!,
+                                                provider.loginUrl,
                                                 '_blank',
                                                 'noopener,noreferrer'
                                             )

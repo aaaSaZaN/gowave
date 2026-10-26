@@ -1,14 +1,13 @@
 import { ShowConfigProfilesWithInboundsFeature } from '@features/ui/dashboard/nodes/show-config-profiles-with-inbounds'
 import { Skeleton, Stack } from '@mantine/core'
-import { UseFormReturnType } from '@mantine/form'
-import { CreateNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
-import { ForwardRefComponent, HTMLMotionProps, motion, Variants } from 'motion/react'
-import { useTranslation } from 'react-i18next'
-import { SiSecurityscorecard } from 'react-icons/si'
-
+import type { UseFormReturnType } from '@mantine/form'
+import type { CreateNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
 import { useGetConfigProfiles } from '@shared/api/hooks'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
+import { type ForwardRefComponent, type HTMLMotionProps, motion, type Variants } from 'motion/react'
+import { useTranslation } from 'react-i18next'
+import { SiSecurityscorecard } from 'react-icons/si'
 
 interface IProps<T extends CreateNodeCommand.RequestBody | UpdateNodeCommand.RequestBody> {
     cardVariants: Variants
@@ -74,7 +73,7 @@ export const NodeConfigProfilesCard = <
                                     form.getValues().configProfile?.activeConfigProfileUuid
                                 }
                                 configProfiles={configProfiles.configProfiles}
-                                errors={form.errors.configProfile}
+                                errors={form.errors['configProfile']}
                                 onSaveInbounds={saveInbounds}
                             />
                         </motion.div>

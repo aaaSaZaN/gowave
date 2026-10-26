@@ -4,7 +4,10 @@
     margin-bottom: 0.75rem;
     margin-top: 0.75rem;
     height: calc(
-        100dvh - 1.5rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+        100dvh -
+        1.5rem -
+        env(safe-area-inset-top, 0px) -
+        env(safe-area-inset-bottom, 0px)
     );
 
     background: linear-gradient(
@@ -39,7 +42,7 @@
 }
 
 .sidebarWrapper::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -92,7 +95,7 @@
 }
 
 .logoSection::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
     left: var(--mantine-spacing-md);
@@ -109,7 +112,7 @@
 }
 
 .footerSection::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: var(--mantine-spacing-md);

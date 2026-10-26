@@ -1,11 +1,11 @@
 import { Box } from '@mantine/core'
-import clsx from 'clsx'
+import clsx from '@shared/lib/classes'
 import { useState } from 'react'
 import { Virtuoso } from 'react-virtuoso'
 
 import { NodeActiveSessionItem } from './node-active-session.item.widget'
 import classes from './node-active-sessions.module.css'
-import { ActiveSessionUser } from './use-node-active-sessions'
+import type { ActiveSessionUser } from './use-node-active-sessions'
 
 interface IProps {
     users: ActiveSessionUser[]

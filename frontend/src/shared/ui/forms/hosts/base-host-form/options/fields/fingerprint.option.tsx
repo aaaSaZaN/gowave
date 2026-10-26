@@ -1,8 +1,7 @@
 import { Autocomplete } from '@mantine/core'
 import { FINGERPRINTS } from '@remnawave/backend-contract'
-import { PiCaretDown } from 'react-icons/pi'
-
 import { useSettingsRowControl } from '@shared/ui/settings-row'
+import { PiCaretDown } from 'react-icons/pi'
 
 import { useHostFormData } from '../host-form-data.context'
 

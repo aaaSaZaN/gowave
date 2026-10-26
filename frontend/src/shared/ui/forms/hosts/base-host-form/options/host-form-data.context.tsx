@@ -1,14 +1,14 @@
-import { GetInputPropsReturnType } from '@mantine/form'
-import {
+import type { GetInputPropsReturnType } from '@mantine/form'
+import type {
     GetHostsTagsCommand,
     GetInternalSquadsCommand,
     GetNodesCommand,
     GetSubscriptionTemplatesCommand
 } from '@remnawave/backend-contract'
-import { createContext, ReactNode, useContext } from 'react'
+import { createContext, type ReactNode, useContext } from 'react'
 
-import { THostForm } from '../host-form.types'
-import { IHostJsonFieldConfig } from '../json-fields'
+import type { THostForm } from '../host-form.types'
+import type { IHostJsonFieldConfig } from '../json-fields'
 
 export interface IHostFormData {
     form: THostForm

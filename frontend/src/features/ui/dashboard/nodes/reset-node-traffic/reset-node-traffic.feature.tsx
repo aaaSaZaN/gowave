@@ -1,10 +1,9 @@
 import { Loader, Menu } from '@mantine/core'
+import { useResetNodeTraffic } from '@shared/api/hooks'
 import { useTranslation } from 'react-i18next'
 import { TbRefresh } from 'react-icons/tb'
 
-import { useResetNodeTraffic } from '@shared/api/hooks'
-
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export function ResetNodeTrafficFeature(props: IProps) {
     const { t } = useTranslation()
@@ -15,7 +14,7 @@ export function ResetNodeTrafficFeature(props: IProps) {
             uuid: node.uuid
         },
         mutationFns: {
-            onSuccess: async () => {
+            onSuccess: () => {
                 handleClose()
             }
         }

@@ -1,7 +1,7 @@
-import { AppShell, Group, Divider } from '@mantine/core'
-
-import { LayoutBrand, LayoutMain } from '../layout-shared'
+import { AppShell, Divider, Group } from '@mantine/core'
+import { optionalProp } from '@shared/lib/optional-prop'
 import classes from '../layout.module.css'
+import { LayoutBrand, LayoutMain } from '../layout-shared'
 import { DesktopNavigation } from '../navbar/desktop-navigation.layout'
 
 interface IProps {
@@ -52,8 +52,8 @@ export const CompactLayout = (props: IProps) => {
             </AppShell.Header>
 
             <LayoutMain
-                pl={isHiResDesktop ? '10vw' : undefined}
-                pr={isHiResDesktop ? '10vw' : undefined}
+                {...optionalProp('pl', isHiResDesktop ? '10vw' : undefined)}
+                {...optionalProp('pr', isHiResDesktop ? '10vw' : undefined)}
                 pt="calc(var(--app-shell-header-height) + var(--mantine-spacing-md))"
             />
         </AppShell>

@@ -1,8 +1,8 @@
-import { Box, Card, Group, px, Stack, Text, ThemeIcon, ThemeIconProps } from '@mantine/core'
-import { PiTrendDown, PiTrendUp } from 'react-icons/pi'
-
+import { Box, Card, Group, px, Stack, Text, ThemeIcon, type ThemeIconProps } from '@mantine/core'
+import { optionalProp } from '@shared/lib/optional-prop'
 import { ShimmerSkeleton } from '@shared/ui/shimmer-skeleton'
 import { formatPercentage, match } from '@shared/utils/misc'
+import { PiTrendDown, PiTrendUp } from 'react-icons/pi'
 
 import classes from './metric-card.module.css'
 
@@ -84,10 +84,10 @@ export function MetricCardWithTrendShared(props: IMetricCardWithTrendProps) {
         <Card>
             <Group gap="md" wrap="nowrap">
                 <ThemeIcon
-                    color={iconColor}
+                    {...optionalProp('color', iconColor)}
                     radius="lg"
                     size="xl"
-                    variant={iconVariant}
+                    {...optionalProp('variant', iconVariant)}
                     {...themeIconProps}
                 >
                     <IconComponent size={iconSize} />

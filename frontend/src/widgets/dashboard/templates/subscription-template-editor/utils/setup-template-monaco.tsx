@@ -1,16 +1,15 @@
-import type { MonacoYaml, MonacoYamlOptions, SchemasSettings } from 'monaco-yaml'
-
-import { Monaco } from '@monaco-editor/react'
+import type { Monaco } from '@monaco-editor/react'
 import {
-    GetHostsCommand,
+    type GetHostsCommand,
     SUBSCRIPTION_TEMPLATE_TYPE,
-    TSubscriptionTemplateType
+    type TSubscriptionTemplateType
 } from '@remnawave/backend-contract'
-import axios from 'axios'
-import consola from 'consola'
-import { app } from 'src/config'
-
+import consola from '@shared/lib/logger'
+import { runAsync } from '@shared/lib/run-async'
 import { registerJsonSchema } from '@shared/utils/monaco/json-schema-registry'
+import axios from 'axios'
+import type { MonacoYaml, MonacoYamlOptions, SchemasSettings } from 'monaco-yaml'
+import { app } from 'src/config'
 
 type Host = GetHostsCommand.Response['response'][number]
 
@@ -37,10 +36,13 @@ let monacoYaml: Promise<MonacoYaml> | undefined
 
 // monaco-yaml depends on monaco-editor, so it is imported lazily with the editor.
 const configureYaml = (monaco: Monaco, schemas?: SchemasSettings[]) => {
-    const options: MonacoYamlOptions = { ...YAML_OPTIONS, schemas }
+    const options: MonacoYamlOptions = {
+        ...YAML_OPTIONS,
+        ...(schemas === undefined ? {} : { schemas })
+    }
 
-    if (monacoYaml) {
-        monacoYaml.then((instance) => instance.update(options))
+    if (monacoYaml !== undefined) {
+        runAsync(monacoYaml.then((instance) => instance.update(options)))
         return
     }
 
@@ -144,7 +146,7 @@ export const configureMonaco = async (
                                                         },
                                                         required: ['type']
                                                     },
-                                                    // oxlint-disable-next-line
+                                                    // biome-ignore lint/suspicious/noThenProperty: JSON Schema conditional keyword, not a Promise handler.
                                                     then: {
                                                         properties: {
                                                             type: true,
@@ -173,7 +175,7 @@ export const configureMonaco = async (
                                                         },
                                                         required: ['type']
                                                     },
-                                                    // oxlint-disable-next-line
+                                                    // biome-ignore lint/suspicious/noThenProperty: JSON Schema conditional keyword, not a Promise handler.
                                                     then: {
                                                         properties: {
                                                             type: true,
@@ -193,7 +195,7 @@ export const configureMonaco = async (
                                                         },
                                                         required: ['type']
                                                     },
-                                                    // oxlint-disable-next-line
+                                                    // biome-ignore lint/suspicious/noThenProperty: JSON Schema conditional keyword, not a Promise handler.
                                                     then: {
                                                         properties: {
                                                             type: true,
@@ -215,7 +217,7 @@ export const configureMonaco = async (
                                                         },
                                                         required: ['type']
                                                     },
-                                                    // oxlint-disable-next-line
+                                                    // biome-ignore lint/suspicious/noThenProperty: JSON Schema conditional keyword, not a Promise handler.
                                                     then: {
                                                         properties: { type: true },
                                                         additionalProperties: false

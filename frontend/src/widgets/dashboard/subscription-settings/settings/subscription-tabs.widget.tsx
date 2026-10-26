@@ -1,10 +1,10 @@
 import { px, Tabs } from '@mantine/core'
-import { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
+import type { UpdateSubscriptionSettingsCommand } from '@remnawave/backend-contract'
+import Masonry from '@shared/ui/masonry'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiInfo } from 'react-icons/pi'
 import { TbListLetters, TbPrescription } from 'react-icons/tb'
-import Masonry from 'react-layout-masonry'
 
 import { SubscriptionAdditionalOptionsWidget } from './cards/subscription-additional-options.widget'
 import { SubscriptionHwidSettingsWidget } from './cards/subscription-hwid-settings.widget'

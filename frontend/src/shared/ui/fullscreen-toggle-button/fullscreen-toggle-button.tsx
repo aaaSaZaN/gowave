@@ -1,5 +1,5 @@
-import { ActionIcon, ActionIconProps } from '@mantine/core'
-import clsx from 'clsx'
+import { ActionIcon, type ActionIconProps } from '@mantine/core'
+import clsx from '@shared/lib/classes'
 import { TbArrowsMaximize, TbArrowsMinimize } from 'react-icons/tb'
 
 import styles from './Fullscreen.module.css'

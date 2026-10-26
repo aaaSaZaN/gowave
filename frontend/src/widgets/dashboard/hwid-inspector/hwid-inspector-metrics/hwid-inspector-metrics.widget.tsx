@@ -1,4 +1,7 @@
 import { Card, Center, Group, Loader, SimpleGrid, Stack, Text, ThemeIcon } from '@mantine/core'
+import { useGetHwidDevicesStats } from '@shared/api/hooks'
+import { useIsMobile } from '@shared/hooks'
+import { type IMetricCardProps, MetricCardShared } from '@shared/ui/metrics/metric-card'
 import { useTranslation } from 'react-i18next'
 import {
     PiCalculatorDuotone,
@@ -7,10 +10,6 @@ import {
     PiDevicesDuotone
 } from 'react-icons/pi'
 import { TbChartArcs3 } from 'react-icons/tb'
-
-import { useGetHwidDevicesStats } from '@shared/api/hooks'
-import { useIsMobile } from '@shared/hooks'
-import { IMetricCardProps, MetricCardShared } from '@shared/ui/metrics/metric-card'
 
 import { buildPlatformData } from './hwid-inspector-metrics.utils'
 import { PlatformRow } from './platform-row'

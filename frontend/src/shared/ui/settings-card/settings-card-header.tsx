@@ -1,5 +1,15 @@
-import { Box, Divider, Group, Stack, Text, ThemeIcon, ThemeIconProps, Title } from '@mantine/core'
-import { ReactNode } from 'react'
+import {
+    Box,
+    Divider,
+    Group,
+    Stack,
+    Text,
+    ThemeIcon,
+    type ThemeIconProps,
+    Title
+} from '@mantine/core'
+import { optionalProp } from '@shared/lib/optional-prop'
+import type { ReactNode } from 'react'
 
 interface SettingsCardHeaderProps {
     description: ReactNode | string
@@ -20,7 +30,11 @@ export function SettingsCardHeader({
         <Box>
             <Group align="flex-start" justify="space-between">
                 <Group align="flex-start" gap="md" wrap="nowrap">
-                    <ThemeIcon color={iconColor} size="xl" variant={iconVariant}>
+                    <ThemeIcon
+                        {...optionalProp('color', iconColor)}
+                        size="xl"
+                        {...optionalProp('variant', iconVariant)}
+                    >
                         {icon}
                     </ThemeIcon>
 

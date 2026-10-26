@@ -1,6 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-
 import { instance } from '@shared/api'
+import { useQuery } from '@tanstack/react-query'
 
 export type UpdateChannel = 'dev' | 'stable'
 

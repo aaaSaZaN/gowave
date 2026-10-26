@@ -10,23 +10,23 @@ import {
     Text,
     TextInput
 } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { modals } from '@mantine/modals'
 import {
-    GetRemnawaveSettingsCommand,
+    type GetRemnawaveSettingsCommand,
     UpdateRemnawaveSettingsCommand
 } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
-import { HiQuestionMarkCircle } from 'react-icons/hi'
-import { TbAlertCircle, TbLink, TbStar } from 'react-icons/tb'
-
 import { queryClient } from '@shared/api'
 import { useUpdateGowaveSettings } from '@shared/api/hooks/gowave-settings/gowave-settings.mutation.hooks'
 import { QueryKeys } from '@shared/api/hooks/keys-factory'
+import { runAsync } from '@shared/lib/run-async'
 import { Logo } from '@shared/ui'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 import { handleFormErrors } from '@shared/utils/misc'
+import { useTranslation } from 'react-i18next'
+import { HiQuestionMarkCircle } from 'react-icons/hi'
+import { TbAlertCircle, TbLink, TbStar } from 'react-icons/tb'
 
 interface IProps {
     brandingSettings: NonNullable<
@@ -63,12 +63,16 @@ export const BrandingSettingsCardWidget = (props: IProps) => {
     const { mutate: updateSettings, isPending: isUpdatePending } = useUpdateGowaveSettings({
         mutationFns: {
             onSuccess() {
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.gowaveSettings.getGowaveSettings.queryKey
-                })
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.auth.getAuthStatus.queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.gowaveSettings.getGowaveSettings.queryKey
+                    })
+                )
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.auth.getAuthStatus.queryKey
+                    })
+                )
             },
             onError(error) {
                 handleFormErrors(form, error)
@@ -184,61 +188,57 @@ export const BrandingSettingsCardWidget = (props: IProps) => {
     }
 
     return (
-        <>
-            <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
-                <SettingsCardShared.Container>
-                    <SettingsCardShared.Header
-                        description={t(
-                            'branding-settings-card.widget.customize-your-gowave-instance'
-                        )}
-                        icon={<Logo size={24} />}
-                        iconColor="cyan"
-                        iconVariant="soft"
-                        title={t('branding-settings-card.widget.branding-settings')}
-                    />
+        <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
+            <SettingsCardShared.Container>
+                <SettingsCardShared.Header
+                    description={t('branding-settings-card.widget.customize-your-gowave-instance')}
+                    icon={<Logo size={24} />}
+                    iconColor="cyan"
+                    iconVariant="soft"
+                    title={t('branding-settings-card.widget.branding-settings')}
+                />
 
-                    <SettingsCardShared.Content>
-                        <Stack gap="md">
-                            <TextInput
-                                description={t(
-                                    'branding-settings-card.widget.the-title-that-will-be-displayed-on-login-page'
-                                )}
-                                key={form.key('brandingSettings.title')}
-                                label={t('branding-settings-card.widget.brand-name')}
-                                leftSection={<TbStar size={16} />}
-                                placeholder="Gowave"
-                                rightSection={brandingTitleHoverCard()}
-                                {...form.getInputProps('brandingSettings.title')}
-                            />
+                <SettingsCardShared.Content>
+                    <Stack gap="md">
+                        <TextInput
+                            description={t(
+                                'branding-settings-card.widget.the-title-that-will-be-displayed-on-login-page'
+                            )}
+                            key={form.key('brandingSettings.title')}
+                            label={t('branding-settings-card.widget.brand-name')}
+                            leftSection={<TbStar size={16} />}
+                            placeholder="Gowave"
+                            rightSection={brandingTitleHoverCard()}
+                            {...form.getInputProps('brandingSettings.title')}
+                        />
 
-                            <TextInput
-                                description={t(
-                                    'branding-settings-card.widget.the-url-to-your-brand-logo-image'
-                                )}
-                                key={form.key('brandingSettings.logoUrl')}
-                                label={t('common.field.logo-url')}
-                                leftSection={<TbLink size={16} />}
-                                placeholder="https://example.com/logo.png"
-                                {...form.getInputProps('brandingSettings.logoUrl')}
-                            />
-                        </Stack>
-                    </SettingsCardShared.Content>
+                        <TextInput
+                            description={t(
+                                'branding-settings-card.widget.the-url-to-your-brand-logo-image'
+                            )}
+                            key={form.key('brandingSettings.logoUrl')}
+                            label={t('common.field.logo-url')}
+                            leftSection={<TbLink size={16} />}
+                            placeholder="https://example.com/logo.png"
+                            {...form.getInputProps('brandingSettings.logoUrl')}
+                        />
+                    </Stack>
+                </SettingsCardShared.Content>
 
-                    <SettingsCardShared.Bottom>
-                        <Group justify="flex-end">
-                            <Button
-                                color="teal"
-                                loading={isUpdatePending}
-                                size="md"
-                                type="submit"
-                                variant="soft"
-                            >
-                                {t('common.action.save')}
-                            </Button>
-                        </Group>
-                    </SettingsCardShared.Bottom>
-                </SettingsCardShared.Container>
-            </form>
-        </>
+                <SettingsCardShared.Bottom>
+                    <Group justify="flex-end">
+                        <Button
+                            color="teal"
+                            loading={isUpdatePending}
+                            size="md"
+                            type="submit"
+                            variant="soft"
+                        >
+                            {t('common.action.save')}
+                        </Button>
+                    </Group>
+                </SettingsCardShared.Bottom>
+            </SettingsCardShared.Container>
+        </form>
     )
 }

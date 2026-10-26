@@ -1,5 +1,6 @@
-import { MRT_Icons } from '@kastov/mantine-react-table-open'
-import { IconBaseProps } from 'react-icons/lib'
+import type { MRT_Icons } from '@kastov/mantine-react-table-open'
+import type { JSX } from 'react/jsx-runtime'
+import type { IconBaseProps } from 'react-icons/lib'
 import {
     PiArrowsDownUp,
     PiArrowsIn,
@@ -30,7 +31,6 @@ import {
     PiX,
     PiXCircle
 } from 'react-icons/pi'
-import { JSX } from 'react/jsx-runtime'
 
 export const customIcons: Partial<MRT_Icons> = {
     IconArrowAutofitContent: (props: IconBaseProps & JSX.IntrinsicAttributes) => (

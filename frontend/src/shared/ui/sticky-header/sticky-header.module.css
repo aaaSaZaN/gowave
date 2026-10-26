@@ -9,12 +9,12 @@
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
 
-    @media (min-width: $mantine-breakpoint-md) {
+    @media (min-width: 48em) {
         padding-left: 1.25rem;
         padding-right: 1.25rem;
     }
 
-    @media (min-width: $mantine-breakpoint-lg) {
+    @media (min-width: 64em) {
         padding-left: 1.5rem;
         padding-right: 1.5rem;
     }

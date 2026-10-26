@@ -1,9 +1,8 @@
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
-import { FC } from 'react'
-
 import { panelUrl } from '@shared/lib/panel-path'
+import type { FC } from 'react'
 
-import { IProps } from './interfaces/props.interface'
+import type { IProps } from './interfaces/props.interface'
 
 export const LottieLinkShared: FC<IProps> = (props) => {
     const { width = 96, height = 115 } = props

@@ -1,10 +1,8 @@
-import type { IProps } from './interfaces/props.interface'
-
 import { Box, Checkbox } from '@mantine/core'
-import { useVirtualizer } from '@tanstack/react-virtual'
+import { useVirtualList } from '@shared/hooks/use-virtual-list'
 import { memo, useRef } from 'react'
-
 import { InboundCheckboxCardShared } from '../inbound-checkbox-card/inbound-checkbox-card.shared'
+import type { IProps } from './interfaces/props.interface'
 
 const INBOUND_HEIGHT = 60
 const MAX_VISIBLE_INBOUNDS = 6
@@ -14,7 +12,7 @@ export const VirtualizedInboundsListShared = memo((props: IProps) => {
 
     const parentRef = useRef<HTMLDivElement>(null)
 
-    const virtualizer = useVirtualizer({
+    const virtualizer = useVirtualList({
         count: profile.inbounds.length,
         getScrollElement: () => parentRef.current,
         estimateSize: () => INBOUND_HEIGHT,
@@ -33,14 +31,15 @@ export const VirtualizedInboundsListShared = memo((props: IProps) => {
         >
             <Box
                 style={{
-                    height: `${virtualizer.getTotalSize()}px`,
+                    height: `${virtualizer.totalSize}px`,
                     width: '100%',
                     position: 'relative'
                 }}
             >
                 <Checkbox.Group>
-                    {virtualizer.getVirtualItems().map((virtualItem) => {
+                    {virtualizer.virtualItems.map((virtualItem) => {
                         const inbound = profile.inbounds[virtualItem.index]
+                        if (!inbound) return null
                         const isSelected = selectedInbounds.has(inbound.uuid)
 
                         return (

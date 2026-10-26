@@ -1,5 +1,13 @@
-import { ActionIcon, Box, CopyButton, Input, InputWrapperProps, MantineColor } from '@mantine/core'
-import clsx from 'clsx'
+import {
+    ActionIcon,
+    Box,
+    CopyButton,
+    Input,
+    type InputWrapperProps,
+    type MantineColor
+} from '@mantine/core'
+import clsx from '@shared/lib/classes'
+import { optionalProp } from '@shared/lib/optional-prop'
 import { PiCheck, PiCopy } from 'react-icons/pi'
 
 import styles from './copyable-code-block.module.css'
@@ -26,7 +34,7 @@ export function CopyableCodeBlock({ color, value, size = 'normal', inputWrapperP
                         onClick={copy}
                     >
                         <Box className={styles.codeWrapper}>
-                            <Box c={color} className={styles.code}>
+                            <Box {...optionalProp('c', color)} className={styles.code}>
                                 {value}
                             </Box>
                         </Box>

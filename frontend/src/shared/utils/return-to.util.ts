@@ -3,7 +3,7 @@ import { ROUTES } from '@shared/constants/routes'
 const RETURN_TO_KEY = 'returnTo'
 
 const isSafeReturnPath = (path: null | string): path is string => {
-    return Boolean(path) && path!.startsWith(ROUTES.DASHBOARD.ROOT)
+    return typeof path === 'string' && path.startsWith(ROUTES.DASHBOARD.ROOT)
 }
 
 export const saveReturnTo = (path: string) => {

@@ -1,21 +1,22 @@
 import { Badge, Box, CopyButton, Divider, Group, Loader, Menu, Text, Tooltip } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
-import { GetConfigProfilesCommand } from '@remnawave/backend-contract'
+import type { GetConfigProfilesCommand } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import { useGetComputedConfigProfile } from '@shared/api/hooks/config-profiles/config-profiles.query.hooks'
+import { ROUTES } from '@shared/constants'
+import { WithDndSortable } from '@shared/hocs/with-dnd-sortable'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
+import { EntityCardShared } from '@shared/ui/entity-card'
+import { XrayLogo } from '@shared/ui/logos'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { formatInt } from '@shared/utils/misc'
 import { githubDarkTheme, JsonEditor } from 'json-edit-react'
 import { useTranslation } from 'react-i18next'
 import { PiCheck, PiCopy, PiCpu, PiPencil, PiTag, PiTrashDuotone } from 'react-icons/pi'
 import { TbCheck, TbCpu2, TbDownload, TbEye, TbTags } from 'react-icons/tb'
 import { generatePath, useNavigate } from 'react-router'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { useGetComputedConfigProfile } from '@shared/api/hooks/config-profiles/config-profiles.query.hooks'
-import { ROUTES } from '@shared/constants'
-import { WithDndSortable } from '@shared/hocs/with-dnd-sortable'
-import { EntityCardShared } from '@shared/ui/entity-card'
-import { XrayLogo } from '@shared/ui/logos'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { formatInt } from '@shared/utils/misc'
 
 interface IProps {
     configProfile: GetConfigProfilesCommand.Response['response']['configProfiles'][number]
@@ -40,10 +41,12 @@ export function ConfigProfileCardWidget(props: IProps) {
     const isActive = nodesCount > 0
 
     const handleEditConfigProfile = () => {
-        navigate(
-            generatePath(ROUTES.DASHBOARD.MANAGEMENT.CONFIG_PROFILE_BY_UUID, {
-                uuid: configProfile.uuid
-            })
+        runAsync(
+            navigate(
+                generatePath(ROUTES.DASHBOARD.MANAGEMENT.CONFIG_PROFILE_BY_UUID, {
+                    uuid: configProfile.uuid
+                })
+            )
         )
     }
 
@@ -66,7 +69,7 @@ export function ConfigProfileCardWidget(props: IProps) {
 
         const computedConfigProfile = await refetchComputedConfigProfile()
 
-        if (computedConfigProfile && computedConfigProfile.data) {
+        if (computedConfigProfile?.data) {
             notifications.update({
                 id: 'view-computed-config-profile',
                 loading: false,
@@ -158,11 +161,13 @@ export function ConfigProfileCardWidget(props: IProps) {
                                         leftSection={<PiTag size={12} />}
                                         onClick={(event) => {
                                             event.stopPropagation()
-                                            showModal(
-                                                'configProfiles_configProfileInboundsDrawer',
-                                                {
-                                                    uuid: configProfile.uuid
-                                                }
+                                            runAsync(
+                                                showModal(
+                                                    'configProfiles_configProfileInboundsDrawer',
+                                                    {
+                                                        uuid: configProfile.uuid
+                                                    }
+                                                )
                                             )
                                         }}
                                         size="lg"
@@ -181,10 +186,12 @@ export function ConfigProfileCardWidget(props: IProps) {
                                         leftSection={<PiCpu size={12} />}
                                         onClick={(event) => {
                                             event.stopPropagation()
-                                            showModal('configProfiles_activeNodesModal', {
-                                                nodes: configProfile.nodes,
-                                                profileName: configProfile.name
-                                            })
+                                            runAsync(
+                                                showModal('configProfiles_activeNodesModal', {
+                                                    nodes: configProfile.nodes,
+                                                    profileName: configProfile.name
+                                                })
+                                            )
                                         }}
                                         size="lg"
                                         style={{
@@ -249,7 +256,7 @@ export function ConfigProfileCardWidget(props: IProps) {
                             }
                             onClick={(e) => {
                                 e.stopPropagation()
-                                handleViewComputedConfigProfile()
+                                runAsync(handleViewComputedConfigProfile())
                             }}
                         >
                             {t('config-profile-card.widget.view-computed')}
@@ -279,7 +286,7 @@ export function ConfigProfileCardWidget(props: IProps) {
                         <CopyButton timeout={2000} value={configProfile.uuid}>
                             {({ copied, copy }) => (
                                 <Menu.Item
-                                    color={copied ? 'teal' : undefined}
+                                    {...optionalProp('color', copied ? 'teal' : undefined)}
                                     leftSection={
                                         copied ? <PiCheck size={18} /> : <PiCopy size={18} />
                                     }
@@ -293,11 +300,13 @@ export function ConfigProfileCardWidget(props: IProps) {
                         <Menu.Item
                             leftSection={<PiPencil size={18} />}
                             onClick={() => {
-                                showModal('renameModal', {
-                                    renameFrom: 'configProfile',
-                                    name: configProfile.name,
-                                    uuid: configProfile.uuid
-                                })
+                                runAsync(
+                                    showModal('renameModal', {
+                                        renameFrom: 'configProfile',
+                                        name: configProfile.name,
+                                        uuid: configProfile.uuid
+                                    })
+                                )
                             }}
                         >
                             {t('common.action.rename')}
@@ -305,15 +314,16 @@ export function ConfigProfileCardWidget(props: IProps) {
 
                         <Menu.Item
                             leftSection={<TbTags size={18} />}
-
                             onClick={() => {
-                                showModal('editTagsModal', {
-                                    editTagsFrom: 'configProfile',
+                                runAsync(
+                                    showModal('editTagsModal', {
+                                        editTagsFrom: 'configProfile',
 
-                                    tags: configProfile.tags,
+                                        tags: configProfile.tags,
 
-                                    uuid: configProfile.uuid
-                                })
+                                        uuid: configProfile.uuid
+                                    })
+                                )
                             }}
                         >
                             {t('common.field.tags')}

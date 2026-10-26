@@ -1,26 +1,25 @@
-import type { editor } from 'monaco-editor'
-
 import { ConfigEditorActionsFeature } from '@features/dashboard/config-profiles/config-editor-actions'
 import { ConfigValidationFeature } from '@features/dashboard/config-profiles/config-validation'
 import { MonacoSetupFeature } from '@features/dashboard/config-profiles/monaco-setup'
 import { Box, Button, Code, Group, Loader, Paper } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import clsx from 'clsx'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbAlertTriangle } from 'react-icons/tb'
-import { useBlocker } from 'react-router'
-
 import { usePseudoFullscreen, useViewportFillHeight } from '@shared/hooks'
-import { CodeEditor, editorClasses, EditorFooter, EditorStatusBar } from '@shared/ui/code-editor'
+import clsx from '@shared/lib/classes'
+import { runAsync } from '@shared/lib/run-async'
+import { CodeEditor, EditorFooter, EditorStatusBar, editorClasses } from '@shared/ui/code-editor'
 import { FullscreenToggleButton, fullscreenClasses } from '@shared/ui/fullscreen-toggle-button'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { preventBackScroll } from '@shared/utils/misc'
 import { useMonaco } from '@shared/utils/setup-monaco/load-monaco'
+import type { editor } from 'monaco-editor'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbAlertTriangle } from 'react-icons/tb'
+import { useBlocker } from 'react-router'
 
 import styles from './ConfigEditor.module.css'
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export function ConfigEditorWidget(props: IProps) {
     const { t, i18n } = useTranslation()
@@ -46,7 +45,7 @@ export function ConfigEditorWidget(props: IProps) {
     useEffect(() => {
         if (!monaco) return
 
-        MonacoSetupFeature.setup(i18n.language, snippets.snippets)
+        runAsync(MonacoSetupFeature.setup(i18n.language, snippets.snippets))
     }, [i18n.language, snippets, monaco])
 
     const blocker = useBlocker(
@@ -61,7 +60,7 @@ export function ConfigEditorWidget(props: IProps) {
             ConfigValidationFeature.validate(editorRef, setResult, setIsConfigValid, snippetMap)
         }
         wasWasmRestarting.current = isWasmRestarting
-    }, [isWasmRestarting, isWasmCrashed])
+    }, [isWasmRestarting, isWasmCrashed, snippetMap])
 
     const checkForChanges = () => {
         if (!editorRef.current) return
@@ -118,7 +117,7 @@ export function ConfigEditorWidget(props: IProps) {
                 closeOnCancel: true
             })
         }
-    }, [blocker])
+    }, [blocker, t])
 
     const statusBar = (result || isWasmRestarting || isWasmCrashed) && (
         <EditorStatusBar
@@ -171,7 +170,6 @@ export function ConfigEditorWidget(props: IProps) {
 
                 <CodeEditor
                     footer={statusBar}
-                    className={styles.monacoEditor}
                     defaultLanguage="json"
                     loading={<LoaderModalShared mih="100%" />}
                     onChange={() => {

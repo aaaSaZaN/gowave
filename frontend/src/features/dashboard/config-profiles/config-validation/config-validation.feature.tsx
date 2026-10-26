@@ -1,26 +1,26 @@
-import type { editor } from 'monaco-editor'
-
-import { GetSnippetsCommand } from '@remnawave/backend-contract'
-import consola from 'consola/browser'
+import type { GetSnippetsCommand } from '@remnawave/backend-contract'
+import { isRecord } from '@shared/lib/guards'
+import consola from '@shared/lib/logger'
 import dayjs from 'dayjs'
-import { RefObject } from 'react'
+import type { editor } from 'monaco-editor'
+import type { RefObject } from 'react'
 
 const PROTECTED_ROOT_KEYS = new Set(['api', 'inbounds', 'metrics', 'snippets', 'stats'])
 
 const replaceSnippetsInRoot = (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    config: any,
+    config: Record<string, unknown>,
     snippetsMap: Map<string, unknown>
 ): void => {
-    const names = config.snippets
+    const names = config['snippets']
 
-    delete config.snippets
+    delete config['snippets']
 
     if (!Array.isArray(names)) return
 
     const merged: Record<string, unknown> = {}
 
     for (const name of names) {
+        if (typeof name !== 'string') continue
         const snippet = snippetsMap.get(name)
 
         if (!snippet) {
@@ -41,24 +41,22 @@ const replaceSnippetsInRoot = (
         config[key] = value
     }
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const replaceSnippetsInArray = (array: any[], snippetsMap: Map<string, unknown>): void => {
+const replaceSnippetsInArray = (array: unknown[], snippetsMap: Map<string, unknown>): void => {
     for (let i = array.length - 1; i >= 0; i--) {
         const item = array[i]
+        if (!isRecord(item)) continue
 
-        if (item.snippet) {
-            const snippet = snippetsMap.get(item.snippet)
+        if (typeof item['snippet'] === 'string') {
+            const snippet = snippetsMap.get(item['snippet'])
 
             if (snippet) {
                 if (Array.isArray(snippet)) {
                     array.splice(i, 1, ...snippet)
                 } else {
-                    // eslint-disable-next-line no-param-reassign
                     array[i] = snippet
                 }
             } else {
-                consola.error(`Snippet ${item.snippet} not found`)
+                consola.error(`Snippet ${item['snippet']} not found`)
                 array.splice(i, 1)
             }
         }
@@ -80,9 +78,7 @@ export const ConfigValidationFeature = {
             if (!editorRef.current) return
 
             const currentValue = editorRef.current.getValue()
-
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            let clonedCurrentValue: any
+            let clonedCurrentValue: unknown
             try {
                 clonedCurrentValue = JSON.parse(currentValue)
             } catch {
@@ -91,18 +87,22 @@ export const ConfigValidationFeature = {
                 return
             }
 
+            if (!isRecord(clonedCurrentValue)) {
+                setResult(`${dayjs().format('HH:mm:ss')} | Config must be a JSON object.`)
+                setIsConfigValid(false)
+                return
+            }
             replaceSnippetsInRoot(clonedCurrentValue, snippetsMap)
 
-            if (clonedCurrentValue.outbounds) {
-                replaceSnippetsInArray(clonedCurrentValue.outbounds, snippetsMap)
+            if (Array.isArray(clonedCurrentValue['outbounds'])) {
+                replaceSnippetsInArray(clonedCurrentValue['outbounds'], snippetsMap)
             }
-
-            if (clonedCurrentValue.routing?.rules) {
-                replaceSnippetsInArray(clonedCurrentValue.routing.rules, snippetsMap)
-            }
-
-            if (clonedCurrentValue.routing?.balancers) {
-                replaceSnippetsInArray(clonedCurrentValue.routing.balancers, snippetsMap)
+            const routing = clonedCurrentValue['routing']
+            if (isRecord(routing)) {
+                for (const key of ['rules', 'balancers']) {
+                    if (Array.isArray(routing[key]))
+                        replaceSnippetsInArray(routing[key], snippetsMap)
+                }
             }
 
             if (typeof window.XrayParseConfig !== 'function') {
@@ -120,7 +120,7 @@ export const ConfigValidationFeature = {
             )
             setIsConfigValid(!validationResult)
         } catch (err: unknown) {
-            const message = (err as Error).message
+            const message = err instanceof Error ? err.message : String(err)
             if (message?.includes('Go program has already exited')) {
                 setResult(`${dayjs().format('HH:mm:ss')} | WASM module crashed, restarting...`)
             } else {

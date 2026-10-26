@@ -1,10 +1,9 @@
 import { Loader, Menu } from '@mantine/core'
-import { GetUserByIdCommand, USERS_STATUS } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
-import { PiCellSignalFullDuotone, PiCellSignalSlashDuotone, PiTrashDuotone } from 'react-icons/pi'
-
+import { type GetUserByIdCommand, USERS_STATUS } from '@remnawave/backend-contract'
 import { queryClient } from '@shared/api'
 import { useDisableUser, useEnableUser, usersQueryKeys } from '@shared/api/hooks'
+import { useTranslation } from 'react-i18next'
+import { PiCellSignalFullDuotone, PiCellSignalSlashDuotone, PiTrashDuotone } from 'react-icons/pi'
 
 interface IProps {
     user: GetUserByIdCommand.Response['response']
@@ -46,7 +45,7 @@ export function ToggleUserStatusButtonFeature(props: IProps) {
         icon = <PiCellSignalSlashDuotone size="16px" />
     }
 
-    const handleToggleUserStatus = async () => {
+    const handleToggleUserStatus = () => {
         if (user.status !== USERS_STATUS.DISABLED) {
             disableUser({ route: { userId: id } })
         } else {

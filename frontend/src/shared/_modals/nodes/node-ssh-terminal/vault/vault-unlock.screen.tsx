@@ -1,12 +1,10 @@
+import { describeVaultError, isValidSeedPhrase } from '@entities/ssh-vault'
 import { Alert, Anchor, Button, Group, Stack, Text, Textarea } from '@mantine/core'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbAlertTriangle, TbBook, TbLock, TbLockOpen } from 'react-icons/tb'
-
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
-
-import { describeVaultError, isValidSeedPhrase } from '@entities/ssh-vault'
 
 import { PasscodeInput } from './passcode-input'
 

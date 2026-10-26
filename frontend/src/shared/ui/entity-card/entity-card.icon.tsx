@@ -1,4 +1,4 @@
-import { ActionIcon, ActionIconProps, PolymorphicComponentProps } from '@mantine/core'
+import { ActionIcon, type ActionIconProps, type PolymorphicComponentProps } from '@mantine/core'
 
 import classes from './entity-card.module.css'
 

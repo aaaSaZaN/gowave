@@ -1,13 +1,14 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Modal } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { TbCpu } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useGetNode } from '@shared/api/hooks'
 import { OPEN_ENTITY } from '@shared/constants'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useTranslation } from 'react-i18next'
+import { TbCpu } from 'react-icons/tb'
 
 import { EditNodeByUuidModalContent } from './edit-node.modal.content'
 
@@ -22,9 +23,11 @@ export const EditNodeModal = NiceModal.create((props: IProps) => {
     const { modalProps, hide } = useNiceMantineModal({
         modal,
         onClose() {
-            queryClient.refetchQueries({
-                queryKey: QueryKeys.nodes.getAllNodes.queryKey
-            })
+            runAsync(
+                queryClient.refetchQueries({
+                    queryKey: QueryKeys.nodes.getAllNodes.queryKey
+                })
+            )
         }
     })
 
@@ -41,7 +44,7 @@ export const EditNodeModal = NiceModal.create((props: IProps) => {
             size="1000px"
             title={
                 <BaseOverlayHeader
-                    countryCode={node?.countryCode}
+                    {...optionalProp('countryCode', node?.countryCode)}
                     iconColor="teal"
                     IconComponent={TbCpu}
                     iconVariant="soft"

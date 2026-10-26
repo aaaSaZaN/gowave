@@ -1,13 +1,13 @@
 import { useModal } from '@ebay/nice-modal-react'
 import { Center, Code, Stack, Text, ThemeIcon } from '@mantine/core'
-import { useEffect, useRef } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Navigate, useNavigate, useParams } from 'react-router'
-
 import type { TOpenEntityModalTarget, TOpenEntityTarget } from '@shared/_modals/open-entity-targets'
 import { OPEN_ENTITY_TARGETS } from '@shared/_modals/open-entity-targets'
 import { ROUTES } from '@shared/constants'
+import { runAsync } from '@shared/lib/run-async'
 import { SectionCard } from '@shared/ui/section-card'
+import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Navigate, useNavigate, useParams } from 'react-router'
 
 interface IModalRedirectProps {
     id: string
@@ -62,7 +62,7 @@ function OpenEntityModal(props: IModalRedirectProps) {
 
         if (!wasVisibleRef.current) return
 
-        navigate(target.fallback, { replace: true })
+        runAsync(navigate(target.fallback, { replace: true }))
     }, [modal.visible, navigate, target])
 
     return <OpenEntityStage id={id} target={target} />

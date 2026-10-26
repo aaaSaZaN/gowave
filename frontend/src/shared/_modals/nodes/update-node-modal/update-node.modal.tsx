@@ -14,14 +14,13 @@ import {
     Text,
     TextInput
 } from '@mantine/core'
-import { GetNodeCommand } from '@remnawave/backend-contract'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
-import { TbAlertTriangle, TbArrowRight, TbCheck, TbCloudDownload, TbCpu } from 'react-icons/tb'
-
+import type { GetNodeCommand } from '@remnawave/backend-contract'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { instance } from '@shared/api/axios'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { useEffect, useMemo, useState } from 'react'
+import { TbAlertTriangle, TbArrowRight, TbCheck, TbCloudDownload, TbCpu } from 'react-icons/tb'
 
 interface IProps {
     node: GetNodeCommand.Response['response']
@@ -147,7 +146,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
         queryKey: ['node-updates-check', node.uuid, NODE_REPOSITORY],
         queryFn: async () => {
             const res = await instance.get<{ response: IUpdatesCheckResponse }>(
-                `/api/nodes/${node.uuid}/updates` as any,
+                `/api/nodes/${node.uuid}/updates`,
                 { params: { repo: NODE_REPOSITORY } }
             )
             return res.data.response
@@ -160,7 +159,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
         queryKey: ['node-updates-check', node.uuid, XRAY_REPOSITORY],
         queryFn: async () => {
             const res = await instance.get<{ response: IUpdatesCheckResponse }>(
-                `/api/nodes/${node.uuid}/updates` as any,
+                `/api/nodes/${node.uuid}/updates`,
                 { params: { repo: XRAY_REPOSITORY } }
             )
             return res.data.response
@@ -265,7 +264,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
             if (activeTab === 'node') {
                 if (!nodeTargetVersion)
                     throw new Error('Нет подходящего релиза GoWave Node для этой архитектуры.')
-                const res = await instance.post(`/api/nodes/${node.uuid}/updates/apply` as any, {
+                const res = await instance.post(`/api/nodes/${node.uuid}/updates/apply`, {
                     type: 'node',
                     repo: NODE_REPOSITORY,
                     version: nodeTargetVersion
@@ -278,7 +277,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                 if (!downloadUrl.startsWith('https://')) {
                     throw new Error('Ссылка должна начинаться с https://')
                 }
-                const res = await instance.post(`/api/nodes/${node.uuid}/updates/apply` as any, {
+                const res = await instance.post(`/api/nodes/${node.uuid}/updates/apply`, {
                     type: 'core',
                     downloadUrl
                 })
@@ -287,7 +286,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
 
             if (!coreTargetVersion)
                 throw new Error('Нет подходящего релиза Xray для этой архитектуры.')
-            const res = await instance.post(`/api/nodes/${node.uuid}/updates/apply` as any, {
+            const res = await instance.post(`/api/nodes/${node.uuid}/updates/apply`, {
                 type: 'core',
                 repo: XRAY_REPOSITORY,
                 version: coreTargetVersion
@@ -546,7 +545,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                                     applyMutation.isPending ||
                                     Boolean(
                                         queryError &&
-                                        (activeTab === 'node' || !coreDownloadUrl.trim())
+                                            (activeTab === 'node' || !coreDownloadUrl.trim())
                                     )
                                 }
                                 leftSection={<TbCloudDownload size={16} />}

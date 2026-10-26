@@ -1,9 +1,14 @@
+import {
+    useUsersTableSelectionStoreActions,
+    useUsersTableSelectionStoreTableSelection
+} from '@entities/dashboard/users/users-table-selection'
+import { useUsersTableStore } from '@entities/dashboard/users/users-table-store'
 import { UserActionGroupFeature } from '@features/dashboard/users/users-action-group'
 import { useUserTableColumns } from '@features/dashboard/users/users-table/model/use-table-columns'
 import { UsersTableSelectionFeature } from '@features/ui/dashboard/users/users-table-selection/users-table-selection.feature'
 import {
     MantineReactTable,
-    MRT_ColumnFilterFnsState,
+    type MRT_ColumnFilterFnsState,
     MRT_ShowHideColumnsButton,
     MRT_ToggleDensePaddingButton,
     MRT_ToggleFullScreenButton,
@@ -11,11 +16,6 @@ import {
 } from '@kastov/mantine-react-table-open'
 import { ActionIcon, ActionIconGroup, Badge, Tooltip } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { PiUsersDuotone } from 'react-icons/pi'
-import { TbBolt, TbEdit } from 'react-icons/tb'
-
 import { showModal } from '@shared/_modals/show-modal'
 import {
     useGetExternalSquads,
@@ -26,14 +26,13 @@ import {
 } from '@shared/api/hooks'
 import { usePreventTableBackScroll } from '@shared/hooks'
 import { DEFAULT_PAGINATION_STATE, useMrtTableBinding } from '@shared/lib/mrt-table-store'
+import { runAsync } from '@shared/lib/run-async'
 import { DataTableShared } from '@shared/ui/table'
 import { sToMs } from '@shared/utils/time-utils'
-
-import {
-    useUsersTableSelectionStoreActions,
-    useUsersTableSelectionStoreTableSelection
-} from '@entities/dashboard/users/users-table-selection'
-import { useUsersTableStore } from '@entities/dashboard/users/users-table-store'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { PiUsersDuotone } from 'react-icons/pi'
+import { TbBolt, TbEdit } from 'react-icons/tb'
 
 export function UserTableWidget() {
     const { t } = useTranslation()
@@ -46,8 +45,12 @@ export function UserTableWidget() {
     const tableColumns = useUserTableColumns(internalSquads, externalSquads, nodes)
     const usersTableSelectionStoreActions = useUsersTableSelectionStoreActions()
     const tableSelection = useUsersTableSelectionStoreTableSelection()
-    const { state: persistedTableState, handlers: persistedTableHandlers } =
-        useMrtTableBinding(useUsersTableStore)
+    const { state: persistedTableState, handlers: persistedTableHandlers } = useMrtTableBinding({
+        getState: useUsersTableStore.getState,
+        getInitialState: useUsersTableStore.getInitialState,
+        setState: useUsersTableStore.setState,
+        subscribe: useUsersTableStore.subscribe
+    })
 
     const defaultFilterFns: Record<string, string> = {
         hwidDeviceLimit: 'equals',
@@ -57,10 +60,12 @@ export function UserTableWidget() {
 
     const [columnFilterFns, setColumnFilterFns] = useState<MRT_ColumnFilterFnsState>(() =>
         Object.fromEntries(
-            tableColumns.map(({ accessorKey }) => [
-                accessorKey,
-                defaultFilterFns[accessorKey!] ?? 'contains'
-            ])
+            tableColumns
+                .filter(({ accessorKey }) => accessorKey !== undefined)
+                .map(({ accessorKey }) => [
+                    accessorKey,
+                    (accessorKey ? defaultFilterFns[accessorKey] : undefined) ?? 'contains'
+                ])
         )
     )
 
@@ -171,10 +176,14 @@ export function UserTableWidget() {
         manualSorting: true,
         enableColumnResizing: true,
         /* prettier-ignore */
-        mantineToolbarAlertBannerProps: isError ? {
-            color: 'red',
-            children: t('user-table.widget.error-loading-data')
-        } : undefined,
+        ...(isError
+            ? {
+                  mantineToolbarAlertBannerProps: {
+                      color: 'red',
+                      children: t('user-table.widget.error-loading-data')
+                  }
+              }
+            : {}),
 
         ...persistedTableHandlers,
         onColumnFilterFnsChange: setColumnFilterFns,
@@ -242,7 +251,7 @@ export function UserTableWidget() {
             rowSelection: tableSelection
         },
         mantineTableBodyRowProps: ({ row }) => ({
-            onClick: async () => {
+            onClick: () => {
                 if (row.id === 'mrt-row-empty' || row.original.id === undefined) {
                     notifications.show({
                         title: 'Nice try!',
@@ -252,7 +261,7 @@ export function UserTableWidget() {
                     return
                 }
 
-                showModal('users_viewUserModal', { userId: row.original.id })
+                runAsync(showModal('users_viewUserModal', { userId: row.original.id }))
 
                 // await userModalActions.setUserUuid(row.original.uuid)
                 // userModalActions.changeModalState(true)

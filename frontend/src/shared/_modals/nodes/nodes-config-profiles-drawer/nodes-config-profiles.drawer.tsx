@@ -10,17 +10,16 @@ import {
     TextInput,
     Tooltip
 } from '@mantine/core'
-import { GetConfigProfilesCommand } from '@remnawave/backend-contract'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbDeviceFloppy, TbSearch, TbX } from 'react-icons/tb'
-import { Virtuoso } from 'react-virtuoso'
-
+import type { GetConfigProfilesCommand } from '@remnawave/backend-contract'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { useGetConfigProfiles } from '@shared/api/hooks'
 import { ConfigProfileCardShared } from '@shared/ui/config-profiles/config-profile-card/config-profile-card.shared'
 import { XrayLogo } from '@shared/ui/logos'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbDeviceFloppy, TbSearch, TbX } from 'react-icons/tb'
+import { Virtuoso } from 'react-virtuoso'
 
 import classes from './nodes-config-profiles.module.css'
 
@@ -63,7 +62,7 @@ export const NodesConfigProfilesDrawer = NiceModal.create((props: IProps) => {
     }, [searchQuery])
 
     const filteredProfiles = useMemo(() => {
-        if (!configProfiles || !configProfiles.configProfiles) return []
+        if (!configProfiles?.configProfiles) return []
 
         if (!debouncedSearchQuery.trim()) {
             return configProfiles.configProfiles
@@ -129,7 +128,7 @@ export const NodesConfigProfilesDrawer = NiceModal.create((props: IProps) => {
         onSaveInbounds(Array.from(selectedInbounds), selectedProfileUuid)
 
         hide()
-    }, [selectedInbounds, selectedProfileUuid, onSaveInbounds])
+    }, [selectedInbounds, selectedProfileUuid, onSaveInbounds, hide])
 
     const handleSelectAllInbounds = useCallback(
         (profileUuid: string) => {
@@ -187,8 +186,7 @@ export const NodesConfigProfilesDrawer = NiceModal.create((props: IProps) => {
                                     <Text fw={700} size="sm">
                                         {filteredProfiles.find(
                                             (p) => p.uuid === selectedProfileUuid
-                                        )?.name ||
-                                            t('common.message.no-profile-selected')}
+                                        )?.name || t('common.message.no-profile-selected')}
                                     </Text>
                                     <Text c="dimmed" size="xs">
                                         {t('internal-squads.drawer.widget.selected-inbounds', {

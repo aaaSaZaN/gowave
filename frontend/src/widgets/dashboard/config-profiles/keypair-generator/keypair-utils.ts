@@ -1,12 +1,13 @@
+import { x25519 } from '@noble/curves/ed25519.js'
 import { ml_dsa65 } from '@noble/post-quantum/ml-dsa.js'
 import { ml_kem768 } from '@noble/post-quantum/ml-kem.js'
-/* eslint-disable camelcase */
 import { randomBytes } from '@noble/post-quantum/utils.js'
-import { encodeURLSafe } from '@stablelib/base64'
-import { generateKeyPair } from '@stablelib/x25519'
+
+import { encodeURLSafe } from '@shared/lib/base64'
 
 export const generateX25519 = () => {
-    const kp = generateKeyPair()
+    const secretKey = x25519.utils.randomSecretKey()
+    const kp = { secretKey, publicKey: x25519.getPublicKey(secretKey) }
     return {
         privateKey: encodeURLSafe(kp.secretKey).replace(/=/g, '').replace(/\n/g, ''),
         password: encodeURLSafe(kp.publicKey).replace(/=/g, '').replace(/\n/g, '')

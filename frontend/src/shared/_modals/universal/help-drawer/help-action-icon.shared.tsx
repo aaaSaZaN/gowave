@@ -1,12 +1,12 @@
-import { ActionIcon, ActionIconProps, Tooltip } from '@mantine/core'
+import { ActionIcon, type ActionIconProps, Tooltip } from '@mantine/core'
+import { showModal } from '@shared/_modals/show-modal'
+import { runAsync } from '@shared/lib/run-async'
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { IconBaseProps } from 'react-icons/lib'
+import type { IconBaseProps } from 'react-icons/lib'
 import { TbQuestionMark } from 'react-icons/tb'
 
-import { showModal } from '@shared/_modals/show-modal'
-
-import { THelpDrawerAvailableScreen } from './help-drawer.types'
+import type { THelpDrawerAvailableScreen } from './help-drawer.types'
 
 interface IProps {
     actionIconProps?: Omit<ActionIconProps, 'onClick'>
@@ -25,9 +25,11 @@ export const HelpActionIconShared = memo((props: IProps) => {
     }
 
     const handleOpenHelpDrawer = () => {
-        showModal('helpDrawer', {
-            screen
-        })
+        runAsync(
+            showModal('helpDrawer', {
+                screen
+            })
+        )
     }
 
     return (

@@ -1,7 +1,6 @@
 import { modals } from '@mantine/modals'
-import { useTranslation } from 'react-i18next'
-
 import { useDeleteInfraBillingHistoryRecord } from '@shared/api/hooks'
+import { useTranslation } from 'react-i18next'
 
 export function useDeleteBillingRecord(refetchRecords: () => void) {
     const { t } = useTranslation()

@@ -11,17 +11,16 @@ import {
     Tooltip
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { GetConfigProfilesCommand } from '@remnawave/backend-contract'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbDeviceFloppy, TbSearch, TbX } from 'react-icons/tb'
-import { Virtuoso } from 'react-virtuoso'
-
+import type { GetConfigProfilesCommand } from '@remnawave/backend-contract'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { useGetConfigProfiles } from '@shared/api/hooks'
 import { ConfigProfileCardShared } from '@shared/ui/config-profiles/config-profile-card/config-profile-card.shared'
 import { XrayLogo } from '@shared/ui/logos'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbDeviceFloppy, TbSearch, TbX } from 'react-icons/tb'
+import { Virtuoso } from 'react-virtuoso'
 
 import classes from './hosts-config-profiles.module.css'
 
@@ -66,7 +65,7 @@ export const HostsConfigProfilesDrawer = NiceModal.create((props: IProps) => {
     )
 
     const filteredProfiles = useMemo(() => {
-        if (!configProfiles || !configProfiles.configProfiles) return []
+        if (!configProfiles?.configProfiles) return []
 
         if (!debouncedSearchQuery.trim()) {
             return configProfiles.configProfiles
@@ -108,7 +107,7 @@ export const HostsConfigProfilesDrawer = NiceModal.create((props: IProps) => {
             setSelectedInbound(inbound.uuid)
             setSelectedProfileUuid(profileUuid)
         },
-        [selectedInbound, selectedProfileUuid]
+        [selectedInbound]
     )
 
     const clearSelection = useCallback(() => {
@@ -120,7 +119,7 @@ export const HostsConfigProfilesDrawer = NiceModal.create((props: IProps) => {
         if (!selectedProfileUuid || !selectedInbound) return
         onSaveInbound(selectedInbound, selectedProfileUuid)
         hide()
-    }, [selectedInbound, selectedProfileUuid, onSaveInbound])
+    }, [selectedInbound, selectedProfileUuid, onSaveInbound, hide])
 
     const selectedInboundsSet = useMemo(() => {
         return selectedInbound ? new Set([selectedInbound]) : new Set<string>()
@@ -166,10 +165,7 @@ export const HostsConfigProfilesDrawer = NiceModal.create((props: IProps) => {
                                     <Text ff="monospace" fw={700} size="sm">
                                         {filteredProfiles.find(
                                             (p) => p.uuid === selectedProfileUuid
-                                        )?.name ||
-                                            t(
-                                                'common.message.no-profile-selected'
-                                            )}
+                                        )?.name || t('common.message.no-profile-selected')}
                                     </Text>
                                     <Text c="white" ff="monospace" size="xs">
                                         {filteredProfiles
@@ -184,9 +180,7 @@ export const HostsConfigProfilesDrawer = NiceModal.create((props: IProps) => {
                             ) : (
                                 <>
                                     <Text fw={700} size="sm">
-                                        {t(
-                                            'common.message.no-inbound-selected'
-                                        )}
+                                        {t('common.message.no-inbound-selected')}
                                     </Text>
                                     <Text c="dimmed" ff="monospace" size="xs">
                                         {t(
@@ -226,9 +220,7 @@ export const HostsConfigProfilesDrawer = NiceModal.create((props: IProps) => {
                 <TextInput
                     leftSection={<TbSearch size={16} />}
                     onChange={(event) => setSearchQuery(event.currentTarget.value)}
-                    placeholder={t(
-                        'common.message.search-profiles-or-inbounds'
-                    )}
+                    placeholder={t('common.message.search-profiles-or-inbounds')}
                     value={searchQuery}
                 />
 

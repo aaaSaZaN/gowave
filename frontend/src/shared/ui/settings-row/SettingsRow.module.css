@@ -40,17 +40,17 @@
     grid-column: 1 / -1;
 }
 
-.row[data-layout='inline'] {
+.row[data-layout="inline"] {
     grid-template-columns: minmax(0, 1fr) auto auto;
 }
 
-.row[data-layout='inline'] .control {
+.row[data-layout="inline"] .control {
     grid-row: 1;
     grid-column: 2;
     justify-self: end;
 }
 
-.row[data-layout='inline'] .action {
+.row[data-layout="inline"] .action {
     grid-column: 3;
 }
 
@@ -79,7 +79,7 @@
 
 @media (pointer: coarse) {
     .action::before {
-        content: '';
+        content: "";
         position: absolute;
         inset: 50% auto auto 50%;
         width: 2.75rem;

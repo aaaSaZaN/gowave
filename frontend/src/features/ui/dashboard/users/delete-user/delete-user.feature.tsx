@@ -1,11 +1,11 @@
 import { Loader, Menu } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { useTranslation } from 'react-i18next'
-import { TbTrash } from 'react-icons/tb'
-
 import { hideModal } from '@shared/_modals/show-modal'
 import { QueryKeys, useDeleteUser } from '@shared/api/hooks'
 import { queryClient } from '@shared/api/query-client'
+import { runAsync } from '@shared/lib/run-async'
+import { useTranslation } from 'react-i18next'
+import { TbTrash } from 'react-icons/tb'
 
 interface IProps {
     userId: number
@@ -18,17 +18,23 @@ export function DeleteUserFeature(props: IProps) {
     const { mutate: deleteUser, isPending: isDeleteUserPending } = useDeleteUser({
         mutationFns: {
             onSuccess: () => {
-                hideModal('users_viewUserModal')
+                runAsync(hideModal('users_viewUserModal'))
 
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.users.getAllUsers._def
-                })
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.users.getUserTags.queryKey
-                })
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.system.getSystemStats.queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.users.getAllUsers._def
+                    })
+                )
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.users.getUserTags.queryKey
+                    })
+                )
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.system.getSystemStats.queryKey
+                    })
+                )
             }
         }
     })

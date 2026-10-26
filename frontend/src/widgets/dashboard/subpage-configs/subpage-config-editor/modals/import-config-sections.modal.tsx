@@ -1,10 +1,9 @@
 import { Divider, Stack, Text } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { TSubscriptionPageRawConfig } from '@remnawave/subscription-page-types'
+import type { TSubscriptionPageRawConfig } from '@remnawave/subscription-page-types'
+import { ActionCardShared } from '@shared/ui'
 import { useTranslation } from 'react-i18next'
 import { TbDevices, TbIcons, TbLanguage, TbReplace } from 'react-icons/tb'
-
-import { ActionCardShared } from '@shared/ui'
 
 export type ImportMode = 'baseTranslations' | 'full' | 'platforms' | 'svgLibrary'
 

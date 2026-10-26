@@ -1,4 +1,4 @@
-import invariant from 'tiny-invariant'
+import invariant from '@shared/lib/invariant'
 
 /**
  * PHP like match function

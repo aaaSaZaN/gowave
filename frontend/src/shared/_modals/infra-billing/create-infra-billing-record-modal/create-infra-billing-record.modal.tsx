@@ -1,21 +1,21 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Button, Modal, NumberInput, Stack } from '@mantine/core'
 import { DatePickerInput } from '@mantine/dates'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { CreateInfraBillingRecordCommand } from '@remnawave/backend-contract'
-import dayjs from 'dayjs'
-import { useTranslation } from 'react-i18next'
-import { HiCalendar, HiCurrencyDollar } from 'react-icons/hi'
-import { TbInvoice } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useCreateInfraBillingHistoryRecord } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
 import { SelectInfraProviderShared } from '@shared/ui/infra-billing/select-infra-provider/select-infra-provider.shared'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { handleFormErrors } from '@shared/utils/misc'
 import { toUtcDayISO } from '@shared/utils/time-utils'
+import dayjs from 'dayjs'
+import { useTranslation } from 'react-i18next'
+import { HiCalendar, HiCurrencyDollar } from 'react-icons/hi'
+import { TbInvoice } from 'react-icons/tb'
 
 export const CreateInfraBillingRecordModal = NiceModal.create(() => {
     const modal = useModal()
@@ -44,17 +44,23 @@ export const CreateInfraBillingRecordModal = NiceModal.create(() => {
         useCreateInfraBillingHistoryRecord({
             mutationFns: {
                 onSuccess: () => {
-                    queryClient.refetchQueries({
-                        queryKey: QueryKeys.infraBilling.getInfraBillingHistoryRecords._def
-                    })
+                    runAsync(
+                        queryClient.refetchQueries({
+                            queryKey: QueryKeys.infraBilling.getInfraBillingHistoryRecords._def
+                        })
+                    )
 
-                    queryClient.refetchQueries({
-                        queryKey: QueryKeys.infraBilling.getInfraProviders.queryKey
-                    })
+                    runAsync(
+                        queryClient.refetchQueries({
+                            queryKey: QueryKeys.infraBilling.getInfraProviders.queryKey
+                        })
+                    )
 
-                    queryClient.refetchQueries({
-                        queryKey: QueryKeys.infraBilling.getInfraBillingNodes.queryKey
-                    })
+                    runAsync(
+                        queryClient.refetchQueries({
+                            queryKey: QueryKeys.infraBilling.getInfraBillingNodes.queryKey
+                        })
+                    )
 
                     form.reset()
 
@@ -66,8 +72,8 @@ export const CreateInfraBillingRecordModal = NiceModal.create(() => {
             }
         })
 
-    const handleSubmit = form.onSubmit(async (values) => {
-        if (!values.providerUuid) {
+    const handleSubmit = form.onSubmit((values) => {
+        if (!values['providerUuid']) {
             notifications.show({
                 title: t('common.message.error'),
                 message: t('create-infra-billing-record.modal.widget.please-select-a-provider'),
@@ -80,8 +86,8 @@ export const CreateInfraBillingRecordModal = NiceModal.create(() => {
             variables: {
                 // @ts-expect-error - TODO: fix ZOD schema
                 billedAt: toUtcDayISO(values.billedAt),
-                providerUuid: values.providerUuid,
-                amount: values.amount
+                providerUuid: values['providerUuid'],
+                amount: values['amount']
             }
         })
     })
@@ -105,7 +111,7 @@ export const CreateInfraBillingRecordModal = NiceModal.create(() => {
                         selectedInfraProviderUuid={form.getValues().providerUuid}
                         setSelectedInfraProviderUuid={(providerUuid) => {
                             form.setValues({
-                                providerUuid: providerUuid ?? undefined
+                                providerUuid: providerUuid ?? ''
                             })
                             form.setTouched({
                                 providerUuid: true

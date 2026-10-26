@@ -1,15 +1,14 @@
 import { Button } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { GetStatusCommand } from '@remnawave/backend-contract'
+import type { GetStatusCommand } from '@remnawave/backend-contract'
+import { usePasskeyAuthenticationOptions, usePasskeyAuthenticationVerify } from '@shared/api/hooks'
+import { useAuth } from '@shared/hooks/use-auth'
 import {
     type PublicKeyCredentialRequestOptionsJSON,
     startAuthentication
 } from '@simplewebauthn/browser'
 import { useState } from 'react'
 import { TbFingerprint } from 'react-icons/tb'
-
-import { usePasskeyAuthenticationOptions, usePasskeyAuthenticationVerify } from '@shared/api/hooks'
-import { useAuth } from '@shared/hooks/use-auth'
 
 interface IProps {
     authentication: NonNullable<GetStatusCommand.Response['response']['authentication']>

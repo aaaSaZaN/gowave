@@ -2,14 +2,13 @@ import { Drawer, Stack } from '@mantine/core'
 import {
     BASE_TRANSLATION_KEYS,
     BASE_TRANSLATION_LABELS,
-    TSubscriptionPageBaseTranslationKeys,
-    TSubscriptionPageLanguageCode,
-    TSubscriptionPageTranslateKeys
+    type TSubscriptionPageBaseTranslationKeys,
+    type TSubscriptionPageLanguageCode,
+    type TSubscriptionPageTranslateKeys
 } from '@remnawave/subscription-page-types'
-import { IconLanguage } from '@tabler/icons-react'
-import { useTranslation } from 'react-i18next'
-
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useTranslation } from 'react-i18next'
+import { TbLanguage } from 'react-icons/tb'
 
 import { LocalizedTextEditor } from './localized-text-editor.component'
 
@@ -48,7 +47,7 @@ export function BaseTranslationsDrawer(props: IProps) {
             title={
                 <BaseOverlayHeader
                     iconColor="violet"
-                    IconComponent={IconLanguage}
+                    IconComponent={TbLanguage}
                     iconVariant="soft"
                     subtitle={t('base-translations-drawer.component.completed', {
                         count: filledCount,

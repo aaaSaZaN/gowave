@@ -1,5 +1,5 @@
 import { ActionIcon, Anchor, Popover, Stack, Text } from '@mantine/core'
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HiQuestionMarkCircle } from 'react-icons/hi'
 

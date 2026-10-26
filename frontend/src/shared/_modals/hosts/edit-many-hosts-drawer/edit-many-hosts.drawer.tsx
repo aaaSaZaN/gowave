@@ -1,12 +1,9 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Code, Drawer, List, Stack, Text } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
 import { INTERNAL_SQUADS_MODE, UpdateManyHostsCommand } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
-import { PiListChecks } from 'react-icons/pi'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { queryClient } from '@shared/api'
 import {
@@ -22,6 +19,8 @@ import { LoadingScreen } from '@shared/ui'
 import { BaseHostForm } from '@shared/ui/forms/hosts/base-host-form'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { parseJsonField } from '@shared/utils/misc'
+import { useTranslation } from 'react-i18next'
+import { PiListChecks } from 'react-icons/pi'
 
 interface IProps {
     uuids: string[]
@@ -96,7 +95,7 @@ export const EditManyHostsDrawer = NiceModal.create((props: IProps) => {
         }
     })
 
-    const handleSubmit = form.onSubmit(async (values) => {
+    const handleSubmit = form.onSubmit((values) => {
         if (!uuids) {
             return
         }

@@ -1,9 +1,9 @@
 import { Checkbox, MultiSelect, SegmentedControl } from '@mantine/core'
 import { INTERNAL_SQUADS_MODE } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
-
+import { optionalProp } from '@shared/lib/optional-prop'
 import { useSettingsRowControl } from '@shared/ui/settings-row'
 import { TagInputPill } from '@shared/ui/tag-input-pill'
+import { useTranslation } from 'react-i18next'
 
 import { useHostFormData } from '../host-form-data.context'
 
@@ -55,7 +55,10 @@ export function InternalSquadsOption() {
                 />
             )}
             renderPill={({ option, value, onRemove }) => (
-                <TagInputPill onRemove={onRemove} value={option?.label ?? value} />
+                <TagInputPill
+                    {...optionalProp('onRemove', onRemove)}
+                    value={option?.label ?? value}
+                />
             )}
             searchable
             w="100%"

@@ -1,13 +1,12 @@
 import { ActionIcon, Avatar, Group, Text } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { TbCreditCard, TbTrash } from 'react-icons/tb'
-
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { faviconResolver, formatCurrencyWithIntl } from '@shared/utils/misc'
 import { formatTimeUtil } from '@shared/utils/time-utils'
+import { useTranslation } from 'react-i18next'
+import { TbCreditCard, TbTrash } from 'react-icons/tb'
 
-import { BillingRecord } from './group-records-by-month'
+import type { BillingRecord } from './group-records-by-month'
 
 interface RecordCardProps {
     onDelete: (uuid: string) => void

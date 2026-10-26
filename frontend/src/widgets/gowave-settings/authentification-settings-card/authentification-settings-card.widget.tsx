@@ -11,31 +11,32 @@ import {
     TextInput,
     ThemeIcon
 } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { modals } from '@mantine/modals'
 import {
-    GetRemnawaveSettingsCommand,
+    type GetRemnawaveSettingsCommand,
     UpdateRemnawaveSettingsCommand
 } from '@remnawave/backend-contract'
-import { TFunction } from 'i18next'
-import { useTranslation } from 'react-i18next'
-import { BiLogoGithub, BiLogoTelegram } from 'react-icons/bi'
-import { PiGlobe, PiKey } from 'react-icons/pi'
-import { SiKeycloak } from 'react-icons/si'
-import { TbAlertCircle, TbFingerprint, TbKey, TbPassword, TbServer } from 'react-icons/tb'
-
 import { showModal } from '@shared/_modals/show-modal'
 import { HelpActionIconShared } from '@shared/_modals/universal'
-import { THelpDrawerAvailableScreen } from '@shared/_modals/universal/help-drawer/help-drawer.types'
+import type { THelpDrawerAvailableScreen } from '@shared/_modals/universal/help-drawer/help-drawer.types'
 import { queryClient } from '@shared/api'
 import { useUpdateGowaveSettings } from '@shared/api/hooks/gowave-settings/gowave-settings.mutation.hooks'
 import { QueryKeys } from '@shared/api/hooks/keys-factory'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
 import { CheckboxCardShared } from '@shared/ui/checkbox-card/checkbox-card.shared'
 import { PocketidLogo } from '@shared/ui/logos'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SettingsCardShared } from '@shared/ui/settings-card'
 import { TagInputPill } from '@shared/ui/tag-input-pill'
 import { handleFormErrors } from '@shared/utils/misc'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
+import { BiLogoGithub, BiLogoTelegram } from 'react-icons/bi'
+import { PiGlobe, PiKey } from 'react-icons/pi'
+import { SiKeycloak } from 'react-icons/si'
+import { TbAlertCircle, TbFingerprint, TbKey, TbPassword, TbServer } from 'react-icons/tb'
 
 interface IProps {
     oauth2Settings: NonNullable<GetRemnawaveSettingsCommand.Response['response']['oauth2Settings']>
@@ -215,14 +216,16 @@ export const AuthentificationSettingsCardWidget = (props: IProps) => {
     const { mutate: updateSettings, isPending: isUpdatePending } = useUpdateGowaveSettings({
         mutationFns: {
             onSuccess(data) {
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.gowaveSettings.getGowaveSettings.queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.gowaveSettings.getGowaveSettings.queryKey
+                    })
+                )
 
                 form.setValues({
-                    passkeySettings: data.passkeySettings!,
-                    passwordSettings: data.passwordSettings!,
-                    oauth2Settings: data.oauth2Settings!
+                    passkeySettings: data.passkeySettings ?? form.getValues().passkeySettings,
+                    passwordSettings: data.passwordSettings ?? form.getValues().passwordSettings,
+                    oauth2Settings: data.oauth2Settings ?? form.getValues().oauth2Settings
                 })
 
                 form.resetDirty()
@@ -337,7 +340,10 @@ export const AuthentificationSettingsCardWidget = (props: IProps) => {
                                         splitChars={[',', ' ', ';']}
                                         {...form.getInputProps(formPath)}
                                         renderPill={({ value, onRemove }) => (
-                                            <TagInputPill onRemove={onRemove} value={value} />
+                                            <TagInputPill
+                                                {...optionalProp('onRemove', onRemove)}
+                                                value={value}
+                                            />
                                         )}
                                     />
                                 )
@@ -460,7 +466,7 @@ export const AuthentificationSettingsCardWidget = (props: IProps) => {
                                 <Group justify="right">
                                     <Button
                                         color="gray"
-                                        disabled={!form.getValues().passkeySettings!.enabled}
+                                        disabled={!form.getValues().passkeySettings?.enabled}
                                         leftSection={<TbFingerprint size={20} />}
                                         onClick={() => showModal('rwSettings_passkeysDrawer')}
                                         size="md"

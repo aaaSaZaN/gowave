@@ -1,4 +1,4 @@
-import { GetExternalSquadsCommand } from '@remnawave/backend-contract'
+import type { GetExternalSquadsCommand } from '@remnawave/backend-contract'
 
 export interface IProps {
     externalSquads: GetExternalSquadsCommand.Response['response']['externalSquads']

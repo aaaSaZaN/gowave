@@ -1,6 +1,6 @@
 import {
     createContext,
-    ReactNode,
+    type ReactNode,
     useCallback,
     useContext,
     useEffect,
@@ -8,12 +8,12 @@ import {
     useState
 } from 'react'
 
-import { THostForm } from '../host-form.types'
+import type { THostForm } from '../host-form.types'
 import {
     HOST_OPTION_FIELD_BY_NAME,
-    HOST_OPTION_KEY_BY_NAME,
     HOST_OPTION_FIELDS,
-    IHostOptionField,
+    HOST_OPTION_KEY_BY_NAME,
+    type IHostOptionField,
     isOptionSet
 } from './host-option-fields'
 
@@ -32,7 +32,7 @@ function getPath(path: string, values: Record<string, unknown>): unknown {
 }
 
 function topLevelKey(path: string): string {
-    return path.split('.')[0]
+    return path.split('.')[0] ?? path
 }
 
 interface IHostOptionsContext {
@@ -118,7 +118,7 @@ export function HostOptionsProvider(props: Props) {
 
             return field ? hasValue(field) : false
         },
-        [hasValue, setFlags]
+        [hasValue]
     )
 
     const isValueSet = useCallback(

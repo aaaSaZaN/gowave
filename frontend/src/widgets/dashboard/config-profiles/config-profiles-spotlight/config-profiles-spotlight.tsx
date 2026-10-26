@@ -1,12 +1,12 @@
 import { Badge, Group } from '@mantine/core'
-import { GetConfigProfilesCommand } from '@remnawave/backend-contract'
-import { PiCpu, PiTag } from 'react-icons/pi'
-import { generatePath, useNavigate } from 'react-router'
-
+import type { GetConfigProfilesCommand } from '@remnawave/backend-contract'
 import { ROUTES } from '@shared/constants'
+import { runAsync } from '@shared/lib/run-async'
 import { XrayLogo } from '@shared/ui/logos'
 import { UniversalSpotlightContentShared } from '@shared/ui/universal-spotlight'
 import { formatInt } from '@shared/utils/misc'
+import { PiCpu, PiTag } from 'react-icons/pi'
+import { generatePath, useNavigate } from 'react-router'
 
 interface IProps {
     configProfiles: GetConfigProfilesCommand.Response['response']['configProfiles']
@@ -18,10 +18,12 @@ export const ConfigProfilesSpotlightWidget = (props: IProps) => {
     const navigate = useNavigate()
 
     const handleViewConfigProfile = (configProfileUuid: string) => {
-        navigate(
-            generatePath(ROUTES.DASHBOARD.MANAGEMENT.CONFIG_PROFILE_BY_UUID, {
-                uuid: configProfileUuid
-            })
+        runAsync(
+            navigate(
+                generatePath(ROUTES.DASHBOARD.MANAGEMENT.CONFIG_PROFILE_BY_UUID, {
+                    uuid: configProfileUuid
+                })
+            )
         )
     }
 

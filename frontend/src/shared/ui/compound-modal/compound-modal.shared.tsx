@@ -1,7 +1,6 @@
-import { Group, Modal, ModalProps, useProps } from '@mantine/core'
-import { ReactNode } from 'react'
-
+import { Group, Modal, type ModalProps, useProps } from '@mantine/core'
 import classes from '@shared/constants/theme/overrides/modal/modal.module.css'
+import type { ReactNode } from 'react'
 
 interface IProps {
     modalProps: Omit<ModalProps, 'children' | 'title'>

@@ -1,10 +1,9 @@
 import { Stack } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { useTranslation } from 'react-i18next'
-import { TbAlertCircle, TbRocket } from 'react-icons/tb'
-
 import { useRestartNode } from '@shared/api/hooks'
 import { ActionCardShared } from '@shared/ui/action-card'
+import { useTranslation } from 'react-i18next'
+import { TbAlertCircle, TbRocket } from 'react-icons/tb'
 
 interface IProps {
     handleClose: () => void
@@ -20,7 +19,7 @@ export function RestartNodeModalContentFeature(props: IProps) {
             uuid: nodeUuid
         },
         mutationFns: {
-            onSuccess: async () => {
+            onSuccess: () => {
                 modals.closeAll()
                 handleClose()
             }

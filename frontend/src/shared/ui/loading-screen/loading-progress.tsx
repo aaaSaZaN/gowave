@@ -1,4 +1,4 @@
-import { nprogress } from '@mantine/nprogress'
+import { nprogress } from '@shared/ui/navigation-progress'
 import { useEffect } from 'react'
 
 export function LoadingProgress() {
@@ -7,5 +7,5 @@ export function LoadingProgress() {
         return () => nprogress.complete()
     }, [])
 
-    return <></>
+    return null
 }

@@ -6,7 +6,7 @@
     position: relative;
     user-select: none;
     overflow: hidden;
-    font-family: 'Unbounded', sans-serif;
+    font-family: "Unbounded", sans-serif;
 }
 
 .controlPanel {
@@ -69,7 +69,7 @@
     font-size: 16px;
     font-weight: 700;
     letter-spacing: 3px;
-    font-family: 'Unbounded', sans-serif;
+    font-family: "Unbounded", sans-serif;
     color: rgba(255, 255, 255, 0.85);
 }
 

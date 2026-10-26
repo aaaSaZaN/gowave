@@ -1,16 +1,16 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Button, Group, Modal, Stack, TextInput } from '@mantine/core'
 import { DatePicker } from '@mantine/dates'
+import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
+import { queryClient } from '@shared/api'
+import { QueryKeys, useUpdateInfraBillingNode } from '@shared/api/hooks'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { toUtcDayISO } from '@shared/utils/time-utils'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbCalendar } from 'react-icons/tb'
-
-import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
-import { queryClient } from '@shared/api'
-import { QueryKeys, useUpdateInfraBillingNode } from '@shared/api/hooks'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { toUtcDayISO } from '@shared/utils/time-utils'
 
 import styles from './update-billing-date.module.css'
 
@@ -102,7 +102,7 @@ export const UpdateBillingDateModal = NiceModal.create((props: IProps) => {
                     />
                     <DatePicker
                         classNames={styles}
-                        defaultDate={selectedDate ?? undefined}
+                        {...optionalProp('defaultDate', selectedDate ?? undefined)}
                         maxDate={dayjs().add(2, 'years').toDate()}
                         onChange={handleDateChange}
                         presets={[

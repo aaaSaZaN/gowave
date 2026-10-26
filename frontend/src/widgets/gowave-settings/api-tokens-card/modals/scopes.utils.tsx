@@ -1,5 +1,6 @@
-import { GetApiTokenScopesCommand } from '@remnawave/backend-contract'
-import { createElement, ReactNode } from 'react'
+import type { GetApiTokenScopesCommand } from '@remnawave/backend-contract'
+import { XrayLogo } from '@shared/ui/logos'
+import { createElement, type ReactNode } from 'react'
 import { HiServer } from 'react-icons/hi'
 import { PiArrowsInCardinalFill, PiListChecks, PiUsers } from 'react-icons/pi'
 import {
@@ -19,8 +20,6 @@ import {
     TbTags,
     TbWebhook
 } from 'react-icons/tb'
-
-import { XrayLogo } from '@shared/ui/logos'
 
 export type ScopeResource = GetApiTokenScopesCommand.Response['response']['resources'][number]
 export type ScopeEndpoint = ScopeResource['endpoints'][number]
@@ -95,9 +94,11 @@ export const expandScopesToKeys = (resources: ScopeResource[], scopes: string[])
 
     for (const scope of scopes) {
         if (scope === '*') {
-            resources.forEach((resource) =>
-                resource.endpoints.forEach((endpoint) => keys.add(endpoint.key))
-            )
+            resources.forEach((resource) => {
+                resource.endpoints.forEach((endpoint) => {
+                    keys.add(endpoint.key)
+                })
+            })
         } else {
             const separator = scope.indexOf(':')
             const resourceName = separator === -1 ? scope : scope.slice(0, separator)
@@ -105,9 +106,18 @@ export const expandScopesToKeys = (resources: ScopeResource[], scopes: string[])
             const resource = byName.get(resourceName)
 
             if (resource) {
-                if (rest === '*') getAllKeys(resource).forEach((key) => keys.add(key))
-                else if (rest === 'read') getReadKeys(resource).forEach((key) => keys.add(key))
-                else if (rest === 'write') getWriteKeys(resource).forEach((key) => keys.add(key))
+                if (rest === '*')
+                    getAllKeys(resource).forEach((key) => {
+                        keys.add(key)
+                    })
+                else if (rest === 'read')
+                    getReadKeys(resource).forEach((key) => {
+                        keys.add(key)
+                    })
+                else if (rest === 'write')
+                    getWriteKeys(resource).forEach((key) => {
+                        keys.add(key)
+                    })
                 else if (resource.endpoints.some((endpoint) => endpoint.key === scope))
                     keys.add(scope)
             }
@@ -144,11 +154,15 @@ const buildResourceScopes = (resource: ScopeResource, selectedEndpoints: Set<str
 
     if (reads.length > 0 && selectedReads.length === reads.length) {
         scopes.push(`${resource.resource}:read`)
-        reads.forEach((endpoint) => covered.add(endpoint.key))
+        reads.forEach((endpoint) => {
+            covered.add(endpoint.key)
+        })
     }
     if (writes.length > 0 && selectedWrites.length === writes.length) {
         scopes.push(`${resource.resource}:write`)
-        writes.forEach((endpoint) => covered.add(endpoint.key))
+        writes.forEach((endpoint) => {
+            covered.add(endpoint.key)
+        })
     }
 
     selected.forEach((endpoint) => {

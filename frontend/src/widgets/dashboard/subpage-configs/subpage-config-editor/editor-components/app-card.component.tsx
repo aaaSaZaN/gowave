@@ -1,19 +1,11 @@
 import { ActionIcon, Badge, Box, Card, Group, Text } from '@mantine/core'
-import {
+import type {
     TSubscriptionPageAppConfig,
     TSubscriptionPageSvgLibrary
 } from '@remnawave/subscription-page-types'
-import {
-    IconArrowDown,
-    IconArrowUp,
-    IconCopy,
-    IconPhoto,
-    IconStar,
-    IconTrash
-} from '@tabler/icons-react'
-import isSvg from 'is-svg'
-
-import { sanitizeSvg } from '@shared/utils/misc'
+import isSvg from '@shared/lib/is-svg'
+import { SafeSvg } from '@shared/ui/safe-svg'
+import { TbArrowDown, TbArrowUp, TbCopy, TbPhoto, TbStar, TbTrash } from 'react-icons/tb'
 
 import styles from '../subpage-config-visual-editor.module.css'
 
@@ -53,12 +45,9 @@ export function AppCard(props: IProps) {
                 <Group gap="sm" wrap="nowrap">
                     <Box className={styles.appIconPreview} visibleFrom="sm">
                         {hasValidIcon ? (
-                            <Box
-                                className={styles.appIconSvg}
-                                dangerouslySetInnerHTML={{ __html: sanitizeSvg(svgContent) }}
-                            />
+                            <SafeSvg className={styles.appIconSvg} svg={svgContent} />
                         ) : (
-                            <IconPhoto color="var(--mantine-color-dimmed)" size={18} />
+                            <TbPhoto color="var(--mantine-color-dimmed)" size={18} />
                         )}
                     </Box>
                     <Text c="white" fw={600} size="sm" truncate>
@@ -66,7 +55,7 @@ export function AppCard(props: IProps) {
                     </Text>
                     {app.featured && (
                         <ActionIcon color="yellow" size="sm" variant="subtle">
-                            <IconStar size={16} />
+                            <TbStar size={16} />
                         </ActionIcon>
                     )}
                 </Group>
@@ -84,7 +73,7 @@ export function AppCard(props: IProps) {
                         size="sm"
                         variant="subtle"
                     >
-                        <IconArrowUp size={20} />
+                        <TbArrowUp size={20} />
                     </ActionIcon>
                     <ActionIcon
                         color="gray"
@@ -96,7 +85,7 @@ export function AppCard(props: IProps) {
                         size="sm"
                         variant="subtle"
                     >
-                        <IconArrowDown size={20} />
+                        <TbArrowDown size={20} />
                     </ActionIcon>
                     <ActionIcon
                         color="gray"
@@ -107,7 +96,7 @@ export function AppCard(props: IProps) {
                         size="sm"
                         variant="subtle"
                     >
-                        <IconCopy size={20} />
+                        <TbCopy size={20} />
                     </ActionIcon>
                     <ActionIcon
                         className={styles.deleteButton}
@@ -119,7 +108,7 @@ export function AppCard(props: IProps) {
                         size="sm"
                         variant="subtle"
                     >
-                        <IconTrash size={20} />
+                        <TbTrash size={20} />
                     </ActionIcon>
                 </Group>
             </Group>

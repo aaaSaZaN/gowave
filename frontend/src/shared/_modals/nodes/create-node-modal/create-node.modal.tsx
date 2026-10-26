@@ -1,11 +1,7 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Group, Modal, Progress, Stack, Transition } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { CreateNodeCommand } from '@remnawave/backend-contract'
-import { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbCpu } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { queryClient } from '@shared/api'
 import {
@@ -14,7 +10,12 @@ import {
     useCreateNode,
     useGetNodeSecretKey
 } from '@shared/api/hooks'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbCpu } from 'react-icons/tb'
 
 import { CreateNodeStep1Connection } from './create-node-steps/create-node-step-1-connection'
 import { CreateNodeStep2ConfigProfiles } from './create-node-steps/create-node-step-2-config-profiles'
@@ -27,7 +28,7 @@ export const CreateNodeModal = NiceModal.create(() => {
     const { modalProps, hide } = useNiceMantineModal({
         modal,
         onClose: () => {
-            queryClient.refetchQueries({ queryKey: QueryKeys.nodes.getAllNodes.queryKey })
+            runAsync(queryClient.refetchQueries({ queryKey: QueryKeys.nodes.getAllNodes.queryKey }))
         }
     })
 
@@ -46,9 +47,11 @@ export const CreateNodeModal = NiceModal.create(() => {
     const { mutate: createNode, isPending: isCreateNodePending } = useCreateNode({
         mutationFns: {
             onSuccess: (data) => {
-                queryClient.refetchQueries({
-                    queryKey: configProfilesQueryKeys.getConfigProfiles.queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: configProfilesQueryKeys.getConfigProfiles.queryKey
+                    })
+                )
 
                 setCreatedNodeUuid(data.uuid)
                 setActiveStep(2) // Move to status step
@@ -178,7 +181,10 @@ export const CreateNodeModal = NiceModal.create(() => {
                 >
                     {(styles) => (
                         <div style={styles}>
-                            <CreateNodeStep3Status nodeUuid={createdNodeUuid} onClose={hide} />
+                            <CreateNodeStep3Status
+                                {...optionalProp('nodeUuid', createdNodeUuid)}
+                                onClose={hide}
+                            />
                         </div>
                     )}
                 </Transition>

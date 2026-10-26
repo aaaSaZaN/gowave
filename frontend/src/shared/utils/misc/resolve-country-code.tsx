@@ -1,4 +1,4 @@
-import ReactCountryFlag from 'react-country-flag'
+import ReactCountryFlag from '@shared/ui/country-flag'
 import { TbServer2 } from 'react-icons/tb'
 
 /**
@@ -267,7 +267,7 @@ export function emojiFlag(
     }
 ) {
     const arr = countryCode.split('-')
-    return countryFlagData[(arr[1] || arr[0]).toUpperCase()] || fallback
+    return countryFlagData[(arr[1] || arr[0] || '').toUpperCase()] || fallback
 }
 
 export function resolveCountryCode(countryCode?: string, size: number = 24) {

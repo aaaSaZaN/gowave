@@ -1,24 +1,25 @@
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { UpdateNodeCommand } from '@remnawave/backend-contract'
-import { NodeDetailsCardWidget } from '@widgets/dashboard/nodes/node-details-card'
-import { NodeSystemCardWidget } from '@widgets/dashboard/nodes/node-system-card'
-import { motion } from 'motion/react'
-import { useEffect, useRef, useState } from 'react'
-
 import { queryClient } from '@shared/api'
 import {
     configProfilesQueryKeys,
     nodesQueryKeys,
+    type TTrafficTrackingStart,
     useGetNode,
     useGetNodeIntegrations,
     useGetNodePlugins,
-    TTrafficTrackingStart,
     useGetNodeSecretKey,
     useUpdateNode
 } from '@shared/api/hooks'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { runAsync } from '@shared/lib/run-async'
 import { BaseNodeForm } from '@shared/ui/forms/nodes/base-node-form/base-node-form'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { withNodeIpsErrors } from '@shared/ui/node-ips'
+import { NodeDetailsCardWidget } from '@widgets/dashboard/nodes/node-details-card'
+import { NodeSystemCardWidget } from '@widgets/dashboard/nodes/node-system-card'
+import { motion } from 'motion/react'
+import { useEffect, useRef, useState } from 'react'
 
 interface IProps {
     nodeUuid: string
@@ -60,7 +61,7 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
 
     const { mutate: updateNode, isPending: isUpdateNodePending } = useUpdateNode({
         mutationFns: {
-            onSuccess: async (data) => {
+            onSuccess: (data) => {
                 queryClient.setQueryData(
                     nodesQueryKeys.getNode({
                         uuid: nodeUuid
@@ -68,12 +69,16 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                     data
                 )
 
-                queryClient.refetchQueries({
-                    queryKey: nodesQueryKeys.getAllNodes.queryKey
-                })
-                queryClient.refetchQueries({
-                    queryKey: configProfilesQueryKeys.getConfigProfiles.queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: nodesQueryKeys.getAllNodes.queryKey
+                    })
+                )
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: configProfilesQueryKeys.getConfigProfiles.queryKey
+                    })
+                )
 
                 form.resetDirty()
             }
@@ -112,9 +117,9 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                 note: fetchedNode.note ?? undefined
             })
         }
-    }, [fetchedNode])
+    }, [fetchedNode, form.initialize])
 
-    const handleSubmit = form.onSubmit(async (values) => {
+    const handleSubmit = form.onSubmit((values) => {
         if (!fetchedNode) {
             return
         }
@@ -166,7 +171,8 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
             nodePlugins={nodePlugins.nodePlugins}
             nodeSystemCard={<NodeSystemCardWidget node={fetchedNode} />}
             secretKey={secretKey}
-            trafficTrackingStart={
+            {...optionalProp(
+                'trafficTrackingStart',
                 fetchedNode.isTrafficTrackingActive
                     ? undefined
                     : {
@@ -174,7 +180,7 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                           onChange: setTrafficTrackingStart,
                           value: trafficTrackingStart
                       }
-            }
+            )}
         />
     )
 }

@@ -1,6 +1,6 @@
 import type { InputBaseProps } from '@mantine/core'
 
-import { GetConfigProfilesCommand } from '@remnawave/backend-contract'
+import type { GetConfigProfilesCommand } from '@remnawave/backend-contract'
 
 export interface IProps extends InputBaseProps {
     allInbounds: Array<{

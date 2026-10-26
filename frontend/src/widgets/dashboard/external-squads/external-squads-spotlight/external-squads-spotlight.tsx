@@ -1,11 +1,11 @@
 import { Badge, Group } from '@mantine/core'
-import { GetExternalSquadsCommand } from '@remnawave/backend-contract'
-import { PiUsers } from 'react-icons/pi'
-import { TbWebhook } from 'react-icons/tb'
-
+import type { GetExternalSquadsCommand } from '@remnawave/backend-contract'
 import { showModal } from '@shared/_modals/show-modal'
+import { runAsync } from '@shared/lib/run-async'
 import { UniversalSpotlightContentShared } from '@shared/ui/universal-spotlight'
 import { formatInt } from '@shared/utils/misc'
+import { PiUsers } from 'react-icons/pi'
+import { TbWebhook } from 'react-icons/tb'
 
 interface IProps {
     externalSquads: GetExternalSquadsCommand.Response['response']['externalSquads']
@@ -15,9 +15,11 @@ export const ExternalSquadsSpotlightWidget = (props: IProps) => {
     const { externalSquads } = props
 
     const handleOpenEditModal = (uuid: string) => {
-        showModal('externalSquads_externalSquadsDrawer', {
-            uuid: uuid
-        })
+        runAsync(
+            showModal('externalSquads_externalSquadsDrawer', {
+                uuid: uuid
+            })
+        )
     }
 
     return (

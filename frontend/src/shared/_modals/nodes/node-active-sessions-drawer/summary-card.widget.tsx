@@ -1,12 +1,11 @@
 import { ActionIcon, Group, Tooltip } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbAlertTriangle, TbQuestionMark, TbRefresh, TbUser } from 'react-icons/tb'
-
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { formatInt } from '@shared/utils/misc'
+import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbAlertTriangle, TbQuestionMark, TbRefresh, TbUser } from 'react-icons/tb'
 
 import { RequirementsWidget } from './requirements.widget'
 

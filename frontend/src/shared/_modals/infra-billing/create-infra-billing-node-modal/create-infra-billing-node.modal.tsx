@@ -1,15 +1,9 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Button, Center, Modal, SegmentedControl, Stack, TextInput } from '@mantine/core'
 import { DatePickerInput } from '@mantine/dates'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { CreateInfraBillingNodeCommand } from '@remnawave/backend-contract'
-import dayjs from 'dayjs'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { HiCalendar } from 'react-icons/hi'
-import { TbCursorText, TbServer } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { queryClient } from '@shared/api'
 import { QueryKeys, useCreateInfraBillingNode } from '@shared/api/hooks'
@@ -18,6 +12,11 @@ import { SelectInfraProviderShared } from '@shared/ui/infra-billing/select-infra
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { handleFormErrors } from '@shared/utils/misc'
 import { toUtcDayISO } from '@shared/utils/time-utils'
+import dayjs from 'dayjs'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { HiCalendar } from 'react-icons/hi'
+import { TbCursorText, TbServer } from 'react-icons/tb'
 
 enum Mode {
     NAME = 'name',
@@ -79,12 +78,12 @@ export const CreateInfraBillingNodeModal = NiceModal.create(() => {
             }
         })
 
-    const handleSubmit = form.onSubmit(async (values) => {
-        const trimmedName = values.name?.trim() || null
-        const hasNode = mode === Mode.NODE && Boolean(values.nodeUuid)
+    const handleSubmit = form.onSubmit((values) => {
+        const trimmedName = values['name']?.trim() || null
+        const hasNode = mode === Mode.NODE && Boolean(values['nodeUuid'])
         const hasName = mode === Mode.NAME && Boolean(trimmedName)
 
-        if (!values.providerUuid || (!hasNode && !hasName)) {
+        if (!values['providerUuid'] || (!hasNode && !hasName)) {
             notifications.show({
                 title: t('common.message.error'),
                 message: t(
@@ -97,8 +96,8 @@ export const CreateInfraBillingNodeModal = NiceModal.create(() => {
         }
         createInfraBillingNode({
             variables: {
-                providerUuid: values.providerUuid,
-                nodeUuid: hasNode ? values.nodeUuid : null,
+                providerUuid: values['providerUuid'],
+                nodeUuid: hasNode ? values['nodeUuid'] : null,
                 name: hasName ? trimmedName : null,
                 // @ts-expect-error - TODO: fix ZOD schema
                 nextBillingAt: toUtcDayISO(values.nextBillingAt)
@@ -156,7 +155,7 @@ export const CreateInfraBillingNodeModal = NiceModal.create(() => {
                             selectedBillingNodeUuid={form.getValues().nodeUuid}
                             setSelectedBillingNodeUuid={(nodeUuid) => {
                                 form.setValues({
-                                    nodeUuid: nodeUuid ?? undefined
+                                    nodeUuid: nodeUuid ?? null
                                 })
                                 form.setTouched({
                                     nodeUuid: true
@@ -185,7 +184,7 @@ export const CreateInfraBillingNodeModal = NiceModal.create(() => {
                             selectedInfraProviderUuid={form.getValues().providerUuid}
                             setSelectedInfraProviderUuid={(providerUuid) => {
                                 form.setValues({
-                                    providerUuid: providerUuid ?? undefined
+                                    providerUuid: providerUuid ?? ''
                                 })
                                 form.setTouched({
                                     providerUuid: true

@@ -1,51 +1,48 @@
+import { evaluateVault } from '@shared/api/hooks'
+import { logoutEvents } from '@shared/emitters'
+import { create } from 'zustand'
+import { devtools } from 'zustand/middleware'
 import type { IEncryptedBlob } from './ssh-crypto'
+import {
+    decrypt,
+    deriveIndexKey,
+    deriveKeyEncryptionKey,
+    derivePasscodeKey,
+    encrypt,
+    fromBase64,
+    generateDataKey,
+    generateSalt,
+    generateSshKeyPair,
+    importDataKey,
+    indexId,
+    isValidPasscode,
+    PASSCODE_MAX_ATTEMPTS,
+    PASSCODE_MIN_LENGTH,
+    toBase64
+} from './ssh-crypto'
 import type { IParsedSshKey, ISshPrivateKey, TSshKeyAlgo } from './ssh-private-key'
+import { parseSshPrivateKey, toOpenSshPublicKey } from './ssh-private-key'
 import type {
     IConnectionProfile,
     IConnectionProfileRecord,
     IKnownHost,
-    ISnippetRecord,
     IKnownHostRecord,
     INodeKeyRecord,
+    ISnippetRecord,
     IVaultMeta
 } from './ssh-vault.db'
-
-import { create } from 'zustand'
-import { devtools } from 'zustand/middleware'
-
-import { evaluateVault } from '@shared/api/hooks'
-import { logoutEvents } from '@shared/emitters'
-
-import {
-    decrypt,
-    deriveIndexKey,
-    indexId,
-    derivePasscodeKey,
-    deriveKeyEncryptionKey,
-    encrypt,
-    generateDataKey,
-    generateSalt,
-    fromBase64,
-    generateSshKeyPair,
-    importDataKey,
-    PASSCODE_MAX_ATTEMPTS,
-    isValidPasscode,
-    PASSCODE_MIN_LENGTH,
-    toBase64
-} from './ssh-crypto'
-import { parseSshPrivateKey, toOpenSshPublicKey } from './ssh-private-key'
 import {
     clearVault,
-    destroyVault,
     deleteSnippet,
+    destroyVault,
+    getAllConnectionProfiles,
     getAllKnownHosts,
     getAllNodeKeys,
     getAllSnippets,
-    getAllConnectionProfiles,
     getConnectionProfile,
+    getDeviceKey,
     getKnownHost,
     getNodeKey,
-    getDeviceKey,
     getOrCreateDeviceKey,
     getVaultMeta,
     putConnectionProfile,
@@ -61,8 +58,8 @@ import {
 import {
     decodeVaultFile,
     encodeVaultFile,
+    type IVaultBackupFile,
     padPayload,
-    IVaultBackupFile,
     unpadPayload,
     vaultFileAad
 } from './vault-backup-file'
@@ -158,11 +155,11 @@ async function wrapPasscode(
 }
 
 function isRestorablePayload(payload: IVaultBackupPayload): boolean {
-    const hasKey = (value: unknown, field: string) =>
-        typeof value === 'object' &&
-        value !== null &&
-        typeof (value as Record<string, unknown>)[field] === 'string' &&
-        (value as Record<string, string>)[field].length > 0
+    const hasKey = (value: unknown, field: string) => {
+        if (typeof value !== 'object' || value === null) return false
+        const key = (value as Record<string, unknown>)[field]
+        return typeof key === 'string' && key.length > 0
+    }
 
     return (
         Array.isArray(payload.keys) &&
@@ -378,10 +375,10 @@ export const useSshVaultStore = create<IActions & IState>()(
                         const attempts = meta.passcode.attempts + 1
                         const exhausted = attempts >= PASSCODE_MAX_ATTEMPTS
 
-                        await putVaultMeta({
-                            ...stripId(meta),
-                            passcode: exhausted ? undefined : { ...meta.passcode, attempts }
-                        })
+                        const updatedMeta = stripId(meta)
+                        if (exhausted) delete updatedMeta.passcode
+                        else updatedMeta.passcode = { ...meta.passcode, attempts }
+                        await putVaultMeta(updatedMeta)
 
                         set({
                             hasPasscode: !exhausted,
@@ -611,7 +608,7 @@ export const useSshVaultStore = create<IActions & IState>()(
                     return storeNodeKey(get().dataKey, nodeUuid, generatedKey(nodeUuid))
                 },
 
-                regenerateNodeKey: async (nodeUuid) =>
+                regenerateNodeKey: (nodeUuid) =>
                     storeNodeKey(get().dataKey, nodeUuid, generatedKey(nodeUuid)),
 
                 importNodeKey: async (nodeUuid, privateKey) => {

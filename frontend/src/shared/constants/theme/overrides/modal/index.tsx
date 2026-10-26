@@ -1,4 +1,3 @@
-// oxlint-disable
 import { Modal } from '@mantine/core'
 
 import { scrollLockShards } from '@shared/utils/scroll-lock-shards'

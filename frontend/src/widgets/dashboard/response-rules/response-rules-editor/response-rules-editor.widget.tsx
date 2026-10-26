@@ -1,24 +1,22 @@
-import type { editor } from 'monaco-editor'
-
 import { MonacoSetupResponseRulesFeature } from '@features/dashboard/config-profiles/monaco-setup'
 import { ResponseRulesEditorActionsFeature } from '@features/dashboard/response-rules/response-rules-editor-actions'
 import { Box, Paper, Stack } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { Monaco } from '@monaco-editor/react'
-import clsx from 'clsx'
+import type { Monaco } from '@monaco-editor/react'
+import { usePseudoFullscreen, useViewportFillHeight } from '@shared/hooks'
+import clsx from '@shared/lib/classes'
+import { CodeEditor, EditorFooter, EditorStatusBar, editorClasses } from '@shared/ui/code-editor'
+import { FullscreenToggleButton, fullscreenClasses } from '@shared/ui/fullscreen-toggle-button'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { preventBackScroll } from '@shared/utils/misc'
+import { setupSuggestWidget } from '@shared/utils/setup-monaco/setup-suggest-monaco'
+import type { editor } from 'monaco-editor'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbAlertTriangle } from 'react-icons/tb'
 import { useBlocker } from 'react-router'
 
-import { usePseudoFullscreen, useViewportFillHeight } from '@shared/hooks'
-import { CodeEditor, editorClasses, EditorFooter, EditorStatusBar } from '@shared/ui/code-editor'
-import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui/fullscreen-toggle-button'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { preventBackScroll } from '@shared/utils/misc'
-import { setupSuggestWidget } from '@shared/utils/setup-monaco/setup-suggest-monaco'
-
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 import styles from './ResponseRulesEditor.module.css'
 
 export function ResponseRulesEditorWidget(props: IProps) {
@@ -84,7 +82,7 @@ export function ResponseRulesEditorWidget(props: IProps) {
                 closeOnCancel: true
             })
         }
-    }, [blocker])
+    }, [blocker, t])
 
     const handleEditorDidMount = () => {
         MonacoSetupResponseRulesFeature.setup(groupedTemplates)

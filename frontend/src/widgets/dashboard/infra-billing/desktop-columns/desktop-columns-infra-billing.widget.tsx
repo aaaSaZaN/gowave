@@ -1,5 +1,16 @@
 import { ActionIcon, Badge, SimpleGrid, Tooltip } from '@mantine/core'
 import { modals } from '@mantine/modals'
+import { showModal } from '@shared/_modals/show-modal'
+import { queryClient } from '@shared/api'
+import {
+    QueryKeys,
+    useDeleteInfraBillingNode,
+    useGetInfraBillingHistoryRecordsInfinite,
+    useGetInfraBillingNodes,
+    useGetInfraProviders
+} from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
+import { LoadingScreen } from '@shared/ui'
 import { MobileNodesListWidget } from '@widgets/dashboard/infra-billing/mobile/mobile-nodes-list.widget'
 import { MobileProvidersListWidget } from '@widgets/dashboard/infra-billing/mobile/mobile-providers-list.widget'
 import { VirtualizedRecordsList } from '@widgets/dashboard/infra-billing/mobile/virtualized-records-list.widget'
@@ -14,17 +25,6 @@ import {
     TbTrash,
     TbX
 } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { queryClient } from '@shared/api'
-import {
-    QueryKeys,
-    useDeleteInfraBillingNode,
-    useGetInfraBillingHistoryRecordsInfinite,
-    useGetInfraBillingNodes,
-    useGetInfraProviders
-} from '@shared/api/hooks'
-import { LoadingScreen } from '@shared/ui'
 
 import { AddButton } from './add-button'
 import { Column } from './column'
@@ -72,9 +72,11 @@ export function DesktopColumnsInfraBillingWidget() {
     const { mutate: deleteNode } = useDeleteInfraBillingNode({
         mutationFns: {
             onSuccess: () => {
-                queryClient.refetchQueries({
-                    queryKey: QueryKeys.infraBilling.getInfraBillingNodes.queryKey
-                })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.infraBilling.getInfraBillingNodes.queryKey
+                    })
+                )
             }
         }
     })
@@ -115,10 +117,12 @@ export function DesktopColumnsInfraBillingWidget() {
         })
 
     const handleUpdateSelected = () => {
-        showModal('infraBilling_updateBillingDateModal', {
-            uuids: Array.from(selectedUuids),
-            callback: exitSelectMode
-        })
+        runAsync(
+            showModal('infraBilling_updateBillingDateModal', {
+                uuids: Array.from(selectedUuids),
+                callback: exitSelectMode
+            })
+        )
     }
 
     if (

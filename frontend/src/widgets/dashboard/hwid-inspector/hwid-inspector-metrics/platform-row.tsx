@@ -1,7 +1,7 @@
 import { Box, Group, Paper, Progress, Text } from '@mantine/core'
 
 import { AppBreakdown } from './app-breakdown'
-import { IPlatformDatum } from './hwid-inspector-metrics.types'
+import type { IPlatformDatum } from './hwid-inspector-metrics.types'
 import { formatCount, formatShare } from './hwid-inspector-metrics.utils'
 import { openPlatformAppsModal } from './platform-apps-modal'
 import classes from './platform-row.module.css'

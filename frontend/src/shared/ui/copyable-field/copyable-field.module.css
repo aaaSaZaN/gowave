@@ -21,7 +21,7 @@
 }
 
 .inputWrapper::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 1px;
     right: 10px;

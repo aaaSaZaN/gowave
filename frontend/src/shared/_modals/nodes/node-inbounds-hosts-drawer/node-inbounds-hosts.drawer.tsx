@@ -1,13 +1,12 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Center, Drawer, Stack, Text, ThemeIcon } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { TbSitemap } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { useGetConfigProfiles, useGetHosts, useGetNodes } from '@shared/api/hooks'
 import { LoadingScreen } from '@shared/ui'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
+import { useTranslation } from 'react-i18next'
+import { TbSitemap } from 'react-icons/tb'
 
 import { NodeInboundsHostsTree } from './node-inbounds-hosts.tree'
 

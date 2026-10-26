@@ -1,4 +1,5 @@
 import { Badge, Checkbox, Group, MultiSelect } from '@mantine/core'
+import { optionalProp } from '@shared/lib/optional-prop'
 
 import { useSettingsRowControl } from '@shared/ui/settings-row'
 import { TagInputPill } from '@shared/ui/tag-input-pill'
@@ -47,7 +48,10 @@ export function NodesOption() {
                 )
             }}
             renderPill={({ option, value, onRemove }) => (
-                <TagInputPill onRemove={onRemove} value={option?.label ?? value} />
+                <TagInputPill
+                    {...optionalProp('onRemove', onRemove)}
+                    value={option?.label ?? value}
+                />
             )}
             searchable
             w="100%"

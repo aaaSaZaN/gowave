@@ -1,17 +1,16 @@
 import {
-    SSH_TERMINAL_WS_PROTOCOL,
-    SshServerMessageSchema,
-    TSshClientMessage
-} from '@remnawave/backend-contract'
-
-import {
     fromBase64,
+    type ISshPrivateKey,
     isOwnUserauthRequest,
-    ISshPrivateKey,
     signSshChallenge,
     sshHostKeyIdentity,
     toBase64
 } from '@entities/ssh-vault'
+import {
+    SSH_TERMINAL_WS_PROTOCOL,
+    SshServerMessageSchema,
+    type TSshClientMessage
+} from '@remnawave/backend-contract'
 
 export interface ISshHostKeyPrompt {
     algo: string

@@ -1,7 +1,7 @@
 import type { ILauncherPosition, TQuickLink } from '@shared/ui/quick-launcher/quick-links.types'
 
-import { HOSTS_VIEW_MODE, NODES_VIEW_MODE } from './enums'
-import { IExperimentalFeatures } from './state.interface'
+import type { HOSTS_VIEW_MODE, NODES_VIEW_MODE } from './enums'
+import type { IExperimentalFeatures } from './state.interface'
 
 export interface IActions {
     actions: {

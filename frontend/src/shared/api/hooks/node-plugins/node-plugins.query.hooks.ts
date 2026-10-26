@@ -1,4 +1,3 @@
-import { createQueryKeys } from '@lukemorales/query-key-factory'
 import {
     GetNodePluginCommand,
     GetNodePluginsCommand,
@@ -8,9 +7,9 @@ import {
     GetTorrentBlockerReportsCommand,
     GetTorrentBlockerReportsStatsCommand
 } from '@remnawave/backend-contract'
-import { keepPreviousData } from '@tanstack/react-query'
-
+import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
+import { keepPreviousData } from '@tanstack/react-query'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'
 
@@ -42,7 +41,10 @@ export const useGetNodePlugin = createGetQueryHook({
     endpoint: GetNodePluginCommand.TSQ_url,
     routeParamsSchema: GetNodePluginCommand.RequestParamSchema,
     responseSchema: GetNodePluginCommand.ResponseSchema,
-    getQueryKey: ({ route }) => nodePluginsQueryKeys.getNodePlugin(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? nodePluginsQueryKeys.getNodePlugin(route).queryKey
+            : nodePluginsQueryKeys.getNodePlugin._def,
     rQueryParams: {
         refetchOnMount: false,
         staleTime: sToMs(5)
@@ -65,7 +67,10 @@ export const useGetTorrentBlockerReports = createGetQueryHook({
     endpoint: GetTorrentBlockerReportsCommand.TSQ_url,
     responseSchema: GetTorrentBlockerReportsCommand.ResponseSchema,
     requestQuerySchema: GetTorrentBlockerReportsCommand.RequestQuerySchema,
-    getQueryKey: ({ query }) => nodePluginsQueryKeys.getTorrentBlockerReports(query!).queryKey,
+    getQueryKey: ({ query }) =>
+        query
+            ? nodePluginsQueryKeys.getTorrentBlockerReports(query).queryKey
+            : nodePluginsQueryKeys.getTorrentBlockerReports._def,
     rQueryParams: {
         staleTime: sToMs(20),
         refetchInterval: sToMs(25),
@@ -101,7 +106,10 @@ export const useGetSharedList = createGetQueryHook({
     endpoint: GetSharedListCommand.TSQ_url,
     requestQuerySchema: GetSharedListCommand.RequestQuerySchema,
     responseSchema: GetSharedListCommand.ResponseSchema,
-    getQueryKey: ({ query }) => nodePluginsQueryKeys.getSharedList(query!).queryKey,
+    getQueryKey: ({ query }) =>
+        query
+            ? nodePluginsQueryKeys.getSharedList(query).queryKey
+            : nodePluginsQueryKeys.getSharedList._def,
     rQueryParams: {
         refetchOnMount: true,
         staleTime: sToMs(5)

@@ -1,11 +1,11 @@
 import { Group, ScrollArea, Text, UnstyledButton } from '@mantine/core'
-import { AnimatePresence, motion, Variants } from 'motion/react'
-import { ReactNode } from 'react'
+import { AnimatePresence, motion, type Variants } from 'motion/react'
+import type { ReactNode } from 'react'
 import { TbChevronRight, TbFolder } from 'react-icons/tb'
 
-import { ITreeNode } from './build-tree'
-import { TreeBreadcrumbs } from './tree-breadcrumbs'
+import type { ITreeNode } from './build-tree'
 import classes from './TreeBrowser.module.css'
+import { TreeBreadcrumbs } from './tree-breadcrumbs'
 import { useTreeNavigation } from './use-tree-navigation'
 
 const levelVariants: Variants = {
@@ -52,7 +52,13 @@ export function TreeBrowser<T>(props: IProps<T>) {
     } = useTreeNavigation(tree)
 
     return (
-        <div className={classes.panel} data-autofocus onKeyDown={handleKeyDown} tabIndex={-1}>
+        <fieldset
+            aria-label={typeof rootLabel === 'string' ? rootLabel : undefined}
+            className={classes.panel}
+            data-autofocus
+            onKeyDown={handleKeyDown}
+            tabIndex={-1}
+        >
             <div className={classes.panelHeader}>
                 <TreeBreadcrumbs onNavigate={navigate} path={currentPath} rootLabel={rootLabel} />
             </div>
@@ -156,6 +162,6 @@ export function TreeBrowser<T>(props: IProps<T>) {
                     </motion.div>
                 </AnimatePresence>
             </ScrollArea>
-        </div>
+        </fieldset>
     )
 }

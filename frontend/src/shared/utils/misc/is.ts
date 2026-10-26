@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 const uuidSchema = z.uuid()
 
-export function isDefined(value: unknown): value is NonNullable<typeof value> {
+export function isDefined<T>(value: T): value is NonNullable<T> {
     return value !== null && value !== undefined && value !== ''
 }
 

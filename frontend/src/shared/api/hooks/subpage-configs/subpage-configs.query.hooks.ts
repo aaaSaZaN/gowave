@@ -1,10 +1,10 @@
-import { createQueryKeys } from '@lukemorales/query-key-factory'
 import {
     GetSubpageConfigCommand,
     GetSubpageConfigsCommand,
     GetSubpageConfigsTagsCommand
 } from '@remnawave/backend-contract'
 
+import { createQueryKeys } from '@shared/api/query-keys'
 import { sToMs } from '@shared/utils/time-utils'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'
@@ -25,7 +25,10 @@ export const useGetSubscriptionPageConfig = createGetQueryHook({
     endpoint: GetSubpageConfigCommand.TSQ_url,
     routeParamsSchema: GetSubpageConfigCommand.RequestParamSchema,
     responseSchema: GetSubpageConfigCommand.ResponseSchema,
-    getQueryKey: ({ route }) => subpageConfigsQueryKeys.getSubpageConfig(route!).queryKey,
+    getQueryKey: ({ route }) =>
+        route
+            ? subpageConfigsQueryKeys.getSubpageConfig(route).queryKey
+            : subpageConfigsQueryKeys.getSubpageConfig._def,
     rQueryParams: {
         refetchOnMount: false,
         staleTime: sToMs(5)

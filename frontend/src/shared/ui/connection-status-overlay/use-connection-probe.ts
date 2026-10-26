@@ -1,9 +1,8 @@
 import { GetRemnawaveHealthCommand, GetStatusCommand } from '@remnawave/backend-contract'
+import { hasAuthorizationToken, instance } from '@shared/api'
 import { onlineManager, useQuery } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { useSyncExternalStore } from 'react'
-
-import { hasAuthorizationToken, instance } from '@shared/api'
 
 const INITIAL_RETRY_DELAY_MS = 1_000
 const MAX_RETRY_DELAY_MS = 30_000

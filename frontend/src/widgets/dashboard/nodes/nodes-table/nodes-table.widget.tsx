@@ -2,35 +2,35 @@ import { RestrictToVerticalAxis } from '@dnd-kit/abstract/modifiers'
 import { move } from '@dnd-kit/helpers'
 import {
     DragDropProvider,
-    DragEndEvent,
-    DragOverEvent,
+    type DragEndEvent,
+    type DragOverEvent,
     DragOverlay,
-    DragStartEvent
+    type DragStartEvent
 } from '@dnd-kit/react'
-import { Box, Container, Stack } from '@mantine/core'
-import { useListState } from '@mantine/hooks'
-import { GetNodesCommand } from '@remnawave/backend-contract'
-import { useWindowVirtualizer } from '@tanstack/react-virtual'
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { TbCpu } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { queryClient } from '@shared/api'
-import { nodesQueryKeys, useGetNodes, useReorderNodes } from '@shared/api/hooks'
-import { useIsMobile } from '@shared/hooks'
-import { NO_TAG, TagFilterBar } from '@shared/ui'
-import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
-import { sToMs } from '@shared/utils/time-utils'
-
 import {
     useExperimentalFeature,
     useNodesActiveTag,
     useViewPreferencesStoreActions
 } from '@entities/dashboard/view-preferences-store'
+import { Box, Container, Stack } from '@mantine/core'
+import { useListState } from '@mantine/hooks'
+import type { GetNodesCommand } from '@remnawave/backend-contract'
+import { showModal } from '@shared/_modals/show-modal'
+import { queryClient } from '@shared/api'
+import { nodesQueryKeys, useGetNodes, useReorderNodes } from '@shared/api/hooks'
+import { useIsMobile } from '@shared/hooks'
+import { useVirtualList } from '@shared/hooks/use-virtual-list'
+import { requireValue } from '@shared/lib/invariant'
+import { runAsync } from '@shared/lib/run-async'
+import { NO_TAG, TagFilterBar } from '@shared/ui'
+import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
+import { sToMs } from '@shared/utils/time-utils'
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { TbCpu } from 'react-icons/tb'
 
 import { NodeCardWidget } from '../node-card'
 import { NodesSpotlightSearchWidget } from '../nodes-spotlight-search'
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 import styles from './NodesTable.module.css'
 
 const EMPTY_NAMES: string[] = []
@@ -61,7 +61,9 @@ export const NodesTableWidget = memo((props: IProps) => {
     const isDraggingRef = useRef(false)
     const dragSnapshotRef = useRef<typeof state | null>(null)
     const activeTagRef = useRef(activeTag)
-    activeTagRef.current = activeTag
+    useLayoutEffect(() => {
+        activeTagRef.current = activeTag
+    }, [activeTag])
     const isMobile = useIsMobile()
 
     useGetNodes({
@@ -77,21 +79,23 @@ export const NodesTableWidget = memo((props: IProps) => {
                 queryClient.setQueryData(nodesQueryKeys.getAllNodes.queryKey, data)
             },
             onError: () => {
-                queryClient.invalidateQueries({ queryKey: nodesQueryKeys.getAllNodes.queryKey })
+                runAsync(
+                    queryClient.invalidateQueries({ queryKey: nodesQueryKeys.getAllNodes.queryKey })
+                )
             }
         }
     })
 
-    const virtualizer = useWindowVirtualizer({
+    const virtualizer = useVirtualList({
         count: state.length,
         estimateSize: () => (isMobile ? 190 : 90),
         overscan: 7,
         scrollMargin,
-        getItemKey: (index) => state[index].uuid
+        getItemKey: (index) => state[index]?.uuid ?? index
     })
 
     useEffect(() => {
-        ;(async () => {
+        ;(() => {
             if (!state || state.length === 0) {
                 return
             }
@@ -111,7 +115,7 @@ export const NodesTableWidget = memo((props: IProps) => {
             }))
 
             const hasOrderChanged = prevStateRef.current?.some(
-                (node, index) => state[index] && node.uuid !== state[index].uuid
+                (node, index) => (state[index] && node.uuid !== state[index]?.uuid) ?? index
             )
 
             if (hasOrderChanged) {
@@ -120,12 +124,12 @@ export const NodesTableWidget = memo((props: IProps) => {
 
             prevStateRef.current = state
         })()
-    }, [state])
+    }, [state, reorderNodes])
 
     useEffect(() => {
         handlers.setState(visibleNodes)
         prevStateRef.current = visibleNodes
-    }, [visibleNodes])
+    }, [visibleNodes, handlers.setState])
 
     useLayoutEffect(() => {
         if (listRef.current) {
@@ -152,7 +156,9 @@ export const NodesTableWidget = memo((props: IProps) => {
                 if (newIds === ids) return prev
 
                 const nodesByUuid = new Map(prev.map((node) => [node.uuid, node]))
-                return newIds.map((uuid) => nodesByUuid.get(uuid)!)
+                return newIds.map((uuid) =>
+                    requireValue(nodesByUuid.get(uuid), 'Reordered node is missing')
+                )
             })
         },
         [handlers]
@@ -211,7 +217,7 @@ export const NodesTableWidget = memo((props: IProps) => {
     }, [nodes, nodePlugins, nodeIntegrations, isNodeIntegrationsEnabled])
 
     const handleViewNode = (nodeUuid: string) => {
-        showModal('nodes_editNodeModal', { nodeUuid })
+        runAsync(showModal('nodes_editNodeModal', { nodeUuid }))
     }
 
     if (!nodes || !nodePlugins || !nodeIntegrations) {
@@ -235,14 +241,14 @@ export const NodesTableWidget = memo((props: IProps) => {
                 <div ref={listRef}>
                     <div
                         style={{
-                            height: `${virtualizer.getTotalSize()}px`,
+                            height: `${virtualizer.totalSize}px`,
                             width: '100%',
                             position: 'relative'
                         }}
                     >
                         <Container fluid>
                             <Stack gap={0}>
-                                {virtualizer.getVirtualItems().map((virtualItem) => {
+                                {virtualizer.virtualItems.map((virtualItem) => {
                                     const item = state[virtualItem.index]
                                     if (!item) return null
 
@@ -260,8 +266,7 @@ export const NodesTableWidget = memo((props: IProps) => {
                                                 left: 0,
                                                 right: 0,
                                                 transform: `translateY(${
-                                                    virtualItem.start -
-                                                    virtualizer.options.scrollMargin
+                                                    virtualItem.start - virtualizer.scrollMargin
                                                 }px)`,
                                                 willChange: 'transform'
                                             }}

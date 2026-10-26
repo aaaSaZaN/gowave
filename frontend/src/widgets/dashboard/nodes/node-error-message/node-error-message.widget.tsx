@@ -1,19 +1,18 @@
-import { useTranslation } from 'react-i18next'
-import { TbAlertTriangle } from 'react-icons/tb'
-
 import { ErrorMessageBlock } from '@shared/ui/error-message-block'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { isNodeConfigRejected } from '@shared/utils/misc'
+import { useTranslation } from 'react-i18next'
+import { TbAlertTriangle } from 'react-icons/tb'
 
-import { IProps } from './interfaces'
+import type { IProps } from './interfaces'
 
 export const NodeErrorMessageWidget = (props: IProps) => {
     const { t } = useTranslation()
 
     const { node } = props
 
-    if (!node || !node.lastStatusMessage) {
+    if (!node?.lastStatusMessage) {
         return null
     }
 

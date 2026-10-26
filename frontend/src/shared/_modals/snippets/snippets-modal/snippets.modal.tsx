@@ -1,6 +1,12 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { ActionIcon, Box, Group, Modal, Stack, Tooltip } from '@mantine/core'
 import { modals } from '@mantine/modals'
+import { HelpActionIconShared } from '@shared/_modals/universal'
+import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
+import { useGetSnippets } from '@shared/api/hooks'
+import { useIsMobile } from '@shared/hooks'
+import { LoaderModalShared } from '@shared/ui/loader-modal'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SnippetsGridWidget } from '@widgets/dashboard/config-profiles/snippets'
 import {
     CREATE_SNIPPET_MODAL_ID,
@@ -8,13 +14,6 @@ import {
 } from '@widgets/dashboard/config-profiles/snippets/create-snippet.modal'
 import { useTranslation } from 'react-i18next'
 import { TbCode, TbPlus, TbRefresh } from 'react-icons/tb'
-
-import { HelpActionIconShared } from '@shared/_modals/universal'
-import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
-import { useGetSnippets } from '@shared/api/hooks'
-import { useIsMobile } from '@shared/hooks'
-import { LoaderModalShared } from '@shared/ui/loader-modal'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 
 export const SnippetsModal = NiceModal.create(() => {
     const modal = useModal()

@@ -1,13 +1,13 @@
 import { Alert, Badge, Button, Code, Group, Paper, Stack, Text } from '@mantine/core'
-import { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbAlertCircle, TbCheck, TbLink, TbX } from 'react-icons/tb'
-
 import { showModal } from '@shared/_modals/show-modal'
 import { useGetNode } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
 import { LottieLinkShared } from '@shared/ui/lotties'
 import { LottieCheckmarkShared } from '@shared/ui/lotties/checkmark'
 import { LottieStopShared } from '@shared/ui/lotties/stop'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbAlertCircle, TbCheck, TbLink, TbX } from 'react-icons/tb'
 
 interface IProps {
     nodeUuid?: string
@@ -58,7 +58,7 @@ export const CreateNodeStep3Status = ({ nodeUuid, onClose }: IProps) => {
         onClose()
 
         setTimeout(() => {
-            showModal('nodes_editNodeModal', { nodeUuid: node.uuid })
+            runAsync(showModal('nodes_editNodeModal', { nodeUuid: node.uuid }))
         }, 300)
     }
 

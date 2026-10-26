@@ -1,10 +1,9 @@
 import { Stack, Text } from '@mantine/core'
+import { getExpirationTextUtil } from '@shared/utils/time-utils'
 import { UserStatusBadge } from '@widgets/dashboard/users/user-status-badge'
 import { useTranslation } from 'react-i18next'
 
-import { getExpirationTextUtil } from '@shared/utils/time-utils'
-
-import { IProps } from './interface'
+import type { IProps } from './interface'
 
 export function StatusColumnEntity(props: IProps) {
     const { t, i18n } = useTranslation()

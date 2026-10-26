@@ -3,14 +3,14 @@ import {
     ActionIcon,
     CopyButton,
     Group,
-    MantineSize,
+    type MantineSize,
     Menu,
     Text,
     TextInput,
     Tooltip
 } from '@mantine/core'
-import { TNodeIpStatus } from '@remnawave/backend-contract'
-import { ReactNode } from 'react'
+import type { TNodeIpStatus } from '@remnawave/backend-contract'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiCheck, PiCopy } from 'react-icons/pi'
 import { RiDraggable } from 'react-icons/ri'

@@ -1,13 +1,12 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { Drawer } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { TbServer } from 'react-icons/tb'
-
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { useGetUserAccessibleNodes } from '@shared/api/hooks'
 import { LoadingScreen } from '@shared/ui'
 import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useTranslation } from 'react-i18next'
+import { TbServer } from 'react-icons/tb'
 
 import { UserAccessibleNodesTree } from './user-accessible-nodes.tree'
 

@@ -1,16 +1,15 @@
 import {
-    GetSharedListsCommand,
-    GetSnippetsCommand,
+    type GetSharedListsCommand,
+    type GetSnippetsCommand,
     HostMapperSchema,
     ResponseRulesConfigSchema,
-    TSubscriptionTemplateType
+    type TSubscriptionTemplateType
 } from '@remnawave/backend-contract'
 import { NodePluginEditorSchema, SharedListConfigSchema } from '@remnawave/node-plugins'
-import axios from 'axios'
-import consola from 'consola'
-import { app } from 'src/config'
-
+import consola from '@shared/lib/logger'
 import { registerJsonSchema } from '@shared/utils/monaco/json-schema-registry'
+import axios from 'axios'
+import { app } from 'src/config'
 
 interface ISchemaNode {
     allOf?: ISchemaNode[]
@@ -162,11 +161,11 @@ const injectInboundPaths = (schema: unknown, rawInbound: unknown) => {
 
     for (const client of ['xrayJson', 'mihomo', 'base64']) {
         for (const branch of properties?.[client]?.items?.oneOf ?? []) {
-            const from = branch.properties?.from as Record<string, unknown> | undefined
+            const from = branch.properties?.['from'] as Record<string, unknown> | undefined
 
             if (!from) continue
 
-            from.defaultSnippets = snippets
+            from['defaultSnippets'] = snippets
         }
     }
 }
@@ -266,7 +265,7 @@ export const MonacoSetupFeature = {
             if (
                 injectProperty(schema.definitions?.GeodataObject, 'core', CUSTOM_CORE_SCHEMA) ===
                     0 &&
-                rootNode?.properties?.geodata
+                rootNode?.properties?.['geodata']
             ) {
                 consola.error('Failed to inject the custom core property into GeodataObject.')
             }
@@ -361,7 +360,7 @@ export const MonacoSetupSnippetsFeature = {
 }
 
 export const MonacoSetupResponseRulesFeature = {
-    setup: async (groupedTemplates: Record<TSubscriptionTemplateType, string[]>) => {
+    setup: (groupedTemplates: Record<TSubscriptionTemplateType, string[]>) => {
         try {
             const schema = ResponseRulesConfigSchema.toJSONSchema({
                 target: 'draft-07'
@@ -376,7 +375,7 @@ export const MonacoSetupResponseRulesFeature = {
                 ...groupedTemplates
             }
 
-            const rules = schema.properties?.rules
+            const rules = schema.properties?.['rules']
             const rulesItems =
                 typeof rules === 'object' &&
                 typeof rules.items === 'object' &&
@@ -385,7 +384,8 @@ export const MonacoSetupResponseRulesFeature = {
                     : undefined
 
             if (rulesItems) {
-                const rulesAllOf = (rulesItems.allOf ??= [])
+                rulesItems.allOf ??= []
+                const rulesAllOf = rulesItems.allOf
 
                 Object.entries(templateOptions).forEach(([responseType, templates]) => {
                     if (templates.length > 0) {
@@ -396,7 +396,7 @@ export const MonacoSetupResponseRulesFeature = {
                                 },
                                 required: ['responseType']
                             },
-                            // oxlint-disable-next-line
+                            // biome-ignore lint/suspicious/noThenProperty: JSON Schema conditional keyword, not a Promise handler.
                             then: {
                                 properties: {
                                     responseModifications: {
@@ -421,7 +421,7 @@ export const MonacoSetupResponseRulesFeature = {
                                 },
                                 required: ['responseType']
                             },
-                            // oxlint-disable-next-line
+                            // biome-ignore lint/suspicious/noThenProperty: JSON Schema conditional keyword, not a Promise handler.
                             then: {
                                 properties: {
                                     responseModifications: {
@@ -459,7 +459,7 @@ export const MonacoSetupResponseRulesFeature = {
 }
 
 export const MonacoSetupHostMapperEditorFeature = {
-    setup: async (rawInbound?: unknown) => {
+    setup: (rawInbound?: unknown) => {
         try {
             const schema = HostMapperSchema.toJSONSchema({ target: 'draft-07' })
 
@@ -495,36 +495,43 @@ const injectSharedListNames = (node: unknown, sharedLists: TSharedLists): void =
     if (!node || typeof node !== 'object') return
 
     if (Array.isArray(node)) {
-        node.forEach((item) => injectSharedListNames(item, sharedLists))
+        node.forEach((item) => {
+            injectSharedListNames(item, sharedLists)
+        })
         return
     }
 
     const schemaNode = node as Record<string, unknown>
 
-    if (schemaNode.type === 'string' && String(schemaNode.pattern ?? '').startsWith('^ext:')) {
-        delete schemaNode.pattern
+    if (
+        schemaNode['type'] === 'string' &&
+        String(schemaNode['pattern'] ?? '').startsWith('^ext:')
+    ) {
+        delete schemaNode['pattern']
 
-        schemaNode.enum = sharedLists.map((sharedList) => `ext:${sharedList.name}`)
-        schemaNode.markdownEnumDescriptions = sharedLists.map(buildSharedListDescription)
-        schemaNode.title = 'Shared List'
-        schemaNode.markdownDescription =
+        schemaNode['enum'] = sharedLists.map((sharedList) => `ext:${sharedList.name}`)
+        schemaNode['markdownEnumDescriptions'] = sharedLists.map(buildSharedListDescription)
+        schemaNode['title'] = 'Shared List'
+        schemaNode['markdownDescription'] =
             sharedLists.length > 0
                 ? 'Reference to a shared list. Manage lists in **Shared Lists**.'
                 : 'No shared lists created yet. Create one in **Shared Lists** first.'
         return
     }
 
-    Object.values(schemaNode).forEach((value) => injectSharedListNames(value, sharedLists))
+    Object.values(schemaNode).forEach((value) => {
+        injectSharedListNames(value, sharedLists)
+    })
 }
 
 export const MonacoSetupNodePluginEditorFeature = {
-    setup: async (sharedLists: TSharedLists = []) => {
+    setup: (sharedLists: TSharedLists = []) => {
         try {
-            const schema = NodePluginEditorSchema.toJSONSchema() as any
+            const schema = NodePluginEditorSchema.toJSONSchema()
             if (schema && typeof schema === 'object') {
                 schema.additionalProperties = true
                 if (schema.properties) {
-                    schema.properties.sharedLists = {
+                    schema.properties['sharedLists'] = {
                         type: 'array',
                         items: { type: 'object' },
                         description: 'Optional shared lists definition'
@@ -589,12 +596,12 @@ const HOST_JSON_FIELD_SCHEMAS = [
 ]
 
 const buildFinalMaskProperties = (definitions: Record<string, ISchemaNode | undefined>) => {
-    if (!definitions.TCPMask || !definitions.UDPMask) {
+    if (!definitions['TCPMask'] || !definitions['UDPMask']) {
         return undefined
     }
 
     return {
-        quicParams: definitions.quicParams
+        quicParams: definitions['quicParams']
             ? { $ref: '#/definitions/quicParams' }
             : { type: 'object' },
         tcp: { type: 'array', items: { $ref: '#/definitions/TCPMask' } },

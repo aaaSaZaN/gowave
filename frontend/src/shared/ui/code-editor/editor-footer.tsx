@@ -1,6 +1,5 @@
+import clsx from '@shared/lib/classes'
 import type { ReactNode, Ref } from 'react'
-
-import clsx from 'clsx'
 
 import styles from './CodeEditor.module.css'
 

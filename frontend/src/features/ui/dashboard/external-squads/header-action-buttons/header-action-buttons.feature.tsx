@@ -1,11 +1,10 @@
 import { ActionIcon, ActionIconGroup, Group, Tooltip } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { TbPlus, TbRefresh } from 'react-icons/tb'
-
 import { showModal } from '@shared/_modals/show-modal'
 import { HelpActionIconShared } from '@shared/_modals/universal'
 import { useGetExternalSquads } from '@shared/api/hooks'
 import { UniversalSpotlightActionIconShared } from '@shared/ui/universal-spotlight'
+import { useTranslation } from 'react-i18next'
+import { TbPlus, TbRefresh } from 'react-icons/tb'
 
 interface IProps {
     externalSquadCount: number
@@ -44,10 +43,7 @@ export const ExternalSquadsHeaderActionButtonsFeature = (props: IProps) => {
             </ActionIconGroup>
 
             <ActionIconGroup>
-                <Tooltip
-                    label={t('common.action.create')}
-                    withArrow
-                >
+                <Tooltip label={t('common.action.create')} withArrow>
                     <ActionIcon
                         color="teal"
                         onClick={() =>

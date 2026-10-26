@@ -1,8 +1,8 @@
-import { useNavigate, useParams } from 'react-router'
-
 import { useGetNodePlugin } from '@shared/api/hooks'
 import { ROUTES } from '@shared/constants'
+import { runAsync } from '@shared/lib/run-async'
 import { LoadingScreen } from '@shared/ui'
+import { useNavigate, useParams } from 'react-router'
 
 import { NodePluginEditorPageComponent } from '../components/node-plugin-editor-page.component'
 
@@ -20,7 +20,7 @@ export function NodePluginEditorPageConnector() {
     })
 
     if (!uuid) {
-        navigate(ROUTES.DASHBOARD.HOME, { replace: true })
+        runAsync(navigate(ROUTES.DASHBOARD.HOME, { replace: true }))
         return null
     }
 

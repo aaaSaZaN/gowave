@@ -1,7 +1,7 @@
 import { Popover, Text } from '@mantine/core'
 import { PiInfo } from 'react-icons/pi'
 
-import { IProps } from './interfaces/props.interface'
+import type { IProps } from './interfaces/props.interface'
 
 export const PopoverWithInfoShared = (props: IProps) => {
     const { position = 'left', text } = props

@@ -2,13 +2,13 @@ import { DataTable } from '@kastov/mantine-datatable'
 import { ActionIcon, Tooltip } from '@mantine/core'
 import { useClipboard } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
+import { showModal } from '@shared/_modals/show-modal'
+import { useGetTopUsersByHwidDevices } from '@shared/api/hooks'
+import { runAsync } from '@shared/lib/run-async'
+import { sToMs } from '@shared/utils/time-utils'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbRefresh } from 'react-icons/tb'
-
-import { showModal } from '@shared/_modals/show-modal'
-import { useGetTopUsersByHwidDevices } from '@shared/api/hooks'
-import { sToMs } from '@shared/utils/time-utils'
 
 import { getHwidInspectorLeaderboardColumns } from './get-hwid-inspector-leaderboard-columns'
 
@@ -45,8 +45,8 @@ export function HwidInspectorLeaderboardWidget() {
     return (
         <DataTable
             borderRadius="sm"
-            columns={getHwidInspectorLeaderboardColumns(t, async (userId) => {
-                showModal('users_viewUserModal', { userId })
+            columns={getHwidInspectorLeaderboardColumns(t, (userId) => {
+                runAsync(showModal('users_viewUserModal', { userId }))
             })}
             defaultColumnProps={{
                 noWrap: true,

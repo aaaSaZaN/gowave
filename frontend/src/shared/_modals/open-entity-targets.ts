@@ -1,14 +1,12 @@
-import type { ModalId } from './modal-registry'
-import type { ParseKeys } from 'i18next'
-import type { ComponentType } from 'react'
-
-import { HiServer } from 'react-icons/hi'
-import { PiArrowsInCardinalFill, PiListChecks, PiUsers } from 'react-icons/pi'
-import { TbCirclesRelation, TbPackage, TbWebhook } from 'react-icons/tb'
-
 import { OPEN_ENTITY, ROUTES } from '@shared/constants'
 import { XrayLogo } from '@shared/ui/logos'
 import { isValidUuid } from '@shared/utils/misc'
+import type { ParseKeys } from 'i18next'
+import type { ComponentType } from 'react'
+import { HiServer } from 'react-icons/hi'
+import { PiArrowsInCardinalFill, PiListChecks, PiUsers } from 'react-icons/pi'
+import { TbCirclesRelation, TbPackage, TbWebhook } from 'react-icons/tb'
+import type { ModalId } from './modal-registry'
 
 import { showModal } from './show-modal'
 

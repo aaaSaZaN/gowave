@@ -1,23 +1,12 @@
-import { DataTableColumn } from '@kastov/mantine-datatable'
+import type { DataTableColumn } from '@kastov/mantine-datatable'
 import { ActionIcon, Avatar, Badge, Group, MultiSelect, Text, TextInput } from '@mantine/core'
-import {
-    GetNodesCommand,
+import type {
     GetConfigProfilesCommand,
     GetNodeIntegrationsCommand,
-    GetNodePluginsCommand
+    GetNodePluginsCommand,
+    GetNodesCommand
 } from '@remnawave/backend-contract'
-import { TFunction } from 'i18next'
-import sortBy from 'lodash/sortBy'
-import ReactCountryFlag from 'react-country-flag'
-import {
-    PiCloudArrowUpDuotone,
-    PiProhibitDuotone,
-    PiPulseDuotone,
-    PiUsersDuotone,
-    PiWarningCircle
-} from 'react-icons/pi'
-import { TbEdit, TbSearch, TbX } from 'react-icons/tb'
-
+import ReactCountryFlag from '@shared/ui/country-flag'
 import { NodeIpsCompactView } from '@shared/ui/node-ips'
 import {
     prettifyBytesUtil,
@@ -26,6 +15,15 @@ import {
 } from '@shared/utils/bytes'
 import { faviconResolver } from '@shared/utils/misc'
 import { formatDurationUtil } from '@shared/utils/time-utils'
+import type { TFunction } from 'i18next'
+import {
+    PiCloudArrowUpDuotone,
+    PiProhibitDuotone,
+    PiPulseDuotone,
+    PiUsersDuotone,
+    PiWarningCircle
+} from 'react-icons/pi'
+import { TbEdit, TbSearch, TbX } from 'react-icons/tb'
 
 import { NodeStatusSimplfiedBadgeWidget } from '../node-status-simplfied-badge'
 
@@ -260,7 +258,8 @@ export function getNodesTableColumns(
             filtering: filters.selectedInbounds.length > 0,
             title: t('common.field.inbounds'),
             render: ({ configProfile: { activeInbounds } }) =>
-                sortBy(activeInbounds, 'tag')
+                [...activeInbounds]
+                    .sort((a, b) => (a.tag < b.tag ? -1 : a.tag > b.tag ? 1 : 0))
                     .map((inbound) => inbound.tag)
                     .join(', ')
         },
@@ -453,7 +452,7 @@ export function getNodesTableColumns(
             sortable: true,
             title: 'RX Speed',
             render: ({ system }) =>
-                system && system.stats.interface
+                system?.stats.interface
                     ? prettySiRealtimeBytesUtil(system.stats.interface.rxBytesPerSec, true, true)
                     : '-'
         },
@@ -462,7 +461,7 @@ export function getNodesTableColumns(
             sortable: true,
             title: 'TX Speed',
             render: ({ system }) =>
-                system && system.stats.interface
+                system?.stats.interface
                     ? prettySiRealtimeBytesUtil(system.stats.interface.txBytesPerSec, true, true)
                     : '-'
         },
@@ -472,7 +471,7 @@ export function getNodesTableColumns(
             defaultToggle: false,
             title: 'RX Total',
             render: ({ system }) =>
-                system && system.stats.interface
+                system?.stats.interface
                     ? prettySiBytesUtil(system.stats.interface.rxTotal, true)
                     : '-'
         },
@@ -482,7 +481,7 @@ export function getNodesTableColumns(
             defaultToggle: false,
             title: 'TX Total',
             render: ({ system }) =>
-                system && system.stats.interface
+                system?.stats.interface
                     ? prettySiBytesUtil(system.stats.interface.txTotal, true)
                     : '-'
         },

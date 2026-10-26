@@ -1,12 +1,18 @@
-import { Badge, Group, RenderTreeNodePayload, Text, Tree, TreeNodeData } from '@mantine/core'
-import { GetUserAccessibleNodesCommand } from '@remnawave/backend-contract'
-import { useMemo } from 'react'
-import { PiTag } from 'react-icons/pi'
-import { TbChevronRight, TbCirclesRelation } from 'react-icons/tb'
-
+import {
+    Badge,
+    Group,
+    type RenderTreeNodePayload,
+    Text,
+    Tree,
+    type TreeNodeData
+} from '@mantine/core'
+import type { GetUserAccessibleNodesCommand } from '@remnawave/backend-contract'
 import { CountryFlag } from '@shared/ui/get-country-flag'
 import { XrayLogo } from '@shared/ui/logos'
 import { SectionCard } from '@shared/ui/section-card'
+import { useMemo } from 'react'
+import { PiTag } from 'react-icons/pi'
+import { TbChevronRight, TbCirclesRelation } from 'react-icons/tb'
 
 type ActiveNode = GetUserAccessibleNodesCommand.Response['response']['activeNodes'][number]
 

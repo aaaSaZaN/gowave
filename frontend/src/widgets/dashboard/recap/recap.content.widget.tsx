@@ -1,5 +1,3 @@
-import type { BgStyle, MaskableField } from './recap.constants'
-
 import {
     alpha,
     Button,
@@ -12,16 +10,17 @@ import {
     TextInput
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
+import { useGetRecap } from '@shared/api/hooks/system/system.query.hooks'
+import { optionalProp } from '@shared/lib/optional-prop'
+import { Logo } from '@shared/ui/logo'
+import { prettifyBytesUtil } from '@shared/utils/bytes'
+import { copyScreenshotToClipboard, downloadScreenshot } from '@shared/utils/copy-screenshot.util'
 import dayjs from 'dayjs'
 import { motion } from 'motion/react'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbCheck, TbCopy, TbDownload, TbX } from 'react-icons/tb'
-
-import { useGetRecap } from '@shared/api/hooks/system/system.query.hooks'
-import { Logo } from '@shared/ui/logo'
-import { prettifyBytesUtil } from '@shared/utils/bytes'
-import { copyScreenshotToClipboard, downloadScreenshot } from '@shared/utils/copy-screenshot.util'
+import type { BgStyle, MaskableField } from './recap.constants'
 
 import {
     BG_STYLES,
@@ -38,7 +37,7 @@ export function RecapContent() {
 
     const [cardKey, setCardKey] = useState(0)
     const [sections, setSections] = useState<string[]>(DEFAULT_SECTIONS)
-    const [accent, setAccent] = useState(SWATCHES[0])
+    const [accent, setAccent] = useState<string>(SWATCHES[0] ?? '#3CC9DB')
     const [copying, setCopying] = useState(false)
     const [downloading, setDownloading] = useState(false)
     const [maskedFields, setMaskedFields] = useState<string[]>([])
@@ -399,14 +398,14 @@ export function RecapContent() {
                             size="md"
                             swatches={SWATCHES}
                             swatchesPerRow={8}
-                            value={accent}
+                            {...optionalProp('value', accent)}
                             withPicker
                         />
                     </div>
 
                     <Group gap="xs">
                         <Button
-                            color={accent}
+                            {...optionalProp('color', accent)}
                             fullWidth
                             leftSection={<TbCopy size={14} />}
                             loading={copying}

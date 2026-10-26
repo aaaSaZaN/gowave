@@ -1,11 +1,9 @@
-import type { IGeocheckConnectivity } from './trace.types'
-
 import { Badge, Box, Group } from '@mantine/core'
 import { TbRoute } from 'react-icons/tb'
-
-import { TraceStat } from './trace-stat'
 import classes from './Trace.module.css'
+import type { IGeocheckConnectivity } from './trace.types'
 import { resolveVerdictColor } from './trace.types'
+import { TraceStat } from './trace-stat'
 
 const formatMs = (value: number): string => (value >= 100 ? value.toFixed(0) : value.toFixed(2))
 

@@ -1,7 +1,6 @@
 import { Center } from '@mantine/core'
-import { TbBrowserX } from 'react-icons/tb'
-
 import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
+import { TbBrowserX } from 'react-icons/tb'
 
 export const InstanceConflictScreen = () => (
     <Center flex={1} p="md">

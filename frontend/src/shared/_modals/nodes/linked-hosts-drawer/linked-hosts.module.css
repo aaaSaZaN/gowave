@@ -12,6 +12,7 @@
         var(--mantine-color-dark-7) 100%
     );
     box-shadow: var(--mantine-shadow-sm);
+    /* biome-ignore lint/complexity/noImportantStyles: Override Mantine inline component styles for this interaction state. */
     cursor: pointer !important;
 
     transition: border-color 150ms ease;
@@ -44,6 +45,7 @@
 }
 
 .lockedIcon {
+    /* biome-ignore lint/complexity/noImportantStyles: Override Mantine inline component styles for this interaction state. */
     opacity: 0.5 !important;
     cursor: not-allowed;
 }

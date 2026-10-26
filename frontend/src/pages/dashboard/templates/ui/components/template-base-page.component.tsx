@@ -1,14 +1,13 @@
 import { TemplatesHeaderActionButtonsFeature } from '@features/ui/dashboard/templates/header-action-buttons'
-import {
+import type {
     GetSubscriptionTemplatesCommand,
     TSubscriptionTemplateType
 } from '@remnawave/backend-contract'
+import { Page, PageHeaderShared } from '@shared/ui'
+import { getCoreLogoFromType } from '@shared/ui/get-core-logo-from-type'
 import { TemplatesGridWidget } from '@widgets/dashboard/templates/templates-grid/templates-grid.widget'
 import { TemplatesSpotlightWidget } from '@widgets/dashboard/templates/templates-spotlight'
 import { motion } from 'motion/react'
-
-import { Page, PageHeaderShared } from '@shared/ui'
-import { getCoreLogoFromType } from '@shared/ui/get-core-logo-from-type'
 
 interface Props {
     templates: GetSubscriptionTemplatesCommand.Response['response']['templates']

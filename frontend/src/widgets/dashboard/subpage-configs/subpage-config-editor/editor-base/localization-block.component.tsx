@@ -1,14 +1,13 @@
 import { Badge, Card, Divider, Group, ScrollArea, SimpleGrid, Stack } from '@mantine/core'
-import { UseFormReturnType } from '@mantine/form'
+import type { UseFormReturnType } from '@mantine/form'
 import {
     getLanguagesArray,
-    TSubscriptionPageLanguageCode,
-    TSubscriptionPageRawConfig
+    type TSubscriptionPageLanguageCode,
+    type TSubscriptionPageRawConfig
 } from '@remnawave/subscription-page-types'
-import { IconGlobe } from '@tabler/icons-react'
-import { useTranslation } from 'react-i18next'
-
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { useTranslation } from 'react-i18next'
+import { TbGlobe } from 'react-icons/tb'
 
 import { LocaleCard } from '../editor-components/locale-card.component'
 import styles from '../subpage-config-visual-editor.module.css'
@@ -42,7 +41,7 @@ export function LocalizationBlockComponent({ form }: IProps) {
                 <Group gap="sm" justify="space-between">
                     <BaseOverlayHeader
                         iconColor="teal"
-                        IconComponent={IconGlobe}
+                        IconComponent={TbGlobe}
                         iconSize={20}
                         iconVariant="soft"
                         subtitle={t('subpage-config-visual-editor.widget.additional-languages')}

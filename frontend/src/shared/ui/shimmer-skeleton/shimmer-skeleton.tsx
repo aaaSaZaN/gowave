@@ -1,4 +1,4 @@
-import { Box, BoxProps, MantineSize } from '@mantine/core'
+import { Box, type BoxProps, type MantineSize } from '@mantine/core'
 
 import classes from './shimmer-skeleton.module.css'
 

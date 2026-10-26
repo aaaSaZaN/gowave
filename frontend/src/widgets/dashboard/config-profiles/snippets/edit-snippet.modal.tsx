@@ -1,24 +1,23 @@
-import type { editor } from 'monaco-editor'
-
 import { MonacoSetupSnippetsFeature } from '@features/dashboard/config-profiles/monaco-setup'
 import { Box, Button, Group, Paper } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { modals } from '@mantine/modals'
 import { UpdateSnippetCommand } from '@remnawave/backend-contract'
-import clsx from 'clsx'
-import { t } from 'i18next'
-import { useEffect, useRef } from 'react'
-import { useTranslation } from 'react-i18next'
-
 import { queryClient } from '@shared/api'
 import { useSyncSnippet, useUpdateSnippet } from '@shared/api/hooks'
 import { QueryKeys } from '@shared/api/hooks/keys-factory'
 import { useModalEscapeGuard, usePseudoFullscreen } from '@shared/hooks'
-import { CodeEditor, editorClasses, EditorFooter, EditorStatusBar } from '@shared/ui/code-editor'
+import clsx from '@shared/lib/classes'
+import { runAsync } from '@shared/lib/run-async'
+import { CodeEditor, EditorFooter, EditorStatusBar, editorClasses } from '@shared/ui/code-editor'
 import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
-import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui/fullscreen-toggle-button'
+import { FullscreenToggleButton, fullscreenClasses } from '@shared/ui/fullscreen-toggle-button'
 import { forceMonacoRetokenize } from '@shared/utils/monaco/force-retokenize'
 import { useMonaco } from '@shared/utils/setup-monaco/load-monaco'
+import { t } from 'i18next'
+import type { editor } from 'monaco-editor'
+import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { openConfirmSnippetSyncModal } from './confirm-snippet-sync.modal'
 import classes from './Snippets.module.css'
@@ -43,7 +42,11 @@ export const EditSnippetModal = (props: IProps) => {
     const { mutate: updateSnippet, isPending: isUpdating } = useUpdateSnippet({
         mutationFns: {
             onSuccess: () => {
-                queryClient.refetchQueries({ queryKey: QueryKeys.snippets.getSnippets.queryKey })
+                runAsync(
+                    queryClient.refetchQueries({
+                        queryKey: QueryKeys.snippets.getSnippets.queryKey
+                    })
+                )
                 modals.close(EDIT_SNIPPET_MODAL_ID)
             }
         }
@@ -114,7 +117,7 @@ export const EditSnippetModal = (props: IProps) => {
     useEffect(() => {
         if (!monaco) return
 
-        MonacoSetupSnippetsFeature.setup(i18n.language)
+        runAsync(MonacoSetupSnippetsFeature.setup(i18n.language))
     }, [i18n.language, monaco])
 
     const hasSnippetError = Boolean(editSnippetForm.getInputProps('snippet').error)

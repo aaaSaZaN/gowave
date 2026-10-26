@@ -2,8 +2,8 @@ import {
     REMNAWAVE_CLIENT_TYPE_BROWSER,
     REMNAWAVE_CLIENT_TYPE_HEADER
 } from '@remnawave/backend-contract'
+import consola from '@shared/lib/logger'
 import axios from 'axios'
-import consola from 'consola/browser'
 
 import { logoutEvents } from '../emitters/emit-logout'
 

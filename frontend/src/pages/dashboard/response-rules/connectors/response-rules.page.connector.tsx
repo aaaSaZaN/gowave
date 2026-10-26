@@ -1,4 +1,4 @@
-import { TSubscriptionTemplateType } from '@remnawave/backend-contract'
+import type { TSubscriptionTemplateType } from '@remnawave/backend-contract'
 
 import { useGetSubscriptionSettings, useGetSubscriptionTemplates } from '@shared/api/hooks'
 import { LoadingScreen } from '@shared/ui'

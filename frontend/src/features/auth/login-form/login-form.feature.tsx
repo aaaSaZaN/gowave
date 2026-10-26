@@ -1,12 +1,11 @@
 import { Button, Container, Paper, PasswordInput, TextInput } from '@mantine/core'
-import { useForm, schemaResolver } from '@mantine/form'
+import { schemaResolver, useForm } from '@mantine/form'
 import { LoginCommand } from '@remnawave/backend-contract'
-import { useTranslation } from 'react-i18next'
-import { PiSignInDuotone } from 'react-icons/pi'
-
 import { useLogin } from '@shared/api/hooks'
 import { useAuth } from '@shared/hooks/use-auth'
 import { handleFormErrors } from '@shared/utils/misc'
+import { useTranslation } from 'react-i18next'
+import { PiSignInDuotone } from 'react-icons/pi'
 
 export const LoginFormFeature = () => {
     const { t } = useTranslation()

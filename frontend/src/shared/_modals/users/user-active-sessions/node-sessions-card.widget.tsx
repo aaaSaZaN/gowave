@@ -1,13 +1,12 @@
 import { ActionIcon, Badge, Group, Tooltip } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import { TbRadar, TbServer, TbUnlink } from 'react-icons/tb'
-
 import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
+import { useTranslation } from 'react-i18next'
+import { TbRadar, TbServer, TbUnlink } from 'react-icons/tb'
 
 import { SessionIpRowWidget } from './session-ip-row.widget'
-import { ActiveSessionNode } from './use-user-active-sessions'
+import type { ActiveSessionNode } from './use-user-active-sessions'
 
 interface IProps {
     node: ActiveSessionNode

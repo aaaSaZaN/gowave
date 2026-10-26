@@ -1,9 +1,12 @@
-import { SUBSCRIPTION_TEMPLATE_TYPE, TSubscriptionTemplateType } from '@remnawave/backend-contract'
-import { useNavigate, useParams } from 'react-router'
-
+import {
+    SUBSCRIPTION_TEMPLATE_TYPE,
+    type TSubscriptionTemplateType
+} from '@remnawave/backend-contract'
 import { useGetHosts, useGetSubscriptionTemplate } from '@shared/api/hooks'
 import { ROUTES } from '@shared/constants'
+import { runAsync } from '@shared/lib/run-async'
 import { LoadingScreen } from '@shared/ui'
+import { useNavigate, useParams } from 'react-router'
 
 import { TemplateEditorPageComponent } from '../components/template-editor-page.component.'
 
@@ -51,12 +54,12 @@ export function TemplateEditorPageConnector() {
             editorType = 'json'
             break
         default:
-            navigate(ROUTES.DASHBOARD.HOME, { replace: true })
+            runAsync(navigate(ROUTES.DASHBOARD.HOME, { replace: true }))
             return null
     }
 
     if (!type) {
-        navigate(ROUTES.DASHBOARD.HOME, { replace: true })
+        runAsync(navigate(ROUTES.DASHBOARD.HOME, { replace: true }))
         return null
     }
 

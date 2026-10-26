@@ -1,13 +1,13 @@
-import { Group, NativeSelect, NumberInput, NumberInputProps } from '@mantine/core'
-import { useRef, useState } from 'react'
-
+import { Group, NativeSelect, NumberInput, type NumberInputProps } from '@mantine/core'
+import { optionalProp } from '@shared/lib/optional-prop'
 import {
     bestFitIecUnitUtil,
     bytesToUnitUtil,
     IEC_UNITS,
-    TIecUnit,
+    type TIecUnit,
     unitToBytesUtil
 } from '@shared/utils/bytes'
+import { useRef, useState } from 'react'
 
 type TByteValue = null | number | string | undefined
 
@@ -51,7 +51,7 @@ export const TrafficLimitInput = ({ defaultValue, onChange, value, ...rest }: IP
                 allowNegative={false}
                 hideControls
                 thousandSeparator=","
-                size={rest.size ? rest.size : undefined}
+                {...optionalProp('size', rest.size ? rest.size : undefined)}
                 {...rest}
                 flex={1}
                 onChange={handleValueChange}
@@ -61,7 +61,7 @@ export const TrafficLimitInput = ({ defaultValue, onChange, value, ...rest }: IP
                 aria-label="Unit"
                 data={IEC_UNITS}
                 onChange={(event) => handleUnitChange(event.currentTarget.value as TIecUnit)}
-                size={rest.size ? rest.size : undefined}
+                {...optionalProp('size', rest.size ? rest.size : undefined)}
                 styles={{ input: { fontWeight: 500 } }}
                 value={unit}
                 w={92}

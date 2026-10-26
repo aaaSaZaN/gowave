@@ -1,5 +1,5 @@
 import { CodeHighlight } from '@mantine/code-highlight'
-import { Group, Stack, ThemeIcon, Text } from '@mantine/core'
+import { Group, Stack, Text, ThemeIcon } from '@mantine/core'
 import { Trans } from 'react-i18next'
 import { TbBrandDocker, TbClock, TbRadar } from 'react-icons/tb'
 

@@ -1,11 +1,8 @@
 import { DataTable, type DataTableSortStatus, useDataTableColumns } from '@kastov/mantine-datatable'
 import { Anchor, Text } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
-import { GetUserSubscriptionRequestHistoryCommand } from '@remnawave/backend-contract'
-import get from 'lodash/get'
-import { ReactNode, useCallback, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-
+import type { GetUserSubscriptionRequestHistoryCommand } from '@remnawave/backend-contract'
+import get from '@shared/lib/object-path'
 import {
     CopyableCell,
     DataTableControls,
@@ -14,6 +11,8 @@ import {
     TextSearchFilter
 } from '@shared/ui'
 import { formatTimeUtil } from '@shared/utils/time-utils'
+import { type ReactNode, useCallback, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 type TRecord = GetUserSubscriptionRequestHistoryCommand.Response['response']['records'][number]
 
@@ -53,7 +52,7 @@ export const UserSubscriptionRequestsTable = (props: IProps) => {
         sortable: true,
         toggleable: true,
         ellipsis: true,
-        width,
+        ...(width === undefined ? {} : { width }),
         filter: (
             <TextSearchFilter
                 label={title}

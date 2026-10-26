@@ -1,18 +1,17 @@
-import type { editor } from 'monaco-editor'
-
 import { TemplateEditorActionsFeature } from '@features/dashboard/subscription-templates/template-editor-actions'
 import { Box, Paper } from '@mantine/core'
-import { Monaco } from '@monaco-editor/react'
-import { GetHostsCommand, GetSubscriptionTemplateCommand } from '@remnawave/backend-contract'
-import { decode } from '@stablelib/base64'
-import clsx from 'clsx'
-import { useLayoutEffect, useRef } from 'react'
-
+import type { Monaco } from '@monaco-editor/react'
+import type { GetHostsCommand, GetSubscriptionTemplateCommand } from '@remnawave/backend-contract'
 import { usePseudoFullscreen, useViewportFillHeight } from '@shared/hooks'
-import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui'
-import { CodeEditor, editorClasses, EditorFooter } from '@shared/ui/code-editor'
+import { decode } from '@shared/lib/base64'
+import clsx from '@shared/lib/classes'
+import { runAsync } from '@shared/lib/run-async'
+import { FullscreenToggleButton, fullscreenClasses } from '@shared/ui'
+import { CodeEditor, EditorFooter, editorClasses } from '@shared/ui/code-editor'
 import { preventBackScroll } from '@shared/utils/misc'
 import { setupSuggestWidget } from '@shared/utils/setup-monaco/setup-suggest-monaco'
+import type { editor } from 'monaco-editor'
+import { useLayoutEffect, useRef } from 'react'
 
 import styles from './SubscriptionTemplateEditor.module.css'
 import { configureMonaco, getTemplateModelPath } from './utils/setup-template-monaco'
@@ -44,7 +43,7 @@ export function SubscriptionTemplateEditorWidget(props: Props) {
     }
 
     const handleEditorWillMount = (monaco: Monaco) => {
-        configureMonaco(monaco, editorType, hosts, template.templateType)
+        runAsync(configureMonaco(monaco, editorType, hosts, template.templateType))
     }
 
     const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor, monaco: Monaco) => {

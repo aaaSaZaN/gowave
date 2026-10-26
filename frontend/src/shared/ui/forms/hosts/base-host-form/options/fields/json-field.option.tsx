@@ -1,10 +1,9 @@
 import { Button } from '@mantine/core'
+import { useSettingsRowControl } from '@shared/ui/settings-row'
 import { useTranslation } from 'react-i18next'
 import { TbPencil } from 'react-icons/tb'
 
-import { useSettingsRowControl } from '@shared/ui/settings-row'
-
-import { openHostJsonFieldModal, THostJsonField } from '../../json-fields'
+import { openHostJsonFieldModal, type THostJsonField } from '../../json-fields'
 import { useHostFormData } from '../host-form-data.context'
 import { useHostOptions } from '../host-options.context'
 

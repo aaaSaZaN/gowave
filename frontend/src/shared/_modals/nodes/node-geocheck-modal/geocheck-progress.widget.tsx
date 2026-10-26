@@ -1,7 +1,6 @@
 import { Stack, Text } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-
 import { LottieGlobeShared } from '@shared/ui/lotties/globe'
+import { useTranslation } from 'react-i18next'
 
 export const GeocheckProgressWidget = () => {
     const { t } = useTranslation()

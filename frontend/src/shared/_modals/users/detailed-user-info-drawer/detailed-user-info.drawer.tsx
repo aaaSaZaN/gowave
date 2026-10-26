@@ -1,5 +1,13 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
 import { DataList, Drawer, Group, Stack } from '@mantine/core'
+import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
+import { useGetUserById } from '@shared/api/hooks'
+import { CopyableDataListItem } from '@shared/ui/copyable-field/copyable-data-list-item'
+import { LoaderModalShared } from '@shared/ui/loader-modal'
+import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
+import { SectionCard } from '@shared/ui/section-card'
+import { prettifyBytesUtil } from '@shared/utils/bytes'
+import { formatTimeUtil } from '@shared/utils/time-utils'
 import { UserStatusBadge } from '@widgets/dashboard/users/user-status-badge'
 import { useTranslation } from 'react-i18next'
 import {
@@ -10,15 +18,6 @@ import {
     PiTagDuotone,
     PiUserDuotone
 } from 'react-icons/pi'
-
-import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
-import { useGetUserById } from '@shared/api/hooks'
-import { CopyableDataListItem } from '@shared/ui/copyable-field/copyable-data-list-item'
-import { LoaderModalShared } from '@shared/ui/loader-modal'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
-import { SectionCard } from '@shared/ui/section-card'
-import { prettifyBytesUtil } from '@shared/utils/bytes'
-import { formatTimeUtil } from '@shared/utils/time-utils'
 
 interface IProps {
     userId: number

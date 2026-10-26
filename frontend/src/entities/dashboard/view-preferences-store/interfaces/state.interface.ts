@@ -1,6 +1,6 @@
 import type { ILauncherPosition, TQuickLink } from '@shared/ui/quick-launcher/quick-links.types'
 
-import { HOSTS_VIEW_MODE, NODES_VIEW_MODE } from './enums'
+import type { HOSTS_VIEW_MODE, NODES_VIEW_MODE } from './enums'
 
 export interface IExperimentalFeatures {
     legacyLayoutStyle: boolean

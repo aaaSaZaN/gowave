@@ -1,15 +1,14 @@
 import { Button, Divider, Group, px, Stack, Tabs, Transition } from '@mantine/core'
+import { CopyableAreaShared } from '@shared/ui/copyable-area/copyable-area'
+import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiKey } from 'react-icons/pi'
 import { TbKey, TbLock, TbSignature } from 'react-icons/tb'
 
-import { CopyableAreaShared } from '@shared/ui/copyable-area/copyable-area'
-import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
-
 import { generateMlDsa65, generateMlKem768, generateX25519 } from './keypair-utils'
 
-const enum TabTypes {
+enum TabTypes {
     ML_DSA65 = 'ml-dsa65',
     ML_KEM768 = 'ml-kem768',
     X25519 = 'x25519'

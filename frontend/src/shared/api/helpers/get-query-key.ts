@@ -1,4 +1,4 @@
-import { QueryKey } from '../types'
+import type { QueryKey } from '../types'
 
 export function getQueryKey(
     queryKey: QueryKey,

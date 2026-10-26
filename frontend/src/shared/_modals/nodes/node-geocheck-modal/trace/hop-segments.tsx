@@ -1,13 +1,11 @@
-import type { IGeocheckHop } from './trace.types'
-
 import { Box, Stack, Text } from '@mantine/core'
-import ColorHash from 'color-hash'
+import ColorHash from '@shared/lib/color'
 import { useMemo } from 'react'
-
 import { HopRow } from './hop-row'
-import { TraceLink } from './trace-link'
 import classes from './Trace.module.css'
+import type { IGeocheckHop } from './trace.types'
 import { groupHopsByAs, isTimedOutHop } from './trace.types'
+import { TraceLink } from './trace-link'
 
 const colorHash = new ColorHash({ lightness: [0.68, 0.68, 0.68] })
 
@@ -38,10 +36,10 @@ export const HopSegments = (props: IProps) => {
 
     return (
         <Stack gap="xs">
-            {segments.map((segment, index) => (
+            {segments.map((segment) => (
                 <Box
                     className={classes.segment}
-                    key={`${segment.asn}-${index}`}
+                    key={`${segment.asn}:${segment.hops[0]?.ttl}`}
                     style={{ '--as-color': resolveAsColor(segment.asn) }}
                 >
                     <Text c="dimmed" mb={2} size="10px" truncate>

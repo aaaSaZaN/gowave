@@ -4,13 +4,8 @@ import { schemaResolver, useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import {
     CreateNodeIntegrationCommand,
-    UpdateNodeIntegrationCommand
+    type UpdateNodeIntegrationCommand
 } from '@remnawave/backend-contract'
-import clsx from 'clsx'
-import { useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbPlugConnected } from 'react-icons/tb'
-
 import { showModal } from '@shared/_modals/show-modal'
 import { openApplyToNodesModal } from '@shared/_modals/universal'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
@@ -23,13 +18,18 @@ import {
 } from '@shared/api/hooks'
 import { COMPACT_MONACO_OPTIONS } from '@shared/constants/monaco-theme'
 import { usePseudoFullscreen } from '@shared/hooks'
-import { CodeEditor, editorClasses, EditorFooter, EditorStatusBar } from '@shared/ui/code-editor'
-import { fullscreenClasses, FullscreenToggleButton } from '@shared/ui/fullscreen-toggle-button'
+import clsx from '@shared/lib/classes'
+import { runAsync } from '@shared/lib/run-async'
+import { CodeEditor, EditorFooter, EditorStatusBar, editorClasses } from '@shared/ui/code-editor'
+import { FullscreenToggleButton, fullscreenClasses } from '@shared/ui/fullscreen-toggle-button'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { handleFormErrors } from '@shared/utils/misc'
 import { addBase64EditorAction } from '@shared/utils/monaco/base64-action'
 import { forceMonacoRetokenize } from '@shared/utils/monaco/force-retokenize'
+import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbPlugConnected } from 'react-icons/tb'
 
 import classes from './NodeIntegrationEditor.module.css'
 
@@ -92,18 +92,23 @@ export const NodeIntegrationEditorModal = NiceModal.create((props: IProps) => {
         })
 
         setConfigValue(JSON.stringify(integration.config ?? {}, null, 2))
-    }, [integration])
+    }, [integration, form.initialize])
 
     const invalidateIntegrations = () => {
-        queryClient.refetchQueries({
-            queryKey: QueryKeys.nodeIntegrations.getNodeIntegrations.queryKey
-        })
+        runAsync(
+            queryClient.refetchQueries({
+                queryKey: QueryKeys.nodeIntegrations.getNodeIntegrations.queryKey
+            })
+        )
 
         if (integrationUuid) {
-            queryClient.refetchQueries({
-                queryKey: QueryKeys.nodeIntegrations.getNodeIntegration({ uuid: integrationUuid })
-                    .queryKey
-            })
+            runAsync(
+                queryClient.refetchQueries({
+                    queryKey: QueryKeys.nodeIntegrations.getNodeIntegration({
+                        uuid: integrationUuid
+                    }).queryKey
+                })
+            )
         }
     }
 

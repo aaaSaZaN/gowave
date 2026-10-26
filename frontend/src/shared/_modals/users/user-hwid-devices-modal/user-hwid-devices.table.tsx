@@ -1,9 +1,17 @@
 import { DataTable, type DataTableSortStatus, useDataTableColumns } from '@kastov/mantine-datatable'
 import { ActionIcon, Anchor, Group, Text, ThemeIcon } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
-import { GetUserHwidDevicesCommand } from '@remnawave/backend-contract'
-import get from 'lodash/get'
-import { ReactNode, useCallback, useMemo, useState } from 'react'
+import type { GetUserHwidDevicesCommand } from '@remnawave/backend-contract'
+import get from '@shared/lib/object-path'
+import {
+    CopyableCell,
+    DataTableControls,
+    EllipsisCell,
+    sortRecords,
+    TextSearchFilter
+} from '@shared/ui'
+import { formatTimeUtil } from '@shared/utils/time-utils'
+import { type ReactNode, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiDeviceMobile, PiLinuxLogo } from 'react-icons/pi'
 import {
@@ -13,15 +21,6 @@ import {
     TbBrandWindows,
     TbTrash
 } from 'react-icons/tb'
-
-import {
-    CopyableCell,
-    DataTableControls,
-    EllipsisCell,
-    sortRecords,
-    TextSearchFilter
-} from '@shared/ui'
-import { formatTimeUtil } from '@shared/utils/time-utils'
 
 type TDevice = GetUserHwidDevicesCommand.Response['response']['devices'][number]
 
@@ -79,7 +78,7 @@ export const UserHwidDevicesTable = (props: IProps) => {
         sortable: true,
         toggleable: true,
         ellipsis: true,
-        width,
+        ...(width === undefined ? {} : { width }),
         filter: (
             <TextSearchFilter
                 label={title}

@@ -9,16 +9,15 @@ import {
     Tooltip
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { CreateApiTokenCommand, GetApiTokensCommand } from '@remnawave/backend-contract'
-import dayjs from 'dayjs'
-import { useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { TbCheck, TbCopy } from 'react-icons/tb'
-
+import type { CreateApiTokenCommand, GetApiTokensCommand } from '@remnawave/backend-contract'
 import { useGetScopes } from '@shared/api/hooks'
 import { CopyableCodeBlock } from '@shared/ui/copyable-code-block'
 import { ModalFooter } from '@shared/ui/modal-footer'
 import { formatTimeUtil } from '@shared/utils/time-utils'
+import dayjs from 'dayjs'
+import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { TbCheck, TbCopy } from 'react-icons/tb'
 
 import classes from '../api-token-card.module.css'
 import { ScopeResourceRow } from './scope-resource-row'

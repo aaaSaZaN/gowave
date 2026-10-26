@@ -16,23 +16,12 @@ import {
     Progress,
     SimpleGrid,
     Text,
-    ThemeIconProps,
+    type ThemeIconProps,
     Tooltip,
     UnstyledButton
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import { GetNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
-import { githubDarkTheme, JsonEditor } from 'json-edit-react'
-import { memo, useCallback, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
-import {
-    PiArrowsCounterClockwise,
-    PiCloudArrowUpDuotone,
-    PiUsersDuotone,
-    PiWarningCircle
-} from 'react-icons/pi'
-import { TbChevronRight, TbJson, TbPower, TbSum, TbWifi, TbWifiOff } from 'react-icons/tb'
-
+import type { GetNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
 import { showModal } from '@shared/_modals/show-modal'
 import { queryClient } from '@shared/api'
 import {
@@ -47,7 +36,18 @@ import { XrayLogo } from '@shared/ui/logos'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { prettifyBytesUtil } from '@shared/utils/bytes'
+import { isCustomXrayVersion, isGoNodeVersion } from '@shared/utils/misc/node-versions'
 import { getNodeResetDaysUtil, getXrayUptimeUtil } from '@shared/utils/time-utils'
+import { githubDarkTheme, JsonEditor } from 'json-edit-react'
+import { memo, useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import {
+    PiArrowsCounterClockwise,
+    PiCloudArrowUpDuotone,
+    PiUsersDuotone,
+    PiWarningCircle
+} from 'react-icons/pi'
+import { TbChevronRight, TbJson, TbPower, TbSum, TbWifi, TbWifiOff } from 'react-icons/tb'
 
 interface IProps {
     node: GetNodeCommand.Response['response']
@@ -400,11 +400,11 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                             radius="md"
                             style={{
                                 background:
-                                    node.usersOnline! > 0
+                                    (node.usersOnline ?? 0) > 0
                                         ? 'rgba(45, 212, 191, 0.08)'
                                         : 'rgba(107, 114, 128, 0.08)',
                                 border: `1px solid ${
-                                    node.usersOnline! > 0
+                                    (node.usersOnline ?? 0) > 0
                                         ? 'rgba(45, 212, 191, 0.2)'
                                         : 'rgba(107, 114, 128, 0.2)'
                                 }`
@@ -413,14 +413,14 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                             <Group gap="xs" justify="center">
                                 <PiUsersDuotone
                                     color={
-                                        node.usersOnline! > 0
+                                        (node.usersOnline ?? 0) > 0
                                             ? 'var(--mantine-color-teal-5)'
                                             : 'var(--mantine-color-gray-6)'
                                     }
                                     size={16}
                                 />
                                 <Text
-                                    c={node.usersOnline! > 0 ? 'teal.5' : 'gray.6'}
+                                    c={(node.usersOnline ?? 0) > 0 ? 'teal.5' : 'gray.6'}
                                     fw={600}
                                     size="sm"
                                 >
@@ -431,15 +431,8 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
 
                         {node.versions &&
                             (() => {
-                                const isGoNode =
-                                    (node.versions as any)?.nodeType === 'go' ||
-                                    node.versions.node?.includes('(Go)')
-                                const isCustomXray = Boolean(
-                                    (node.versions as any)?.isCustom ||
-                                    (node.versions as any)?.isCustomXray ||
-                                    node.versions.xray?.toLowerCase().includes('custom') ||
-                                    node.versions.xray?.toLowerCase().includes('mod')
-                                )
+                                const isGoNode = isGoNodeVersion(node.versions)
+                                const isCustomXray = isCustomXrayVersion(node.versions)
                                 return (
                                     <Paper
                                         p="xs"
@@ -565,8 +558,7 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                             >
                                 <Tooltip
                                     label={
-                                        (node as any)?.versions?.nodeType === 'go' ||
-                                        node.versions.node?.includes('(Go)')
+                                        isGoNodeVersion(node.versions)
                                             ? 'Версия ноды, gowave-node'
                                             : t('node-details-card.widget.gowave-node-version')
                                     }

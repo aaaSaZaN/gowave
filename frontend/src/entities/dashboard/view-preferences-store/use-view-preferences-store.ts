@@ -1,18 +1,17 @@
-import { create } from 'zustand'
-import { createJSONStorage, devtools, persist } from 'zustand/middleware'
-
 import {
     DEFAULT_QUICK_LINKS,
     sanitizeLauncherColumns,
     sanitizeLauncherPosition,
     sanitizeQuickLinks
 } from '@shared/ui/quick-launcher/quick-links.types'
+import { create } from 'zustand'
+import { createJSONStorage, devtools, persist } from 'zustand/middleware'
 
 import {
     HOSTS_VIEW_MODE,
-    IActions,
-    IExperimentalFeatures,
-    IState,
+    type IActions,
+    type IExperimentalFeatures,
+    type IState,
     NODES_VIEW_MODE
 } from './interfaces'
 

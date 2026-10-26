@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, devtools, persist } from 'zustand/middleware'
 
-import { IActions, IState } from './interfaces'
+import type { IActions, IState } from './interfaces'
 
 export const useMiscStore = create<IActions & IState>()(
     persist(

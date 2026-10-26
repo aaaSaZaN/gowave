@@ -1,9 +1,7 @@
-import type { IProps } from './interfaces/props.interface'
-
 import {
     ActionIcon,
     Avatar,
-    ComboboxItem,
+    type ComboboxItem,
     Group,
     Select,
     Skeleton,
@@ -11,12 +9,12 @@ import {
     Text,
     Tooltip
 } from '@mantine/core'
+import { useGetInfraProviders } from '@shared/api/hooks'
+import { faviconResolver } from '@shared/utils/misc'
 import { forwardRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbExternalLink } from 'react-icons/tb'
-
-import { useGetInfraProviders } from '@shared/api/hooks'
-import { faviconResolver } from '@shared/utils/misc'
+import type { IProps } from './interfaces/props.interface'
 
 interface ItemProps extends ComboboxItem {
     faviconLink: null | string

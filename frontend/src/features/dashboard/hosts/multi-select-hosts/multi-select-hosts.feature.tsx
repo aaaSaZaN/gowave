@@ -1,3 +1,4 @@
+import { useHostsActiveTag } from '@entities/dashboard/view-preferences-store'
 import {
     ActionIcon,
     Affix,
@@ -12,7 +13,12 @@ import {
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
-import { useEffect } from 'react'
+import { showModal } from '@shared/_modals/show-modal'
+import { useBulkEnableHosts, useCloneHost, useGetHosts } from '@shared/api/hooks'
+import {
+    useBulkDeleteHosts,
+    useBulkDisableHosts
+} from '@shared/api/hooks/hosts/hosts.mutation.hooks'
 import { useTranslation } from 'react-i18next'
 import { PiProhibitDuotone, PiPulseDuotone } from 'react-icons/pi'
 import {
@@ -26,16 +32,7 @@ import {
     TbTrash
 } from 'react-icons/tb'
 
-import { showModal } from '@shared/_modals/show-modal'
-import { useBulkEnableHosts, useCloneHost, useGetHosts } from '@shared/api/hooks'
-import {
-    useBulkDeleteHosts,
-    useBulkDisableHosts
-} from '@shared/api/hooks/hosts/hosts.mutation.hooks'
-
-import { useHostsActiveTag } from '@entities/dashboard/view-preferences-store'
-
-import { IProps } from './interfaces/props.interface'
+import type { IProps } from './interfaces/props.interface'
 
 export const MultiSelectHostsFeature = (props: IProps) => {
     const { configProfiles, hosts, moveSelected, selectedHosts, setSelectedHosts } = props
@@ -46,18 +43,6 @@ export const MultiSelectHostsFeature = (props: IProps) => {
 
     const { refetch: refetchHosts } = useGetHosts()
     const activeTag = useHostsActiveTag()
-
-    useEffect(() => {
-        if (!hosts) return
-
-        const existingUuids = new Set(hosts.map((host) => host.uuid))
-
-        setSelectedHosts((current) => {
-            const alive = current.filter((uuid) => existingUuids.has(uuid))
-
-            return alive.length === current.length ? current : alive
-        })
-    }, [hosts])
 
     const { mutate: bulkDeleteHosts } = useBulkDeleteHosts({
         mutationFns: {
