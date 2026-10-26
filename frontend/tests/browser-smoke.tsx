@@ -183,8 +183,12 @@ async function run() {
         document.querySelector('.jer-editor-container'),
         'Inbound JSON viewer is missing'
     )
-    assert(jsonViewer.textContent?.includes('vless'), 'JSON viewer renders inbound values')
-    jsonViewer.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
+    const inboundProtocol = requireValue(
+        jsonViewer.querySelector('.jer-value-string'),
+        'Inbound protocol value is missing'
+    )
+    assert(inboundProtocol.textContent?.includes('vless'), 'JSON viewer renders inbound values')
+    inboundProtocol.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
     await wait()
     assert(
         !jsonViewer.querySelector('input, textarea, [contenteditable="true"]'),
