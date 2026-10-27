@@ -10,16 +10,24 @@ import {
     TextInput,
     ThemeIcon
 } from '@mantine/core'
-import { useDebouncedValue } from '@mantine/hooks'
 import { useAutoAnimate } from '@shared/hooks/use-auto-animate'
 import { TemplateInfoPopoverShared } from '@shared/ui/popovers/template-info-popover/template-info-popover.shared'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiPlus, PiTrash } from 'react-icons/pi'
 
 const EMPTY_REMARKS = ['']
-const remarkRows = (values: string[]) =>
+
+interface RemarkRow {
+    id: string
+    value: string
+}
+
+const remarkRows = (values: string[]): RemarkRow[] =>
     values.map((value, index) => ({ id: `initial:${index}`, value }))
+
+const hasSameValues = (rows: RemarkRow[], values: string[]) =>
+    rows.length === values.length && rows.every((row, index) => row.value === values[index])
 
 export const RemarksManager = ({
     initialRemarks = EMPTY_REMARKS,
@@ -35,7 +43,6 @@ export const RemarksManager = ({
     title: string
 }) => {
     const [localRemarks, setLocalRemarks] = useState(() => remarkRows(initialRemarks))
-    const [debouncedRemarks] = useDebouncedValue(localRemarks, 300)
     const { t } = useTranslation()
 
     const [parent] = useAutoAnimate((el, action) => {
@@ -62,37 +69,39 @@ export const RemarksManager = ({
         })
     })
 
+    // Parents store what onChange reports and pass it back as a new array. Only a different
+    // value (initial load, save, another squad) replaces the rows; the echo of our own edit
+    // must not, or the rows reset and report again in a render loop.
     const [previousRemarks, setPreviousRemarks] = useState(initialRemarks)
     if (previousRemarks !== initialRemarks) {
         setPreviousRemarks(initialRemarks)
-        setLocalRemarks(remarkRows(initialRemarks))
+        if (!hasSameValues(localRemarks, initialRemarks)) {
+            setLocalRemarks(remarkRows(initialRemarks))
+        }
     }
 
-    useEffect(() => {
-        onChange(debouncedRemarks.map((remark) => remark.value))
-    }, [debouncedRemarks, onChange])
+    const commitRemarks = (nextRemarks: RemarkRow[]) => {
+        setLocalRemarks(nextRemarks)
+        onChange(nextRemarks.map((remark) => remark.value))
+    }
 
     const addLocalRemark = () => {
-        setLocalRemarks((prev) => [...prev, { id: crypto.randomUUID(), value: '' }])
+        commitRemarks([...localRemarks, { id: crypto.randomUUID(), value: '' }])
     }
 
     const removeLocalRemark = (index: number) => {
-        setLocalRemarks((prev) => {
-            const newRemarks = [...prev]
-            newRemarks.splice(index, 1)
-            if (newRemarks.length === 0) newRemarks.push({ id: crypto.randomUUID(), value: '' })
-            return newRemarks
-        })
+        const newRemarks = localRemarks.filter((_, remarkIndex) => remarkIndex !== index)
+        if (newRemarks.length === 0) newRemarks.push({ id: crypto.randomUUID(), value: '' })
+        commitRemarks(newRemarks)
     }
 
     const updateLocalRemark = (index: number, value: string) => {
-        setLocalRemarks((prev) => {
-            const newRemarks = [...prev]
-            const current = newRemarks[index]
-            if (!current) return prev
-            newRemarks[index] = { ...current, value }
-            return newRemarks
-        })
+        if (!localRemarks[index]) return
+        commitRemarks(
+            localRemarks.map((remark, remarkIndex) =>
+                remarkIndex === index ? { ...remark, value } : remark
+            )
+        )
     }
 
     return (

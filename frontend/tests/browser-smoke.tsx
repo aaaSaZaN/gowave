@@ -244,8 +244,10 @@ async function run() {
     window.scrollTo(0, 0)
 
     let lastRemarks: string[] = []
+    let remarkReports = 0
     const onRemarksChange = (remarks: string[]) => {
         lastRemarks = remarks
+        remarkReports += 1
     }
     flushSync(() =>
         root.render(
@@ -267,6 +269,10 @@ async function run() {
     )
     const addRemark = requireValue(container.querySelector('button'), 'Add remark button missing')
     flushSync(() => addRemark.click())
+    assert(
+        lastRemarks.length === 2 && lastRemarks[0] === 'First' && lastRemarks[1] === '',
+        'adding a remark reports immediately'
+    )
     const secondRemarkInput = requireValue(
         container.querySelectorAll('input').item(1),
         'Second remark input missing'
@@ -297,8 +303,17 @@ async function run() {
         )
     )
     assert(container.querySelector('input')?.value === 'Second', 'remarks reset on new data')
+    const reportsAfterReset = remarkReports
     await wait(350)
-    assert(lastRemarks[0] === 'Second', 'remarks report debounced changes')
+    assert(remarkReports === reportsAfterReset, 'remarks do not echo parent data back')
+    const resetRemarkInput = requireValue(container.querySelector('input'), 'Reset remark missing')
+    const setInputValue = requireValue(
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set,
+        'Input value setter missing'
+    )
+    setInputValue.call(resetRemarkInput, 'Second edited')
+    resetRemarkInput.dispatchEvent(new Event('input', { bubbles: true }))
+    assert(lastRemarks[0] === 'Second edited', 'typing a remark reports immediately')
     flushSync(() =>
         root.render(
             <MantineProvider>
