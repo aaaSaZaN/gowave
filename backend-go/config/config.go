@@ -274,11 +274,16 @@ func (c *Config) IsLoopbackHost() bool {
 // Validate prevents accidentally deploying with a public or weak signing key.
 // NormalizePanelBasePath validates a dashboard-only mount point.
 func NormalizePanelBasePath(value string) (string, error) {
+	value = strings.TrimSpace(value)
 	if value == "" || value == "/" {
 		return "/", nil
 	}
+	// "panel", "/panel" and "/panel/" all mean the same mount point.
+	if !strings.HasPrefix(value, "/") {
+		value = "/" + value
+	}
 	if !regexp.MustCompile(`^/[a-zA-Z0-9_-]+(/[a-zA-Z0-9_-]+)*/?$`).MatchString(value) {
-		return "", fmt.Errorf("PANEL_BASE_PATH must be an absolute path with letters, numbers, underscores, and hyphens")
+		return "", fmt.Errorf("PANEL_BASE_PATH must use letters, numbers, underscores, hyphens and single slashes, for example /panel/")
 	}
 	first := strings.Split(strings.Trim(value, "/"), "/")[0]
 	if first == "api" || first == "metrics" {

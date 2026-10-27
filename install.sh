@@ -1014,8 +1014,12 @@ INSTALL_NODE=false
 NODE_INSTALL_URL=https://raw.githubusercontent.com/aaaSaZaN/gowave-node/main/install.sh
 
 normalize_panel_path() {
-    local value=${1:-/} first
-    if [ "$value" = / ]; then printf /; return; fi
+    local value=${1:-} first
+    value=${value#"${value%%[![:space:]]*}"}
+    value=${value%"${value##*[![:space:]]}"}
+    if [ -z "$value" ] || [ "$value" = / ]; then printf /; return; fi
+    # "panel", "/panel" and "/panel/" all mean the same mount point.
+    [[ $value == /* ]] || value=/$value
     [[ $value =~ ^/[a-zA-Z0-9_-]+(/[a-zA-Z0-9_-]+)*/?$ ]] || return 1
     first=${value#/}; first=${first%%/*}
     case $first in api|metrics) return 1 ;; esac
@@ -1030,7 +1034,7 @@ ask_panel_path() {
             PANEL_BASE_PATH=$normalized
             return
         fi
-        warn "$(t 'Пример: /panel/. Допустимы буквы, цифры, дефис и подчёркивание; /api и /metrics заняты.' 'Example: /panel/. Use letters, numbers, hyphens and underscores; /api and /metrics are reserved.')"
+        warn "$(t 'Пример: panel или /panel/. Допустимы буквы, цифры, дефис и подчёркивание; /api и /metrics заняты.' 'Example: panel or /panel/. Use letters, numbers, hyphens and underscores; /api and /metrics are reserved.')"
     done
 }
 

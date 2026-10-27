@@ -14,10 +14,16 @@ INSTALL_DIR=$WORK/panel
 mkdir -p "$INSTALL_DIR"
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
-for value in /api /api/sub /metrics /a/../b //evil /bad?x /a//b; do
+for value in /api api /api/sub api/sub /metrics metrics /a/../b ../b //evil /bad?x /a//b a//b 'two words'; do
     if normalize_panel_path "$value" >/dev/null; then fail "accepted $value"; fi
 done
 [ "$(normalize_panel_path /private/panel)" = /private/panel/ ] || fail normalization
+for value in panel /panel /panel/ panel/ ' /panel '; do
+    [ "$(normalize_panel_path "$value")" = /panel/ ] || fail "normalized $value"
+done
+for value in '' / ' '; do
+    [ "$(normalize_panel_path "$value")" = / ] || fail "normalized root '$value'"
+done
 
 # Failed reconfiguration restores the entire original environment and restarts it.
 printf 'APP_PORT=3000\nPANEL_DOMAIN=panel.example\nAPP_SECRET=preserved\n' >"$ENV_FILE"

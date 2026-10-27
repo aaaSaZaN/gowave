@@ -3,13 +3,13 @@ package config
 import "testing"
 
 func TestPanelBasePath(t *testing.T) {
-	for input, want := range map[string]string{"": "/", "/": "/", "/panel": "/panel/", "/private/panel/": "/private/panel/", "/a_B-123": "/a_B-123/"} {
+	for input, want := range map[string]string{"": "/", "/": "/", " ": "/", "/panel": "/panel/", "/panel/": "/panel/", "panel": "/panel/", "panel/": "/panel/", " /panel ": "/panel/", "private/panel": "/private/panel/", "/private/panel/": "/private/panel/", "/a_B-123": "/a_B-123/"} {
 		got, err := NormalizePanelBasePath(input)
 		if err != nil || got != want {
 			t.Errorf("%q: got %q, %v; want %q", input, got, err, want)
 		}
 	}
-	for _, input := range []string{"panel", "//evil", "/../panel", "/a/./b", "/a//b", "/api", "/api/sub/", "/metrics/", "/p?x=y", "/p#x", "/a%2fb", "/a.b", "/<script>", "/space here"} {
+	for _, input := range []string{"//evil", "/../panel", "../panel", "/a/./b", "/a//b", "a//b", "/api", "api", "api/sub/", "/api/sub/", "/metrics/", "metrics", "/p?x=y", "/p#x", "/a%2fb", "/a.b", "/<script>", "/space here", "space here"} {
 		if _, err := NormalizePanelBasePath(input); err == nil {
 			t.Errorf("accepted invalid path %q", input)
 		}
