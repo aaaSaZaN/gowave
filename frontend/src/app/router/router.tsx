@@ -47,8 +47,9 @@ import { MainLayout } from '../layouts/dashboard/main-layout/layout'
 const router = createBrowserRouter(
     createRoutesFromElements(
         <Route element={<ErrorBoundaryHoc FallbackComponent={ErrorPageComponent} />}>
-            <Route element={<AuthLayout />} path={ROUTES.OAUTH2.ROOT}>
+            <Route element={<AuthLayout />}>
                 <Route element={<Oauth2CallbackPage />} path={ROUTES.OAUTH2.ROOT} />
+                <Route element={<Oauth2CallbackPage />} path={ROUTES.OAUTH2.AUTH_CALLBACK} />
             </Route>
             <Route element={<AuthGuard />}>
                 <Route element={<Navigate replace to={ROUTES.DASHBOARD.ROOT} />} path="/" />

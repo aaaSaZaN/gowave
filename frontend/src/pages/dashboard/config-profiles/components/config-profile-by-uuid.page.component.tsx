@@ -14,13 +14,15 @@ import { useNavigate } from 'react-router'
 interface Props {
     configProfile: GetConfigProfileByUuidCommand.Response['response']
     isWasmCrashed: boolean
-    isWasmRestarting: boolean
+    isWasmLoading: boolean
     onRestartWasm: () => void
     snippets: GetSnippetsCommand.Response['response']
+    wasmProgress: number
 }
 
 export const ConfigProfileByUuidPageComponent = (props: Props) => {
-    const { configProfile, isWasmCrashed, isWasmRestarting, onRestartWasm, snippets } = props
+    const { configProfile, isWasmCrashed, isWasmLoading, onRestartWasm, snippets, wasmProgress } =
+        props
 
     const { t } = useTranslation()
     const navigate = useNavigate()
@@ -71,9 +73,10 @@ export const ConfigProfileByUuidPageComponent = (props: Props) => {
             <ConfigEditorWidget
                 configProfile={configProfile}
                 isWasmCrashed={isWasmCrashed}
-                isWasmRestarting={isWasmRestarting}
+                isWasmLoading={isWasmLoading}
                 onRestartWasm={onRestartWasm}
                 snippets={snippets}
+                wasmProgress={wasmProgress}
             />
         </Page>
     )

@@ -3,7 +3,8 @@ import type { GetConfigProfileByUuidCommand, GetSnippetsCommand } from '@remnawa
 export interface IProps {
     configProfile: GetConfigProfileByUuidCommand.Response['response']
     isWasmCrashed: boolean
-    isWasmRestarting: boolean
+    isWasmLoading: boolean
     onRestartWasm: () => void
     snippets: GetSnippetsCommand.Response['response']
+    wasmProgress: number
 }

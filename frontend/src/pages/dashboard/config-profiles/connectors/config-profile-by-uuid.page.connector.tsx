@@ -11,13 +11,16 @@ import { app } from 'src/config'
 
 import { ConfigProfileByUuidPageComponent } from '../components/config-profile-by-uuid.page.component'
 
+const WASM_INIT_TIMEOUT_MS = 60_000
+
 export function ConfigProfileByUuidPageConnector() {
     const { uuid } = useParams()
 
-    const [downloadProgress, setDownloadProgress] = useState(0)
-    const [isLoading, setIsLoading] = useState(true)
+    // The validator is Xray-core compiled to WebAssembly (~60 MB, ~12 MB gzip). It loads in the
+    // background so the editor opens immediately; validation starts once it is ready.
+    const [wasmProgress, setWasmProgress] = useState(0)
+    const [isWasmLoading, setIsWasmLoading] = useState(true)
     const [isWasmCrashed, setIsWasmCrashed] = useState(false)
-    const [isWasmRestarting, setIsWasmRestarting] = useState(false)
     const wasmBytesCache = useRef<ArrayBuffer | null>(null)
 
     const { data: configProfile, isLoading: isConfigProfileLoading } = useGetConfigProfile({
@@ -37,8 +40,13 @@ export function ConfigProfileByUuidPageConnector() {
                     const Go = window.Go
                     if (!Go) throw new Error('WASM runtime is not initialized')
                     const go = new Go()
-                    const wasmInitialized = new Promise<void>((resolve) => {
+                    const wasmInitialized = new Promise<void>((resolve, reject) => {
+                        const timeout = setTimeout(
+                            () => reject(new Error('WASM module did not initialize in time')),
+                            WASM_INIT_TIMEOUT_MS
+                        )
                         window.onWasmInitialized = () => {
+                            clearTimeout(timeout)
                             consola.info('WASM module initialized')
                             resolve()
                         }
@@ -50,7 +58,7 @@ export function ConfigProfileByUuidPageConnector() {
                     } else {
                         wasmBytes = await fetchWithProgress(
                             app.configEditor.wasmUrl,
-                            setDownloadProgress
+                            setWasmProgress
                         )
                         wasmBytesCache.current = wasmBytes
                     }
@@ -70,20 +78,19 @@ export function ConfigProfileByUuidPageConnector() {
                 })
                 .then(
                     () => {
-                        setIsLoading(false)
-                        setIsWasmRestarting(false)
+                        setIsWasmLoading(false)
                     },
                     (err: unknown) => {
                         consola.error('WASM initialization error:', err)
-                        setIsLoading(false)
-                        setIsWasmRestarting(false)
+                        setIsWasmCrashed(true)
+                        setIsWasmLoading(false)
                     }
                 ),
         []
     )
 
     const restartWasm = useCallback(() => {
-        setIsWasmRestarting(true)
+        setIsWasmLoading(true)
         setIsWasmCrashed(false)
         void initWasm()
     }, [initWasm])
@@ -100,17 +107,18 @@ export function ConfigProfileByUuidPageConnector() {
         return <Navigate to={ROUTES.DASHBOARD.MANAGEMENT.CONFIG_PROFILES} />
     }
 
-    if (isLoading || isConfigProfileLoading || !configProfile || isSnippetsLoading || !snippets) {
-        return <LoadingScreen text="The WASM module is loading..." value={downloadProgress} />
+    if (isConfigProfileLoading || !configProfile || isSnippetsLoading || !snippets) {
+        return <LoadingScreen />
     }
 
     return (
         <ConfigProfileByUuidPageComponent
             configProfile={configProfile}
             isWasmCrashed={isWasmCrashed}
-            isWasmRestarting={isWasmRestarting}
+            isWasmLoading={isWasmLoading}
             onRestartWasm={restartWasm}
             snippets={snippets}
+            wasmProgress={wasmProgress}
         />
     )
 }

@@ -25,7 +25,8 @@ export function ConfigEditorWidget(props: IProps) {
     const { t, i18n } = useTranslation()
     const monaco = useMonaco()
 
-    const { configProfile, isWasmCrashed, isWasmRestarting, onRestartWasm, snippets } = props
+    const { configProfile, isWasmCrashed, isWasmLoading, onRestartWasm, snippets, wasmProgress } =
+        props
 
     const [result, setResult] = useState('')
     const [isConfigValid, setIsConfigValid] = useState(true)
@@ -35,7 +36,7 @@ export function ConfigEditorWidget(props: IProps) {
     )
 
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
-    const wasWasmRestarting = useRef(false)
+    const wasWasmLoading = useRef(false)
 
     const { isFullscreen, toggle: toggleFullscreen } = usePseudoFullscreen()
     const { containerRef: editorWrapperRef, footerRef } = useViewportFillHeight({
@@ -56,11 +57,11 @@ export function ConfigEditorWidget(props: IProps) {
     const snippetMap = new Map(snippets.snippets.map((s) => [s.name, s.snippet]))
 
     useEffect(() => {
-        if (wasWasmRestarting.current && !isWasmRestarting && !isWasmCrashed && editorRef.current) {
+        if (wasWasmLoading.current && !isWasmLoading && !isWasmCrashed && editorRef.current) {
             ConfigValidationFeature.validate(editorRef, setResult, setIsConfigValid, snippetMap)
         }
-        wasWasmRestarting.current = isWasmRestarting
-    }, [isWasmRestarting, isWasmCrashed, snippetMap])
+        wasWasmLoading.current = isWasmLoading
+    }, [isWasmLoading, isWasmCrashed, snippetMap])
 
     const checkForChanges = () => {
         if (!editorRef.current) return
@@ -119,29 +120,29 @@ export function ConfigEditorWidget(props: IProps) {
         }
     }, [blocker, t])
 
-    const statusBar = (result || isWasmRestarting || isWasmCrashed) && (
+    const statusBar = (result || isWasmLoading || isWasmCrashed) && (
         <EditorStatusBar
-            status={isWasmCrashed || isWasmRestarting || !isConfigValid ? 'error' : 'success'}
+            status={isWasmCrashed || isWasmLoading || !isConfigValid ? 'error' : 'success'}
         >
-            {isWasmRestarting && (
+            {isWasmLoading && (
                 <Group gap="xs">
                     <Loader color="orange" size="xs" />
                     <Code className={styles.statusCode} color="orange">
-                        Xray Core (WASM) is restarting...
+                        Xray Core (WASM) is loading... {wasmProgress}%
                     </Code>
                 </Group>
             )}
-            {!isWasmRestarting && isWasmCrashed && (
+            {!isWasmLoading && isWasmCrashed && (
                 <Group gap="sm">
                     <Code className={styles.statusCode} color="red">
-                        Xray Core (WASM) crashed. Validation is unavailable.
+                        Xray Core (WASM) is not running. Validation is unavailable.
                     </Code>
                     <Button color="red" onClick={onRestartWasm} size="compact-xs" variant="light">
                         {t('restart-node-button.feature.restart')}
                     </Button>
                 </Group>
             )}
-            {!isWasmRestarting && !isWasmCrashed && result}
+            {!isWasmLoading && !isWasmCrashed && result}
         </EditorStatusBar>
     )
 
@@ -173,7 +174,7 @@ export function ConfigEditorWidget(props: IProps) {
                     defaultLanguage="json"
                     loading={<LoaderModalShared mih="100%" />}
                     onChange={() => {
-                        if (!isWasmCrashed && !isWasmRestarting) {
+                        if (!isWasmCrashed && !isWasmLoading) {
                             ConfigValidationFeature.validate(
                                 editorRef,
                                 setResult,

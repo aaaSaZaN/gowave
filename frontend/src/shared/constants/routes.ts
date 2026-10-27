@@ -5,7 +5,9 @@ export const ROUTES = {
         LOGIN: '/auth/login'
     },
     OAUTH2: {
-        ROOT: '/oauth2/callback/:provider'
+        ROOT: '/oauth2/callback/:provider',
+        // Redirect URI the backend sends to providers (see backend-go/internal/auth/oauth.go).
+        AUTH_CALLBACK: '/auth/oauth2/callback/:provider'
     },
     DASHBOARD: {
         ROOT: '/dashboard',
