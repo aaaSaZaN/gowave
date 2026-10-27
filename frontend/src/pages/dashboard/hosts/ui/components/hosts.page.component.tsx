@@ -48,13 +48,27 @@ export default function HostsPageComponent(props: IProps) {
 
     const { setHostsViewMode } = useViewPreferencesStoreActions()
 
+    // Only a change of the local list (drag and drop, move buttons) may persist an order.
+    // A fresh `hosts` reaches `state` one effect later; comparing it with the stale list
+    // would send viewPosition -1 for every host and replace the cache with an empty list.
+    const lastStateRef = useRef(state)
+
     useEffect(() => {
         ;(() => {
-            if (!hosts || !state) {
+            if (!hosts || !state || lastStateRef.current === state) {
+                return
+            }
+            lastStateRef.current = state
+
+            if (isDraggingRef.current) {
                 return
             }
 
-            if (isDraggingRef.current) {
+            const hostUuids = new Set(hosts.map((host) => host.uuid))
+            if (
+                state.length !== hosts.length ||
+                state.some((stateItem) => !hostUuids.has(stateItem.uuid))
+            ) {
                 return
             }
 
