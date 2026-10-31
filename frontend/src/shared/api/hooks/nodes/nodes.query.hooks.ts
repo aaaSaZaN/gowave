@@ -11,6 +11,7 @@ import { keepPreviousData } from '@tanstack/react-query'
 import { z } from 'zod'
 
 import { createGetQueryHook, errorHandler } from '../../tsq-helpers'
+import { TRAFFIC_TRACKING_START } from './nodes.mutation.hooks'
 
 export const nodesQueryKeys = createQueryKeys('nodes', {
     getAllNodes: {
@@ -44,9 +45,16 @@ export const useGetNodes = createGetQueryHook({
     errorHandler: (error) => errorHandler(error, 'Get All Nodes')
 })
 
+// The stored traffic tracking mode is a Gowave extension of the node response.
+const GetNodeResponseSchema = GetNodeCommand.ResponseSchema.extend({
+    response: GetNodeCommand.ResponseSchema.shape.response.extend({
+        trafficTrackingStart: z.enum(TRAFFIC_TRACKING_START).nullish()
+    })
+})
+
 export const useGetNode = createGetQueryHook({
     endpoint: GetNodeCommand.TSQ_url,
-    responseSchema: GetNodeCommand.ResponseSchema,
+    responseSchema: GetNodeResponseSchema,
     routeParamsSchema: GetNodeCommand.RequestParamSchema,
     getQueryKey: ({ route }) =>
         route ? nodesQueryKeys.getNode(route).queryKey : nodesQueryKeys.getNode._def,

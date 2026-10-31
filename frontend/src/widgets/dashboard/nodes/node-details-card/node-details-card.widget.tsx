@@ -4,7 +4,6 @@ import { GetNodeLinkedHostsFeature } from '@features/ui/dashboard/nodes/get-node
 import { GetNodeUsersUsageFeature } from '@features/ui/dashboard/nodes/get-node-users-usage'
 import { OpenNodeLogsFeature } from '@features/ui/dashboard/nodes/open-node-logs'
 import { OpenNodeSshFeature } from '@features/ui/dashboard/nodes/open-node-ssh'
-import { OpenNodeUpdateFeature } from '@features/ui/dashboard/nodes/open-node-update'
 import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     ActionIcon,
@@ -313,7 +312,6 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                             </ActionIcon>
                         </Tooltip>
                         <OpenNodeLogsFeature node={node} />
-                        <OpenNodeUpdateFeature node={node} />
                     </Group>
 
                     <Divider opacity={0.3} orientation="vertical" />
@@ -386,7 +384,7 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                     )}
                 </Box>
             </SectionCard.Section>
-            {node.isConnected && (
+            {(node.isConnected || isGoNodeVersion(node.versions)) && (
                 <SectionCard.Section>
                     <SimpleGrid
                         cols={{
@@ -396,39 +394,41 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                         }}
                         spacing="xs"
                     >
-                        <Paper
-                            p="xs"
-                            radius="md"
-                            style={{
-                                background:
-                                    (node.usersOnline ?? 0) > 0
-                                        ? 'rgba(45, 212, 191, 0.08)'
-                                        : 'rgba(107, 114, 128, 0.08)',
-                                border: `1px solid ${
-                                    (node.usersOnline ?? 0) > 0
-                                        ? 'rgba(45, 212, 191, 0.2)'
-                                        : 'rgba(107, 114, 128, 0.2)'
-                                }`
-                            }}
-                        >
-                            <Group gap="xs" justify="center">
-                                <PiUsersDuotone
-                                    color={
+                        {node.isConnected && (
+                            <Paper
+                                p="xs"
+                                radius="md"
+                                style={{
+                                    background:
                                         (node.usersOnline ?? 0) > 0
-                                            ? 'var(--mantine-color-teal-5)'
-                                            : 'var(--mantine-color-gray-6)'
-                                    }
-                                    size={16}
-                                />
-                                <Text
-                                    c={(node.usersOnline ?? 0) > 0 ? 'teal.5' : 'gray.6'}
-                                    fw={600}
-                                    size="sm"
-                                >
-                                    {node.usersOnline}
-                                </Text>
-                            </Group>
-                        </Paper>
+                                            ? 'rgba(45, 212, 191, 0.08)'
+                                            : 'rgba(107, 114, 128, 0.08)',
+                                    border: `1px solid ${
+                                        (node.usersOnline ?? 0) > 0
+                                            ? 'rgba(45, 212, 191, 0.2)'
+                                            : 'rgba(107, 114, 128, 0.2)'
+                                    }`
+                                }}
+                            >
+                                <Group gap="xs" justify="center">
+                                    <PiUsersDuotone
+                                        color={
+                                            (node.usersOnline ?? 0) > 0
+                                                ? 'var(--mantine-color-teal-5)'
+                                                : 'var(--mantine-color-gray-6)'
+                                        }
+                                        size={16}
+                                    />
+                                    <Text
+                                        c={(node.usersOnline ?? 0) > 0 ? 'teal.5' : 'gray.6'}
+                                        fw={600}
+                                        size="sm"
+                                    >
+                                        {node.usersOnline}
+                                    </Text>
+                                </Group>
+                            </Paper>
+                        )}
 
                         {node.versions &&
                             (() => {
@@ -518,7 +518,7 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                                 )
                             })()}
 
-                        {node.xrayUptime !== 0 && (
+                        {node.isConnected && node.xrayUptime !== 0 && (
                             <Paper
                                 hiddenFrom="sm"
                                 p="xs"
@@ -548,31 +548,84 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                             </Paper>
                         )}
 
-                        {node.versions && (
-                            <Paper
-                                p="xs"
-                                radius="md"
-                                style={{
-                                    background: 'rgba(99, 102, 241, 0.08)',
-                                    border: '1px solid rgba(99, 102, 241, 0.2)'
-                                }}
-                            >
-                                <Tooltip
-                                    label={
-                                        isGoNodeVersion(node.versions)
-                                            ? 'Версия ноды, gowave-node'
-                                            : t('node-details-card.widget.gowave-node-version')
-                                    }
-                                >
-                                    <Group gap="xs" justify="center">
-                                        <Logo color="var(--mantine-color-indigo-5)" size={16} />
-                                        <Text c="indigo.5" fw={600} size="sm">
-                                            {node.versions.node}
-                                        </Text>
-                                    </Group>
-                                </Tooltip>
-                            </Paper>
-                        )}
+                        {node.versions &&
+                            (() => {
+                                const isGoNode = isGoNodeVersion(node.versions)
+                                return (
+                                    <Paper
+                                        p="xs"
+                                        radius="md"
+                                        style={{
+                                            background: 'rgba(99, 102, 241, 0.08)',
+                                            border: '1px solid rgba(99, 102, 241, 0.2)'
+                                        }}
+                                    >
+                                        <Tooltip
+                                            label={
+                                                isGoNode
+                                                    ? 'Нажмите, чтобы выбрать версию GoWave Node'
+                                                    : t(
+                                                          'node-details-card.widget.gowave-node-version'
+                                                      )
+                                            }
+                                        >
+                                            <UnstyledButton
+                                                aria-label={
+                                                    isGoNode
+                                                        ? `Выбрать версию GoWave Node. Установлена ${node.versions.node}`
+                                                        : t(
+                                                              'node-details-card.widget.gowave-node-version'
+                                                          )
+                                                }
+                                                disabled={!isGoNode}
+                                                onClick={() =>
+                                                    isGoNode &&
+                                                    showModal('nodes_updateNodeModal', {
+                                                        node,
+                                                        initialTab: 'node'
+                                                    })
+                                                }
+                                                style={{
+                                                    borderRadius: 'var(--mantine-radius-sm)',
+                                                    cursor: isGoNode ? 'pointer' : 'default',
+                                                    display: 'block',
+                                                    width: '100%'
+                                                }}
+                                            >
+                                                <Group gap="xs" justify="center">
+                                                    <Logo
+                                                        color="var(--mantine-color-indigo-5)"
+                                                        size={16}
+                                                    />
+                                                    <Text
+                                                        c="indigo.5"
+                                                        fw={600}
+                                                        size="sm"
+                                                        style={
+                                                            isGoNode
+                                                                ? {
+                                                                      textDecorationStyle: 'dotted',
+                                                                      textUnderlineOffset: 3
+                                                                  }
+                                                                : undefined
+                                                        }
+                                                        td={isGoNode ? 'underline' : undefined}
+                                                    >
+                                                        {node.versions.node}
+                                                    </Text>
+                                                    {isGoNode && (
+                                                        <TbChevronRight
+                                                            aria-hidden
+                                                            color="var(--mantine-color-dimmed)"
+                                                            size={14}
+                                                        />
+                                                    )}
+                                                </Group>
+                                            </UnstyledButton>
+                                        </Tooltip>
+                                    </Paper>
+                                )
+                            })()}
                     </SimpleGrid>
                 </SectionCard.Section>
             )}

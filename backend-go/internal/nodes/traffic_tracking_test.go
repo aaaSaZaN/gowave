@@ -59,7 +59,7 @@ func TestApplyTrackingStart(t *testing.T) {
 				database.NodesUsageHistory{NodeUUID: "node", CreatedAt: time.Date(2026, 10, 10, 1, 0, 0, 0, time.UTC), TotalBytes: 100},
 				database.NodesUsageHistory{NodeUUID: "node", CreatedAt: time.Date(2026, 10, 20, 15, 0, 0, 0, time.UTC), TotalBytes: 50},
 			)
-			if err := applyTrackingStart(db, node.UUID, mode, now); err != nil {
+			if err := applyTrackingStart(db, node.UUID, mode, false, now); err != nil {
 				t.Fatal(err)
 			}
 			if err := db.Where("uuid = ?", node.UUID).First(&node).Error; err != nil {
@@ -113,15 +113,48 @@ func TestUpdateNodeTrafficTrackingStart(t *testing.T) {
 		t.Fatalf("response = %+v, want tracking with 70 bytes", res.Response)
 	}
 
-	// Only enabling tracking moves the counter.
-	if recorder := patchNode(t, handler, `{"uuid":"node","isTrafficTrackingActive":true,"trafficTrackingStart":"zero"}`); recorder.Code != http.StatusOK {
-		t.Fatalf("PATCH /api/nodes = %d: %s", recorder.Code, recorder.Body.String())
+	counterAfter := func(body string) uint64 {
+		t.Helper()
+		if recorder := patchNode(t, handler, body); recorder.Code != http.StatusOK {
+			t.Fatalf("PATCH /api/nodes = %d: %s", recorder.Code, recorder.Body.String())
+		}
+		if err := db.Where("uuid = ?", node.UUID).First(&node).Error; err != nil {
+			t.Fatal(err)
+		}
+		return node.TrafficUsedBytes
 	}
-	if err := db.Where("uuid = ?", node.UUID).First(&node).Error; err != nil {
+
+	// The mode stays on the node and saving a tracked node leaves the counter alone.
+	if used := counterAfter(`{"uuid":"node","name":"renamed"}`); used != 70 {
+		t.Fatalf("plain update changed the counter to %d", used)
+	}
+	if node.TrafficTrackingStart == nil || *node.TrafficTrackingStart != TrackingStartPeriod {
+		t.Fatalf("stored mode = %v, want period", node.TrafficTrackingStart)
+	}
+	if used := counterAfter(`{"uuid":"node","trafficTrackingStart":"keep"}`); used != 70 {
+		t.Fatalf("keep changed the counter to %d", used)
+	}
+	if *node.TrafficTrackingStart != TrackingStartKeep {
+		t.Fatalf("stored mode = %s, want keep", *node.TrafficTrackingStart)
+	}
+
+	// Changing the mode of a tracked node recounts it, repeating the mode does not.
+	if used := counterAfter(`{"uuid":"node","trafficTrackingStart":"zero"}`); used != 0 {
+		t.Fatalf("zero left the counter at %d", used)
+	}
+	if err := db.Model(&database.Node{}).Where("uuid = ?", "node").Update("traffic_used_bytes", 5).Error; err != nil {
 		t.Fatal(err)
 	}
-	if node.TrafficUsedBytes != 70 {
-		t.Fatalf("already tracked node counter changed to %d", node.TrafficUsedBytes)
+	if used := counterAfter(`{"uuid":"node","trafficTrackingStart":"zero"}`); used != 5 {
+		t.Fatalf("repeated zero moved the counter to %d", used)
+	}
+	if used := counterAfter(`{"uuid":"node","trafficTrackingStart":"period"}`); used != 70 {
+		t.Fatalf("period set the counter to %d, want 70", used)
+	}
+
+	// An untracked node has no counter to recount.
+	if used := counterAfter(`{"uuid":"node","isTrafficTrackingActive":false,"trafficTrackingStart":"zero"}`); used != 70 {
+		t.Fatalf("untracked node counter changed to %d", used)
 	}
 }
 

@@ -291,6 +291,7 @@ func formatNodeWithInbounds(service *Service, n *database.Node, inbounds []datab
 		"trafficResetDay":           trd,
 		"trafficLimitBytes":         n.TrafficLimitBytes,
 		"trafficUsedBytes":          n.TrafficUsedBytes,
+		"trafficTrackingStart":      n.TrafficTrackingStart,
 		"notifyPercent":             np,
 		"viewPosition":              vp,
 		"countryCode":               n.CountryCode,
@@ -580,7 +581,7 @@ func (h *Handler) GetTrafficSummary(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ResetTraffic(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	uuidParam := chi.URLParam(r, "uuid")
-	node, err := h.service.Update(uuidParam, map[string]interface{}{"traffic_used_bytes": 0})
+	node, err := h.service.Update(uuidParam, map[string]interface{}{"traffic_used_bytes": 0, "traffic_tracking_start": TrackingStartZero})
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]interface{}{"message": "Node not found"})
@@ -730,7 +731,7 @@ func (h *Handler) BulkActions(w http.ResponseWriter, r *http.Request) {
 		case "ENABLE":
 			_, _ = h.service.SetDisabled(nodeUuid, false)
 		case "RESET_TRAFFIC":
-			_, _ = h.service.Update(nodeUuid, map[string]interface{}{"traffic_used_bytes": 0})
+			_, _ = h.service.Update(nodeUuid, map[string]interface{}{"traffic_used_bytes": 0, "traffic_tracking_start": TrackingStartZero})
 		case "RESTART":
 			if node, err := h.service.GetByUUID(nodeUuid); err == nil {
 				go h.service.StartNode(node, true)

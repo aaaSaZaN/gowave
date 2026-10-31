@@ -8,9 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
-// Ways to start the counter when traffic tracking is enabled. Gowave
-// extension of UpdateNodeCommand ("trafficTrackingStart"); without it the
-// counter keeps everything accumulated since the last reset, as upstream does.
+// Ways to set the counter of a tracked node. Gowave extension of
+// UpdateNodeCommand ("trafficTrackingStart"), stored on the node; without it
+// the counter keeps everything accumulated since the last reset, as upstream
+// does.
 const (
 	TrackingStartKeep   = "keep"
 	TrackingStartZero   = "zero"
@@ -48,11 +49,11 @@ func trafficResetAt(year int, month time.Month, resetDay int) time.Time {
 	return time.Date(first.Year(), first.Month(), resetDay, trafficResetHour, 0, 0, 0, time.UTC)
 }
 
-// applyTrackingStart sets the counter of a node whose traffic tracking was
-// just enabled: "zero" starts from nothing and "period" counts the current
-// period from the usage history.
-func applyTrackingStart(tx *gorm.DB, nodeUUID, mode string, now time.Time) error {
-	if mode != TrackingStartZero && mode != TrackingStartPeriod {
+// applyTrackingStart stores the mode of a tracked node and, when it changes or
+// tracking was just enabled, sets the counter: "zero" starts from nothing and
+// "period" counts the current period from the usage history.
+func applyTrackingStart(tx *gorm.DB, nodeUUID, mode string, wasTracked bool, now time.Time) error {
+	if !ValidTrackingStart(mode) {
 		return nil
 	}
 	var node database.Node
@@ -61,6 +62,13 @@ func applyTrackingStart(tx *gorm.DB, nodeUUID, mode string, now time.Time) error
 	}
 	if !node.IsTrafficTrackingActive {
 		return nil
+	}
+	if wasTracked && node.TrafficTrackingStart != nil && *node.TrafficTrackingStart == mode {
+		return nil
+	}
+	updates := map[string]interface{}{"traffic_tracking_start": mode}
+	if mode == TrackingStartKeep {
+		return tx.Model(&database.Node{}).Where("uuid = ?", nodeUUID).Updates(updates).Error
 	}
 	used := int64(0)
 	if mode == TrackingStartPeriod {
@@ -73,7 +81,8 @@ func applyTrackingStart(tx *gorm.DB, nodeUUID, mode string, now time.Time) error
 		// History holds raw bytes; the counter applies the node multiplier.
 		used = multiplyConsumption(node.NodeConsumptionMultiplier, raw)
 	}
-	return tx.Model(&database.Node{}).Where("uuid = ?", nodeUUID).Update("traffic_used_bytes", used).Error
+	updates["traffic_used_bytes"] = used
+	return tx.Model(&database.Node{}).Where("uuid = ?", nodeUUID).Updates(updates).Error
 }
 
 // LifetimeTraffic returns the raw bytes each node has served since it was

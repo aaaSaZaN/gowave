@@ -11,7 +11,6 @@ import {
     useGetNodeSecretKey,
     useUpdateNode
 } from '@shared/api/hooks'
-import { optionalProp } from '@shared/lib/optional-prop'
 import { runAsync } from '@shared/lib/run-async'
 import { BaseNodeForm } from '@shared/ui/forms/nodes/base-node-form/base-node-form'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
@@ -30,8 +29,8 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
     const { nodeUuid, onClose } = props
 
     const isFormInitialized = useRef(false)
-    const [trafficTrackingStart, setTrafficTrackingStart] =
-        useState<TTrafficTrackingStart>('period')
+    const [selectedTrackingStart, setSelectedTrackingStart] =
+        useState<null | TTrafficTrackingStart>(null)
 
     const form = useForm<UpdateNodeCommand.RequestBody>({
         name: 'edit-node-form',
@@ -81,6 +80,7 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                 )
 
                 form.resetDirty()
+                setSelectedTrackingStart(null)
             }
         }
     })
@@ -119,6 +119,13 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
         }
     }, [fetchedNode, form.initialize])
 
+    // Nodes tracked before the mode was stored have counted everything so far.
+    const savedTrackingStart =
+        fetchedNode?.trafficTrackingStart ??
+        (fetchedNode?.isTrafficTrackingActive ? 'keep' : 'period')
+    const trafficTrackingStart = selectedTrackingStart ?? savedTrackingStart
+    const isTrackingStartChanged = trafficTrackingStart !== savedTrackingStart
+
     const handleSubmit = form.onSubmit((values) => {
         if (!fetchedNode) {
             return
@@ -128,14 +135,14 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
             Object.entries(values).filter(([field]) => form.isDirty(field))
         ) as Partial<UpdateNodeCommand.RequestBody>
 
-        const enablesTracking =
-            !fetchedNode.isTrafficTrackingActive && values.isTrafficTrackingActive === true
-
         updateNode({
             variables: {
                 ...changedValues,
                 uuid: fetchedNode.uuid,
-                ...(enablesTracking && { trafficTrackingStart }),
+                ...(values.isTrafficTrackingActive === true &&
+                    (isTrackingStartChanged || !fetchedNode.isTrafficTrackingActive) && {
+                        trafficTrackingStart
+                    }),
                 ...(changedValues.configProfile !== undefined && {
                     configProfile: {
                         activeConfigProfileUuid:
@@ -171,16 +178,12 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
             nodePlugins={nodePlugins.nodePlugins}
             nodeSystemCard={<NodeSystemCardWidget node={fetchedNode} />}
             secretKey={secretKey}
-            {...optionalProp(
-                'trafficTrackingStart',
-                fetchedNode.isTrafficTrackingActive
-                    ? undefined
-                    : {
-                          accumulatedBytes: fetchedNode.trafficUsedBytes ?? 0,
-                          onChange: setTrafficTrackingStart,
-                          value: trafficTrackingStart
-                      }
-            )}
+            trafficTrackingStart={{
+                accumulatedBytes: fetchedNode.trafficUsedBytes ?? 0,
+                isChanged: Boolean(fetchedNode.isTrafficTrackingActive) && isTrackingStartChanged,
+                onChange: setSelectedTrackingStart,
+                value: trafficTrackingStart
+            }}
         />
     )
 }

@@ -237,7 +237,9 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
                 )}
                 <Button
                     color="teal"
-                    disabled={!form.isDirty() || !form.isTouched()}
+                    disabled={
+                        !trafficTrackingStart?.isChanged && (!form.isDirty() || !form.isTouched())
+                    }
                     leftSection={<PiFloppyDiskDuotone size="16px" />}
                     loading={isDataSubmitting}
                     onClick={handleSubmit}

@@ -26,6 +26,13 @@ const UpdateNodeBodySchema = UpdateNodeCommand.RequestBodySchema.extend({
     trafficTrackingStart: z.enum(TRAFFIC_TRACKING_START).optional()
 })
 
+// The stored mode is a Gowave extension of the node response as well.
+const UpdateNodeResponseSchema = UpdateNodeCommand.ResponseSchema.extend({
+    response: UpdateNodeCommand.ResponseSchema.shape.response.extend({
+        trafficTrackingStart: z.enum(TRAFFIC_TRACKING_START).nullish()
+    })
+})
+
 export const useCreateNode = createMutationHook({
     endpoint: CreateNodeCommand.TSQ_url,
     bodySchema: CreateNodeCommand.RequestBodySchema,
@@ -53,7 +60,7 @@ export const useCreateNode = createMutationHook({
 export const useUpdateNode = createMutationHook({
     endpoint: UpdateNodeCommand.TSQ_url,
     bodySchema: UpdateNodeBodySchema,
-    responseSchema: UpdateNodeCommand.ResponseSchema,
+    responseSchema: UpdateNodeResponseSchema,
     requestMethod: UpdateNodeCommand.endpointDetails.REQUEST_METHOD,
     rMutationParams: {
         onSuccess: () => {

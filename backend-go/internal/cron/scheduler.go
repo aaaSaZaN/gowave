@@ -362,7 +362,7 @@ func (s *Scheduler) resetNodes(tx *gorm.DB, instant time.Time) error {
 		return err
 	}
 	for _, node := range nodes {
-		if err := tx.Model(&node).Update("traffic_used_bytes", 0).Error; err != nil {
+		if err := tx.Model(&node).Updates(map[string]interface{}{"traffic_used_bytes": 0, "traffic_tracking_start": "period"}).Error; err != nil {
 			return err
 		}
 		delete(s.nodeNotified, node.UUID)

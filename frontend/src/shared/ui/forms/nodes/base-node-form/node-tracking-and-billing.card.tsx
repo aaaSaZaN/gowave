@@ -37,9 +37,10 @@ function extractFirstUrl(text: string): null | string {
     return match ? match[0] : null
 }
 
-// How the counter starts when an edit enables tracking on a node that had it off.
+// How the traffic counter of the node is counted.
 export interface ITrafficTrackingStartControl {
     accumulatedBytes: number
+    isChanged: boolean
     onChange: (value: TTrafficTrackingStart) => void
     value: TTrafficTrackingStart
 }

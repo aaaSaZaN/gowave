@@ -825,8 +825,8 @@ func (s *Service) Update(uuid string, updates map[string]interface{}) (*database
 	return s.GetByUUID(uuid)
 }
 
-// UpdateWithConfigProfile applies a node update; trackingStart chooses how
-// the traffic counter starts when the update enables tracking.
+// UpdateWithConfigProfile applies a node update; trackingStart sets how the
+// traffic counter of a tracked node is counted.
 func (s *Service) UpdateWithConfigProfile(uuid string, updates map[string]interface{}, changeProfile bool, profileUUID *string, inboundUUIDs []string, trackingStart string) (*database.Node, error) {
 	updates["updated_at"] = time.Now().UTC()
 	err := s.db.Transaction(func(tx *gorm.DB) error {
@@ -837,10 +837,8 @@ func (s *Service) UpdateWithConfigProfile(uuid string, updates map[string]interf
 		if err := updateNodeWithProfile(tx, uuid, updates, changeProfile, profileUUID, inboundUUIDs); err != nil {
 			return err
 		}
-		if !before.IsTrafficTrackingActive {
-			if err := applyTrackingStart(tx, uuid, trackingStart, time.Now()); err != nil {
-				return err
-			}
+		if err := applyTrackingStart(tx, uuid, trackingStart, before.IsTrafficTrackingActive, time.Now()); err != nil {
+			return err
 		}
 		return s.emitNodeByUUID(tx, uuid, "node.modified")
 	})
