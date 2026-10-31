@@ -2,6 +2,9 @@ module gowave
 
 go 1.27.1
 
+// Disable MPTCP by default to mitigate CVE-2026-98432 in unpatched Linux kernels.
+godebug multipathtcp=0
+
 require (
 	filippo.io/age v1.3.2
 	github.com/cloudflare/circl v1.6.5
