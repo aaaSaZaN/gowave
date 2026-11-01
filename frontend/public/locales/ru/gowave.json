@@ -419,27 +419,7 @@
     "page": {
       "online-stats": "Статистика онлайна",
       "bandwidth": "Трафик",
-      "gowave-usage": "Нагрузка GoWave",
-      "process-details": "Подробности процесса"
-    },
-    "runtime-info": {
-      "title": "Гид по метрикам рантайма",
-      "subtitle": "Что на самом деле означает каждое число на карточке процесса",
-      "intro": "Каждая карточка показывает живой срез одного <highlight>процесса GoWave</highlight>. Этот гид объясняет, что измеряет каждая метрика и когда стоит беспокоиться.",
-      "instance-types-title": "Типы процессов",
-      "instance-types-description": "GoWave разделён на несколько специализированных процессов. У каждого своя задача, своя память и свой event loop.",
-      "api-description": "Обрабатывает все HTTP-запросы от дашборда и эндпоинтов подписки. Это <highlight>основной процесс, с которым работают пользователи</highlight> — практически каждый запрос панели и подписки обслуживается здесь.",
-      "scheduler-description": "<highlight>Диспетчер по расписанию</highlight>. Сам он ничего не выполняет — в назначенный момент просто кладёт задачу в очередь, откуда её заберёт <highlight>Processor</highlight>.",
-      "processor-description": "Собственно <highlight>воркер</highlight>. Разбирает очередь и делает тяжёлую работу: <highlight>проверки состояния нод</highlight>, <highlight>агрегацию трафика</highlight> по пользователям и нодам и другие долгие задачи, которые нельзя вешать на API.",
-      "memory-description": "Где процесс держит рабочие данные. Все значения Node.js отдаёт в реальном времени.",
-      "heap-description": "Память под объекты JavaScript, которой управляет <highlight>V8</highlight> — движок Node.js. Показано как <highlight>занято / всего</highlight>. Высокое соотношение — это <highlight>норма, а не проблема</highlight>: V8 удерживает память, пока ему действительно не понадобится больше, так что что-то вроде <highlight>100 / 120 МБ</highlight> — нормально.",
-      "rss-description": "<highlight>Resident Set Size</highlight> — вся физическая память, которую ОС выдала процессу, включая кучу, нативный код и разделяемые библиотеки. Лучший одиночный показатель того, <highlight>сколько оперативки процесс реально занимает</highlight>.",
-      "external-description": "Память вне V8, которую держат нативные C++-объекты, связанные с JavaScript — обычно это <highlight>открытые сокеты</highlight>, <highlight>потоки</highlight> и данные в Buffer.",
-      "array-buffers-description": "Память, выделенная именно под <highlight>ArrayBuffer</highlight> и <highlight>Buffer</highlight> (сырые бинарные данные). Считается частью <highlight>External</highlight>.",
-      "event-loop-description": "Состояние однопоточного цикла, который крутит всю асинхронную работу в Node.js. Если цикл заблокирован, встаёт весь процесс.",
-      "delay-description": "Среднее время между соседними тиками event loop. Здоровое значение держится около <highlight>0–2 мс</highlight>. Больше — значит цикл блокирует долгая синхронная работа.",
-      "p99-description": "<highlight>99-й перцентиль</highlight> задержки event loop за окно измерения. Показывает худшие случаи, которые среднее прячет — удобно, чтобы ловить редкие всплески.",
-      "active-handles-description": "Долгоживущие ресурсы, удерживающие цикл: <highlight>открытые сокеты</highlight>, <highlight>таймеры</highlight>, <highlight>файловые дескрипторы</highlight>. Стабильное значение — норма; <highlight>безостановочный рост</highlight> — верный признак утечки."
+      "gowave-usage": "Нагрузка GoWave"
     }
   },
   "login-form": {
@@ -716,8 +696,8 @@
     "select-template-to-load": "Выберите шаблон для загрузки"
   },
   "pm2-metrics": {
-    "total-processes": "Всего процессов",
-    "total-memory": "Всего памяти"
+    "total-memory": "Всего памяти",
+    "uptime": "Uptime панели"
   },
   "internal-squads-grid": {
     "widget": {
@@ -1741,17 +1721,6 @@
   "bulk-all-users-actions": {
     "modal": {
       "perform-actions-on-all-users": "Действия над всеми пользователями"
-    }
-  },
-  "backend-tools-card": {
-    "widget": {
-      "queue-viewer": "Queue Viewer",
-      "queue-viewer-description": "Мониторинг и управление очередями фоновых задач.",
-      "scalar-description": "Современный интерактивный справочник по API.",
-      "swagger-description": "Классический обозреватель документации OpenAPI.",
-      "backend-tools-description": "Доступ к Queue Viewer, Scalar или Swagger.",
-      "login": "Логин",
-      "backend-tools": "Инструменты бэкенда"
     }
   },
   "http-stats": {

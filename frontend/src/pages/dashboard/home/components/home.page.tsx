@@ -1,29 +1,19 @@
-import { ActionIcon, Box, Group, SimpleGrid, Stack, Title } from '@mantine/core'
-import { modals } from '@mantine/modals'
-import { notifications } from '@mantine/notifications'
-import { useIsMobile } from '@shared/hooks'
+import { Box, SimpleGrid, Stack, Title } from '@mantine/core'
 import { LoadingScreen } from '@shared/ui'
 import { DisclaimerOverlay } from '@shared/ui/disclaimer-overlay'
 import { MetricCardShared, MetricCardWithTrendShared } from '@shared/ui/metrics/metric-card'
-import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { Page } from '@shared/ui/page'
-import { copyScreenshotToClipboard } from '@shared/utils/copy-screenshot.util'
-import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbCamera, TbInfoCircle } from 'react-icons/tb'
 
 import classes from './home.module.css'
 import type { IProps } from './interfaces'
 import {
     getBandwidthMetrics,
     getOnlineMetrics,
-    getRuntimeProcessMetrics,
     getRuntimeSummaryMetrics,
     getSimpleMetrics,
     getUsersMetrics
 } from './metrics'
-import { RuntimeDetailCard } from './runtime-detail-card'
-import { RuntimeInfoModalContent } from './runtime-info-modal/runtime-info-modal'
 
 interface IAnimatedCardProps {
     children: React.ReactNode
@@ -39,33 +29,7 @@ const AnimatedCard = ({ children, index }: IAnimatedCardProps) => (
 export const HomePage = (props: IProps) => {
     const { t } = useTranslation()
 
-    const isMobile = useIsMobile()
-    const runtimeRef = useRef<HTMLDivElement>(null)
-    const [copying, setCopying] = useState(false)
-
     const { systemInfo, bandwidthStats, gowaveHealth } = props
-
-    const copyRuntimeScreenshot = async () => {
-        if (!runtimeRef.current || copying) return
-        setCopying(true)
-        try {
-            await copyScreenshotToClipboard(async () => {
-                await new Promise<void>((resolve) => {
-                    setTimeout(resolve, 100)
-                })
-                if (!runtimeRef.current) throw new Error('runtimeRef')
-                return runtimeRef.current
-            }, 'gowave-runtime.png')
-        } catch (error) {
-            notifications.show({
-                color: 'red',
-                message: `${error instanceof Error ? error.message : 'Unknown error'}`,
-                title: 'Error'
-            })
-        } finally {
-            setCopying(false)
-        }
-    }
 
     if (!systemInfo || !bandwidthStats || !gowaveHealth) {
         return <LoadingScreen />
@@ -76,7 +40,6 @@ export const HomePage = (props: IProps) => {
     const usersMetrics = getUsersMetrics(systemInfo.users, t)
     const onlineMetrics = getOnlineMetrics(systemInfo.onlineStats, t)
     const runtimeSummaryMetrics = getRuntimeSummaryMetrics(gowaveHealth.runtimeMetrics, t)
-    const runtimeProcessMetrics = getRuntimeProcessMetrics(gowaveHealth.runtimeMetrics)
 
     return (
         <Page title={t('constants.home')}>
@@ -89,21 +52,6 @@ export const HomePage = (props: IProps) => {
 
                         <SimpleGrid cols={{ base: 1, sm: 2, xl: 4 }} spacing="xs">
                             {runtimeSummaryMetrics.map((metric, index) => (
-                                <AnimatedCard index={index} key={metric.title}>
-                                    <MetricCardShared {...metric} />
-                                </AnimatedCard>
-                            ))}
-                        </SimpleGrid>
-                    </div>
-                )}
-
-                {runtimeProcessMetrics.length > 0 && (
-                    <div className={classes.section}>
-                        <Title className={classes.title} m="xs" ml={0} order={4}>
-                            {t('home.page.process-details')}
-                        </Title>
-                        <SimpleGrid cols={{ base: 1, sm: 2, xl: 4 }} spacing="xs">
-                            {runtimeProcessMetrics.map((metric, index) => (
                                 <AnimatedCard index={index} key={metric.title}>
                                     <MetricCardShared {...metric} />
                                 </AnimatedCard>
@@ -184,61 +132,6 @@ export const HomePage = (props: IProps) => {
                         ))}
                     </SimpleGrid>
                 </div>
-
-                {gowaveHealth.runtimeMetrics && gowaveHealth.runtimeMetrics.length > 0 && (
-                    <div className={classes.section}>
-                        <Group align="center" gap="xs" m="xs" ml={0}>
-                            <Title className={classes.title} order={4}>
-                                Runtime
-                            </Title>
-
-                            <ActionIcon
-                                color="gray"
-                                loading={copying}
-                                onClick={() => copyRuntimeScreenshot()}
-                                radius="md"
-                                size="sm"
-                                variant="transparent"
-                            >
-                                <TbCamera size={24} />
-                            </ActionIcon>
-
-                            <ActionIcon
-                                color="gray"
-                                onClick={() => {
-                                    modals.open({
-                                        title: (
-                                            <BaseOverlayHeader
-                                                iconColor="cyan"
-                                                IconComponent={TbInfoCircle}
-                                                iconSize={20}
-                                                iconVariant="soft"
-                                                subtitle={t('home.runtime-info.subtitle')}
-                                                title={t('home.runtime-info.title')}
-                                            />
-                                        ),
-                                        size: 'xl',
-                                        centered: true,
-                                        fullScreen: isMobile,
-                                        children: <RuntimeInfoModalContent />
-                                    })
-                                }}
-                                radius="md"
-                                size="sm"
-                                variant="transparent"
-                            >
-                                <TbInfoCircle size={24} />
-                            </ActionIcon>
-                        </Group>
-                        <SimpleGrid cols={{ base: 1, sm: 1, xl: 2 }} ref={runtimeRef} spacing="xs">
-                            {gowaveHealth.runtimeMetrics.map((metric, index) => (
-                                <AnimatedCard index={index} key={metric.pid}>
-                                    <RuntimeDetailCard metric={metric} />
-                                </AnimatedCard>
-                            ))}
-                        </SimpleGrid>
-                    </div>
-                )}
             </Stack>
             <DisclaimerOverlay />
         </Page>

@@ -1,24 +1,14 @@
 import type { GetRemnawaveHealthCommand } from '@remnawave/backend-contract'
 import type { IMetricCardProps } from '@shared/ui/metrics/metric-card'
 import { prettifyBytesUtil } from '@shared/utils/bytes'
+import { getXrayUptimeUtil } from '@shared/utils/time-utils'
 import type { TFunction } from 'i18next'
 import {
-    PiClockDuotone,
-    PiCloudDuotone,
     PiGearSixDuotone,
     PiMemoryDuotone,
-    PiQueueDuotone,
     PiTimerDuotone,
     PiTreeStructureDuotone
 } from 'react-icons/pi'
-
-const PROCESS_CONFIG: Record<string, { Icon: typeof PiGearSixDuotone; name: string }> = {
-    api: { Icon: PiCloudDuotone, name: 'API' },
-    scheduler: { Icon: PiClockDuotone, name: 'Scheduler' },
-    processor: { Icon: PiQueueDuotone, name: 'Processor' }
-}
-
-const DEFAULT_PROCESS = { Icon: PiGearSixDuotone, name: 'Unknown' }
 
 export const getRuntimeSummaryMetrics = (
     runtimeMetrics: GetRemnawaveHealthCommand.Response['response']['runtimeMetrics'],
@@ -30,18 +20,10 @@ export const getRuntimeSummaryMetrics = (
 
     const totalRss = runtimeMetrics.reduce((sum, p) => sum + Number(p.rss), 0)
     const totalHeapUsed = runtimeMetrics.reduce((sum, p) => sum + Number(p.heapUsed), 0)
-    const avgEventLoopDelay =
-        runtimeMetrics.reduce((sum, p) => sum + Number(p.eventLoopDelayMs), 0) /
-        runtimeMetrics.length
+    const totalGoroutines = runtimeMetrics.reduce((sum, p) => sum + Number(p.activeHandles), 0)
+    const maxUptime = runtimeMetrics.reduce((max, p) => Math.max(max, Number(p.uptime)), 0)
 
     return [
-        {
-            value: runtimeMetrics.length,
-            IconComponent: PiGearSixDuotone,
-            title: t('pm2-metrics.total-processes'),
-            iconVariant: 'soft',
-            iconColor: 'blue'
-        },
         {
             value: prettifyBytesUtil(totalRss, true),
             IconComponent: PiMemoryDuotone,
@@ -57,32 +39,18 @@ export const getRuntimeSummaryMetrics = (
             iconColor: 'green'
         },
         {
-            value: `${avgEventLoopDelay.toFixed(2)} ms`,
+            value: totalGoroutines,
+            IconComponent: PiGearSixDuotone,
+            title: 'Goroutines',
+            iconVariant: 'soft',
+            iconColor: 'blue'
+        },
+        {
+            value: getXrayUptimeUtil(maxUptime),
             IconComponent: PiTimerDuotone,
-            title: 'Avg Event Loop',
+            title: t('pm2-metrics.uptime'),
             iconVariant: 'soft',
             iconColor: 'orange'
         }
     ]
 }
-
-export const getRuntimeProcessMetrics = (
-    runtimeMetrics: GetRemnawaveHealthCommand.Response['response']['runtimeMetrics']
-): IMetricCardProps[] => {
-    if (!runtimeMetrics || runtimeMetrics.length === 0) {
-        return []
-    }
-
-    return runtimeMetrics.map((process) => {
-        const config = PROCESS_CONFIG[process.instanceType] ?? DEFAULT_PROCESS
-        return {
-            value: prettifyBytesUtil(process.rss, true),
-            IconComponent: config.Icon,
-            title: `${config.name}-${process.instanceId}`,
-            iconVariant: 'soft',
-            iconColor: 'teal'
-        }
-    })
-}
-
-export const getRuntimeMetrics = getRuntimeSummaryMetrics

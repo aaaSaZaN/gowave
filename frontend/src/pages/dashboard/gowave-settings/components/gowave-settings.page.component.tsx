@@ -4,7 +4,6 @@ import { LoadingScreen, Logo, Page, PageHeaderShared } from '@shared/ui'
 import Masonry from '@shared/ui/masonry'
 import { ApiTokensCardWidget } from '@widgets/gowave-settings/api-tokens-card/api-tokens-card.widget'
 import { AuthentificationSettingsCardWidget } from '@widgets/gowave-settings/authentification-settings-card/authentification-settings-card.widget'
-import { BackendToolsCardWidget } from '@widgets/gowave-settings/backend-tools-card/backend-tools-card.widget'
 import { BrandingSettingsCardWidget } from '@widgets/gowave-settings/branding-settings-card/branding-settings-card.widget'
 import { ExperimentalSettingsCardWidget } from '@widgets/gowave-settings/experimental-settings-card/experimental-settings-card.widget'
 import { useTranslation } from 'react-i18next'
@@ -43,7 +42,6 @@ export const GowaveSettingsPageComponent = (props: IProps) => {
                         passwordSettings={gowaveSettings.passwordSettings}
                     />
                     <ApiTokensCardWidget apiTokensData={apiTokensData} />
-                    <BackendToolsCardWidget />
                     <BrandingSettingsCardWidget
                         brandingSettings={gowaveSettings.brandingSettings}
                     />
