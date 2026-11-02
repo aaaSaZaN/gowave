@@ -92,7 +92,7 @@ jobs:
 
       - name: Image tags
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.IMAGE }}
           # latest=auto skips pre-release versions such as v1.2.0-beta.1.
