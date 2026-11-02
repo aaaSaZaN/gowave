@@ -46,6 +46,10 @@ updates:
       - "Applone"
     commit-message:
       prefix: "ci(deps)"
+    groups:
+      ci-dependencies:
+        patterns:
+          - "*"
 
   - package-ecosystem: "docker"
     directory: "/"
