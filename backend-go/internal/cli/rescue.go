@@ -21,12 +21,12 @@ func IsMigrationCommand(args []string) bool {
 		return false
 	}
 	switch args[0] {
-	case "--migrate-pg-to-sqlite", "migrate-pg-to-sqlite", "--migrate-sqlite-to-pg", "migrate-sqlite-to-pg", "--migrate-to-docker":
+	case "--migrate-pg-to-sqlite", "migrate-pg-to-sqlite", "--migrate-sqlite-to-pg", "migrate-sqlite-to-pg", "--migrate-pg-to-pg", "migrate-pg-to-pg", "--migrate-to-docker":
 		return true
 	case "migrate", "--migrate":
 		if len(args) > 1 {
 			sub := args[1]
-			return sub == "pg-to-sqlite" || sub == "postgres-to-sqlite" || sub == "sqlite-to-pg" || sub == "sqlite-to-postgres" || sub == "to-docker"
+			return sub == "pg-to-sqlite" || sub == "postgres-to-sqlite" || sub == "sqlite-to-pg" || sub == "sqlite-to-postgres" || sub == "pg-to-pg" || sub == "postgres-to-postgres" || sub == "to-docker"
 		}
 		return false
 	default:
@@ -87,6 +87,39 @@ func runSQLiteToPG(cfg *config.Config, args []string) {
 		target = detected
 	}
 	if err := MigrateSQLiteToPostgres(cfg, source, target, force); err != nil {
+		fmt.Printf("[-] Migration failed: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+// runPGToPG handles "[source_dsn] [target_dsn] [--force]" for the upstream
+// PostgreSQL -> GoWave PostgreSQL command.
+func runPGToPG(cfg *config.Config, args []string) {
+	force := false
+	var positional []string
+	for _, arg := range args {
+		if arg == "--force" {
+			force = true
+			continue
+		}
+		positional = append(positional, arg)
+	}
+	source, target := "", ""
+	if len(positional) > 0 {
+		source = positional[0]
+	}
+	if len(positional) > 1 {
+		target = positional[1]
+	}
+	if target == "" {
+		detected, err := DetectPostgresTargetDSN(cfg)
+		if err != nil {
+			fmt.Printf("[-] %v\n", err)
+			os.Exit(1)
+		}
+		target = detected
+	}
+	if _, err := MigratePostgresToPostgres(cfg, source, target, force); err != nil {
 		fmt.Printf("[-] Migration failed: %v\n", err)
 		os.Exit(1)
 	}
@@ -153,12 +186,19 @@ func RunRescue(db *gorm.DB, cfg *config.Config, args []string) {
 		case "--migrate-sqlite-to-pg", "migrate-sqlite-to-pg":
 			runSQLiteToPG(cfg, args[1:])
 			return
+		case "--migrate-pg-to-pg", "migrate-pg-to-pg":
+			runPGToPG(cfg, args[1:])
+			return
 		case "--migrate-to-docker":
 			runToDocker(args[1:])
 			return
 		case "migrate", "--migrate":
 			if len(args) > 1 && (args[1] == "sqlite-to-pg" || args[1] == "sqlite-to-postgres") {
 				runSQLiteToPG(cfg, args[2:])
+				return
+			}
+			if len(args) > 1 && (args[1] == "pg-to-pg" || args[1] == "postgres-to-postgres") {
+				runPGToPG(cfg, args[2:])
 				return
 			}
 			if len(args) > 1 && args[1] == "to-docker" {
@@ -203,6 +243,7 @@ func printUsage() {
 	fmt.Println("Usage: gowave-server rescue [flag]")
 	fmt.Println("       gowave-server import pasarguard [path/dsn]")
 	fmt.Println("       gowave-server migrate pg-to-sqlite [dsn] [destination]")
+	fmt.Println("       gowave-server migrate pg-to-pg [source_dsn] [target_dsn] [--force]")
 	fmt.Println("       gowave-server migrate to-docker [--dir /opt/gowave-docker] [--image ref] [--yes]")
 	fmt.Println("       gowave-server migrate sqlite-to-pg [source_sqlite] [target_dsn] [--force]")
 	fmt.Println("       gowave-server cli [flag]")
@@ -212,10 +253,14 @@ func printUsage() {
 	fmt.Println("  --migrate-pg-to-sqlite [dsn] [dest]  Migrate upstream panel PostgreSQL data to SQLite")
 	fmt.Println("  migrate pg-to-sqlite [dsn] [dest]    Migrate upstream panel PostgreSQL data to SQLite")
 	fmt.Println("  migrate to-docker                    Move this SQLite install to Docker + PostgreSQL")
+	fmt.Println("      --from-upstream [dsn]            Copy the upstream panel's PostgreSQL instead of this SQLite")
 	fmt.Println("      --dir <path>                     Compose project directory (default /opt/gowave-docker)")
 	fmt.Println("      --image <ref>                    Panel image (default ghcr.io/aaasazan/gowave:latest)")
 	fmt.Println("      --from <path>                    Current install directory (default: this binary's)")
 	fmt.Println("      --yes                            Do not ask for confirmation")
+	fmt.Println("  --migrate-pg-to-pg [src_dsn] [dsn]   Copy upstream panel PostgreSQL data into GoWave PostgreSQL")
+	fmt.Println("  migrate pg-to-pg [src_dsn] [dsn]     Copy upstream panel PostgreSQL data into GoWave PostgreSQL")
+	fmt.Println("      --force                         Replace existing users, nodes and hosts in the target")
 	fmt.Println("  --migrate-sqlite-to-pg [src] [dsn]   Copy GoWave SQLite data into an existing PostgreSQL")
 	fmt.Println("  migrate sqlite-to-pg [src] [dsn]     Copy GoWave SQLite data into an existing PostgreSQL")
 	fmt.Println("      --force                         Replace existing users, nodes and hosts in the target")
@@ -243,8 +288,9 @@ func interactiveMenu(db *gorm.DB, cfg *config.Config) {
 		fmt.Println("7) Import database from PasarGuard (SQLite/PostgreSQL)")
 		fmt.Println("8) Migrate from upstream panel PostgreSQL -> Gowave SQLite (and purge Docker)")
 		fmt.Println("9) Move Gowave to Docker (SQLite -> PostgreSQL)")
+		fmt.Println("10) Migrate from upstream panel PostgreSQL -> GoWave PostgreSQL")
 		fmt.Println("0) Exit")
-		fmt.Print("\nSelect an option [0-9]: ")
+		fmt.Print("\nSelect an option [0-10]: ")
 
 		input, err := reader.ReadString('\n')
 		if err != nil {
@@ -273,11 +319,13 @@ func interactiveMenu(db *gorm.DB, cfg *config.Config) {
 			if err := RunMigrateToDocker(nil, reader); err != nil {
 				fmt.Printf("[-] Migration to Docker failed: %v\n", err)
 			}
+		case "10":
+			MigratePGToPGInteractive(cfg, reader)
 		case "0", "q", "exit":
 			fmt.Println("Exiting Rescue CLI.")
 			return
 		default:
-			fmt.Println("Invalid option, please choose between 0 and 9.")
+			fmt.Println("Invalid option, please choose between 0 and 10.")
 		}
 	}
 }

@@ -155,7 +155,7 @@ func Run() {
 			cli.RunRescue(db, cfg, os.Args[2:])
 			return
 		}
-		if firstArg == "import" || firstArg == "--import" || firstArg == "--import-pasarguard" || firstArg == "import-pasarguard" || firstArg == "migrate" || firstArg == "--migrate" || firstArg == "--migrate-pg-to-sqlite" || firstArg == "--migrate-sqlite-to-pg" || firstArg == "migrate-sqlite-to-pg" {
+		if firstArg == "import" || firstArg == "--import" || firstArg == "--import-pasarguard" || firstArg == "import-pasarguard" || firstArg == "migrate" || firstArg == "--migrate" || firstArg == "--migrate-pg-to-sqlite" || firstArg == "--migrate-sqlite-to-pg" || firstArg == "migrate-sqlite-to-pg" || firstArg == "--migrate-pg-to-pg" || firstArg == "migrate-pg-to-pg" {
 			cli.RunRescue(db, cfg, os.Args[1:])
 			return
 		}

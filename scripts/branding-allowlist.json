@@ -11,10 +11,20 @@
       "count": 1,
       "sha256": "1761bc6353aa15d9aeb5dd2d0457e4e52b5a0fc7202196a84a8936ccbdc1ebf5"
     },
+    "backend-go/internal/cli/migrate_pg_to_pg_test.go": {
+      "reason": "Legacy settings table name required to seed the upstream PostgreSQL migration fixture.",
+      "count": 1,
+      "sha256": "99b2697bcabf5dd6363742c1aa084c09d61c8166ae74a3585f45d69ee6fe7f17"
+    },
     "backend-go/internal/cli/migrate_pg_to_sqlite.go": {
       "reason": "Detect existing installations, container names, and database hosts during safe migration.",
       "count": 5,
       "sha256": "bf441e1bac2916ac45904de0bcfb9b9a87dfc8bd91bf4c89a66404fa51869248"
+    },
+    "backend-go/internal/cli/testdata/upstream_postgres_schema.sql": {
+      "reason": "Legacy settings table name reproduced in the upstream PostgreSQL schema fixture.",
+      "count": 1,
+      "sha256": "65c495cca36eba4ec965fbc3d5cf55e92d8c652c6ad4602f0d3ec7106c53236c"
     },
     "backend-go/internal/contracts/commands.json": {
       "reason": "Pinned dependency contract export; routes, schemas, and scope identifiers remain byte-compatible.",

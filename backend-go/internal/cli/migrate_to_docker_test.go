@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
@@ -35,6 +36,47 @@ func TestParseToDockerArgs(t *testing.T) {
 		if _, err := parseToDockerArgs(args); err == nil {
 			t.Errorf("parseToDockerArgs(%v) should fail", args)
 		}
+	}
+}
+
+func TestParseToDockerArgsFromUpstream(t *testing.T) {
+	opts, err := parseToDockerArgs([]string{"--from-upstream", "--yes"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !opts.FromUpstream || opts.UpstreamDSN != "" {
+		t.Errorf("bare flag: got %+v, want FromUpstream with an empty DSN for auto-detection", opts)
+	}
+
+	opts, err = parseToDockerArgs([]string{"--from-upstream", "postgresql://u:p@127.0.0.1:6767/db", "--dir", "/srv/gw"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !opts.FromUpstream || opts.UpstreamDSN != "postgresql://u:p@127.0.0.1:6767/db" || opts.DockerDir != "/srv/gw" {
+		t.Errorf("got %+v", opts)
+	}
+}
+
+func TestComposeHostDSNReachesThePublishedPort(t *testing.T) {
+	plan := &toDockerPlan{Env: map[string]string{
+		"POSTGRES_USER":     "gowave",
+		"POSTGRES_PASSWORD": "p@ss word/#",
+		"POSTGRES_DB":       "gowave",
+		"POSTGRES_PORT":     "5433",
+	}}
+	got := composeHostDSN(plan)
+	parsed, err := url.Parse(got)
+	if err != nil {
+		t.Fatalf("DSN %q does not parse: %v", got, err)
+	}
+	if parsed.Host != "127.0.0.1:5433" || parsed.Path != "/gowave" {
+		t.Errorf("host/path = %q%q, want 127.0.0.1:5433/gowave", parsed.Host, parsed.Path)
+	}
+	if password, _ := parsed.User.Password(); password != "p@ss word/#" {
+		t.Errorf("password = %q, want it escaped and preserved", password)
+	}
+	if parsed.Query().Get("sslmode") != "disable" {
+		t.Errorf("sslmode = %q, want disable", parsed.Query().Get("sslmode"))
 	}
 }
 

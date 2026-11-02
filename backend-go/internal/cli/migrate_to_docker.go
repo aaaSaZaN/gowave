@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -48,12 +49,17 @@ type toDockerOptions struct {
 	DockerDir string
 	Image     string
 	Yes       bool
+	// FromUpstream copies an upstream panel's PostgreSQL straight into the new
+	// Docker PostgreSQL instead of an existing GoWave SQLite install.
+	FromUpstream bool
+	UpstreamDSN  string
 }
 
 // toDockerPlan is everything derived from the existing install before any
 // change is made.
 type toDockerPlan struct {
 	toDockerOptions
+	// SourceDB is the SQLite file to copy; empty when FromUpstream is set.
 	SourceDB    string
 	AppPort     string
 	Env         map[string]string
@@ -84,6 +90,13 @@ func parseToDockerArgs(args []string) (toDockerOptions, error) {
 			opts.DockerDir, err = value()
 		case "--image":
 			opts.Image, err = value()
+		case "--from-upstream":
+			opts.FromUpstream = true
+			// The DSN is optional: without it the upstream panel's own .env
+			// is read, like the other migration commands do.
+			if i+1 < len(args) && !strings.HasPrefix(args[i+1], "--") {
+				opts.UpstreamDSN, err = value()
+			}
 		default:
 			return opts, fmt.Errorf("unknown argument %q", arg)
 		}
@@ -152,12 +165,22 @@ func prepareToDocker(opts toDockerOptions) (*toDockerPlan, error) {
 		return nil, fmt.Errorf("%s has no valid APP_SECRET; it must be carried over to keep admin logins working", envPath)
 	}
 
-	sourceDB, err := resolveSourceSQLite(opts.FromDir, oldEnv)
-	if err != nil {
-		return nil, err
-	}
-	if err := checkSQLiteFileForeignKeys(sourceDB); err != nil {
-		return nil, err
+	var sourceDB string
+	upstreamDSN := strings.TrimSpace(opts.UpstreamDSN)
+	if opts.FromUpstream {
+		if upstreamDSN == "" {
+			if upstreamDSN, err = DetectUpstreamPostgresDSN(); err != nil {
+				return nil, err
+			}
+		}
+		opts.UpstreamDSN = upstreamDSN
+	} else {
+		if sourceDB, err = resolveSourceSQLite(opts.FromDir, oldEnv); err != nil {
+			return nil, err
+		}
+		if err := checkSQLiteFileForeignKeys(sourceDB); err != nil {
+			return nil, err
+		}
 	}
 
 	if _, err := os.Stat(filepath.Join(opts.DockerDir, "docker-compose.yml")); err == nil {
@@ -290,7 +313,11 @@ func printToDockerPlan(plan *toDockerPlan) {
 	fmt.Println("  Move GoWave to Docker (PostgreSQL)")
 	fmt.Println("========================================================")
 	fmt.Printf("Current install:  %s\n", plan.FromDir)
-	fmt.Printf("SQLite database:  %s (read only, kept for rollback)\n", plan.SourceDB)
+	if plan.FromUpstream {
+		fmt.Printf("Upstream source:  %s (read only, never written to)\n", redactDSN(plan.UpstreamDSN))
+	} else {
+		fmt.Printf("SQLite database:  %s (read only, kept for rollback)\n", plan.SourceDB)
+	}
 	fmt.Printf("New install:      %s (docker-compose.yml + .env)\n", plan.DockerDir)
 	fmt.Printf("Image:            %s\n", plan.Env["GOWAVE_IMAGE"])
 	fmt.Printf("Panel port:       %s (unchanged)\n", plan.AppPort)
@@ -302,7 +329,11 @@ func printToDockerPlan(plan *toDockerPlan) {
 	} else {
 		fmt.Println("  3. (no systemd unit found; the old panel must already be stopped)")
 	}
-	fmt.Println("  4. Copy all data from SQLite into PostgreSQL")
+	if plan.FromUpstream {
+		fmt.Println("  4. Copy all data from the upstream panel's PostgreSQL into the new PostgreSQL")
+	} else {
+		fmt.Println("  4. Copy all data from SQLite into PostgreSQL")
+	}
 	fmt.Println("  5. Start the panel in Docker and wait until it is healthy")
 	if plan.HasSystemd {
 		fmt.Printf("  6. Disable %s and point `gowave` at the container\n", systemdUnit)
@@ -379,10 +410,20 @@ func executeToDocker(plan *toDockerPlan) error {
 	}
 
 	step(4, "Copying data into PostgreSQL")
-	srcDir := filepath.Dir(plan.SourceDB)
-	if err := compose("run", "--rm", "--no-deps", "-v", srcDir+":/src",
-		"gowave", "migrate", "sqlite-to-pg", "/src/"+filepath.Base(plan.SourceDB)); err != nil {
-		return rollback(fmt.Errorf("copy data: %w", err))
+	if plan.FromUpstream {
+		// The upstream database is published on the host, not on this
+		// project's network, so the copy runs here instead of in a container.
+		// Replacing rows is safe: both the project and its volume were created
+		// by this command, which refuses to reuse existing ones.
+		if _, err := MigratePostgresToPostgres(nil, plan.UpstreamDSN, composeHostDSN(plan), true); err != nil {
+			return rollback(fmt.Errorf("copy upstream data: %w", err))
+		}
+	} else {
+		srcDir := filepath.Dir(plan.SourceDB)
+		if err := compose("run", "--rm", "--no-deps", "-v", srcDir+":/src",
+			"gowave", "migrate", "sqlite-to-pg", "/src/"+filepath.Base(plan.SourceDB)); err != nil {
+			return rollback(fmt.Errorf("copy data: %w", err))
+		}
 	}
 
 	step(5, "Starting the panel in Docker")
@@ -408,6 +449,16 @@ func executeToDocker(plan *toDockerPlan) error {
 	if plan.HasSystemd {
 		fmt.Printf("    CLI:      gowave <command>   (runs inside the container)\n")
 	}
+	if plan.FromUpstream {
+		// There is no SQLite copy to fall back on here: the panel that still
+		// holds this data is the upstream one, which was only read.
+		fmt.Println("\nThe upstream panel's database was only read, so it is still the way back:")
+		fmt.Printf("    cd %s && docker compose down\n", plan.DockerDir)
+		fmt.Println("    then start the upstream panel again from its own directory")
+		fmt.Println("Changes made in GoWave are not copied back to the upstream panel.")
+		return nil
+	}
+
 	fmt.Printf("\nThe SQLite database %s was not modified. To go back:\n", plan.SourceDB)
 	fmt.Printf("    cd %s && docker compose down\n", plan.DockerDir)
 	if plan.HasSystemd && plan.WrapperFrom != "" {
@@ -434,6 +485,19 @@ exec docker compose --project-directory %[1]s exec gowave /app/gowave "$@"
 	if err := os.WriteFile(cliWrapperPath, []byte(script), 0o755); err != nil {
 		fmt.Printf("[!] Could not install %s: %v\n", cliWrapperPath, err)
 	}
+}
+
+// composeHostDSN addresses the project's PostgreSQL through the loopback port
+// the compose file publishes, which is how the host reaches it.
+func composeHostDSN(plan *toDockerPlan) string {
+	dsn := url.URL{
+		Scheme:   "postgresql",
+		User:     url.UserPassword(plan.Env["POSTGRES_USER"], plan.Env["POSTGRES_PASSWORD"]),
+		Host:     net.JoinHostPort("127.0.0.1", plan.Env["POSTGRES_PORT"]),
+		Path:     "/" + plan.Env["POSTGRES_DB"],
+		RawQuery: "sslmode=disable",
+	}
+	return dsn.String()
 }
 
 func runDockerCompose(dir string, env map[string]string, args ...string) error {

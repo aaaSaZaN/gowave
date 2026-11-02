@@ -461,6 +461,7 @@ container_names() {
 # stop_old_panel stops every container of the old panel and keeps it from
 # starting on boot. Nothing is deleted.
 OLD_PANEL_POLICIES=''
+OLD_APP_IDS=''
 
 stop_old_panel() {
     local ids id
@@ -691,11 +692,13 @@ gowave_cli() {
     return "${PIPESTATUS[0]}"
 }
 
-# migrate_data copies the old panel into $INSTALL_DIR/gowave.db. The old
-# panel's app container is stopped first for a consistent copy and started
-# again if the copy fails; its database keeps running.
+# migrate_data prepares the old panel for the move and, for SQLite, copies its
+# data right away. The old panel's app container is stopped first so the copy
+# is consistent; its database keeps running. Migrating upstream data into
+# PostgreSQL is done by `migrate to-docker`, which reads that database
+# directly, so here the old panel is only prepared.
 migrate_data() {
-    local app_service app_ids db_ids status=0
+    local app_service db_ids status=0
     if [ "$SOURCE" = upstream ]; then
         app_service=remnawave
         db_ids=$(old_containers "$UPSTREAM_DIR" remnawave-db)
@@ -704,9 +707,14 @@ migrate_data() {
     else
         app_service=pasarguard
     fi
-    app_ids=$(old_containers "$SOURCE_DIR" "$app_service")
+    OLD_APP_IDS=$(old_containers "$SOURCE_DIR" "$app_service")
     # shellcheck disable=SC2086
-    [ -n "$app_ids" ] && run docker stop $app_ids
+    [ -n "$OLD_APP_IDS" ] && run docker stop $OLD_APP_IDS
+
+    if [ "$SOURCE" = upstream ] && [ "$DB_MODE" = docker ]; then
+        info "$(t 'Данные прежней панели будут скопированы прямо в PostgreSQL' 'Upstream data will be copied straight into PostgreSQL')"
+        return 0
+    fi
 
     info "$(t 'Переношу данные из' 'Migrating data from') $SOURCE"
     if [ "$SOURCE" = upstream ]; then
@@ -717,20 +725,34 @@ migrate_data() {
     fi
     if [ "$status" -ne 0 ]; then
         rm -f "$INSTALL_DIR"/gowave.db*
-        # shellcheck disable=SC2086
-        [ -n "$app_ids" ] && docker start $app_ids >/dev/null 2>&1
+        start_old_app
         die "$(t "Перенос не удался, старая панель запущена обратно. Подробности выше и в $LOG" "Migration failed, the old panel has been started again. Details above and in $LOG")"
     fi
+}
+
+# start_old_app brings back the app container migrate_data stopped, for the
+# paths that fail before stop_old_panel recorded the restart policies.
+start_old_app() {
+    [ -n "$OLD_APP_IDS" ] || return 0
+    # shellcheck disable=SC2086
+    docker start $OLD_APP_IDS >/dev/null 2>&1 || true
+    OLD_APP_IDS=''
 }
 
 move_to_docker() {
     ensure_docker
     info "$(t 'Перевожу панель в Docker с PostgreSQL' 'Moving the panel to Docker with PostgreSQL')"
-    local image_args=()
+    local image_args=() source_args=()
     # The default image is :latest; other channels and pinned releases name theirs.
     [ "$GOWAVE_VERSION" != latest ] && image_args=(--image "$(panel_image)")
-    gowave_cli migrate to-docker --yes --from "$INSTALL_DIR" "${image_args[@]}" ||
+    # Upstream data goes straight into the new PostgreSQL, without a SQLite hop.
+    [ "$SOURCE" = upstream ] && source_args=(--from-upstream)
+    if ! gowave_cli migrate to-docker --yes --from "$INSTALL_DIR" "${image_args[@]}" "${source_args[@]}"; then
+        # This runs after FRESH_ROLLBACK was cleared, so the old panel's app
+        # container is brought back here rather than by the exit trap.
+        start_old_app
         die "$(t 'Переход в Docker не удался, панель продолжает работать на SQLite.' 'Moving to Docker failed, the panel keeps running on SQLite.')"
+    fi
 }
 
 # ---------------------------------------------------------------- Caddy
@@ -1176,6 +1198,9 @@ fresh_install() {
     echo "$(t "  Панель:   https://$DOMAIN$PANEL_BASE_PATH (локально 127.0.0.1:$APP_PORT)" "  Panel:     https://$DOMAIN$PANEL_BASE_PATH (locally 127.0.0.1:$APP_PORT)")"
     if [ "$DB_MODE" = sqlite ]; then
         echo "$(t "  База:     SQLite, $INSTALL_DIR" "  Database:  SQLite, $INSTALL_DIR")"
+    elif [ "$SOURCE" = upstream ]; then
+        echo "$(t "  База:     PostgreSQL в Docker, $DOCKER_DIR (перенос напрямую, без промежуточного SQLite)" \
+            "  Database:  PostgreSQL in Docker, $DOCKER_DIR (copied directly, without a SQLite hop)")"
     else
         echo "$(t "  База:     PostgreSQL в Docker, $DOCKER_DIR" "  Database:  PostgreSQL in Docker, $DOCKER_DIR")"
     fi
@@ -1196,16 +1221,25 @@ fresh_install() {
     if [ "$SOURCE" = upstream ] && [ -f "$UPSTREAM_DIR/.env" ]; then
         info "$(t 'Переношу настройки уведомлений:' 'Copying notification settings:') $(copy_notifications "$UPSTREAM_DIR/.env" "$INSTALL_DIR/.env")"
     fi
+    local defer_stop=false
     if [ "$SOURCE" != none ]; then
+        # The upstream database must stay up until `migrate to-docker` has read it.
+        [ "$SOURCE" = upstream ] && [ "$DB_MODE" = docker ] && defer_stop=true
         migrate_data
-        stop_old_panel
-        OLD_PANEL_STOPPED=true
+        if [ "$defer_stop" = false ]; then
+            stop_old_panel
+            OLD_PANEL_STOPPED=true
+        fi
     fi
     write_unit
     info "$(t 'Запускаю панель' 'Starting the panel')"
     start_native
     FRESH_ROLLBACK=false
     [ "$DB_MODE" = docker ] && move_to_docker
+    if [ "$defer_stop" = true ]; then
+        stop_old_panel
+        OLD_PANEL_STOPPED=true
+    fi
 
     sleep 2
     if [ "$PROXY" != external ] && ! check_web_ports false; then
@@ -1234,6 +1268,11 @@ rollback_fresh_install() {
     [ "$(readlink "$CLI_PATH" 2>/dev/null)" = "$INSTALL_DIR/gowave-server" ] && rm -f "$CLI_PATH"
     rm -rf "$INSTALL_DIR/gowave-server" "$INSTALL_DIR/frontend" "$INSTALL_DIR/.env" "$INSTALL_DIR"/gowave.db*
     rmdir "$INSTALL_DIR" 2>/dev/null || true
+    if [ "$OLD_PANEL_STOPPED" != true ] && [ -n "$OLD_APP_IDS" ]; then
+        # shellcheck disable=SC2086
+        docker start $OLD_APP_IDS >/dev/null 2>&1 || true
+        warn "$(t "Старая панель запущена обратно ($SOURCE_DIR)." "The old panel has been started again ($SOURCE_DIR).")"
+    fi
     if [ "$OLD_PANEL_STOPPED" = true ] && [ -n "$OLD_PANEL_POLICIES" ]; then
         local id policy
         while read -r id policy; do
