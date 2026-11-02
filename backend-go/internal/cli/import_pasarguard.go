@@ -1,9 +1,11 @@
 package cli
 
 import (
+	"archive/zip"
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -14,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
 
 	"gowave/internal/database"
@@ -37,6 +40,9 @@ type PasarGuardProxySettings struct {
 }
 
 type PasarGuardRawUser struct {
+	OnlineAt               *time.Time
+	EditAt                 *time.Time
+	SubRevokedAt           *time.Time
 	ID                     uint64     `gorm:"column:id"`
 	Username               string     `gorm:"column:username"`
 	Status                 string     `gorm:"column:status"`
@@ -51,6 +57,7 @@ type PasarGuardRawUser struct {
 }
 
 type PasarGuardRawHWID struct {
+	LastUsedAt  time.Time
 	UserID      uint64    `gorm:"column:user_id"`
 	HWID        string    `gorm:"column:hwid"`
 	DeviceOS    *string   `gorm:"column:device_os"`
@@ -217,12 +224,44 @@ func sqliteReadOnlyURI(path string) string {
 }
 
 func ImportFromPasarGuard(destDB *gorm.DB, source string) error {
+	if strings.HasSuffix(strings.ToLower(source), ".zip") {
+		archive, err := zip.OpenReader(source)
+		if err != nil {
+			return err
+		}
+		defer archive.Close()
+		for _, f := range archive.File {
+			if f.Name != "db.sqlite3" {
+				continue
+			}
+			r, err := f.Open()
+			if err != nil {
+				return err
+			}
+			defer r.Close()
+			tmp, err := os.CreateTemp("", "gowave-pasar-*.sqlite3")
+			if err != nil {
+				return err
+			}
+			defer os.Remove(tmp.Name())
+			_, copyErr := io.Copy(tmp, r)
+			closeErr := tmp.Close()
+			if copyErr != nil {
+				return copyErr
+			}
+			if closeErr != nil {
+				return closeErr
+			}
+			return ImportFromPasarGuard(destDB, tmp.Name())
+		}
+		return fmt.Errorf("backup has no root db.sqlite3")
+	}
 	driver, dsn, err := DetectPasarGuardSource(source)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("[*] Opening PasarGuard database (%s: %s)...\n", driver, dsn)
+	fmt.Printf("[*] Opening PasarGuard database (%s)...\n", driver)
 
 	gormCfg := &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
@@ -238,9 +277,20 @@ func ImportFromPasarGuard(destDB *gorm.DB, source string) error {
 		return fmt.Errorf("failed to connect to PasarGuard database: %w", err)
 	}
 
+	sqlDB, err := srcDB.DB()
+	if err != nil {
+		return err
+	}
+	defer sqlDB.Close()
+	return destDB.Transaction(func(tx *gorm.DB) error { return importPasarGuard(tx, srcDB) })
+}
+
+func importPasarGuard(destDB, srcDB *gorm.DB) error {
+	userIDs := map[uint64]uint64{}
+
 	// 1. Read users
 	var pgUsers []PasarGuardRawUser
-	err = srcDB.Table("users").Find(&pgUsers).Error
+	err := srcDB.Table("users").Find(&pgUsers).Error
 	if err != nil {
 		return fmt.Errorf("failed to query users table: %w", err)
 	}
@@ -250,7 +300,7 @@ func ImportFromPasarGuard(destDB *gorm.DB, source string) error {
 	// Find default internal squad if exists
 	var defaultSquadUUID string
 	var squad database.InternalSquad
-	if err := destDB.First(&squad).Error; err == nil && squad.UUID != "" {
+	if err := destDB.First(&squad).Error; err == nil && squad.UUID != "" && !srcDB.Migrator().HasTable("users_groups_association") {
 		defaultSquadUUID = squad.UUID
 		fmt.Printf("[*] Found default internal squad '%s' (%s). Users will be assigned to it.\n", squad.Name, squad.UUID)
 	}
@@ -262,7 +312,9 @@ func ImportFromPasarGuard(destDB *gorm.DB, source string) error {
 	for _, u := range pgUsers {
 		var ps PasarGuardProxySettings
 		if u.ProxySettings != "" {
-			_ = json.Unmarshal([]byte(u.ProxySettings), &ps)
+			if err := json.Unmarshal([]byte(u.ProxySettings), &ps); err != nil {
+				return fmt.Errorf("user %d proxy settings: %w", u.ID, err)
+			}
 		}
 
 		vlessUUID := strings.TrimSpace(ps.Vless.ID)
@@ -280,7 +332,9 @@ func ImportFromPasarGuard(destDB *gorm.DB, source string) error {
 
 		status := strings.ToUpper(strings.TrimSpace(u.Status))
 		switch status {
-		case "ACTIVE", "ON_HOLD":
+		case "ON_HOLD":
+			status = "DISABLED"
+		case "ACTIVE":
 			status = "ACTIVE"
 		case "DISABLED":
 			status = "DISABLED"
@@ -322,7 +376,7 @@ func ImportFromPasarGuard(destDB *gorm.DB, source string) error {
 		}
 
 		gwUser := database.User{
-			ID:                   u.ID,
+			SubRevokedAt:         u.SubRevokedAt,
 			ShortUUID:            users.NewShortUUID(),
 			Username:             u.Username,
 			Status:               status,
@@ -341,35 +395,54 @@ func ImportFromPasarGuard(destDB *gorm.DB, source string) error {
 		// Insert or update in Gowave
 		err := destDB.Transaction(func(tx *gorm.DB) error {
 			var existing database.User
-			if err := tx.Where("id = ? OR username = ?", u.ID, u.Username).First(&existing).Error; err == nil {
+			if err := tx.Where("username = ?", u.Username).First(&existing).Error; err == nil {
 				gwUser.ID = existing.ID
 				gwUser.ShortUUID = existing.ShortUUID
-				return tx.Model(&database.User{}).Where("id = ?", existing.ID).Updates(gwUser).Error
-			}
-
-			if err := tx.Create(&gwUser).Error; err != nil {
+				if ps.Vless.ID == "" {
+					gwUser.VlessUUID = existing.VlessUUID
+				}
+				if ps.Trojan.Password == "" {
+					gwUser.TrojanPassword = existing.TrojanPassword
+				}
+				if ps.Shadowsocks.Password == "" {
+					gwUser.SsPassword = existing.SsPassword
+				}
+				if err := tx.Model(&database.User{}).Where("id = ?", existing.ID).Select("*").Omit("Traffic", "ExternalSquad", "ActiveInternalSquads").Updates(gwUser).Error; err != nil {
+					return err
+				}
+			} else if err != gorm.ErrRecordNotFound {
 				return err
+			} else {
+				if err := tx.Create(&gwUser).Error; err != nil {
+					return err
+				}
 			}
 
+			userIDs[u.ID] = gwUser.ID
 			traffic := database.UserTraffic{
 				ID:                       gwUser.ID,
 				UsedTrafficBytes:         u.UsedTraffic,
 				LifetimeUsedTrafficBytes: u.UsedTraffic,
+				OnlineAt:                 u.OnlineAt,
 			}
-			_ = tx.Create(&traffic).Error
+			if err := tx.Clauses(clause.OnConflict{UpdateAll: true}).Create(&traffic).Error; err != nil {
+				return err
+			}
 
 			if defaultSquadUUID != "" {
 				member := database.InternalSquadMember{
 					InternalSquadUUID: defaultSquadUUID,
 					UserID:            gwUser.ID,
 				}
-				_ = tx.Create(&member).Error
+				if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&member).Error; err != nil {
+					return err
+				}
 			}
 			return nil
 		})
 
 		if err != nil {
-			fmt.Printf("[-] Error importing user %s: %v\n", u.Username, err)
+			return fmt.Errorf("import user %d: %w", u.ID, err)
 		} else {
 			importedCount++
 		}
@@ -379,25 +452,33 @@ func ImportFromPasarGuard(destDB *gorm.DB, source string) error {
 
 	// 2. Read HWIDs if table exists
 	var pgHwids []PasarGuardRawHWID
-	if err := srcDB.Table("user_hwids").Find(&pgHwids).Error; err == nil && len(pgHwids) > 0 {
+	if srcDB.Migrator().HasTable("user_hwids") {
+		if err := srcDB.Table("user_hwids").Find(&pgHwids).Error; err != nil {
+			return err
+		}
 		hwidCount := 0
 		for _, h := range pgHwids {
 			d := database.HwidDevice{
 				HWID:        h.HWID,
-				UserID:      h.UserID,
+				UserID:      userIDs[h.UserID],
 				Platform:    h.DeviceOS,
 				OSVersion:   h.OSVersion,
 				DeviceModel: h.DeviceModel,
 				CreatedAt:   h.CreatedAt.UTC(),
-				UpdatedAt:   now,
+				UpdatedAt:   h.LastUsedAt,
 			}
-			if err := destDB.Where("hwid = ?", h.HWID).FirstOrCreate(&d).Error; err == nil {
+			if err := destDB.Clauses(clause.OnConflict{UpdateAll: true}).Create(&d).Error; err == nil {
 				hwidCount++
+			} else {
+				return err
 			}
 		}
 		fmt.Printf("[+] Successfully imported %d HWID devices!\n", hwidCount)
 	}
 
+	if err := importPasarGuardExtended(destDB, srcDB, userIDs); err != nil {
+		return err
+	}
 	fmt.Println("\n[✔] Migration from PasarGuard completed successfully!")
 	return nil
 }

@@ -158,7 +158,28 @@ func RunRescue(db *gorm.DB, cfg *config.Config, args []string) {
 				os.Exit(1)
 			}
 			return
+		case "--import-3x-ui", "import-3x-ui":
+			source := ""
+			if len(args) > 1 {
+				source = args[1]
+			}
+			if err := ImportFrom3xUI(db, source); err != nil {
+				fmt.Printf("[-] 3x-ui import failed: %v\n", err)
+				os.Exit(1)
+			}
+			return
 		case "import":
+			if len(args) > 1 && args[1] == "3x-ui" {
+				source := ""
+				if len(args) > 2 {
+					source = args[2]
+				}
+				if err := ImportFrom3xUI(db, source); err != nil {
+					fmt.Printf("[-] 3x-ui import failed: %v\n", err)
+					os.Exit(1)
+				}
+				return
+			}
 			source := ""
 			if len(args) > 1 && (args[1] == "pasarguard" || args[1] == "pasar") {
 				if len(args) > 2 {
@@ -241,7 +262,8 @@ func PrintNodeSecretKey(db *gorm.DB) {
 
 func printUsage() {
 	fmt.Println("Usage: gowave-server rescue [flag]")
-	fmt.Println("       gowave-server import pasarguard [path/dsn]")
+	fmt.Println("       gowave-server import pasarguard [path/dsn/backup.zip]")
+	fmt.Println("       gowave-server import 3x-ui [path]")
 	fmt.Println("       gowave-server migrate pg-to-sqlite [dsn] [destination]")
 	fmt.Println("       gowave-server migrate pg-to-pg [source_dsn] [target_dsn] [--force]")
 	fmt.Println("       gowave-server migrate to-docker [--dir /opt/gowave-docker] [--image ref] [--yes]")
@@ -289,8 +311,9 @@ func interactiveMenu(db *gorm.DB, cfg *config.Config) {
 		fmt.Println("8) Migrate from upstream panel PostgreSQL -> Gowave SQLite (and purge Docker)")
 		fmt.Println("9) Move Gowave to Docker (SQLite -> PostgreSQL)")
 		fmt.Println("10) Migrate from upstream panel PostgreSQL -> GoWave PostgreSQL")
+		fmt.Println("11) Import database from 3x-ui (SQLite)")
 		fmt.Println("0) Exit")
-		fmt.Print("\nSelect an option [0-10]: ")
+		fmt.Print("\nSelect an option [0-11]: ")
 
 		input, err := reader.ReadString('\n')
 		if err != nil {
@@ -321,6 +344,8 @@ func interactiveMenu(db *gorm.DB, cfg *config.Config) {
 			}
 		case "10":
 			MigratePGToPGInteractive(cfg, reader)
+		case "11":
+			Import3xUIInteractive(db, reader)
 		case "0", "q", "exit":
 			fmt.Println("Exiting Rescue CLI.")
 			return
