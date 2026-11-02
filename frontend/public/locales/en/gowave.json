@@ -1874,6 +1874,7 @@
     "connections-current": "Current"
   },
   "node-error-message": {
+    "config-checking": "Checking the config on nodes: {{nodes}}",
     "config-not-applied": "New config not applied",
     "config-not-applied-description": "Xray rejected the config, so the node keeps serving the previous one. Fix the config profile and save it again."
   }

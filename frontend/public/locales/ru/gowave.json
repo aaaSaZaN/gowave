@@ -1874,6 +1874,7 @@
     "connections-current": "Текущее"
   },
   "node-error-message": {
+    "config-checking": "Проверяем конфиг на нодах: {{nodes}}",
     "config-not-applied": "Новый конфиг не применён",
     "config-not-applied-description": "Xray отклонил конфиг, нода продолжает работать на предыдущем. Исправьте профиль конфига и сохраните его снова."
   }

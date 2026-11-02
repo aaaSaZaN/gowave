@@ -36,7 +36,8 @@ export function ConfigEditorActionsFeature(props: Props) {
         configProfile,
         hasUnsavedChanges,
         setHasUnsavedChanges,
-        setOriginalValue
+        setOriginalValue,
+        setSavedAt
     } = props
     const { t } = useTranslation()
 
@@ -79,6 +80,7 @@ export function ConfigEditorActionsFeature(props: Props) {
                 )
 
                 setHasUnsavedChanges(false)
+                setSavedAt(Date.now())
             },
             onError: (error) => {
                 setIsConfigValid(false)

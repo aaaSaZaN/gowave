@@ -12,6 +12,7 @@ import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { preventBackScroll } from '@shared/utils/misc'
 import { useMonaco } from '@shared/utils/setup-monaco/load-monaco'
+import { ConfigRejectionStatusBarWidget } from '@widgets/dashboard/config-profiles/config-rejection-status-bar'
 import type { editor } from 'monaco-editor'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -31,6 +32,7 @@ export function ConfigEditorWidget(props: IProps) {
     const [result, setResult] = useState('')
     const [isConfigValid, setIsConfigValid] = useState(true)
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+    const [savedAt, setSavedAt] = useState<null | number>(null)
     const [originalValue, setOriginalValue] = useState<string>(
         JSON.stringify(configProfile.config, null, 2) || ''
     )
@@ -170,7 +172,15 @@ export function ConfigEditorWidget(props: IProps) {
                 )}
 
                 <CodeEditor
-                    footer={statusBar}
+                    footer={
+                        <>
+                            <ConfigRejectionStatusBarWidget
+                                configProfileUuid={configProfile.uuid}
+                                savedAt={savedAt}
+                            />
+                            {statusBar}
+                        </>
+                    }
                     defaultLanguage="json"
                     loading={<LoaderModalShared mih="100%" />}
                     onChange={() => {
@@ -224,6 +234,7 @@ export function ConfigEditorWidget(props: IProps) {
                         setIsConfigValid={setIsConfigValid}
                         setOriginalValue={setOriginalValue}
                         setResult={setResult}
+                        setSavedAt={setSavedAt}
                     />
                 </EditorFooter>
             )}
