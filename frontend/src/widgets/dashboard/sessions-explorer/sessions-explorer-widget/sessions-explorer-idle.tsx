@@ -1,14 +1,8 @@
-import { CodeHighlight } from '@mantine/code-highlight'
 import { Button, Group, Stack, Text, ThemeIcon } from '@mantine/core'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SectionCard } from '@shared/ui/section-card'
 import { Trans, useTranslation } from 'react-i18next'
-import { TbAlertTriangle, TbBrandDocker, TbClock, TbRadar, TbRadar2 } from 'react-icons/tb'
-
-const DOCKER_SNIPPET = `
-    cap_add:
-      - NET_ADMIN
-`
+import { TbAlertTriangle, TbClock, TbRadar, TbRadar2 } from 'react-icons/tb'
 
 const HIGHLIGHT_SPAN = <Text c="var(--mantine-color-bright)" component="span" fw={600} size="sm" />
 
@@ -31,30 +25,6 @@ export function SessionsExplorerIdle({ onlineNodesCount, onStart }: IProps) {
                         title={t('active-sessions-drawer.widget.requirements')}
                     />
                 </SectionCard.Section>
-
-                <Stack gap="xs">
-                    <Group gap="sm" wrap="nowrap">
-                        <ThemeIcon color="violet" size="md" variant="soft">
-                            <TbBrandDocker size={16} />
-                        </ThemeIcon>
-                        <Text c="dimmed" size="sm">
-                            <Trans
-                                components={{ highlight: HIGHLIGHT_SPAN }}
-                                i18nKey="active-sessions-drawer.widget.warning-docker"
-                            />
-                        </Text>
-                    </Group>
-                    <CodeHighlight
-                        background="rgba(22, 27, 35)"
-                        code={DOCKER_SNIPPET}
-                        language="yaml"
-                        radius="md"
-                        style={{
-                            border: '1px solid rgba(var(--gw-fg-rgb), 0.08)',
-                            borderRadius: 'var(--mantine-radius-md)'
-                        }}
-                    />
-                </Stack>
 
                 <Group gap="sm" wrap="nowrap">
                     <ThemeIcon color="cyan" size="md" variant="soft">

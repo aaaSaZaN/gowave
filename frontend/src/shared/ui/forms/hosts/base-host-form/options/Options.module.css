@@ -9,4 +9,9 @@
         background-color: color-mix(in srgb, var(--mantine-color-body) 95%, transparent);
     }
     background-image: linear-gradient(rgba(var(--gw-fg-rgb), 0.02), rgba(var(--gw-fg-rgb), 0.02));
+
+    @mixin light {
+        background-color: var(--gw-card-bg);
+        background-image: none;
+    }
 }

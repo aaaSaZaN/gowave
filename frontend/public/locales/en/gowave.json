@@ -587,7 +587,6 @@
       "requirements": "Requirements",
       "warning-activity": "An IP address will be shown when <highlight>Xray Core</highlight> considers the <highlight>connection still open</highlight>. As a result, some of the IP addresses shown may no longer be connected. Use the <highlight>clock</highlight> icon to track the last activity of a given IP.",
       "warning-version": "GoWave Node version <highlight>{{version}}</highlight> or higher",
-      "warning-docker": "Add the following to <highlight>docker-compose.yml</highlight> of GoWave Node (/opt/gowave-node)",
       "warning-patience": "Fetching data may take some time, do not close this window!",
       "warning-n-plus-one": "<highlight>Please note</highlight>: this request performs <highlight>N+1</highlight> calls to the gRPC API of <highlight>Xray Core</highlight> due to the lack of bulk data retrieval methods. <highlight>N</highlight> is the number of users currently online on the given node.",
       "fetching": "Fetching active sessions...",

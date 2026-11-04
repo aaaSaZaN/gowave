@@ -587,7 +587,6 @@
       "requirements": "Требования",
       "warning-activity": "IP-адрес показывается, пока <highlight>Xray Core</highlight> считает <highlight>соединение открытым</highlight>. Из-за этого часть показанных адресов может быть уже отключена. Отслеживайте последнюю активность конкретного IP по иконке <highlight>часов</highlight>.",
       "warning-version": "GoWave Node версии <highlight>{{version}}</highlight> или выше",
-      "warning-docker": "Добавьте следующее в <highlight>docker-compose.yml</highlight> ноды GoWave (/opt/gowave-node)",
       "warning-patience": "Сбор данных может занять время, не закрывайте это окно!",
       "warning-n-plus-one": "<highlight>Обратите внимание</highlight>: запрос делает <highlight>N+1</highlight> обращений к gRPC API <highlight>Xray Core</highlight>, потому что метода для пакетной выдачи там нет. <highlight>N</highlight> — число пользователей, которые сейчас онлайн на этой ноде.",
       "fetching": "Собираем активные сессии...",
