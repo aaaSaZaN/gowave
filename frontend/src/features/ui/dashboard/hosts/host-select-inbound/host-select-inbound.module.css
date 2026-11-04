@@ -1,8 +1,8 @@
 .card {
     padding: var(--mantine-spacing-md);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
     border-radius: var(--mantine-radius-md);
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--gw-raised-bg);
 
     cursor: pointer;
     transition:
@@ -11,8 +11,8 @@
 }
 
 .card:hover {
-    border-color: rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.035);
+    border-color: rgba(var(--gw-fg-rgb), 0.14);
+    background: rgba(var(--gw-fg-rgb), 0.035);
 }
 
 .card:focus-visible {

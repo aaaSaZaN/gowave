@@ -8,7 +8,7 @@
     margin-left: calc(-1 * var(--mantine-spacing-sm));
 
     padding: var(--mantine-spacing-sm) var(--mantine-spacing-lg);
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid rgba(var(--gw-fg-rgb), 0.06);
     background-color: var(--mantine-color-body);
 }
 

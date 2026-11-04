@@ -89,7 +89,7 @@ export const NodeDetailsCard = memo(
                                     </Text>
 
                                     <Text
-                                        c="white"
+                                        c="var(--mantine-color-bright)"
                                         fw={600}
                                         size="md"
                                         style={{

@@ -5,7 +5,7 @@
     border: 1px solid var(--mantine-color-dark-5);
     padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
     margin-bottom: var(--mantine-spacing-xs);
-    background: #1b1f26;
+    background: var(--gw-card-bg);
 }
 
 .mobileItem {
@@ -15,12 +15,12 @@
     border-radius: var(--mantine-radius-lg);
     transition: all 0.2s ease;
     height: 190px;
-    background: #1b1f26;
+    background: var(--gw-card-bg);
 }
 
 .mobileItem:active {
     transform: scale(0.98);
-    background: #1b1f26;
+    background: var(--gw-card-bg);
 }
 
 .filteredItem {

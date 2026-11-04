@@ -50,7 +50,7 @@ export function AppCard(props: IProps) {
                             <TbPhoto color="var(--mantine-color-dimmed)" size={18} />
                         )}
                     </Box>
-                    <Text c="white" fw={600} size="sm" truncate>
+                    <Text c="var(--mantine-color-bright)" fw={600} size="sm" truncate>
                         {app.name || `App ${index + 1}`}
                     </Text>
                     {app.featured && (

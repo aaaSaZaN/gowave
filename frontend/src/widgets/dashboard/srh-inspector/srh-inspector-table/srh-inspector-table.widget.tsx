@@ -119,17 +119,17 @@ export function SrhInspectorTableWidget() {
         }),
         mantineTopToolbarProps: {
             style: {
-                '--mrt-base-background-color': '#1b2027'
+                '--mrt-base-background-color': 'var(--gw-card-bg)'
             }
         },
         mantineTableHeadProps: {
             style: {
-                '--mrt-base-background-color': '#1b2027'
+                '--mrt-base-background-color': 'var(--gw-card-bg)'
             }
         },
         mantineBottomToolbarProps: {
             style: {
-                '--mrt-base-background-color': '#1b2027'
+                '--mrt-base-background-color': 'var(--gw-card-bg)'
             }
         },
         mantinePaperProps: {

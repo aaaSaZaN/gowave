@@ -1,3 +1,66 @@
+/*
+ * Color scheme tokens.
+ *
+ * Much of the dashboard was written against the dark palette directly
+ * (var(--mantine-color-dark-N), white rgba overlays). Instead of rewriting
+ * every module, the light scheme remaps the dark palette to a light surface
+ * ramp with the same roles: 0-3 are text shades, 4-5 borders and hovers,
+ * 6 raised surfaces, 7 the page body, 8-9 recessed surfaces.
+ */
+:root[data-mantine-color-scheme="dark"] {
+    --gw-fg-rgb: 255, 255, 255;
+    --gw-surface-rgb: 22, 27, 35;
+    --gw-card-bg: #1b1f26;
+    --gw-raised-bg: rgba(255, 255, 255, 0.02);
+    --gw-scrollbar-track: rgba(22, 27, 35, 0.6);
+
+    --gw-json-bg: #0d1117;
+    --gw-json-fg: #ffffff;
+    --gw-json-property: #e6edf3;
+    --gw-json-count: #8b949e;
+    --gw-json-purple: #d2a8ff;
+    --gw-json-string: #a5d6ff;
+    --gw-json-bracket: #56d364;
+    --gw-json-orange: rgb(203, 75, 22);
+    --gw-json-boolean: #ff7b72;
+    --gw-json-null: green;
+    --gw-json-null-bg: rgba(255, 255, 255, 0.14);
+}
+
+:root[data-mantine-color-scheme="light"] {
+    --mantine-color-dark-0: #1f2328;
+    --mantine-color-dark-1: #31363c;
+    --mantine-color-dark-2: #59636e;
+    --mantine-color-dark-3: #818b98;
+    --mantine-color-dark-4: #d1d9e0;
+    --mantine-color-dark-5: #e6eaef;
+    --mantine-color-dark-6: #ffffff;
+    --mantine-color-dark-7: #f6f8fa;
+    --mantine-color-dark-8: #eff2f5;
+    --mantine-color-dark-9: #e6eaef;
+
+    --gw-fg-rgb: 31, 35, 40;
+    --gw-surface-rgb: 255, 255, 255;
+    --gw-card-bg: #ffffff;
+    --gw-raised-bg: #ffffff;
+    --mantine-shadow-md: 0 1px 3px rgba(31, 35, 40, 0.06), 0 4px 10px rgba(31, 35, 40, 0.05);
+    --mantine-shadow-lg: 0 2px 6px rgba(31, 35, 40, 0.07), 0 8px 18px rgba(31, 35, 40, 0.06);
+    --mantine-shadow-xl: 0 2px 6px rgba(31, 35, 40, 0.06), 0 10px 24px rgba(31, 35, 40, 0.07);
+    --gw-scrollbar-track: rgba(208, 215, 222, 0.4);
+
+    --gw-json-bg: #ffffff;
+    --gw-json-fg: #1f2328;
+    --gw-json-property: #1f2328;
+    --gw-json-count: #59636e;
+    --gw-json-purple: #8250df;
+    --gw-json-string: #0a3069;
+    --gw-json-bracket: #1a7f37;
+    --gw-json-orange: #bc4c00;
+    --gw-json-boolean: #cf222e;
+    --gw-json-null: #cf222e;
+    --gw-json-null-bg: rgba(207, 34, 46, 0.1);
+}
+
 html,
 body {
     min-height: 100vh;
@@ -44,7 +107,7 @@ body {
     padding: 6px 10px;
     border-left: 3px solid var(--vscode-textBlockQuote-border, #007acc80);
     border-radius: 3px;
-    background: var(--vscode-textBlockQuote-background, rgba(255, 255, 255, 0.05));
+    background: var(--vscode-textBlockQuote-background, rgba(var(--gw-fg-rgb), 0.05));
 }
 
 .monaco-hover blockquote > :first-child,
@@ -72,7 +135,7 @@ body {
         bottom: 0px;
         width: 100%;
         height: 4px;
-        background: #161b23;
+        background: var(--mantine-color-body);
         z-index: 0;
     }
 }
@@ -131,14 +194,14 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-    background: rgba(22, 27, 35, 0.6);
+    background: var(--gw-scrollbar-track);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, #0d9488 0%, #06b6d4 100%);
     border-radius: 4px;
-    border: 1px solid rgba(22, 27, 35, 0.8);
+    border: 1px solid rgba(var(--gw-surface-rgb), 0.8);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -146,10 +209,10 @@ body {
 }
 
 ::-webkit-scrollbar-corner {
-    background: rgba(22, 27, 35, 0.6);
+    background: var(--gw-scrollbar-track);
 }
 
 * {
     scrollbar-width: thin;
-    scrollbar-color: #0d9488 rgba(22, 27, 35, 0.6);
+    scrollbar-color: #0d9488 var(--gw-scrollbar-track);
 }

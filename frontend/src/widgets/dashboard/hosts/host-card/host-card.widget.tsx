@@ -1,6 +1,5 @@
 import { OptimisticSortingPlugin } from '@dnd-kit/dom/sortable'
 import { useSortable } from '@dnd-kit/react/sortable'
-import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     ActionIcon,
     Badge,
@@ -23,6 +22,7 @@ import {
 } from '@remnawave/backend-contract'
 import { showModal } from '@shared/_modals/show-modal'
 import { ROUTES } from '@shared/constants'
+import { jsonViewerTheme } from '@shared/constants/theme'
 import { useIsMobile } from '@shared/hooks'
 import cx from '@shared/lib/classes'
 import ColorHash from '@shared/lib/color'
@@ -330,7 +330,7 @@ export function HostCardWidget(props: IProps) {
                                 className={classes.dragHandle}
                                 ref={isDragOverlay ? undefined : handleRef}
                             >
-                                <RiDraggable color="white" size="24px" />
+                                <RiDraggable color="var(--mantine-color-bright)" size="24px" />
                             </Box>
                         )}
                     </Group>
@@ -467,7 +467,7 @@ export function HostCardWidget(props: IProps) {
                                                     maxWidth="100%"
                                                     rootName=""
                                                     showCollectionCount
-                                                    theme={githubDarkTheme}
+                                                    theme={jsonViewerTheme}
                                                 />
                                             ),
                                             title: (
@@ -505,7 +505,7 @@ export function HostCardWidget(props: IProps) {
                                                     maxWidth="100%"
                                                     rootName=""
                                                     showCollectionCount
-                                                    theme={githubDarkTheme}
+                                                    theme={jsonViewerTheme}
                                                 />
                                             ),
                                             title: (
@@ -543,7 +543,7 @@ export function HostCardWidget(props: IProps) {
                                                     maxWidth="100%"
                                                     rootName=""
                                                     showCollectionCount
-                                                    theme={githubDarkTheme}
+                                                    theme={jsonViewerTheme}
                                                 />
                                             ),
                                             title: (

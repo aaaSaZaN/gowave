@@ -2,7 +2,7 @@
     position: relative;
     display: flex;
     gap: 6px;
-    background: #1b1f26;
+    background: var(--gw-card-bg);
     transition:
         border-color 150ms ease,
         background-color 150ms ease;

@@ -1,5 +1,4 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
-import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     ActionIcon,
     Badge,
@@ -16,6 +15,7 @@ import {
 import { modals } from '@mantine/modals'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { useGetConnectionKeysByUserId, useGetRawSubscription } from '@shared/api/hooks'
+import { jsonViewerTheme } from '@shared/constants/theme'
 import { EmptyPageLayout } from '@shared/ui/layouts/empty-page'
 import { LoaderModalShared } from '@shared/ui/loader-modal'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
@@ -197,7 +197,7 @@ export const ConnectionKeysDrawer = NiceModal.create((props: IProps) => {
                         maxWidth="100%"
                         rootName=""
                         showCollectionCount
-                        theme={githubDarkTheme}
+                        theme={jsonViewerTheme}
                         jsonStringify={(data) => JSON.stringify(data)}
                     />
                 </Box>

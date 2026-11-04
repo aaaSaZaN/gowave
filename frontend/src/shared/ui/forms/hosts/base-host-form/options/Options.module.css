@@ -4,9 +4,9 @@
     z-index: 3;
     margin-top: calc(var(--mantine-spacing-md) * -1);
     padding-top: var(--mantine-spacing-md);
-    background-color: rgba(22, 27, 35, 0.95);
+    background-color: rgba(var(--gw-surface-rgb), 0.95);
     @supports (background-color: color-mix(in srgb, black, transparent)) {
         background-color: color-mix(in srgb, var(--mantine-color-body) 95%, transparent);
     }
-    background-image: linear-gradient(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02));
+    background-image: linear-gradient(rgba(var(--gw-fg-rgb), 0.02), rgba(var(--gw-fg-rgb), 0.02));
 }

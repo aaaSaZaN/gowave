@@ -35,7 +35,7 @@ export function ErrorPageComponent({ componentStack, error }: Partial<ErrorBound
                         <CodeHighlight
                             defaultExpanded={false}
                             radius="md"
-                            background="rgba(255, 255, 255, 0.02)"
+                            background="var(--gw-raised-bg)"
                             withLineNumbers
                             code={details}
                             expandCodeLabel=""

@@ -1,4 +1,3 @@
-import { githubDarkTheme } from '@json-edit-react/themes'
 import { Badge, Box, CopyButton, Divider, Group, Loader, Menu, Text, Tooltip } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
@@ -6,6 +5,7 @@ import type { GetConfigProfilesCommand } from '@remnawave/backend-contract'
 import { showModal } from '@shared/_modals/show-modal'
 import { useGetComputedConfigProfile } from '@shared/api/hooks/config-profiles/config-profiles.query.hooks'
 import { ROUTES } from '@shared/constants'
+import { jsonViewerTheme } from '@shared/constants/theme'
 import { WithDndSortable } from '@shared/hocs/with-dnd-sortable'
 import { optionalProp } from '@shared/lib/optional-prop'
 import { runAsync } from '@shared/lib/run-async'
@@ -98,7 +98,7 @@ export function ConfigProfileCardWidget(props: IProps) {
                             maxWidth="100%"
                             rootName=""
                             showCollectionCount
-                            theme={githubDarkTheme}
+                            theme={jsonViewerTheme}
                         />
                     </>
                 ),
@@ -228,7 +228,7 @@ export function ConfigProfileCardWidget(props: IProps) {
                                                 maxWidth="100%"
                                                 rootName=""
                                                 showCollectionCount
-                                                theme={githubDarkTheme}
+                                                theme={jsonViewerTheme}
                                             />
                                         </Box>
                                     ),

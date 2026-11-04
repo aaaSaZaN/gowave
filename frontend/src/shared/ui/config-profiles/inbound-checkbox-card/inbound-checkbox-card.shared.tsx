@@ -1,7 +1,7 @@
-import { githubDarkTheme } from '@json-edit-react/themes'
 import { ActionIcon, Badge, Checkbox, Group, Text } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import type { GetConfigProfilesCommand } from '@remnawave/backend-contract'
+import { jsonViewerTheme } from '@shared/constants/theme'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { JsonViewer } from 'json-edit-react'
 import { useTranslation } from 'react-i18next'
@@ -26,7 +26,7 @@ export const InboundCheckboxCardShared = (props: IProps) => {
                     maxWidth="100%"
                     rootName=""
                     showCollectionCount
-                    theme={githubDarkTheme}
+                    theme={jsonViewerTheme}
                 />
             ),
             title: (

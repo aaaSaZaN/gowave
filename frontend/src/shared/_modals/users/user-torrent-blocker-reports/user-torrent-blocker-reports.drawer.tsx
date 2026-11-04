@@ -92,7 +92,7 @@ export const UserTorrentBlockerReportsModal = NiceModal.create((props: IProps) =
                                     <TbFlame size={24} />
                                 </ThemeIcon>
                                 <Stack gap={0}>
-                                    <Text c="white" fw={700} size="xl">
+                                    <Text c="var(--mantine-color-bright)" fw={700} size="xl">
                                         {reports?.total ?? 0}
                                     </Text>
                                     <Text c="dimmed" size="xs">

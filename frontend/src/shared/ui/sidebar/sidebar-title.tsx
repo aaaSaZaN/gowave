@@ -22,7 +22,16 @@ export const SidebarTitleShared = () => {
     return (
         <Text className={classes.logoTitle}>
             {titleParts.map((part) => (
-                <Text c={part.color || 'white'} component="span" inherit key={part.text}>
+                <Text
+                    c={
+                        !part.color || part.color === 'white'
+                            ? 'var(--mantine-color-bright)'
+                            : part.color
+                    }
+                    component="span"
+                    inherit
+                    key={part.text}
+                >
                     {part.text}
                 </Text>
             ))}

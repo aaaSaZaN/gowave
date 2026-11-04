@@ -2,8 +2,8 @@
     position: relative;
     overflow: hidden;
     border-radius: var(--mantine-radius-md);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.06);
+    background: var(--gw-raised-bg);
     padding: 10px 14px;
     transition:
         background 150ms ease,
@@ -11,7 +11,7 @@
 }
 
 .row:hover {
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(var(--gw-fg-rgb), 0.04);
     transform: translateX(2px);
 }
 

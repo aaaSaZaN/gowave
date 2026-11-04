@@ -6,7 +6,13 @@ import '@mantine/spotlight/styles.css'
 import '@kastov/mantine-react-table-open/styles.css'
 import '@kastov/mantine-datatable/styles.css'
 import './global.css'
-import { Center, DirectionProvider, MantineProvider, v8CssVariablesResolver } from '@mantine/core'
+import {
+    Center,
+    type CSSVariablesResolver,
+    DirectionProvider,
+    MantineProvider,
+    v8CssVariablesResolver
+} from '@mantine/core'
 import { ModalsProvider } from '@mantine/modals'
 import { Notifications } from '@mantine/notifications'
 import { theme } from '@shared/constants'
@@ -32,6 +38,18 @@ import { initConnectionWatchdog, queryClient } from './shared/api'
 dayjs.extend(customParseFormat)
 
 polyfillCountryFlagEmojis()
+
+const cssVariablesResolver: CSSVariablesResolver = (theme) => {
+    const resolved = v8CssVariablesResolver(theme)
+
+    return {
+        ...resolved,
+        light: {
+            ...resolved.light,
+            '--mantine-color-body': '#f6f8fa'
+        }
+    }
+}
 
 initConnectionWatchdog()
 
@@ -60,7 +78,7 @@ export function App() {
                     <IsMobileProvider>
                         <DirectionProvider>
                             <MantineProvider
-                                cssVariablesResolver={v8CssVariablesResolver}
+                                cssVariablesResolver={cssVariablesResolver}
                                 defaultColorScheme="dark"
                                 theme={theme}
                                 deduplicateInlineStyles

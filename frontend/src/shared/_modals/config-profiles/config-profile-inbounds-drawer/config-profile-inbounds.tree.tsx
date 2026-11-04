@@ -1,4 +1,3 @@
-import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     ActionIcon,
     Badge,
@@ -17,6 +16,7 @@ import type {
     GetInternalSquadsCommand
 } from '@remnawave/backend-contract'
 import { showModal } from '@shared/_modals/show-modal'
+import { jsonViewerTheme } from '@shared/constants/theme'
 import ColorHash from '@shared/lib/color'
 import { runAsync } from '@shared/lib/run-async'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
@@ -55,7 +55,7 @@ const openRawInboundModal = (inbound: ProfileInbound) => {
                     maxWidth="100%"
                     rootName=""
                     showCollectionCount
-                    theme={githubDarkTheme}
+                    theme={jsonViewerTheme}
                 />
             </Box>
         ),

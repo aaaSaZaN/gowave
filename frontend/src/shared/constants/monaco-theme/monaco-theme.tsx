@@ -151,3 +151,50 @@ export const monacoTheme = {
         'menu.border': '#30363d'
     }
 }
+
+export const monacoLightTheme = {
+    base: 'vs',
+    inherit: true,
+    rules: [
+        { foreground: '59636e', token: 'comment' },
+        { foreground: '0550ae', token: 'constant' },
+        { foreground: '8250df', token: 'entity' },
+        { foreground: 'cf222e', token: 'keyword' },
+        { foreground: 'cf222e', token: 'storage' },
+        { foreground: '0a3069', token: 'string' },
+        { foreground: '0a3069', token: 'meta.verbatim' },
+        { foreground: '0550ae', token: 'support' },
+        { foreground: '953800', fontStyle: 'italic', token: 'invalid.deprecated' },
+        { foreground: '116329', token: 'string.key.json' },
+        { foreground: '0550ae', token: 'number' },
+        { foreground: '116329', token: 'type' }
+    ],
+    colors: {
+        'editor.foreground': '#1f2328',
+        'editor.background': '#ffffff',
+        'editor.selectionBackground': '#0969da33',
+        'editor.lineHighlightBackground': '#f6f8fa',
+        'editorCursor.foreground': '#0969da',
+        'editorWhitespace.foreground': '#d1d9e0',
+        'editorLineNumber.foreground': '#818b98',
+        'editorLineNumber.activeForeground': '#1f2328',
+        'editorWidget.background': '#ffffff',
+        'editorWidget.border': '#d1d9e0',
+        'editorWidget.foreground': '#1f2328',
+        'editorHoverWidget.background': '#ffffff',
+        'editorHoverWidget.border': '#d1d9e0',
+        'editorHoverWidget.foreground': '#1f2328',
+        'editorSuggestWidget.background': '#ffffff',
+        'editorSuggestWidget.border': '#d1d9e0',
+        'editorSuggestWidget.foreground': '#1f2328',
+        'editorSuggestWidget.selectedBackground': '#f6f8fa',
+        'editorSuggestWidget.highlightForeground': '#0969da',
+
+        'menu.background': '#ffffff',
+        'menu.foreground': '#1f2328',
+        'menu.selectionBackground': '#0c85991f',
+        'menu.selectionForeground': '#1f2328',
+        'menu.separatorBackground': '#d1d9e0',
+        'menu.border': '#d1d9e0'
+    }
+}

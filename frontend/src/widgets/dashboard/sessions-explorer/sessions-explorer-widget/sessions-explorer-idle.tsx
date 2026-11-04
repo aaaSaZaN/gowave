@@ -10,7 +10,7 @@ const DOCKER_SNIPPET = `
       - NET_ADMIN
 `
 
-const HIGHLIGHT_SPAN = <Text c="white" component="span" fw={600} size="sm" />
+const HIGHLIGHT_SPAN = <Text c="var(--mantine-color-bright)" component="span" fw={600} size="sm" />
 
 interface IProps {
     onlineNodesCount: number
@@ -50,7 +50,7 @@ export function SessionsExplorerIdle({ onlineNodesCount, onStart }: IProps) {
                         language="yaml"
                         radius="md"
                         style={{
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            border: '1px solid rgba(var(--gw-fg-rgb), 0.08)',
                             borderRadius: 'var(--mantine-radius-md)'
                         }}
                     />

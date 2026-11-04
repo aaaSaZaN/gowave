@@ -1,7 +1,7 @@
-import { githubDarkTheme } from '@json-edit-react/themes'
 import { ActionIcon, Box, Divider, Group, Stack } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import type { GetTorrentBlockerReportsCommand } from '@remnawave/backend-contract'
+import { jsonViewerTheme } from '@shared/constants/theme'
 import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { SettingsCardShared } from '@shared/ui/settings-card'
@@ -43,7 +43,7 @@ export const UserTorrentBlockerReportItem = (props: IProps) => {
                                         maxWidth="100%"
                                         rootName=""
                                         showCollectionCount
-                                        theme={githubDarkTheme}
+                                        theme={jsonViewerTheme}
                                     />
                                 </Box>
                             ),

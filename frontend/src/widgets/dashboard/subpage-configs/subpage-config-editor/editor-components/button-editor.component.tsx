@@ -72,7 +72,13 @@ export function ButtonEditor(props: IProps) {
                             className={`${styles.chevron} ${opened ? styles.chevronOpen : ''}`}
                             size={16}
                         />
-                        <Text c="white" fw={500} size="sm" style={{ flex: 1 }} truncate="start">
+                        <Text
+                            c="var(--mantine-color-bright)"
+                            fw={500}
+                            size="sm"
+                            style={{ flex: 1 }}
+                            truncate="start"
+                        >
                             Button {index + 1}: {buttonTitle}
                         </Text>
                     </Group>

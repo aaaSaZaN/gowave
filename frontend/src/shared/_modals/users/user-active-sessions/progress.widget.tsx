@@ -21,7 +21,7 @@ export const ProgressWidget = ({ completed, percent, total }: IProps) => {
                     </div>
 
                     <Stack align="center" gap={4}>
-                        <Text c="white" fw={600} size="md">
+                        <Text c="var(--mantine-color-bright)" fw={600} size="md">
                             {t('active-sessions-drawer.widget.fetching')}
                         </Text>
                         <Text c="dimmed" size="sm">
@@ -34,7 +34,7 @@ export const ProgressWidget = ({ completed, percent, total }: IProps) => {
                             radius="md"
                             size={18}
                             style={{
-                                backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                                backgroundColor: 'rgba(var(--gw-fg-rgb), 0.05)'
                             }}
                         >
                             <Progress.Section
@@ -47,7 +47,7 @@ export const ProgressWidget = ({ completed, percent, total }: IProps) => {
                             />
                         </Progress.Root>
                         <Group justify="center" mt={6}>
-                            <Text c="white" ff="monospace" fw={700} size="sm">
+                            <Text c="var(--mantine-color-bright)" ff="monospace" fw={700} size="sm">
                                 {Math.round(percent)}%
                             </Text>
                         </Group>

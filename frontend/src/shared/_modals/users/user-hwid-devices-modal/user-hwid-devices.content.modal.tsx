@@ -166,7 +166,11 @@ export const UserHwidDevicesContentModal = (props: IProps) => {
                                         {isLoading ? (
                                             <Loader color="cyan" size="sm" type="oval" />
                                         ) : (
-                                            <Text c="white" fw={700} size="xl">
+                                            <Text
+                                                c="var(--mantine-color-bright)"
+                                                fw={700}
+                                                size="xl"
+                                            >
                                                 {devices?.devices.length ?? 0}
                                             </Text>
                                         )}

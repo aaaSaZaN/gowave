@@ -94,7 +94,7 @@ export function TagFilterBar(props: IProps) {
             mb="xs"
             style={{
                 border: '1px solid rgb(255, 255, 255, 0.08)',
-                background: '#1b1f26'
+                background: 'var(--gw-card-bg)'
             }}
         >
             <Group gap="xs" p="xs" wrap="nowrap">

@@ -1,7 +1,7 @@
 .tab {
     position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
+    background-color: var(--gw-raised-bg);
     border-radius: var(--mantine-radius-md);
 
     transition:

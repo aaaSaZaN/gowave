@@ -1,8 +1,8 @@
 .message {
     position: relative;
     padding: 12px 44px 12px 14px;
-    background: rgba(22, 27, 35, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(var(--gw-surface-rgb), 0.6);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
     border-left: 2px solid var(--mantine-color-red-5);
     border-radius: var(--mantine-radius-md);
 }

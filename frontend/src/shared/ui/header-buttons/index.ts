@@ -1,3 +1,4 @@
+export { ColorSchemeControl } from './ColorSchemeControl'
 export { GithubControl } from './GithubControl'
 export { HeaderControl } from './HeaderControl'
 export { HeaderControls } from './HeaderControls'

@@ -18,9 +18,9 @@
     gap: var(--mantine-spacing-md);
     flex: 0 0 auto;
     padding: 10px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
     border-radius: var(--mantine-radius-md);
-    background-color: rgba(255, 255, 255, 0.02);
+    background-color: var(--gw-raised-bg);
 }
 
 .body {
@@ -32,9 +32,9 @@
 
 .targets {
     display: flex;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
     border-radius: var(--mantine-radius-md);
-    background-color: rgba(255, 255, 255, 0.02);
+    background-color: var(--gw-raised-bg);
     flex-direction: column;
     gap: 4px;
     flex: 0 0 300px;
@@ -47,9 +47,9 @@
 }
 
 .detail {
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
     border-radius: var(--mantine-radius-md);
-    background-color: rgba(255, 255, 255, 0.02);
+    background-color: var(--gw-raised-bg);
     flex: 1 1 auto;
     min-width: 0;
     min-height: 0;
@@ -123,7 +123,7 @@
 }
 
 .hopRow:hover {
-    background-color: rgba(255, 255, 255, 0.03);
+    background-color: rgba(var(--gw-fg-rgb), 0.03);
 }
 
 .hopRow[data-timeout] {
@@ -133,7 +133,7 @@
 .hopBarTrack {
     height: 4px;
     border-radius: 2px;
-    background-color: rgba(255, 255, 255, 0.06);
+    background-color: rgba(var(--gw-fg-rgb), 0.06);
     overflow: hidden;
 }
 

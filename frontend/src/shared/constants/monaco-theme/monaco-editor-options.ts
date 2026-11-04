@@ -1,6 +1,7 @@
 import type { editor } from 'monaco-editor'
 
 export const MONACO_THEME_NAME = 'GithubDark'
+export const MONACO_LIGHT_THEME_NAME = 'GithubLight'
 
 export const BASE_MONACO_OPTIONS: editor.IStandaloneEditorConstructionOptions = {
     autoClosingBrackets: 'always',

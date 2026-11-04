@@ -167,7 +167,7 @@ export const HostsConfigProfilesDrawer = NiceModal.create((props: IProps) => {
                                             (p) => p.uuid === selectedProfileUuid
                                         )?.name || t('common.message.no-profile-selected')}
                                     </Text>
-                                    <Text c="white" ff="monospace" size="xs">
+                                    <Text c="var(--mantine-color-bright)" ff="monospace" size="xs">
                                         {filteredProfiles
                                             .find((p) => p.uuid === selectedProfileUuid)
                                             ?.inbounds.find((i) => i.uuid === selectedInbound)

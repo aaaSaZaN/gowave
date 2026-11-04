@@ -1,4 +1,3 @@
-import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     ActionIcon,
     Anchor,
@@ -11,6 +10,7 @@ import {
     Tooltip
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
+import { jsonViewerTheme } from '@shared/constants/theme'
 import { usePseudoFullscreen } from '@shared/hooks'
 import clsx from '@shared/lib/classes'
 import { fullscreenClasses } from '@shared/ui/fullscreen-toggle-button'
@@ -224,7 +224,7 @@ export const GeocheckResultWidget = (props: IProps) => {
                         maxWidth="100%"
                         rootName=""
                         showCollectionCount
-                        theme={githubDarkTheme}
+                        theme={jsonViewerTheme}
                     />
                 </Box>
             </Box>

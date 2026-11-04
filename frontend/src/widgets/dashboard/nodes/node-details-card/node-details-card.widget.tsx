@@ -4,7 +4,6 @@ import { GetNodeLinkedHostsFeature } from '@features/ui/dashboard/nodes/get-node
 import { GetNodeUsersUsageFeature } from '@features/ui/dashboard/nodes/get-node-users-usage'
 import { OpenNodeLogsFeature } from '@features/ui/dashboard/nodes/open-node-logs'
 import { OpenNodeSshFeature } from '@features/ui/dashboard/nodes/open-node-ssh'
-import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     ActionIcon,
     Badge,
@@ -31,6 +30,7 @@ import {
     useGetNodeMetadata,
     useGetNodesTrafficSummary
 } from '@shared/api/hooks'
+import { jsonViewerTheme } from '@shared/constants/theme'
 import { Logo } from '@shared/ui'
 import { XrayLogo } from '@shared/ui/logos'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
@@ -299,7 +299,7 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                                                     maxWidth="100%"
                                                     rootName=""
                                                     showCollectionCount
-                                                    theme={githubDarkTheme}
+                                                    theme={jsonViewerTheme}
                                                 />
                                             </Box>
                                         )

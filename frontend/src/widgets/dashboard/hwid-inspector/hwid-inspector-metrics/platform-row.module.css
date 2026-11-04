@@ -1,10 +1,10 @@
 .item {
     cursor: pointer;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
     background: rgba(0, 0, 0, 0.1);
     transition: background 150ms ease;
 }
 
 .item:hover {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--gw-fg-rgb), 0.03);
 }

@@ -217,7 +217,7 @@ export const NodeCardWidget = memo((props: IProps) => {
                     })}
                     ref={isDragOverlay ? undefined : handleRef}
                 >
-                    <PiDotsSixVertical color="white" size="24px" />
+                    <PiDotsSixVertical color="var(--mantine-color-bright)" size="24px" />
                 </Box>
             )}
 

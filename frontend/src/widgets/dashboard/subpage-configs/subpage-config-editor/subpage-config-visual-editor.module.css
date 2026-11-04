@@ -1,6 +1,6 @@
 .sectionCard {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--gw-raised-bg);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
     transition: border-color 0.3s ease;
 }
 
@@ -11,7 +11,7 @@
 .interactiveCard {
     cursor: pointer;
     background: rgba(0, 0, 0, 0.13);
-    border: 1px solid rgba(255, 255, 255, 0.028);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.028);
     transition: all 0.3s ease;
 }
 
@@ -25,7 +25,7 @@
 
 .buttonCard {
     background: rgba(0, 0, 0, 0.13);
-    border: 1px solid rgba(255, 255, 255, 0.028);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.028);
     transition: all 0.3s ease;
 }
 
@@ -35,13 +35,13 @@
 }
 
 .inputDark {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--gw-raised-bg);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.1);
     color: white;
 }
 
 .inputDark::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(var(--gw-fg-rgb), 0.4);
 }
 
 .inputDark:focus {
@@ -49,24 +49,24 @@
 }
 
 .selectDark {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--gw-raised-bg);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.1);
     color: white;
 }
 
 .checkboxDark {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--gw-raised-bg);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.1);
 }
 
 .addButton {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px dashed rgba(255, 255, 255, 0.15);
+    background: var(--gw-raised-bg);
+    border: 1px dashed rgba(var(--gw-fg-rgb), 0.15);
     transition: all 0.2s ease;
 }
 
 .addButton:hover {
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(var(--gw-fg-rgb), 0.04);
     border-color: rgba(34, 211, 238, 0.4);
 }
 
@@ -88,7 +88,7 @@
 }
 
 .collapseHeader:hover {
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--gw-raised-bg);
 }
 
 .chevron {
@@ -125,7 +125,7 @@
 }
 
 .divider {
-    border-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(var(--gw-fg-rgb), 0.06);
 }
 
 .accordion {
@@ -135,9 +135,9 @@
 
 .accordionItem {
     /* biome-ignore lint/complexity/noImportantStyles: Override Mantine Accordion and dropdown component styles. */
-    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.06) !important;
     /* biome-ignore lint/complexity/noImportantStyles: Override Mantine Accordion and dropdown component styles. */
-    background: rgba(255, 255, 255, 0.01) !important;
+    background: rgba(var(--gw-fg-rgb), 0.01) !important;
     border-radius: var(--mantine-radius-md);
     margin-bottom: var(--mantine-spacing-sm);
     transition: border-color 0.2s ease;
@@ -145,7 +145,7 @@
 
 .accordionItem:hover {
     /* biome-ignore lint/complexity/noImportantStyles: Override Mantine Accordion and dropdown component styles. */
-    border-color: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(var(--gw-fg-rgb), 0.12) !important;
 }
 
 .accordionControl {
@@ -153,8 +153,8 @@
 }
 
 .textareaDark textarea {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--gw-raised-bg);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.1);
     color: white;
     min-height: 80px;
 }
@@ -164,8 +164,8 @@
 }
 
 .localizedTextButton {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--gw-raised-bg);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
     border-radius: var(--mantine-radius-md);
     padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
     transition: all 0.2s ease;
@@ -173,7 +173,7 @@
 }
 
 .localizedTextButton:hover {
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(var(--gw-fg-rgb), 0.04);
     border-color: rgba(34, 211, 238, 0.3);
 }
 
@@ -189,8 +189,8 @@
 }
 
 .localeCard {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: var(--gw-raised-bg);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.06);
     border-radius: var(--mantine-radius-md);
     padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
     transition: all 0.2s ease;
@@ -203,8 +203,8 @@
 }
 
 .localeCard:hover {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(var(--gw-fg-rgb), 0.04);
+    border-color: rgba(var(--gw-fg-rgb), 0.12);
 }
 
 .localeCardActive {
@@ -251,8 +251,8 @@
     display: flex;
     align-items: center;
     padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--gw-raised-bg);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.1);
     border-radius: var(--mantine-radius-md);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -260,7 +260,7 @@
 }
 
 .iconSelectTrigger:hover {
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(var(--gw-fg-rgb), 0.04);
     border-color: rgba(34, 211, 238, 0.3);
 }
 
@@ -287,8 +287,8 @@
     width: 28px;
     height: 28px;
     border-radius: var(--mantine-radius-sm);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(var(--gw-fg-rgb), 0.05);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.1);
     flex-shrink: 0;
 }
 
@@ -320,7 +320,7 @@
     /* biome-ignore lint/complexity/noImportantStyles: Override Mantine Accordion and dropdown component styles. */
     background: rgba(30, 35, 45, 0.98) !important;
     /* biome-ignore lint/complexity/noImportantStyles: Override Mantine Accordion and dropdown component styles. */
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.08) !important;
     /* biome-ignore lint/complexity/noImportantStyles: Override Mantine Accordion and dropdown component styles. */
     padding: 8px !important;
 }
@@ -334,8 +334,8 @@
 }
 
 .iconSelectItem {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: var(--gw-raised-bg);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.06);
     border-radius: var(--mantine-radius-md);
     transition: all 0.15s ease;
     position: relative;

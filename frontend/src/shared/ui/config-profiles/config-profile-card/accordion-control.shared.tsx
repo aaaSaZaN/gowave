@@ -1,4 +1,3 @@
-import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     Accordion,
     type AccordionControlProps,
@@ -10,6 +9,7 @@ import {
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import type { GetConfigProfilesCommand } from '@remnawave/backend-contract'
+import { jsonViewerTheme } from '@shared/constants/theme'
 import { XrayLogo } from '@shared/ui/logos'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { JsonViewer } from 'json-edit-react'
@@ -40,7 +40,7 @@ export const AccordionControlShared = (props: IProps) => {
                         maxWidth="100%"
                         rootName=""
                         showCollectionCount
-                        theme={githubDarkTheme}
+                        theme={jsonViewerTheme}
                     />
                 </Box>
             ),

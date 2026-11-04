@@ -61,7 +61,7 @@ export function LocalizedTextEditor(props: IProps) {
                                 {label}
                             </Text>
                             <Text
-                                c="white"
+                                c="var(--mantine-color-bright)"
                                 className={styles.localizedTextPreview}
                                 size="sm"
                                 truncate="end"

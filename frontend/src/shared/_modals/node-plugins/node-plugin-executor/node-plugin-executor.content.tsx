@@ -391,7 +391,7 @@ export const NodePluginExecutorContent = (props: IProps) => {
                                             style={{
                                                 border: isSelected
                                                     ? '1px solid var(--mantine-color-cyan-6)'
-                                                    : '1px solid rgba(255,255,255,0.06)',
+                                                    : '1px solid rgba(var(--gw-fg-rgb), 0.06)',
                                                 background: isSelected
                                                     ? 'var(--mantine-color-cyan-light)'
                                                     : 'transparent',

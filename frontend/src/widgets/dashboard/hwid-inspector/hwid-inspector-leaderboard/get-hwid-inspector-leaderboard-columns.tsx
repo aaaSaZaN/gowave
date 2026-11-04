@@ -51,7 +51,7 @@ export function getHwidInspectorLeaderboardColumns(
             accessor: 'devicesCount',
             title: <TbSum size={18} />,
             render: ({ devicesCount }) => (
-                <Text c="white" fw={600} size="sm">
+                <Text c="var(--mantine-color-bright)" fw={600} size="sm">
                     {devicesCount}
                 </Text>
             )

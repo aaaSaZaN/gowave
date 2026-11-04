@@ -14,12 +14,12 @@
 
 .stickyNodeHeader {
     background:
-        linear-gradient(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02)),
+        linear-gradient(rgba(var(--gw-fg-rgb), 0.02), rgba(var(--gw-fg-rgb), 0.02)),
         var(--mantine-color-body);
     box-shadow:
         1px 0 0 0 var(--mantine-color-body),
         -1px 0 0 0 var(--mantine-color-body),
-        0 1px 0 0 rgba(255, 255, 255, 0.06);
+        0 1px 0 0 rgba(var(--gw-fg-rgb), 0.06);
     padding: 8px 4px;
     position: relative;
 }

@@ -6,9 +6,9 @@
     flex-direction: column;
     height: 100%;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
     border-radius: var(--mantine-radius-md);
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--gw-raised-bg);
 }
 
 .panel:focus {
@@ -18,8 +18,8 @@
 .panelHeader {
     flex-shrink: 0;
     padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.015);
+    border-bottom: 1px solid rgba(var(--gw-fg-rgb), 0.06);
+    background: rgba(var(--gw-fg-rgb), 0.015);
 }
 
 .levels {
@@ -39,7 +39,7 @@
 
 .crumb:hover {
     color: var(--mantine-color-text);
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--gw-fg-rgb), 0.05);
 }
 
 .crumbCurrent {
@@ -61,15 +61,15 @@
 }
 
 .row:not(:last-child) {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(var(--gw-fg-rgb), 0.05);
 }
 
 .row:nth-child(even) {
-    background: rgba(255, 255, 255, 0.012);
+    background: rgba(var(--gw-fg-rgb), 0.012);
 }
 
 .row:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--gw-fg-rgb), 0.05);
 }
 
 .row:focus-visible {

@@ -1,0 +1,9 @@
+/*
+ * Tooltips stay dark in both color schemes, so labels written with white
+ * text remain readable. A `color` prop still overrides --tooltip-bg inline.
+ */
+.tooltip {
+    --tooltip-bg: #21262d;
+    --tooltip-color: #f0f6fc;
+    border: 1px solid #484f58;
+}

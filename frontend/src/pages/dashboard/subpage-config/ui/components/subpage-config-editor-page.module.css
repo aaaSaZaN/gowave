@@ -12,6 +12,6 @@
 
 .headerCard {
     border-radius: var(--mantine-radius-lg);
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--gw-raised-bg);
+    border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
 }

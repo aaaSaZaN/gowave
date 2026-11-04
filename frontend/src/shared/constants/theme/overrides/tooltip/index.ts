@@ -1,18 +1,17 @@
 import { Tooltip } from '@mantine/core'
 
+import classes from './tooltip.module.css'
+
 export default {
     Tooltip: Tooltip.extend({
+        classNames: {
+            tooltip: classes.tooltip
+        },
         defaultProps: {
             radius: 'md',
             withArrow: true,
             transitionProps: { transition: 'scale-x', duration: 300 },
-            arrowSize: 2,
-            color: 'dark.6',
-            styles: {
-                tooltip: {
-                    border: '1px solid var(--mantine-color-dark-4)'
-                }
-            }
+            arrowSize: 2
         }
     })
 }

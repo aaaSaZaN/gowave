@@ -2,7 +2,6 @@ import {
     useTbReportsTableStore,
     useTbReportsTableStoreActions
 } from '@entities/dashboard/torrent-blocker-reports/tb-reports-table-store'
-import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     MantineReactTable,
     type MRT_ColumnFilterFnsState,
@@ -20,6 +19,7 @@ import {
     useGetTorrentBlockerStats,
     useTruncateTorrentBlockerReports
 } from '@shared/api/hooks'
+import { jsonViewerTheme } from '@shared/constants/theme'
 import { usePreventTableBackScroll } from '@shared/hooks'
 import { DEFAULT_PAGINATION_STATE, useMrtTableBinding } from '@shared/lib/mrt-table-store'
 import { runAsync } from '@shared/lib/run-async'
@@ -144,17 +144,17 @@ export function TorrentBlockerReportsTableWidget() {
         }),
         mantineTopToolbarProps: {
             style: {
-                '--mrt-base-background-color': '#1b2027'
+                '--mrt-base-background-color': 'var(--gw-card-bg)'
             }
         },
         mantineTableHeadProps: {
             style: {
-                '--mrt-base-background-color': '#1b2027'
+                '--mrt-base-background-color': 'var(--gw-card-bg)'
             }
         },
         mantineBottomToolbarProps: {
             style: {
-                '--mrt-base-background-color': '#1b2027'
+                '--mrt-base-background-color': 'var(--gw-card-bg)'
             }
         },
         mantinePaperProps: {
@@ -201,7 +201,7 @@ export function TorrentBlockerReportsTableWidget() {
                                         maxWidth="100%"
                                         rootName=""
                                         showCollectionCount
-                                        theme={githubDarkTheme}
+                                        theme={jsonViewerTheme}
                                     />
                                 </Box>
                             ),

@@ -1,7 +1,11 @@
-import { Box, Text } from '@mantine/core'
+import { Box, Text, useComputedColorScheme } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import Editor, { type EditorProps, type OnMount } from '@monaco-editor/react'
-import { BASE_MONACO_OPTIONS, MONACO_THEME_NAME } from '@shared/constants/monaco-theme'
+import {
+    BASE_MONACO_OPTIONS,
+    MONACO_LIGHT_THEME_NAME,
+    MONACO_THEME_NAME
+} from '@shared/constants/monaco-theme'
 import clsx from '@shared/lib/classes'
 import { optionalProp } from '@shared/lib/optional-prop'
 import { describeJsonPath } from '@shared/utils/monaco/json-path'
@@ -42,6 +46,7 @@ export function CodeEditor(props: Props) {
         ...rest
     } = props
 
+    const colorScheme = useComputedColorScheme('dark')
     const isMonacoReady = useMonaco() !== null
     const [jsonPath, setJsonPath] = useState<string[]>([])
     const documentTextRef = useRef('')
@@ -150,7 +155,7 @@ export function CodeEditor(props: Props) {
                     {...optionalProp('language', language)}
                     loading={<LoaderModalShared mih="100%" />}
                     onMount={handleMount}
-                    theme={MONACO_THEME_NAME}
+                    theme={colorScheme === 'dark' ? MONACO_THEME_NAME : MONACO_LIGHT_THEME_NAME}
                     {...rest}
                     options={{ ...BASE_MONACO_OPTIONS, ...options }}
                     wrapperProps={{

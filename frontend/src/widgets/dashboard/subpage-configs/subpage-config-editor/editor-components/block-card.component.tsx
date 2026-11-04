@@ -37,7 +37,13 @@ export function BlockCard(props: IProps) {
     return (
         <Card className={styles.interactiveCard} onClick={onEdit} p="sm" radius="md">
             <Group justify="space-between" wrap="nowrap">
-                <Text c="white" fw={500} size="sm" style={{ flex: 1 }} truncate="end">
+                <Text
+                    c="var(--mantine-color-bright)"
+                    fw={500}
+                    size="sm"
+                    style={{ flex: 1 }}
+                    truncate="end"
+                >
                     {blockTitle}
                 </Text>
 

@@ -50,7 +50,11 @@ const BrandTitle = ({ titleParts }: { titleParts: Array<{ color: string; text: s
         <Title ff="Unbounded" order={1} pos="relative">
             {titleParts.map((part) => (
                 <Text
-                    c={part.color || 'white'}
+                    c={
+                        !part.color || part.color === 'white'
+                            ? 'var(--mantine-color-bright)'
+                            : part.color
+                    }
                     component="span"
                     fw="inherit"
                     fz="inherit"

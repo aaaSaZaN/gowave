@@ -1,4 +1,3 @@
-import { githubDarkTheme } from '@json-edit-react/themes'
 import {
     ActionIcon,
     Box,
@@ -17,6 +16,7 @@ import { modals } from '@mantine/modals'
 import { type GetUserByIdCommand, USERS_STATUS } from '@remnawave/backend-contract'
 import { showModal } from '@shared/_modals/show-modal'
 import { useGetUserMetadata } from '@shared/api/hooks'
+import { jsonViewerTheme } from '@shared/constants/theme'
 import { runAsync } from '@shared/lib/run-async'
 import { CopyableCodeBlock } from '@shared/ui/copyable-code-block'
 import { CopyableFieldShared } from '@shared/ui/copyable-field/copyable-field'
@@ -224,7 +224,7 @@ export const UserIdentificationCard = memo((props: IProps) => {
                                                         maxWidth="100%"
                                                         rootName=""
                                                         showCollectionCount
-                                                        theme={githubDarkTheme}
+                                                        theme={jsonViewerTheme}
                                                     />
                                                 </Box>
                                             )

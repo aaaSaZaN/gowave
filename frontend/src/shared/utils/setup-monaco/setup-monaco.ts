@@ -11,7 +11,12 @@ import jsonWorker from 'monaco-editor/languages/features/json/json.worker?worker
 
 export { jsonDefaults } from 'monaco-editor/languages/features/json/register'
 
-import { MONACO_THEME_NAME, monacoTheme } from '@shared/constants/monaco-theme'
+import {
+    MONACO_LIGHT_THEME_NAME,
+    MONACO_THEME_NAME,
+    monacoLightTheme,
+    monacoTheme
+} from '@shared/constants/monaco-theme'
 
 import yamlWorker from './yaml-worker.js?worker'
 
@@ -78,6 +83,11 @@ loader.config({ monaco })
 monaco.editor.defineTheme(MONACO_THEME_NAME, {
     ...monacoTheme,
     base: 'vs-dark'
+})
+
+monaco.editor.defineTheme(MONACO_LIGHT_THEME_NAME, {
+    ...monacoLightTheme,
+    base: 'vs'
 })
 
 runAsync(

@@ -1,6 +1,7 @@
 import { type BoxProps, Group } from '@mantine/core'
 import { optionalProp } from '@shared/lib/optional-prop'
 
+import { ColorSchemeControl } from './ColorSchemeControl'
 import { GithubControl } from './GithubControl'
 import { LanguageControl } from './LanguageControl'
 import { LogoutControl } from './LogoutControl'
@@ -11,6 +12,7 @@ interface HeaderControlsProps extends BoxProps {
     githubLink?: string
     isGithubLoading?: boolean
     stars?: number
+    withColorScheme?: boolean
     withGithub?: boolean
     withLanguage?: boolean
     withLogout?: boolean
@@ -21,6 +23,7 @@ interface HeaderControlsProps extends BoxProps {
 export function HeaderControls({
     githubLink,
     withGithub = true,
+    withColorScheme = true,
     withLogout = true,
     withLanguage = true,
     withVersion = true,
@@ -40,6 +43,7 @@ export function HeaderControls({
                 />
             )}
             {withRecap && <RecapControl />}
+            {withColorScheme && <ColorSchemeControl />}
             {withLanguage && <LanguageControl />}
             {withLogout && <LogoutControl />}
         </Group>

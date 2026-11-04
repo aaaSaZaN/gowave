@@ -30,7 +30,7 @@ export function GithubControl({
                 {isLoading ? (
                     <Group gap={8} wrap="nowrap">
                         <TbStar style={{ width: rem(16), height: rem(16), color: 'gold' }} />
-                        <Loader color="white" size="xs" />
+                        <Loader color="var(--mantine-color-bright)" size="xs" />
                     </Group>
                 ) : (
                     stars !== undefined && (
