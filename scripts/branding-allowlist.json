@@ -156,6 +156,11 @@
       "count": 2,
       "sha256": "315c2659226759f726a5522663dbc8c63fcd9b8b1d678219dc85ba216a62d2bc"
     },
+    "backend-go/internal/subscription/cache_test.go": {
+      "reason": "Upstream subscription template extension key rendered by the cache parity test.",
+      "count": 1,
+      "sha256": "db1bd7032b0775459c0d40a8e0060206df0424c839f9fce64cef2aca5c769f33"
+    },
     "backend-go/internal/subscription/serve.go": {
       "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
       "count": 1,

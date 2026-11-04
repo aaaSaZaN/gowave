@@ -21,10 +21,11 @@ type Handler struct {
 	subPublicDomain string
 	disableHistory  bool
 	history         *historyWriter
+	cache           *subCache
 }
 
 func NewHandler(db *gorm.DB, subPublicDomain string) *Handler {
-	return &Handler{db: db, subPublicDomain: subPublicDomain, history: newHistoryWriter(db)}
+	return &Handler{db: db, subPublicDomain: subPublicDomain, history: newHistoryWriter(db), cache: newSubCache(db)}
 }
 
 // RunHistoryWriter records subscription requests in the background until ctx

@@ -72,8 +72,18 @@ func parseHeaderObject(raw string) *ojson.Object {
 	return object
 }
 
-// loadSettings reads the subscription settings row.
+// loadSettings returns the subscription settings, cached between writes.
+// Callers must not modify the result.
 func (h *Handler) loadSettings() (*subSettings, error) {
+	snap := h.cache.snapshot()
+	if snap == nil {
+		return h.readSettings()
+	}
+	return snap.settings.get(h.readSettings)
+}
+
+// readSettings reads the subscription settings row.
+func (h *Handler) readSettings() (*subSettings, error) {
 	var row database.SubscriptionSetting
 	if err := h.db.First(&row).Error; err != nil {
 		return nil, err
@@ -105,8 +115,8 @@ func (h *Handler) applySquadOverrides(settings *subSettings, squadUUID *string) 
 	if squadUUID == nil {
 		return settings, nil
 	}
-	var squad database.ExternalSquad
-	if err := h.db.Where("uuid = ?", *squadUUID).First(&squad).Error; err != nil {
+	squad, err := h.externalSquad(*squadUUID)
+	if err != nil || squad == nil {
 		return settings, nil
 	}
 	patched := *settings
@@ -177,6 +187,26 @@ func (h *Handler) applySquadOverrides(settings *subSettings, squadUUID *string) 
 	return &patched, overrides
 }
 
+// externalSquad returns the squad row, nil when it does not exist.
+func (h *Handler) externalSquad(squadUUID string) (*database.ExternalSquad, error) {
+	read := func() (*database.ExternalSquad, error) {
+		var squad database.ExternalSquad
+		err := h.db.Where("uuid = ?", squadUUID).First(&squad).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		return &squad, nil
+	}
+	snap := h.cache.snapshot()
+	if snap == nil {
+		return read()
+	}
+	return keyed[*database.ExternalSquad](&snap.squads, squadUUID).get(read)
+}
+
 func parseHostOverrides(raw string) *subtpl.HostOverrides {
 	var fields map[string]json.RawMessage
 	if json.Unmarshal([]byte(raw), &fields) != nil {
@@ -198,38 +228,90 @@ func parseHostOverrides(raw string) *subtpl.HostOverrides {
 	return overrides
 }
 
+type templateKey struct{ first, second string }
+
 // squadTemplateName ports GetCachedTemplateNameQuery.
 func (h *Handler) squadTemplateName(squadUUID, templateType string) (string, bool) {
 	if templateType == "XRAY_BASE64" {
 		return "", false
 	}
+	read := func() (string, error) { return h.readSquadTemplateName(squadUUID, templateType) }
+	var name string
+	var err error
+	if snap := h.cache.snapshot(); snap == nil {
+		name, err = read()
+	} else {
+		name, err = keyed[string](&snap.squadTemplates, templateKey{squadUUID, templateType}).get(read)
+	}
+	return name, err == nil && name != ""
+}
+
+// readSquadTemplateName returns "" when the squad has no template of the
+// type; the error is a database failure.
+func (h *Handler) readSquadTemplateName(squadUUID, templateType string) (string, error) {
 	var names []*string
 	err := h.db.Table("external_squads_templates AS est").
 		Select("st.name").
 		Joins("LEFT JOIN subscription_templates AS st ON st.uuid = est.template_uuid").
 		Where("est.external_squad_uuid = ? AND est.template_type = ?", squadUUID, templateType).
 		Limit(1).Pluck("st.name", &names).Error
-	if err != nil || len(names) == 0 || names[0] == nil || *names[0] == "" {
-		return "", false
+	if err != nil {
+		return "", err
 	}
-	return *names[0], true
+	if len(names) == 0 || names[0] == nil {
+		return "", nil
+	}
+	return *names[0], nil
+}
+
+// templateResult keeps a template lookup, including a missing or invalid
+// template, which is cached like a found one.
+type templateResult struct {
+	value *ojson.Object
+	err   error
 }
 
 // templates ports getCachedTemplateByType: the named template of a type,
-// else the one named "Default".
+// else the one named "Default". Callers must not modify the result.
 func (h *Handler) templates(templateType, name string) (*ojson.Object, error) {
 	if name == "" {
 		name = "Default"
 	}
+	read := func() (templateResult, error) { return h.readTemplate(templateType, name) }
+	var result templateResult
+	var err error
+	if snap := h.cache.snapshot(); snap == nil {
+		result, err = read()
+	} else {
+		result, err = keyed[templateResult](&snap.templates, templateKey{templateType, name}).get(read)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return result.value, result.err
+}
+
+// readTemplate's error is a database failure; a missing or unparsable
+// template is reported in the result.
+func (h *Handler) readTemplate(templateType, name string) (templateResult, error) {
 	var row database.SubscriptionTemplate
 	err := h.db.Where("name = ? AND template_type = ?", name, templateType).First(&row).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		err = h.db.Where("name = ? AND template_type = ?", "Default", templateType).First(&row).Error
 	}
-	if err != nil {
-		return nil, err
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return templateResult{err: err}, nil
 	}
+	if err != nil {
+		return templateResult{}, err
+	}
+	value, err := parseTemplate(&row)
+	return templateResult{value: value, err: err}, nil
+}
+
+func parseTemplate(row *database.SubscriptionTemplate) (*ojson.Object, error) {
 	var value any
+	var err error
 	switch row.TemplateType {
 	case "MIHOMO", "STASH", "CLASH":
 		value, err = subtpl.LoadYAML(row.TemplateYaml)
@@ -339,25 +421,68 @@ func templateHost(host *database.Host, rawInbound any, inboundTag string, xrayTe
 
 // hostsForUser ports GetHostsForUserQuery: hosts reachable through the
 // user's internal squads (honouring each host's ALLOW_ONLY/EXCLUDE squad
-// list), joined with their inbound and Xray JSON template.
+// list), joined with their inbound and Xray JSON template. The host graph
+// is cached; only the user's squads are read per request. The hosts are
+// shared between requests and must not be modified.
 func (h *Handler) hostsForUser(userID uint64, withDisabled, withHidden bool) ([]*subtpl.Host, error) {
-	query := h.db.Model(&database.Host{}).Where(`EXISTS (
-		SELECT 1 FROM internal_squad_inbounds AS isi
-		JOIN internal_squad_members AS ism ON ism.internal_squad_uuid = isi.internal_squad_uuid
-		WHERE isi.inbound_uuid = hosts.config_profile_inbound_uuid AND ism.user_id = ?
-		AND (EXISTS (
-			SELECT 1 FROM internal_squad_host_links AS link
-			WHERE link.host_uuid = hosts.uuid AND link.squad_uuid = isi.internal_squad_uuid
-		)) = (hosts.internal_squads_mode = 'ALLOW_ONLY')
-	)`, userID)
-	if !withDisabled {
-		query = query.Where("hosts.is_disabled = ?", false)
+	var index *hostIndex
+	var err error
+	if snap := h.cache.snapshot(); snap == nil {
+		index, err = h.readHostIndex()
+	} else {
+		index, err = snap.hosts.get(h.readHostIndex)
 	}
-	if !withHidden {
-		query = query.Where("hosts.is_hidden = ?", false)
+	if err != nil {
+		return nil, err
 	}
+	var squads []string
+	if err := h.db.Model(&database.InternalSquadMember{}).Where("user_id = ?", userID).
+		Pluck("internal_squad_uuid", &squads).Error; err != nil {
+		return nil, err
+	}
+	return index.forSquads(squads, withDisabled, withHidden), nil
+}
+
+// hostIndex is the host graph hostsForUser filters per user.
+type hostIndex struct {
+	// hosts are ordered by view_position and have a known inbound.
+	hosts []indexedHost
+	// squadInbounds maps an internal squad to its inbounds.
+	squadInbounds map[string]map[string]bool
+}
+
+type indexedHost struct {
+	host      *subtpl.Host
+	inbound   string
+	allowOnly bool
+	// linked are the internal squads in the host's squad list.
+	linked map[string]bool
+}
+
+// forSquads keeps the hosts whose inbound one of squads grants, where that
+// squad is listed by an ALLOW_ONLY host or not listed by an EXCLUDE host.
+func (index *hostIndex) forSquads(squads []string, withDisabled, withHidden bool) []*subtpl.Host {
+	hosts := []*subtpl.Host{}
+	for _, entry := range index.hosts {
+		if entry.host.IsDisabled && !withDisabled || entry.host.IsHidden && !withHidden {
+			continue
+		}
+		for _, squad := range squads {
+			if index.squadInbounds[squad][entry.inbound] && entry.linked[squad] == entry.allowOnly {
+				hosts = append(hosts, entry.host)
+				break
+			}
+		}
+	}
+	return hosts
+}
+
+// readHostIndex loads every host with its inbound and Xray JSON template,
+// parsing each inbound and template once.
+func (h *Handler) readHostIndex() (*hostIndex, error) {
+	// A NULL squad mode never matches upstream's comparison.
 	var rows []database.Host
-	if err := query.Order("hosts.view_position ASC").Find(&rows).Error; err != nil {
+	if err := h.db.Where("internal_squads_mode IS NOT NULL").Order("view_position ASC").Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	inboundUUIDs, templateUUIDs := []string{}, []string{}
@@ -369,14 +494,18 @@ func (h *Handler) hostsForUser(userID uint64, withDisabled, withHidden bool) ([]
 			templateUUIDs = append(templateUUIDs, *row.XrayJsonTemplateUUID)
 		}
 	}
-	inbounds := map[string]database.ConfigProfileInbound{}
+	type parsedInbound struct {
+		raw any
+		tag string
+	}
+	inbounds := map[string]parsedInbound{}
 	if len(inboundUUIDs) > 0 {
 		var list []database.ConfigProfileInbound
 		if err := h.db.Select("uuid", "raw_inbound", "tag").Where("uuid IN ?", inboundUUIDs).Find(&list).Error; err != nil {
 			return nil, err
 		}
 		for _, inbound := range list {
-			inbounds[inbound.UUID] = inbound
+			inbounds[inbound.UUID] = parsedInbound{raw: parseJSONColumn(inbound.RawInbound), tag: inbound.Tag}
 		}
 	}
 	templates := map[string]any{}
@@ -389,7 +518,28 @@ func (h *Handler) hostsForUser(userID uint64, withDisabled, withHidden bool) ([]
 			templates[template.UUID] = parseJSONColumn(template.TemplateJson)
 		}
 	}
-	hosts := make([]*subtpl.Host, 0, len(rows))
+	var squadInbounds []database.InternalSquadInbound
+	if err := h.db.Select("internal_squad_uuid", "inbound_uuid").Find(&squadInbounds).Error; err != nil {
+		return nil, err
+	}
+	var links []database.InternalSquadHostLink
+	if err := h.db.Select("host_uuid", "squad_uuid").Find(&links).Error; err != nil {
+		return nil, err
+	}
+	index := &hostIndex{squadInbounds: map[string]map[string]bool{}}
+	for _, row := range squadInbounds {
+		if index.squadInbounds[row.InternalSquadUUID] == nil {
+			index.squadInbounds[row.InternalSquadUUID] = map[string]bool{}
+		}
+		index.squadInbounds[row.InternalSquadUUID][row.InboundUUID] = true
+	}
+	linked := map[string]map[string]bool{}
+	for _, link := range links {
+		if linked[link.HostUUID] == nil {
+			linked[link.HostUUID] = map[string]bool{}
+		}
+		linked[link.HostUUID][link.SquadUUID] = true
+	}
 	for i := range rows {
 		row := &rows[i]
 		if row.ConfigProfileInboundUUID == nil {
@@ -403,7 +553,10 @@ func (h *Handler) hostsForUser(userID uint64, withDisabled, withHidden bool) ([]
 		if row.XrayJsonTemplateUUID != nil {
 			template = templates[*row.XrayJsonTemplateUUID]
 		}
-		hosts = append(hosts, templateHost(row, parseJSONColumn(inbound.RawInbound), inbound.Tag, template))
+		index.hosts = append(index.hosts, indexedHost{
+			host:    templateHost(row, inbound.raw, inbound.tag, template),
+			inbound: *row.ConfigProfileInboundUUID, allowOnly: row.InternalSquadsMode == "ALLOW_ONLY", linked: linked[row.UUID],
+		})
 	}
-	return hosts, nil
+	return index, nil
 }
