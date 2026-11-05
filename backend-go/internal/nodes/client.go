@@ -703,3 +703,78 @@ func (c *Client) RemoveUser(node *database.Node, payload RemoveUserRequestPayloa
 	}
 	return nil
 }
+
+// ErrBulkUnsupported marks a node without the add-users/remove-users endpoints.
+var ErrBulkUnsupported = errors.New("node does not support bulk user commands")
+
+type BulkUserInbound struct {
+	Type string `json:"type"`
+	Tag  string `json:"tag"`
+	Flow string `json:"flow"`
+}
+
+type BulkUserData struct {
+	UserID         string `json:"userId"`
+	HashUUID       string `json:"hashUuid"`
+	VlessUUID      string `json:"vlessUuid"`
+	TrojanPassword string `json:"trojanPassword"`
+	SSPassword     string `json:"ssPassword"`
+}
+
+type BulkUser struct {
+	InboundData []BulkUserInbound `json:"inboundData"`
+	UserData    BulkUserData      `json:"userData"`
+}
+
+type AddUsersRequestPayload struct {
+	AffectedInboundTags []string   `json:"affectedInboundTags"`
+	Users               []BulkUser `json:"users"`
+}
+
+type BulkUserRef struct {
+	UserID   string `json:"userId"`
+	HashUUID string `json:"hashUuid"`
+}
+
+type RemoveUsersRequestPayload struct {
+	Users []BulkUserRef `json:"users"`
+}
+
+func (c *Client) AddUsers(ctx context.Context, node *database.Node, payload AddUsersRequestPayload) error {
+	return c.bulkUserCommand(ctx, node, "add-users", payload)
+}
+
+func (c *Client) RemoveUsers(ctx context.Context, node *database.Node, payload RemoveUsersRequestPayload) error {
+	return c.bulkUserCommand(ctx, node, "remove-users", payload)
+}
+
+func (c *Client) bulkUserCommand(ctx context.Context, node *database.Node, command string, payload interface{}) error {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	url := fmt.Sprintf("https://%s:%d/node/handler/%s", node.Address, getNodePort(node), command)
+	resp, err := c.doRequest(ctx, "POST", url, payload)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return ErrBulkUnsupported
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return fmt.Errorf("node returned status %d: %s", resp.StatusCode, string(body))
+	}
+	var result struct {
+		Response *struct {
+			Success *bool   `json:"success"`
+			Error   *string `json:"error"`
+		} `json:"response"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err == nil && result.Response != nil && result.Response.Success != nil && !*result.Response.Success {
+		if result.Response.Error != nil && *result.Response.Error != "" {
+			return fmt.Errorf("node rejected %s: %s", command, *result.Response.Error)
+		}
+		return fmt.Errorf("node rejected %s", command)
+	}
+	return nil
+}

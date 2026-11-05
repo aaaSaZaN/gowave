@@ -61,7 +61,14 @@ type Service struct {
 	nodeMetrics map[string]*NodeHotMetrics
 	pollMu      sync.Mutex
 	polling     map[string]bool
+	checking    map[string]bool
 	usage       UsageOptions
+	// pendingUsage keeps per-node raw bytes whose write failed after the node
+	// had already reset its counters; the next poll of that node retries them.
+	pendingMu    sync.Mutex
+	pendingUsage map[string]map[uint64]int64
+	usageOnce    sync.Once
+	usageSlots   chan struct{}
 }
 
 func NewService(db *gorm.DB, client *Client) *Service {
@@ -298,10 +305,12 @@ func (s *Service) CheckNodeHealth(node *database.Node) (bool, string) {
 			m.XrayUptime = 0
 			m.OnlineUsers = 0
 		}
-		if versionsResp != nil {
+		// Versions rarely change; persisting them on every check would
+		// write one row per node every interval.
+		if versionsResp != nil && (m.Versions == nil || *m.Versions != *versionsResp) {
 			m.Versions = versionsResp
+			toSave = cloneMetrics(m)
 		}
-		toSave = cloneMetrics(m)
 	})
 
 	if versionsResp != nil && node.ID > 0 && toSave != nil {
@@ -567,8 +576,11 @@ func (s *Service) PollNodeStats(node *database.Node) {
 		metrics = &NodeHotMetrics{}
 	}
 
-	if metrics.Versions == nil {
-		go s.CheckNodeHealth(node)
+	if metrics.Versions == nil && s.beginHealthCheck(node.UUID) {
+		go func(n database.Node) {
+			defer s.endHealthCheck(n.UUID)
+			s.CheckNodeHealth(&n)
+		}(*node)
 	}
 
 	// 1. Fetch system stats
@@ -650,44 +662,109 @@ func (s *Service) PollNodeStats(node *database.Node) {
 	})
 }
 
-func (s *Service) StartHealthCheckLoop(ctx context.Context) {
-	healthTicker := time.NewTicker(15 * time.Second)
-	statsTicker := time.NewTicker(5 * time.Second)
-	defer healthTicker.Stop()
-	defer statsTicker.Stop()
+const (
+	healthCheckInterval = 15 * time.Second
+	statsPollInterval   = 5 * time.Second
+	// healthCheckWorkers bounds concurrent health checks. Each check holds an
+	// HTTP request and a few database statements, so the limit keeps a large
+	// fleet from taking the whole connection pool at once.
+	healthCheckWorkers = 32
+)
 
-	// Initial run
-	var nodes []database.Node
-	if err := s.db.Where("is_disabled = ?", false).Find(&nodes).Error; err == nil {
-		for _, n := range nodes {
-			nodeCopy := n
-			go func(nc database.Node) {
-				s.CheckNodeHealth(&nc)
-				s.PollNodeStats(&nc)
-			}(nodeCopy)
+// StartHealthCheckLoop runs health checks and stats polls on independent
+// schedules. A node that does not answer only delays its own next check: it
+// holds back neither the other nodes nor the stats polls.
+func (s *Service) StartHealthCheckLoop(ctx context.Context) {
+	go s.runHealthChecks(ctx)
+	s.runStatsPolls(ctx)
+}
+
+func (s *Service) runHealthChecks(ctx context.Context) {
+	ticker := time.NewTicker(healthCheckInterval)
+	defer ticker.Stop()
+	slots := make(chan struct{}, healthCheckWorkers)
+	for {
+		var nodes []database.Node
+		if err := s.db.Where("is_disabled = ?", false).Find(&nodes).Error; err != nil {
+			log.Printf("[NODES] health check: %v", err)
+		}
+		for i := range nodes {
+			node := nodes[i]
+			if !s.beginHealthCheck(node.UUID) {
+				continue
+			}
+			go func() {
+				defer s.endHealthCheck(node.UUID)
+				select {
+				case slots <- struct{}{}:
+				case <-ctx.Done():
+					return
+				}
+				defer func() { <-slots }()
+				s.CheckNodeHealth(&node)
+			}()
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
 		}
 	}
+}
 
+// runStatsPolls spreads each round's polls over the interval instead of
+// starting every node at the same instant, which turned into a burst of
+// concurrent usage transactions every few seconds.
+func (s *Service) runStatsPolls(ctx context.Context) {
+	ticker := time.NewTicker(statsPollInterval)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-healthTicker.C:
-			var nodes []database.Node
-			if err := s.db.Where("is_disabled = ?", false).Find(&nodes).Error; err == nil {
-				for _, n := range nodes {
-					s.CheckNodeHealth(&n)
+		case <-ticker.C:
+		}
+		var nodes []database.Node
+		if err := s.db.Where("is_disabled = ? AND is_connected = ?", false, true).Find(&nodes).Error; err != nil {
+			log.Printf("[NODES] stats poll: %v", err)
+			continue
+		}
+		for i := range nodes {
+			node := nodes[i]
+			delay := statsPollInterval * time.Duration(i) / time.Duration(len(nodes))
+			go func() {
+				timer := time.NewTimer(delay)
+				defer timer.Stop()
+				select {
+				case <-ctx.Done():
+					return
+				case <-timer.C:
 				}
-			}
-		case <-statsTicker.C:
-			var nodes []database.Node
-			if err := s.db.Where("is_disabled = ? AND is_connected = ?", false, true).Find(&nodes).Error; err == nil {
-				for _, n := range nodes {
-					go s.PollNodeStats(&n)
-				}
-			}
+				s.PollNodeStats(&node)
+			}()
 		}
 	}
+}
+
+// beginHealthCheck marks a scheduled health check as running. It reports
+// false while the previous one for the node has not finished.
+func (s *Service) beginHealthCheck(nodeUUID string) bool {
+	s.pollMu.Lock()
+	defer s.pollMu.Unlock()
+	if s.checking == nil {
+		s.checking = make(map[string]bool)
+	}
+	if s.checking[nodeUUID] {
+		return false
+	}
+	s.checking[nodeUUID] = true
+	return true
+}
+
+func (s *Service) endHealthCheck(nodeUUID string) {
+	s.pollMu.Lock()
+	delete(s.checking, nodeUUID)
+	s.pollMu.Unlock()
 }
 
 func (s *Service) Create(dto CreateNodeDTO) (*database.Node, error) {
@@ -1102,32 +1179,6 @@ func (s *Service) syncUserToSingleNode(node *database.Node, user *database.User,
 			},
 		}
 		return client.RemoveUser(node, req)
-	}
-}
-
-// SyncAllUsersToNode schedules a fresh reconciliation after a node restart.
-func (s *Service) SyncAllUsersToNode(node *database.Node) {
-	if node == nil {
-		return
-	}
-	var users []database.User
-	if err := s.db.Where("status = ?", "ACTIVE").Find(&users).Error; err != nil {
-		log.Printf("[NODES] reconcile: %v", err)
-		return
-	}
-	revision := uint64(time.Now().UnixNano())
-	if err := s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&database.Job{}).Where("target = ? AND kind = ? AND state = ?", node.UUID, "user-sync", "failed").Updates(map[string]interface{}{"state": "pending", "attempts": 0, "available_at": time.Now().UTC()}).Error; err != nil {
-			return err
-		}
-		for _, user := range users {
-			if err := jobs.Enqueue(tx, "user-sync", strconv.FormatUint(user.ID, 10), node.UUID, revision, jobs.UserSync{ID: user.ID, VlessUUID: user.VlessUUID}); err != nil {
-				return err
-			}
-		}
-		return nil
-	}); err != nil {
-		log.Printf("[NODES] schedule reconciliation: %v", err)
 	}
 }
 

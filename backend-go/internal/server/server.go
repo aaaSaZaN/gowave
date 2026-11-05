@@ -266,6 +266,7 @@ func NewApp(cfg *config.Config, db *gorm.DB) *App {
 	workQueue := jobs.New(db)
 	notifier.Register(workQueue)
 	workQueue.Register("user-sync", nodeService.ApplyUserJob)
+	workQueue.Register("user-resync", nodeService.ApplyUserResyncJob)
 	workQueue.Register("node-start", nodeService.ApplyNodeJob)
 	workQueue.Register("node-stop", nodeService.ApplyNodeJob)
 	workQueue.Register("node-retire", nodeService.ApplyRetireJob)

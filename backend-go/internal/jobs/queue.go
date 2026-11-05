@@ -112,7 +112,9 @@ func (q *Queue) claim() (*database.Job, error) {
 	var job database.Job
 	now := time.Now().UTC()
 	err := q.db.Transaction(func(tx *gorm.DB) error {
-		query := tx.Model(&database.Job{}).Where("available_at <= ? AND (state = 'pending' OR (state = 'running' AND lease_until <= ?))", now, now).
+		// The state IN clause matches idx_jobs_ready, so the claim reads jobs
+		// in queue order and stops at the first one it can take.
+		query := tx.Model(&database.Job{}).Where("state IN ('pending', 'running') AND available_at <= ? AND (state = 'pending' OR (state = 'running' AND lease_until <= ?))", now, now).
 			Where("NOT EXISTS (SELECT 1 FROM jobs busy WHERE busy.target = jobs.target AND busy.id <> jobs.id AND busy.state = 'running' AND busy.lease_until > ?)", now).
 			Order("created_at ASC, id ASC")
 		if tx.Dialector.Name() == "postgres" {

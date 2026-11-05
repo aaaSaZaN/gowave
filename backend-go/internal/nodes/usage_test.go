@@ -3,8 +3,10 @@ package nodes
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand/v2"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -111,5 +113,128 @@ func TestStoreTorrentReportsPersistsAndNotifies(t *testing.T) {
 	db.Model(&database.Job{}).Where("kind = 'webhook' AND entity_id = 'torrent_blocker.report'").Count(&events)
 	if events != 1 {
 		t.Fatalf("events = %d, want 1", events)
+	}
+}
+
+func usageUsers(t *testing.T, db *gorm.DB, n int) []uint64 {
+	t.Helper()
+	ids := make([]uint64, 0, n)
+	for i := 0; i < n; i++ {
+		user := database.User{ShortUUID: uuid.NewString()[:16], Username: "u" + uuid.NewString()[:12], Status: "ACTIVE", ExpireAt: time.Now().Add(time.Hour), VlessUUID: uuid.NewString()}
+		if err := db.Create(&user).Error; err != nil {
+			t.Fatal(err)
+		}
+		db.Create(&database.UserTraffic{ID: user.ID, FirstConnectedAt: &user.CreatedAt})
+		ids = append(ids, user.ID)
+	}
+	return ids
+}
+
+func usedBytes(db *gorm.DB, ids []uint64) int64 {
+	var total int64
+	db.Model(&database.UserTraffic{}).Where("id IN ?", ids).Select("COALESCE(SUM(used_traffic_bytes), 0)").Scan(&total)
+	return total
+}
+
+func TestRecordUserUsageRetriesFailedBatchOnNextPoll(t *testing.T) {
+	db := usageDB(t)
+	node := database.Node{UUID: uuid.NewString(), Name: "n1", Address: "192.0.2.2", ConsumptionMultiplier: 1_000_000_000}
+	db.Create(&node)
+	ids := usageUsers(t, db, 3)
+	fail := true
+	if err := db.Callback().Raw().Before("gorm:raw").Register("test:fail_usage", func(tx *gorm.DB) {
+		if fail && strings.Contains(tx.Statement.SQL.String(), "UPDATE user_traffic") {
+			tx.AddError(fmt.Errorf("injected failure"))
+		}
+	}); err != nil {
+		t.Fatal(err)
+	}
+	s := &Service{db: db}
+	now := time.Now().UTC()
+	s.recordUserUsage(&node, []NodeUserTraffic{{Username: itoa(ids[0]), Uplink: 100}, {Username: itoa(ids[1]), Downlink: 50}}, now)
+	if got := usedBytes(db, ids); got != 0 {
+		t.Fatalf("failed poll wrote %d bytes", got)
+	}
+	fail = false
+	s.recordUserUsage(&node, []NodeUserTraffic{{Username: itoa(ids[0]), Uplink: 1}, {Username: itoa(ids[2]), Uplink: 7}}, now)
+	if got := usedBytes(db, ids); got != 158 {
+		t.Fatalf("used bytes = %d, want 158 (failed poll kept and retried)", got)
+	}
+	var history int64
+	db.Model(&database.NodesUserUsageHistory{}).Where("user_id IN ?", ids).Select("COALESCE(SUM(total_bytes), 0)").Scan(&history)
+	if history != 158 {
+		t.Fatalf("history = %d, want 158", history)
+	}
+	if len(s.pendingUsage[node.UUID]) != 0 {
+		t.Fatalf("pending usage left: %v", s.pendingUsage)
+	}
+}
+
+func TestRecordUserUsageDropsPendingBytesOfDeletedUsers(t *testing.T) {
+	db := usageDB(t)
+	node := database.Node{UUID: uuid.NewString(), Name: "n1", Address: "192.0.2.3", ConsumptionMultiplier: 1_000_000_000}
+	db.Create(&node)
+	ids := usageUsers(t, db, 2)
+	s := &Service{db: db}
+	s.keepPendingUsage(node.UUID, []userUsage{{id: ids[0], raw: 40}, {id: ids[1], raw: 2}})
+	if err := db.Exec("DELETE FROM users WHERE id = ?", ids[1]).Error; err != nil {
+		t.Fatal(err)
+	}
+	s.recordUserUsage(&node, nil, time.Now().UTC())
+	if got := usedBytes(db, ids[:1]); got != 40 {
+		t.Fatalf("used bytes = %d, want 40", got)
+	}
+	if len(s.pendingUsage[node.UUID]) != 0 {
+		t.Fatalf("bytes of a deleted user are retried forever: %v", s.pendingUsage)
+	}
+}
+
+// Nodes report overlapping users concurrently. On PostgreSQL this used to
+// deadlock and drop whole polls; every reported byte must be billed.
+func TestRecordUserUsageConcurrentNodesBillEveryByte(t *testing.T) {
+	db := usageDB(t)
+	ids := usageUsers(t, db, 120)
+	const nodeCount, polls = 6, 15
+	var expected int64
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	s := &Service{db: db}
+	nodes := map[string]*database.Node{}
+	for n := 0; n < nodeCount; n++ {
+		node := &database.Node{UUID: uuid.NewString(), Name: fmt.Sprintf("n%d", n), Address: fmt.Sprintf("192.0.2.%d", 50+n), ConsumptionMultiplier: 1_000_000_000}
+		if err := db.Create(node).Error; err != nil {
+			t.Fatal(err)
+		}
+		nodes[node.UUID] = node
+		wg.Add(1)
+		go func(seed int) {
+			defer wg.Done()
+			rng := rand.New(rand.NewPCG(uint64(seed), 1))
+			for p := 0; p < polls; p++ {
+				stats := make([]NodeUserTraffic, 0, len(ids))
+				var sum int64
+				for _, i := range rng.Perm(len(ids)) {
+					bytes := int64(rng.IntN(1000) + 1)
+					stats = append(stats, NodeUserTraffic{Username: itoa(ids[i]), Uplink: bytes})
+					sum += bytes
+				}
+				s.recordUserUsage(node, stats, time.Now().UTC())
+				mu.Lock()
+				expected += sum
+				mu.Unlock()
+			}
+		}(n)
+	}
+	wg.Wait()
+	for attempt := 0; len(s.pendingUsage) > 0; attempt++ {
+		if attempt == 5 {
+			t.Fatalf("usage still pending after retries: %d nodes", len(s.pendingUsage))
+		}
+		for nodeUUID := range s.pendingUsage {
+			s.recordUserUsage(nodes[nodeUUID], nil, time.Now().UTC())
+		}
+	}
+	if got := usedBytes(db, ids); got != expected {
+		t.Fatalf("billed %d bytes, nodes reported %d", got, expected)
 	}
 }
