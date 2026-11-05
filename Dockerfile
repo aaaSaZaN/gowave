@@ -42,6 +42,10 @@ RUN apk add --no-cache ca-certificates tzdata \
 WORKDIR /app
 
 COPY --from=backend /out/gowave /app/gowave
+# `docker exec -it gowave cli` (or `rescue`) opens the rescue menu.
+RUN printf '#!/bin/sh\nexec /app/gowave rescue "$@"\n' > /usr/local/bin/cli \
+    && chmod 755 /usr/local/bin/cli \
+    && ln -s cli /usr/local/bin/rescue
 COPY --from=frontend /src/frontend/dist /app/frontend/dist
 
 ENV APP_HOST=0.0.0.0 \

@@ -32,6 +32,35 @@ const MIN_SIZE = 1024
 
 const sha256 = (data) => crypto.createHash('sha256').update(data).digest('hex')
 
+// The asset host occasionally answers 5xx; retry those and network errors so a
+// transient outage does not fail release and Docker builds.
+const ATTEMPTS = 5
+
+async function fetchAsset(name) {
+    for (let attempt = 1; ; attempt++) {
+        let failure
+        try {
+            const response = await fetch(`${BASE_URL}/${name}`)
+            if (response.ok) {
+                return Buffer.from(await response.arrayBuffer())
+            }
+            failure = new Error(`${name}: HTTP ${response.status}`)
+            if (response.status < 500 && response.status !== 429) throw failure
+        } catch (error) {
+            if (error === failure) throw error
+            failure = new Error(`${name}: ${error.message}`)
+        }
+
+        if (attempt >= ATTEMPTS) throw failure
+
+        const delay = 2000 * 2 ** (attempt - 1)
+        console.warn(
+            `${failure.message}; retrying in ${delay / 1000}s (${attempt}/${ATTEMPTS - 1})`
+        )
+        await new Promise((resolve) => setTimeout(resolve, delay))
+    }
+}
+
 async function download(dir) {
     fs.mkdirSync(dir, { recursive: true })
 
@@ -43,12 +72,7 @@ async function download(dir) {
             continue
         }
 
-        const response = await fetch(`${BASE_URL}/${name}`)
-        if (!response.ok) {
-            throw new Error(`${name}: HTTP ${response.status}`)
-        }
-
-        const data = Buffer.from(await response.arrayBuffer())
+        const data = await fetchAsset(name)
         const actual = sha256(data)
         if (actual !== expected) {
             throw new Error(`${name}: SHA-256 ${actual} does not match pinned ${expected}`)
