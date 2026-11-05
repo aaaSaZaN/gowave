@@ -65,11 +65,14 @@ func hostUUIDs(hosts []*subtpl.Host) []string {
 
 // enableCache turns the settle window off for the test, so only write
 // tracking keeps the cache fresh.
+// enableCache turns off the settle window and stretches the TTL: under -race
+// on a slow CI runner a test can take longer than CacheTTL, and an expired
+// snapshot would be rebuilt mid-test.
 func enableCache(t *testing.T) {
 	t.Helper()
-	settle := CacheSettle
-	CacheSettle = 0
-	t.Cleanup(func() { CacheSettle = settle })
+	settle, ttl := CacheSettle, CacheTTL
+	CacheSettle, CacheTTL = 0, time.Hour
+	t.Cleanup(func() { CacheSettle, CacheTTL = settle, ttl })
 }
 
 func TestHostIndexMatchesQuery(t *testing.T) {
