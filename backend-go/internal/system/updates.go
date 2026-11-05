@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,6 +14,7 @@ import (
 	"time"
 
 	"gowave/internal/httpx"
+	"gowave/internal/logx"
 )
 
 type GitHubRelease struct {
@@ -228,6 +228,9 @@ var (
 
 const updateRequestName = "update-request"
 
+// UpdateHelperInstalled reports whether the root update helper is set up.
+func UpdateHelperInstalled() bool { return updateHelperInstalled() }
+
 func updateHelperInstalled() bool {
 	_, err := os.Stat(updateHelperUnit)
 	return err == nil
@@ -267,7 +270,7 @@ func (h *Handler) ApplyUpdate(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, r, http.StatusInternalServerError, httpx.CodeInternal, "Failed to request the update: "+err.Error())
 		return
 	}
-	log.Printf("panel update to the latest %s build requested; progress: journalctl -u gowave-update.service", channel)
+	logx.Infof("update", "Panel update to the latest %s build requested by %s; progress: journalctl -u gowave-update.service", channel, httpx.ClientIP(r))
 
 	httpx.JSON(w, http.StatusOK, map[string]interface{}{"success": true, "channel": channel, "requestedAt": requestedAt})
 }

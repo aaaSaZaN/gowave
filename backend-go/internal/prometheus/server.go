@@ -3,13 +3,13 @@ package prometheus
 import (
 	"context"
 	"crypto/subtle"
-	"log"
 	"net"
 	"net/http"
 	"time"
 
 	"gorm.io/gorm"
 
+	"gowave/internal/logx"
 	"gowave/internal/metrics"
 	"gowave/internal/subtpl/ojson"
 )
@@ -84,7 +84,7 @@ func Serve(ctx context.Context, addr string, handler http.Handler) {
 	server := &http.Server{Addr: addr, Handler: handler, ReadHeaderTimeout: 15 * time.Second}
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Printf("[METRICS] listen %s: %v", addr, err)
+		logx.Errorf("metrics", "listen %s: %v", addr, err)
 		return
 	}
 	go func() {
@@ -94,6 +94,6 @@ func Serve(ctx context.Context, addr string, handler http.Handler) {
 		_ = server.Shutdown(shutdown)
 	}()
 	if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
-		log.Printf("[METRICS] serve: %v", err)
+		logx.Errorf("metrics", "serve: %v", err)
 	}
 }

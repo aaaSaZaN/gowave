@@ -3,11 +3,11 @@ package configprofiles
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
 	"gowave/internal/database"
+	"gowave/internal/logx"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -495,7 +495,7 @@ func (s *Service) UpdateProfile(uuidParam string, name *string, configRaw []byte
 		if s.syncer != nil {
 			go s.syncer.RestartNodesByProfile(profile.UUID)
 		} else {
-			log.Printf("[CONFIG PROFILE] Warning: syncer is nil, skipping RestartNodesByProfile for %s", profile.UUID)
+			logx.Warnf("config-profiles", "Syncer is nil, skipping RestartNodesByProfile for %s", profile.UUID)
 		}
 	}
 

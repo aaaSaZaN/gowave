@@ -3,12 +3,12 @@ package auth
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"time"
 
 	"gowave/internal/database"
 	"gowave/internal/httpx"
+	"gowave/internal/logx"
 	"gowave/internal/notify"
 
 	"github.com/google/uuid"
@@ -253,8 +253,21 @@ func loginAttempt(db *gorm.DB, success bool, username, password, ip, userAgent, 
 	if !success {
 		name = "service.login_attempt_failed"
 	}
+	// %q keeps a crafted username from forging extra log lines.
+	if len(username) > 64 {
+		username = username[:64]
+	}
+	if success {
+		via := ""
+		if description != "–" {
+			via = " (" + description + ")"
+		}
+		logx.Infof("auth", "Admin %q logged in from %s%s", username, ip, via)
+	} else {
+		logx.Warnf("auth", "Failed login as %q from %s: %s", username, ip, description)
+	}
 	if err := notify.Emit(db, notify.Event{Name: name, Data: map[string]interface{}{"loginAttempt": attempt}}); err != nil {
-		log.Printf("[AUTH] %s notification: %v", name, err)
+		logx.Errorf("auth", "%s notification: %v", name, err)
 	}
 }
 

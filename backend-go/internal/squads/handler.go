@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -16,6 +15,7 @@ import (
 	"gowave/internal/configprofiles"
 	"gowave/internal/database"
 	"gowave/internal/jobs"
+	"gowave/internal/logx"
 )
 
 type Handler struct {
@@ -195,7 +195,7 @@ func (h *Handler) CreateInternalSquad(w http.ResponseWriter, r *http.Request) {
 		return tx.Create(&links).Error
 	})
 	if err != nil {
-		log.Printf("[SQUADS] failed to create squad name=%q: %v", s.Name, err)
+		logx.Errorf("squads", "failed to create squad name=%q: %v", s.Name, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{"message": "Failed to create squad"})
 		return
@@ -280,7 +280,7 @@ func (h *Handler) UpdateInternalSquad(w http.ResponseWriter, r *http.Request) {
 		return enqueueAffected(tx, ids)
 	})
 	if err != nil {
-		log.Printf("[SQUADS] failed to update squad uuid=%s: %v", s.UUID, err)
+		logx.Errorf("squads", "failed to update squad uuid=%s: %v", s.UUID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{"message": "Failed to update squad"})
 		return
@@ -313,7 +313,7 @@ func (h *Handler) DeleteInternalSquad(w http.ResponseWriter, r *http.Request) {
 		}
 		return enqueueAffected(tx, ids)
 	}); err != nil {
-		log.Printf("[SQUADS] failed to delete squad uuid=%s: %v", uuidParam, err)
+		logx.Errorf("squads", "failed to delete squad uuid=%s: %v", uuidParam, err)
 		http.Error(w, `{"message":"Failed to delete squad"}`, http.StatusInternalServerError)
 		return
 	}
@@ -834,7 +834,7 @@ func (h *Handler) UpdateExternalSquad(w http.ResponseWriter, r *http.Request) {
 		return tx.Model(&database.ExternalSquad{}).Where("uuid = ?", s.UUID).Updates(updates).Error
 	})
 	if err != nil {
-		log.Printf("[SQUADS] failed to update external squad uuid=%s: %v", s.UUID, err)
+		logx.Errorf("squads", "failed to update external squad uuid=%s: %v", s.UUID, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{"message": "Failed to update squad"})
 		return

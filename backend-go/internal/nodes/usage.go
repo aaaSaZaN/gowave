@@ -3,7 +3,6 @@ package nodes
 import (
 	"cmp"
 	"errors"
-	"log"
 	"math"
 	"slices"
 	"strconv"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"gowave/internal/database"
+	"gowave/internal/logx"
 	"gowave/internal/users"
 
 	"gorm.io/gorm"
@@ -91,7 +91,7 @@ func (s *Service) recordUserUsage(node *database.Node, stats []NodeUserTraffic, 
 			}
 		}
 		if err != nil {
-			log.Printf("[NODE STATS] record usage node=%s, kept %d users for the next poll: %v", node.UUID, len(batch), err)
+			logx.Errorf("nodes", "record usage node=%s, kept %d users for the next poll: %v", node.UUID, len(batch), err)
 			s.keepPendingUsage(node.UUID, batch)
 		}
 	}

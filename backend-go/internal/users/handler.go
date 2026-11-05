@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,6 +11,7 @@ import (
 
 	"gowave/internal/database"
 	"gowave/internal/httpx"
+	"gowave/internal/logx"
 
 	"github.com/go-chi/chi/v5"
 	"gorm.io/gorm"
@@ -606,7 +606,7 @@ func (h *Handler) BulkExtendExpirationDate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if err := h.service.BulkExtendExpirationDate(body.UserIDs, body.ExtendDays); err != nil {
-		log.Printf("[USERS] bulk extend expiration date failed: %v", err)
+		logx.Errorf("users", "bulk extend expiration date failed: %v", err)
 		http.Error(w, `{"message":"Failed to extend expiration date"}`, http.StatusInternalServerError)
 		return
 	}
@@ -622,7 +622,7 @@ func (h *Handler) BulkAllExtendExpirationDate(w http.ResponseWriter, r *http.Req
 		return
 	}
 	if err := h.service.BulkAllExtendExpirationDate(body.ExtendDays); err != nil {
-		log.Printf("[USERS] bulk extend expiration date of all users failed: %v", err)
+		logx.Errorf("users", "bulk extend expiration date of all users failed: %v", err)
 		http.Error(w, `{"message":"Failed to extend expiration date"}`, http.StatusInternalServerError)
 		return
 	}
@@ -639,7 +639,7 @@ func (h *Handler) BulkUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.service.BulkUpdate(body.UserIDs, body.Fields); err != nil {
-		log.Printf("[USERS] bulk update failed: %v", err)
+		logx.Errorf("users", "bulk update failed: %v", err)
 		http.Error(w, `{"message":"Failed to update users"}`, http.StatusInternalServerError)
 		return
 	}
@@ -654,7 +654,7 @@ func (h *Handler) BulkAllUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.service.BulkAllUpdate(fields); err != nil {
-		log.Printf("[USERS] bulk update of all users failed: %v", err)
+		logx.Errorf("users", "bulk update of all users failed: %v", err)
 		http.Error(w, `{"message":"Failed to update users"}`, http.StatusInternalServerError)
 		return
 	}
@@ -670,7 +670,7 @@ func (h *Handler) BulkResetTraffic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.service.BulkResetTraffic(body.UserIDs); err != nil {
-		log.Printf("[USERS] bulk traffic reset failed: %v", err)
+		logx.Errorf("users", "bulk traffic reset failed: %v", err)
 		http.Error(w, `{"message":"Failed to reset traffic"}`, http.StatusInternalServerError)
 		return
 	}
@@ -679,7 +679,7 @@ func (h *Handler) BulkResetTraffic(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) BulkAllResetTraffic(w http.ResponseWriter, r *http.Request) {
 	if err := h.service.BulkAllResetTraffic(); err != nil {
-		log.Printf("[USERS] bulk traffic reset of all users failed: %v", err)
+		logx.Errorf("users", "bulk traffic reset of all users failed: %v", err)
 		http.Error(w, `{"message":"Failed to reset traffic"}`, http.StatusInternalServerError)
 		return
 	}
@@ -695,7 +695,7 @@ func (h *Handler) BulkRevokeSubscription(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if err := h.service.BulkRevokeSubscription(body.UserIDs); err != nil {
-		log.Printf("[USERS] bulk subscription revoke failed: %v", err)
+		logx.Errorf("users", "bulk subscription revoke failed: %v", err)
 		http.Error(w, `{"message":"Failed to revoke subscription"}`, http.StatusInternalServerError)
 		return
 	}
@@ -711,7 +711,7 @@ func (h *Handler) BulkDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.service.BulkDelete(body.UserIDs); err != nil {
-		log.Printf("[USERS] bulk delete failed: %v", err)
+		logx.Errorf("users", "bulk delete failed: %v", err)
 		http.Error(w, `{"message":"Failed to delete users"}`, http.StatusInternalServerError)
 		return
 	}
@@ -727,7 +727,7 @@ func (h *Handler) BulkDeleteByStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.service.BulkDeleteByStatus(body.Status); err != nil {
-		log.Printf("[USERS] bulk delete by status failed: %v", err)
+		logx.Errorf("users", "bulk delete by status failed: %v", err)
 		http.Error(w, `{"message":"Failed to delete users by status"}`, http.StatusInternalServerError)
 		return
 	}
@@ -744,7 +744,7 @@ func (h *Handler) BulkUpdateSquads(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.service.BulkUpdateSquads(body.UserIDs, body.ActiveInternalSquads); err != nil {
-		log.Printf("[USERS] bulk squads update failed: %v", err)
+		logx.Errorf("users", "bulk squads update failed: %v", err)
 		http.Error(w, `{"message":"Failed to update user squads"}`, http.StatusInternalServerError)
 		return
 	}
@@ -815,7 +815,7 @@ func (h *Handler) PatchUser(w http.ResponseWriter, r *http.Request) {
 
 	updatedUser, err := h.service.Update(user.ID, updates)
 	if err != nil {
-		log.Printf("[USERS] failed to patch user id=%d: %v", user.ID, err)
+		logx.Errorf("users", "failed to patch user id=%d: %v", user.ID, err)
 		http.Error(w, `{"message":"Failed to update user"}`, http.StatusInternalServerError)
 		return
 	}

@@ -5,7 +5,6 @@ package prometheus
 
 import (
 	"context"
-	"log"
 	"os"
 	"runtime"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"gorm.io/gorm"
 
 	"gowave/internal/database"
+	"gowave/internal/logx"
 	"gowave/internal/metrics"
 	"gowave/internal/nodes"
 )
@@ -119,7 +119,7 @@ func (e *Exporter) reportShortUserStats() {
 	if e.userStats == nil || time.Since(e.userAt) > userStatsTTL {
 		stats, err := e.loadShortUserStats()
 		if err != nil {
-			log.Printf("[METRICS] user stats: %v", err)
+			logx.Errorf("metrics", "user stats: %v", err)
 			return
 		}
 		e.userStats, e.userAt = stats, time.Now()
@@ -200,7 +200,7 @@ func loadAvg(values []float64, i int) float64 {
 func (e *Exporter) reportNodesStats() {
 	rows, err := e.allNodes()
 	if err != nil {
-		log.Printf("[METRICS] nodes: %v", err)
+		logx.Errorf("metrics", "nodes: %v", err)
 		return
 	}
 	metrics.NodeBasicInfo.Reset()

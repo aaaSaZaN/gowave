@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gowave/internal/database"
-	"log"
+	"gowave/internal/logx"
 	"strconv"
 	"sync"
 	"time"
@@ -151,14 +151,26 @@ func (q *Queue) claim() (*database.Job, error) {
 	return &job, err
 }
 
+// RunOne runs the next due job; the error is the job's own failure or a
+// database error.
 func (q *Queue) RunOne(ctx context.Context) (bool, error) {
+	worked, jobErr, err := q.runOne(ctx)
+	if err == nil {
+		err = jobErr
+	}
+	return worked, err
+}
+
+// runOne separates the job's failure, which it logs, from queue errors.
+func (q *Queue) runOne(ctx context.Context) (bool, error, error) {
 	job, err := q.claim()
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return false, nil
+		return false, nil, nil
 	}
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
+	started := time.Now()
 	handler, ok := q.handlers[job.Kind]
 	if !ok {
 		err = fmt.Errorf("unsupported job kind %s", job.Kind)
@@ -195,17 +207,39 @@ func (q *Queue) RunOne(ctx context.Context) (bool, error) {
 			delay = retryAfter.Delay
 		}
 		updates["state"], updates["last_error"], updates["available_at"] = state, err.Error(), now.Add(delay)
+		if state == "failed" {
+			logx.Errorf("jobs", "Job %s %s (%s) failed after %d attempt(s), giving up: %v", job.Kind, shortID(job.ID), job.Target, job.Attempts, err)
+		} else if job.Attempts == 1 {
+			// A node that is down fails every queued job for it; the first
+			// failure and the final one are enough for the log.
+			logx.Warnf("jobs", "Job %s %s (%s) failed, retry in %s: %v", job.Kind, shortID(job.ID), job.Target, delay, err)
+		} else {
+			logx.Debugf("jobs", "Job %s %s (%s) failed, attempt %d, retry in %s: %v", job.Kind, shortID(job.ID), job.Target, job.Attempts, delay, err)
+		}
+	} else {
+		logx.Debugf("jobs", "Job %s %s (%s) done in %s", job.Kind, shortID(job.ID), job.Target, time.Since(started).Round(time.Millisecond))
 	}
 	result := q.db.Model(&database.Job{}).Where("id = ? AND state = 'running' AND lease_until = ?", job.ID, *job.LeaseUntil).Updates(updates)
 	if result.Error != nil {
-		return true, result.Error
+		return true, err, result.Error
 	}
-	return true, err
+	return true, err, nil
 }
+
+// shortID keeps log lines readable; job IDs are hex digests.
+func shortID(id string) string {
+	if len(id) > 8 {
+		return id[:8]
+	}
+	return id
+}
+
+// Workers is the number of goroutines that run jobs.
+const Workers = 8
 
 func (q *Queue) Start(ctx context.Context) {
 	var wg sync.WaitGroup
-	for i := 0; i < 8; i++ {
+	for i := 0; i < Workers; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -217,9 +251,9 @@ func (q *Queue) Start(ctx context.Context) {
 					return
 				default:
 				}
-				worked, err := q.RunOne(ctx)
-				if err != nil {
-					log.Printf("[JOBS] %v", err)
+				worked, _, err := q.runOne(ctx)
+				if err != nil && ctx.Err() == nil {
+					logx.Errorf("jobs", "Job queue: %v", err)
 				}
 				if worked {
 					continue

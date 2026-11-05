@@ -32,6 +32,10 @@ type Config struct {
 	// default because every request, subscription fetches included, would
 	// otherwise reach the service log.
 	HTTPLogging bool
+	// LogLevel is LOG_LEVEL (debug, info, warn, error) and LogFormat is
+	// LOG_FORMAT (text, json) for the service log.
+	LogLevel  string
+	LogFormat string
 
 	Notifications NotificationsConfig
 	Service       ServiceConfig
@@ -153,6 +157,8 @@ func Load() *Config {
 		SubPublicDomain: subDomain,
 		JWTLifetime:     jwtLifetime,
 		HTTPLogging:     envBool("IS_HTTP_LOGGING_ENABLED"),
+		LogLevel:        os.Getenv("LOG_LEVEL"),
+		LogFormat:       os.Getenv("LOG_FORMAT"),
 		MetricsUser:     os.Getenv("METRICS_USER"),
 		MetricsPass:     os.Getenv("METRICS_PASS"),
 	}

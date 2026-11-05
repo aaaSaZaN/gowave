@@ -2,11 +2,11 @@ package subscription
 
 import (
 	"context"
-	"log"
 	"sync"
 	"time"
 
 	"gowave/internal/database"
+	"gowave/internal/logx"
 
 	"gorm.io/gorm"
 )
@@ -102,7 +102,7 @@ func (w *historyWriter) Wait(timeout time.Duration) {
 	select {
 	case <-stopped:
 	case <-time.After(timeout):
-		log.Printf("[SUB] subscription history: %d rows not written before shutdown", len(w.queue))
+		logx.Warnf("subscription", "Subscription history: %d rows not written before shutdown", len(w.queue))
 	}
 }
 
@@ -123,7 +123,7 @@ func (w *historyWriter) write(batch []database.UserSubscriptionRequestHistory) {
 		return
 	}
 	if err := w.db.CreateInBatches(batch, historyBatch).Error; err != nil {
-		log.Printf("[SUB] subscription history insert: %v", err)
+		logx.Errorf("subscription", "subscription history insert: %v", err)
 		return
 	}
 	seen := make(map[uint64]bool, len(batch))
@@ -140,6 +140,6 @@ func (w *historyWriter) write(batch []database.UserSubscriptionRequestHistory) {
 			SELECT id, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY request_at DESC, id DESC) AS position
 			FROM user_subscription_request_history WHERE user_id IN ?
 		) ranked WHERE position > ?)`, users, historyKeep).Error; err != nil {
-		log.Printf("[SUB] subscription history trim: %v", err)
+		logx.Errorf("subscription", "subscription history trim: %v", err)
 	}
 }

@@ -3,6 +3,14 @@
 # Build locally instead of pulling: docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 name: gowave
 
+# Docker keeps container logs on disk without a limit by default.
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+
 services:
   gowave:
     image: ${GOWAVE_IMAGE:-ghcr.io/aaasazan/gowave:latest}
@@ -18,6 +26,7 @@ services:
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=128m
     restart: unless-stopped
+    <<: *logging
     env_file: .env
     networks:
       - gowave-network
@@ -51,6 +60,7 @@ services:
     container_name: gowave-postgres
     hostname: gowave-postgres
     restart: unless-stopped
+    <<: *logging
     networks:
       - gowave-network
     environment:

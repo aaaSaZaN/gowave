@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"strings"
 	"time"
 
 	"gowave/config"
 	"gowave/internal/database"
 	"gowave/internal/jobs"
+	"gowave/internal/logx"
 	"gowave/internal/notify"
 	"gowave/internal/users"
 
@@ -53,7 +54,7 @@ func (s *Scheduler) SetConfig(cfg *config.Config) { s.cfg = cfg }
 
 func (s *Scheduler) Start(ctx context.Context) {
 	if err := s.Tick(time.Now().UTC()); err != nil {
-		log.Printf("[SCHEDULE] %v", err)
+		logx.Errorf("scheduler", "%v", err)
 	}
 	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
@@ -63,7 +64,7 @@ func (s *Scheduler) Start(ctx context.Context) {
 			return
 		case now := <-ticker.C:
 			if err := s.Tick(now.UTC()); err != nil {
-				log.Printf("[SCHEDULE] %v", err)
+				logx.Errorf("scheduler", "%v", err)
 			}
 		}
 	}
@@ -78,6 +79,8 @@ type calendarTask struct {
 	fn     func(tx *gorm.DB, instant time.Time) error
 	// maxCatchUp bounds how many missed instants are replayed.
 	maxCatchUp int
+	// frequent tasks log their runs at debug level only.
+	frequent bool
 }
 
 func daily(hour, minute int) (func(time.Time) time.Time, func(time.Time) time.Time) {
@@ -125,7 +128,8 @@ func (s *Scheduler) tasks() []calendarTask {
 	var tasks []calendarTask
 	add := func(name string, schedule func() (func(time.Time) time.Time, func(time.Time) time.Time), maxCatchUp int, fn func(*gorm.DB, time.Time) error) {
 		latest, step := schedule()
-		tasks = append(tasks, calendarTask{name: name, latest: latest, step: step, fn: fn, maxCatchUp: maxCatchUp})
+		frequent := strings.HasPrefix(name, "notify/") || name == "service/clean-jobs"
+		tasks = append(tasks, calendarTask{name: name, latest: latest, step: step, fn: fn, maxCatchUp: maxCatchUp, frequent: frequent})
 	}
 	add("reset/DAY", func() (func(time.Time) time.Time, func(time.Time) time.Time) { return daily(0, 5) }, 1, s.resetStrategy("DAY"))
 	add("reset/MONTH_ROLLING", func() (func(time.Time) time.Time, func(time.Time) time.Time) { return daily(0, 10) }, 31, s.resetRolling)
@@ -144,6 +148,18 @@ func (s *Scheduler) tasks() []calendarTask {
 		add("notify/not-connected", func() (func(time.Time) time.Time, func(time.Time) time.Time) { return every(10 * time.Minute) }, 144, s.notConnectedNotifications)
 	}
 	return tasks
+}
+
+// TaskNames lists the calendar tasks this configuration schedules.
+func (s *Scheduler) TaskNames() []string {
+	names := []string{"review/users", "review/nodes"}
+	if s.cfg.Notifications.BandwidthUsageThresholds != nil {
+		names = append(names, "notify/threshold")
+	}
+	for _, task := range s.tasks() {
+		names = append(names, task.name)
+	}
+	return names
 }
 
 // Tick runs the continuous checks and every calendar task that is due.
@@ -197,6 +213,8 @@ func (s *Scheduler) runCalendar(task calendarTask, now time.Time) error {
 	}
 	for _, instant := range instants {
 		instant := instant
+		started := time.Now()
+		ran := false
 		err := s.db.Transaction(func(tx *gorm.DB) error {
 			// The conditional update is the lock: a concurrent instance that
 			// already advanced the cursor makes this a no-op.
@@ -207,10 +225,18 @@ func (s *Scheduler) runCalendar(task calendarTask, now time.Time) error {
 			if result.RowsAffected == 0 {
 				return nil
 			}
+			ran = true
 			return task.fn(tx, instant)
 		})
 		if err != nil {
 			return err
+		}
+		if ran {
+			log := logx.Infof
+			if task.frequent {
+				log = logx.Debugf
+			}
+			log("scheduler", "Task %s for %s done in %s", task.name, instant.Format("2006-01-02 15:04 UTC"), time.Since(started).Round(time.Millisecond))
 		}
 	}
 	return nil
@@ -225,6 +251,7 @@ func (s *Scheduler) reviewUsers(now time.Time) error {
 		return err
 	}
 	if len(expired) > 0 {
+		logx.Infof("scheduler", "%d user(s) expired", len(expired))
 		if err := svc.SetStatusFor(expired, "EXPIRED", len(expired) < 10000); err != nil {
 			return err
 		}
@@ -236,6 +263,7 @@ func (s *Scheduler) reviewUsers(now time.Time) error {
 		return err
 	}
 	if len(limited) > 0 {
+		logx.Infof("scheduler", "%d user(s) reached their traffic limit", len(limited))
 		return svc.SetStatusFor(limited, "LIMITED", len(limited) < 10000)
 	}
 	return nil
@@ -323,6 +351,9 @@ func (s *Scheduler) resetStrategy(strategy string) func(*gorm.DB, time.Time) err
 		if err := tx.Model(&database.User{}).Where("traffic_limit_strategy = ?", strategy).Pluck("id", &ids).Error; err != nil {
 			return err
 		}
+		if len(ids) > 0 {
+			logx.Infof("scheduler", "Resetting traffic of %d users with the %s strategy", len(ids), strategy)
+		}
 		return users.NewService(tx).BulkResetTraffic(ids)
 	}
 }
@@ -345,6 +376,9 @@ func (s *Scheduler) resetRolling(tx *gorm.DB, instant time.Time) error {
 			ids = append(ids, u.ID)
 		}
 	}
+	if len(ids) > 0 {
+		logx.Infof("scheduler", "Resetting traffic of %d users with the MONTH_ROLLING strategy", len(ids))
+	}
 	return users.NewService(tx).BulkResetTraffic(ids)
 }
 
@@ -362,6 +396,7 @@ func (s *Scheduler) resetNodes(tx *gorm.DB, instant time.Time) error {
 		return err
 	}
 	for _, node := range nodes {
+		logx.Infof("scheduler", "Resetting traffic of node %s (%s)", node.Name, node.UUID)
 		if err := tx.Model(&node).Updates(map[string]interface{}{"traffic_used_bytes": 0, "traffic_tracking_start": "period"}).Error; err != nil {
 			return err
 		}

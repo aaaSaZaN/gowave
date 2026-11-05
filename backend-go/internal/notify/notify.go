@@ -13,9 +13,9 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -27,6 +27,7 @@ import (
 	"gowave/config"
 	"gowave/internal/database"
 	"gowave/internal/jobs"
+	"gowave/internal/logx"
 
 	"gopkg.in/yaml.v3"
 	"gorm.io/gorm"
@@ -305,7 +306,7 @@ func (n *Notifier) deliverTelegram(ctx context.Context, job *database.Job) error
 	res, err := n.telegram.Do(req)
 	if err != nil {
 		// Never log the bot token embedded in the URL.
-		return fmt.Errorf("telegram network error")
+		return fmt.Errorf("telegram network error: %s", networkError(err))
 	}
 	defer res.Body.Close()
 	var reply struct {
@@ -331,6 +332,15 @@ func (n *Notifier) deliverTelegram(ctx context.Context, job *database.Job) error
 	return nil
 }
 
+// networkError describes a failed request without its URL, which carries the bot token.
+func networkError(err error) string {
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) {
+		err = urlErr.Err
+	}
+	return err.Error()
+}
+
 // CheckTelegram calls getMe once at startup, like upstream's healthcheck.
 func (n *Notifier) CheckTelegram(ctx context.Context) {
 	if !n.cfg.TelegramEnabled {
@@ -342,22 +352,23 @@ func (n *Notifier) CheckTelegram(ctx context.Context) {
 	}
 	res, err := n.telegram.Do(req)
 	if err != nil {
-		log.Printf("[NOTIFY] Telegram getMe failed: network error")
+		logx.Errorf("telegram", "Telegram bot check (getMe) failed: %s. Notifications will be retried, check TELEGRAM_BOT_API_ROOT/TELEGRAM_BOT_PROXY and the network", networkError(err))
 		return
 	}
 	defer res.Body.Close()
 	var reply struct {
-		OK     bool `json:"ok"`
-		Result struct {
+		OK          bool   `json:"ok"`
+		Description string `json:"description"`
+		Result      struct {
 			Username string `json:"username"`
 		} `json:"result"`
 	}
-	_ = json.NewDecoder(res.Body).Decode(&reply)
+	_ = json.NewDecoder(io.LimitReader(res.Body, 64<<10)).Decode(&reply)
 	if !reply.OK {
-		log.Printf("[NOTIFY] Telegram getMe failed with status %d", res.StatusCode)
+		logx.Errorf("telegram", "Telegram bot check (getMe) failed: HTTP %d %s. Check TELEGRAM_BOT_TOKEN", res.StatusCode, reply.Description)
 		return
 	}
-	log.Printf("[NOTIFY] Telegram notifications enabled. Bot username: %s", reply.Result.Username)
+	logx.Infof("telegram", "Telegram bot @%s is ready, notifications enabled", reply.Result.Username)
 }
 
 var current atomic.Pointer[Notifier]

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"gowave/internal/logx"
 	"gowave/internal/responserules"
 
 	"gorm.io/gorm"
@@ -85,6 +86,7 @@ func applyMigrations(db *gorm.DB) error {
 			if err := tx.Exec("INSERT INTO gowave_migrations (name, applied_at) VALUES (?, ?)", entry.Name(), time.Now().UTC()).Error; err != nil {
 				return err
 			}
+			logx.Debugf("database", "Applied migration %s", entry.Name())
 		}
 		return nil
 	})

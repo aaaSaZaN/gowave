@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"sort"
@@ -25,6 +24,7 @@ import (
 	"gowave/internal/auth"
 	"gowave/internal/database"
 	"gowave/internal/keygen"
+	"gowave/internal/logx"
 	"gowave/internal/nodes"
 	"gowave/internal/nodessh"
 	"gowave/internal/subscription"
@@ -361,7 +361,7 @@ func (s *StubHandler) ReorderNodePlugins(w http.ResponseWriter, r *http.Request)
 
 func (s *StubHandler) syncPluginToNodes(id string) {
 	if err := enqueuePlugin(s.db, id); err != nil {
-		log.Printf("[PLUGINS] %v", err)
+		logx.Errorf("plugins", "%v", err)
 	}
 }
 

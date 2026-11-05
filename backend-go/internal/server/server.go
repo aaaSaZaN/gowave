@@ -3,12 +3,16 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 	"mime"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
+	"os/user"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -22,6 +26,7 @@ import (
 	"gowave/internal/infrabilling"
 	"gowave/internal/jobs"
 	"gowave/internal/keygen"
+	"gowave/internal/logx"
 	"gowave/internal/middleware"
 	"gowave/internal/nodes"
 	"gowave/internal/nodessh"
@@ -70,7 +75,7 @@ func warnIfRoot() {
 	if os.Geteuid() != 0 {
 		return
 	}
-	fmt.Fprintln(os.Stderr, "WARNING: GoWave is running as root. This is not recommended; install.sh sets up an unprivileged service.")
+	logx.Warnf("security", "GoWave is running as root. This is not recommended; install.sh sets up an unprivileged service.")
 }
 
 // warnWritableExecutable flags installations whose binary the service account can
@@ -88,7 +93,7 @@ func warnWritableExecutable() {
 		return
 	}
 	if syscall.Access(exe, 2) == nil {
-		fmt.Fprintf(os.Stderr, "WARNING: %s is writable by the service account. Update with the installer to make the code root-owned: %s\n", exe, system.InstallerUpdateCommand)
+		logx.Warnf("security", "%s is writable by the service account. Update with the installer to make the code root-owned: %s", exe, system.InstallerUpdateCommand)
 	}
 }
 
@@ -134,19 +139,35 @@ func Run() {
 	}
 
 	ensureGlobalSymlink()
+	serving := len(args) == 0
+	if serving {
+		// CLI commands keep their plain console output.
+		if err := logx.Setup(cfg.LogLevel, cfg.LogFormat); err != nil {
+			logx.Warnf("config", "%v; using LOG_LEVEL=info, LOG_FORMAT=text", err)
+		}
+		logx.Infof("startup", "GoWave %s starting (%s channel%s, %s, %s/%s, pid %d)",
+			system.AppVersion, system.CurrentChannel(), commitSuffix(), runtime.Version(), runtime.GOOS, runtime.GOARCH, os.Getpid())
+	}
 
 	db, err := database.Init(cfg.DBDriver, cfg.DatabaseURL)
 	if err != nil {
-		fmt.Printf("Database init failed: %v\n", err)
+		logx.Errorf("database", "Cannot open %s: %v", describeDatabase(cfg), err)
 		os.Exit(1)
 	}
 	if cfg.DBMaxConnections > 0 {
 		database.SetMaxConnections(db, cfg.DBMaxConnections)
 	}
 
+	appliedBefore := countMigrations(db)
+	migrateStart := time.Now()
 	if err := database.AutoMigrate(db); err != nil {
-		fmt.Printf("Auto migration failed: %v\n", err)
+		logx.Errorf("database", "Migration failed: %v", err)
 		os.Exit(1)
+	}
+	if serving {
+		applied := countMigrations(db)
+		logx.Infof("database", "Connected to %s; schema has %d migrations, %d applied now (%s)",
+			describeDatabase(cfg), applied, applied-appliedBefore, time.Since(migrateStart).Round(time.Millisecond))
 	}
 
 	if len(os.Args) > 1 {
@@ -164,7 +185,7 @@ func Run() {
 	warnIfRoot()
 	warnWritableExecutable()
 	if err := cfg.Validate(); err != nil {
-		fmt.Fprintf(os.Stderr, "Invalid configuration: %v\n", err)
+		logx.Errorf("config", "Invalid configuration: %v", err)
 		os.Exit(1)
 	}
 
@@ -173,17 +194,18 @@ func Run() {
 	// a non-zero status so systemd and Docker see the failure.
 	listener, err := net.Listen("tcp", serverAddr)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Listen failed: %v\n", err)
+		logx.Errorf("http", "Cannot listen on %s: %v", serverAddr, err)
 		os.Exit(1)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	app := NewApp(cfg, db)
+	logStartupSummary(cfg, db, app)
 	app.Start(ctx)
 
 	if !cfg.IsLoopbackHost() {
-		fmt.Printf("WARNING: APP_HOST=%s exposes the panel without HTTPS. Keep APP_HOST=127.0.0.1 and serve the panel through a reverse proxy (Caddy/Nginx).\n", cfg.AppHost)
+		logx.Warnf("security", "APP_HOST=%s exposes the panel without HTTPS. Keep APP_HOST=127.0.0.1 and serve the panel through a reverse proxy (Caddy/Nginx).", cfg.AppHost)
 	}
 	srv := &http.Server{
 		Addr:              serverAddr,
@@ -193,46 +215,219 @@ func Run() {
 		// WebSocket is hijacked, which clears both deadlines.
 		ReadTimeout:  5 * time.Minute,
 		WriteTimeout: 5 * time.Minute,
+		ErrorLog:     log.New(httpErrorWriter{}, "", 0),
 	}
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
 	serveErr := make(chan error, 1)
 	go func() {
-		fmt.Printf("GoWave running on %s\n", serverAddr)
+		logx.Infof("http", "GoWave %s is ready on http://%s", system.AppVersion, serverAddr)
 		serveErr <- srv.Serve(listener)
 	}()
 
 	exitCode := 0
 	select {
-	case <-quit:
+	case sig := <-quit:
+		logx.Infof("startup", "%s received, shutting down", sig)
 	case err := <-serveErr:
-		fmt.Fprintf(os.Stderr, "Server failed: %v\n", err)
+		logx.Errorf("http", "Server failed: %v", err)
 		exitCode = 1
 	}
-	fmt.Println("Shutting down GoWave server...")
 
 	cancel()
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		fmt.Printf("Server forced shutdown: %v\n", err)
+		logx.Warnf("http", "Forced shutdown: %v", err)
 	}
 	// Background writers flush what requests queued before the shutdown.
 	app.wait(5 * time.Second)
-	fmt.Println("Server exiting")
+	logx.Infof("startup", "GoWave stopped")
 	if exitCode != 0 {
 		os.Exit(exitCode)
 	}
 }
 
+// httpErrorWriter sends net/http's own errors (TLS handshakes, broken
+// connections) to the service log at debug level: they are noise otherwise.
+type httpErrorWriter struct{}
+
+func (httpErrorWriter) Write(p []byte) (int, error) {
+	logx.Debugf("http", "%s", strings.TrimSpace(string(p)))
+	return len(p), nil
+}
+
+func commitSuffix() string {
+	if system.CommitSha == "" {
+		return ""
+	}
+	sha := system.CommitSha
+	if len(sha) > 7 {
+		sha = sha[:7]
+	}
+	return ", commit " + sha
+}
+
+func countMigrations(db *gorm.DB) int64 {
+	var n int64
+	if !db.Migrator().HasTable("gowave_migrations") {
+		return 0
+	}
+	if err := db.Table("gowave_migrations").Count(&n).Error; err != nil {
+		return 0
+	}
+	return n
+}
+
+// describeDatabase names the database without credentials.
+func describeDatabase(cfg *config.Config) string {
+	if cfg.DBDriver != "postgres" {
+		name := cfg.DatabaseURL
+		if name == "" {
+			name = "gowave.db"
+		}
+		name, _, _ = strings.Cut(strings.TrimPrefix(name, "file:"), "?")
+		if abs, err := filepath.Abs(name); err == nil {
+			name = abs
+		}
+		return "SQLite " + name
+	}
+	if u, err := url.Parse(cfg.DatabaseURL); err == nil && u.Host != "" {
+		return "PostgreSQL " + u.Host + u.Path
+	}
+	fields := map[string]string{}
+	for _, part := range strings.Fields(cfg.DatabaseURL) {
+		if key, value, ok := strings.Cut(part, "="); ok {
+			fields[key] = strings.Trim(value, "'")
+		}
+	}
+	host := fields["host"]
+	if host == "" {
+		host = "localhost"
+	}
+	if port := fields["port"]; port != "" {
+		host = net.JoinHostPort(host, port)
+	}
+	return "PostgreSQL " + host + "/" + fields["dbname"]
+}
+
+func onOff(enabled bool) string {
+	if enabled {
+		return "on"
+	}
+	return "off"
+}
+
+// logStartupSummary reports what this instance is configured to do, so an
+// admin can check the panel's state from `journalctl` or `docker compose logs`.
+func logStartupSummary(cfg *config.Config, db *gorm.DB, app *App) {
+	if who, err := user.Current(); err == nil {
+		where := "native service"
+		if system.IsRunningInDocker() {
+			where = "Docker"
+		}
+		logx.Infof("startup", "Running as %s (%s), timezone UTC", who.Username, where)
+	}
+
+	if app.StaticDir != "" {
+		abs, err := filepath.Abs(app.StaticDir)
+		if err != nil {
+			abs = app.StaticDir
+		}
+		base := cfg.PanelBasePath
+		if base == "" {
+			base = "/"
+		}
+		logx.Infof("http", "Dashboard served from %s at base path %s", abs, base)
+	} else {
+		logx.Warnf("http", "No frontend build found (looked in %s); only the API is served", strings.Join(staticDirs, ", "))
+	}
+	logx.Infof("http", "Panel domain %s, subscription domain %s, HTTP access log %s",
+		valueOr(cfg.PanelDomain, "not set"), valueOr(cfg.SubPublicDomain, "not set"), onOff(cfg.HTTPLogging))
+	if cfg.MetricsEnabled && cfg.MetricsPort != "" {
+		auth := "without basic auth"
+		if cfg.MetricsUser != "" {
+			auth = "with basic auth"
+		}
+		logx.Infof("metrics", "Prometheus metrics on http://%s/metrics %s", net.JoinHostPort(cfg.AppHost, cfg.MetricsPort), auth)
+	} else {
+		logx.Infof("metrics", "Prometheus metrics disabled")
+	}
+
+	n := cfg.Notifications
+	if n.TelegramEnabled {
+		var chats []string
+		for _, chat := range []struct{ name, target string }{
+			{"users", n.TelegramUsers}, {"nodes", n.TelegramNodes}, {"crm", n.TelegramCRM},
+			{"service", n.TelegramService}, {"tblocker", n.TelegramTBlocker},
+		} {
+			if chat.target != "" {
+				chats = append(chats, chat.name)
+			}
+		}
+		proxy := ""
+		if n.TelegramProxy != "" {
+			proxy = " through a proxy"
+		}
+		logx.Infof("telegram", "Telegram notifications on for %s%s; checking the bot token…", valueOr(strings.Join(chats, ", "), "no chats"), proxy)
+	} else {
+		logx.Infof("telegram", "Telegram notifications off (IS_TELEGRAM_NOTIFICATIONS_ENABLED)")
+	}
+	if n.WebhookEnabled {
+		logx.Infof("webhook", "Webhooks on, %d URL(s)", len(n.WebhookURLs))
+	} else {
+		logx.Infof("webhook", "Webhooks off (WEBHOOK_ENABLED)")
+	}
+
+	var users, activeUsers, nodesTotal, nodesEnabled, pending, failed int64
+	db.Model(&database.User{}).Count(&users)
+	db.Model(&database.User{}).Where("status = ?", "ACTIVE").Count(&activeUsers)
+	db.Model(&database.Node{}).Count(&nodesTotal)
+	db.Model(&database.Node{}).Where("is_disabled = ?", false).Count(&nodesEnabled)
+	db.Model(&database.Job{}).Where("state IN ?", []string{"pending", "running"}).Count(&pending)
+	db.Model(&database.Job{}).Where("state = ?", "failed").Count(&failed)
+	logx.Infof("startup", "%d users (%d active), %d nodes (%d enabled)", users, activeUsers, nodesTotal, nodesEnabled)
+	if failed > 0 {
+		logx.Warnf("jobs", "%d background jobs are queued, %d failed for good (see the jobs table)", pending, failed)
+	} else {
+		logx.Infof("jobs", "%d background jobs queued", pending)
+	}
+	if !app.NodeClientReady {
+		logx.Warnf("nodes", "Node certificates are missing; nodes cannot be reached until keygen data exists")
+	}
+
+	switch {
+	case system.IsRunningInDocker():
+		logx.Infof("update", "In-panel updates are off in Docker; update with docker compose pull")
+	case system.UpdateHelperInstalled():
+		logx.Infof("update", "In-panel updates available (gowave-update.path installed)")
+	default:
+		logx.Infof("update", "In-panel updates unavailable: the update helper is not installed (gowave service install)")
+	}
+}
+
+func valueOr(value, fallback string) string {
+	if strings.TrimSpace(value) == "" {
+		return fallback
+	}
+	return value
+}
+
+// staticDirs are searched in order for the frontend build.
+var staticDirs = []string{"./frontend/dist", "./dist", "../frontend/dist", "./static", "/opt/gowave/frontend/dist", "/opt/gowave/dist"}
+
 // App holds the HTTP router and the background workers. Construction has no
 // side effects so tests can inspect routes; Start launches the workers.
 type App struct {
 	Router http.Handler
-	start  func(ctx context.Context)
-	wait   func(timeout time.Duration)
+	// StaticDir is the frontend build being served, empty when none was found.
+	StaticDir string
+	// NodeClientReady is false when no node certificates exist yet.
+	NodeClientReady bool
+	start           func(ctx context.Context)
+	wait            func(timeout time.Duration)
 }
 
 // Start launches the scheduler, job workers and node health checks; they stop
@@ -250,7 +445,7 @@ func NewApp(cfg *config.Config, db *gorm.DB) *App {
 	notifier, err := notify.New(cfg)
 	if err != nil {
 		// Like upstream, an invalid notifications config stops startup.
-		fmt.Fprintf(os.Stderr, "Invalid notifications config: %v\n", err)
+		logx.Errorf("config", "Invalid notifications config: %v", err)
 		os.Exit(1)
 	}
 	notify.SetDefault(notifier)
@@ -504,7 +699,6 @@ func NewApp(cfg *config.Config, db *gorm.DB) *App {
 	_ = mime.AddExtensionType(".json", "application/json")
 	_ = mime.AddExtensionType(".js", "application/javascript")
 
-	staticDirs := []string{"./frontend/dist", "./dist", "../frontend/dist", "./static", "/opt/gowave/frontend/dist", "/opt/gowave/dist"}
 	var staticDir string
 	for _, dir := range staticDirs {
 		if _, err := os.Stat(dir); err == nil {
@@ -518,15 +712,17 @@ func NewApp(cfg *config.Config, db *gorm.DB) *App {
 		r.Head("/*", spa.ServeHTTP)
 	}
 
-	return &App{Router: r, wait: subHandler.WaitHistoryWriter, start: func(ctx context.Context) {
+	return &App{Router: r, StaticDir: staticDir, NodeClientReady: nodeClient != nil, wait: subHandler.WaitHistoryWriter, start: func(ctx context.Context) {
 		go subHandler.RunHistoryWriter(ctx)
 		go notifier.CheckTelegram(ctx)
 		if err := notify.Emit(db, notify.Event{Name: "service.panel_started", Data: map[string]string{"panelVersion": strings.TrimPrefix(system.AppVersion, "v")}}); err != nil {
-			fmt.Printf("panel_started notification: %v\n", err)
+			logx.Errorf("notify", "panel_started notification: %v", err)
 		}
 		go scheduler.Start(ctx)
 		go workQueue.Start(ctx)
 		go nodeService.StartHealthCheckLoop(ctx)
+		logx.Infof("scheduler", "Scheduler started: %s", strings.Join(scheduler.TaskNames(), ", "))
+		logx.Infof("jobs", "%d job workers started", jobs.Workers)
 		go nodeService.SyncAllUsersToConnectedNodes()
 		go metricsExporter.Run(ctx)
 		if cfg.MetricsEnabled && cfg.MetricsPort != "" {

@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 
 	"gowave/internal/database"
 	"gowave/internal/jobs"
+	"gowave/internal/logx"
 
 	"gorm.io/gorm"
 )
@@ -39,7 +39,7 @@ func (s *Service) SyncAllUsersToNode(node *database.Node) {
 		}
 		return jobs.Enqueue(tx, "user-resync", node.UUID, node.UUID, uint64(time.Now().UnixNano()), map[string]string{"uuid": node.UUID})
 	}); err != nil {
-		log.Printf("[NODES] schedule reconciliation: %v", err)
+		logx.Errorf("nodes", "schedule reconciliation: %v", err)
 	}
 }
 

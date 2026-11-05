@@ -9,6 +9,7 @@ import (
 
 	"gowave/internal/database"
 	"gowave/internal/jobs"
+	"gowave/internal/logx"
 	"gowave/internal/notify"
 	"gowave/internal/users"
 
@@ -20,7 +21,7 @@ import (
 func (s *Service) enqueueReportCollection(node *database.Node, now time.Time) {
 	revision := uint64(now.Truncate(time.Minute).Unix())
 	if err := jobs.Enqueue(s.db, "torrent-collect", node.UUID, node.UUID, revision, map[string]string{"uuid": node.UUID}); err != nil {
-		logf("[TORRENT] enqueue collection for %s: %v", node.UUID, err)
+		logx.Errorf("nodes", "enqueue collection for %s: %v", node.UUID, err)
 	}
 }
 

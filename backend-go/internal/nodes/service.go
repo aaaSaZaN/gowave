@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	prom "gowave/internal/metrics"
-	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -16,6 +15,7 @@ import (
 	"gowave/internal/configrender"
 	"gowave/internal/database"
 	"gowave/internal/jobs"
+	"gowave/internal/logx"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -255,9 +255,16 @@ func (s *Service) CheckNodeHealth(node *database.Node) (bool, string) {
 		event := "node.connection_restored"
 		if !alive {
 			event = "node.connection_lost"
+			reason := msg
+			if err != nil {
+				reason = err.Error()
+			}
+			logx.Warnf("nodes", "Lost connection to node %s (%s:%d): %s", node.Name, node.Address, getNodePort(node), valueOr(reason, "no answer"))
+		} else {
+			logx.Infof("nodes", "Node %s (%s:%d) is connected again", node.Name, node.Address, getNodePort(node))
 		}
 		if err := s.emitNodeByUUID(s.db, node.UUID, event); err != nil {
-			log.Printf("[NODES] %s notification: %v", event, err)
+			logx.Errorf("nodes", "%s notification: %v", event, err)
 		}
 	}
 	if changed.RowsAffected != 1 {
@@ -329,7 +336,7 @@ func (s *Service) CheckNodeHealth(node *database.Node) (bool, string) {
 		if !node.IsDisabled && err == nil {
 			revision := uint64(time.Now().Unix() / 60)
 			if err := jobs.Enqueue(s.db, "node-start", node.UUID, node.UUID, revision, map[string]string{"uuid": node.UUID}); err != nil {
-				log.Printf("[NODES] enqueue start for %s: %v", node.UUID, err)
+				logx.Errorf("nodes", "enqueue start for %s: %v", node.UUID, err)
 			}
 		}
 	} else {
@@ -357,6 +364,7 @@ func (s *Service) StartNode(node *database.Node, force bool) (bool, error) {
 	if node.IsDisabled {
 		return false, errors.New("node is disabled")
 	}
+	started := time.Now()
 
 	s.db.Model(&database.Node{}).Where("uuid = ?", node.UUID).Update("is_connecting", true)
 	startupSuccessful := false
@@ -481,7 +489,7 @@ func (s *Service) StartNode(node *database.Node, force bool) (bool, error) {
 	startupSuccessful = true
 	ok, err := client.StartXray(node, payload)
 	if err != nil {
-		log.Printf("[NODES] start %s failed: %v", node.Name, err)
+		logx.Errorf("nodes", "Node %s (%s:%d) failed to start Xray: %v", node.Name, node.Address, getNodePort(node), err)
 		// GoWave Node validates a config before stopping the running Xray,
 		// so a rejected config can leave the node serving the previous one.
 		if health, healthErr := client.CheckHealth(node); healthErr == nil && health.IsAlive {
@@ -516,6 +524,7 @@ func (s *Service) StartNode(node *database.Node, force bool) (bool, error) {
 	}
 
 	if ok {
+		logx.Infof("nodes", "Node %s (%s:%d) started Xray in %s", node.Name, node.Address, getNodePort(node), time.Since(started).Round(time.Millisecond))
 		nodeCopy := *node
 		nodeCopy.IsConnected = true
 		nodeCopy.IsConnecting = false
@@ -543,7 +552,7 @@ func (s *Service) RestartNodesByProfile(profileUUID string) {
 		false, profileUUID, profileUUID,
 	).Find(&nodesList).Error
 	if err != nil {
-		log.Printf("[NODES] RestartNodesByProfile query error: %v", err)
+		logx.Errorf("nodes", "RestartNodesByProfile query error: %v", err)
 		return
 	}
 	for i := range nodesList {
@@ -552,7 +561,7 @@ func (s *Service) RestartNodesByProfile(profileUUID string) {
 			node.ActiveConfigProfileUUID = &profileUUID
 		}
 		if err := jobs.EnqueueNode(s.db, node.UUID, "node-start"); err != nil {
-			log.Printf("[NODES] enqueue restart: %v", err)
+			logx.Errorf("nodes", "enqueue restart: %v", err)
 		}
 	}
 }
@@ -628,13 +637,13 @@ func (s *Service) PollNodeStats(node *database.Node) {
 					"updated_at":     gorm.Expr("excluded.updated_at"),
 				}),
 			}).Create(&history).Error; err != nil {
-				log.Printf("[NODE STATS] upsert node usage history node=%s: %v", node.UUID, err)
+				logx.Errorf("nodes", "upsert node usage history node=%s: %v", node.UUID, err)
 			}
 
 			// Node traffic uses its own multiplier, independent of users'.
 			incNodeTraffic := multiplyConsumption(node.NodeConsumptionMultiplier, nodeTotal)
 			if err := s.db.Exec(`UPDATE nodes SET traffic_used_bytes = traffic_used_bytes + ? WHERE uuid = ?`, incNodeTraffic, node.UUID).Error; err != nil {
-				log.Printf("[NODE STATS] update node traffic node=%s: %v", node.UUID, err)
+				logx.Errorf("nodes", "update node traffic node=%s: %v", node.UUID, err)
 			}
 
 			inbounds := make([]prom.NodeTraffic, 0, len(combinedStats.Inbounds))
@@ -686,7 +695,7 @@ func (s *Service) runHealthChecks(ctx context.Context) {
 	for {
 		var nodes []database.Node
 		if err := s.db.Where("is_disabled = ?", false).Find(&nodes).Error; err != nil {
-			log.Printf("[NODES] health check: %v", err)
+			logx.Errorf("nodes", "health check: %v", err)
 		}
 		for i := range nodes {
 			node := nodes[i]
@@ -726,7 +735,7 @@ func (s *Service) runStatsPolls(ctx context.Context) {
 		}
 		var nodes []database.Node
 		if err := s.db.Where("is_disabled = ? AND is_connected = ?", false, true).Find(&nodes).Error; err != nil {
-			log.Printf("[NODES] stats poll: %v", err)
+			logx.Errorf("nodes", "stats poll: %v", err)
 			continue
 		}
 		for i := range nodes {
@@ -1187,7 +1196,7 @@ func (s *Service) SyncUserToNodes(user *database.User, previous *string) {
 		return
 	}
 	if err := jobs.EnqueueUser(s.db, user, previous, false); err != nil {
-		log.Printf("[NODES] enqueue user: %v", err)
+		logx.Errorf("nodes", "enqueue user: %v", err)
 	}
 }
 func (s *Service) RemoveUserFromNodes(user *database.User) {
@@ -1195,7 +1204,7 @@ func (s *Service) RemoveUserFromNodes(user *database.User) {
 		return
 	}
 	if err := jobs.EnqueueUser(s.db, user, nil, true); err != nil {
-		log.Printf("[NODES] enqueue removal: %v", err)
+		logx.Errorf("nodes", "enqueue removal: %v", err)
 	}
 }
 func (s *Service) SyncAllUsersToConnectedNodes() {
@@ -1349,4 +1358,9 @@ func (s *Service) SetDisabled(nodeUUID string, disabled bool) (*database.Node, e
 	return s.GetByUUID(nodeUUID)
 }
 
-func logf(format string, args ...interface{}) { log.Printf(format, args...) }
+func valueOr(value, fallback string) string {
+	if strings.TrimSpace(value) == "" {
+		return fallback
+	}
+	return value
+}
