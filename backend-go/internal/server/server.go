@@ -334,6 +334,7 @@ func NewApp(cfg *config.Config, db *gorm.DB) *App {
 		protected.Get("/api/system/metadata", sysHandler.GetMetadata)
 		protected.Get("/api/system/updates/check", sysHandler.CheckUpdate)
 		protected.Post("/api/system/updates/apply", sysHandler.ApplyUpdate)
+		protected.Get("/api/system/updates/status", sysHandler.UpdateStatus)
 		protected.Get("/api/tokens", tokensHandler.GetApiTokens)
 		protected.Post("/api/tokens", tokensHandler.CreateApiToken)
 		protected.Delete("/api/tokens/{uuid}", tokensHandler.DeleteApiToken)

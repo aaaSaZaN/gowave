@@ -6,12 +6,16 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func writeTarGz(t *testing.T, entries []tar.Header, bodies map[string]string) string {
@@ -201,5 +205,231 @@ func TestInstallerCommandPassesChannelToScript(t *testing.T) {
 	want := `sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/aaaSaZaN/gowave/main/install.sh)" _ --update --dev`
 	if got := installerCommand(ChannelDev); got != want {
 		t.Fatalf("installerCommand(dev) = %q, want %q", got, want)
+	}
+}
+
+func useUpdateRuntimeDir(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	old := updateRequestDir
+	t.Cleanup(func() { updateRequestDir = old })
+	updateRequestDir = dir
+	t.Setenv("RUNTIME_DIRECTORY", "")
+	return dir
+}
+
+func TestUpdateReporterWritesProgressAndErrors(t *testing.T) {
+	dir := useUpdateRuntimeDir(t)
+
+	report := newUpdateReporter(dir, ChannelDev)
+	report.Step(UpdateStepDownload, 5, "Downloading %s", "gowave-linux-amd64")
+	report.Download("gowave-linux-amd64", 50, 100, 5, 55)
+	report.Fail(errors.New("download gowave-linux-amd64: bad status: 404 Not Found"))
+
+	status, err := readUpdateStatus()
+	if err != nil || status == nil {
+		t.Fatalf("readUpdateStatus() = %v, %v", status, err)
+	}
+	if status.State != UpdateStateFailed || status.Step != UpdateStepDownload || status.Channel != ChannelDev {
+		t.Fatalf("status = %+v", status)
+	}
+	if !strings.Contains(status.Error, "404") || status.FinishedAt == nil || status.Progress < 5 {
+		t.Fatalf("failed status = %+v", status)
+	}
+	last := status.Log[len(status.Log)-1]
+	if last.Level != "error" || !strings.Contains(last.Message, "404") {
+		t.Fatalf("last log line = %+v", last)
+	}
+	if info, err := os.Stat(filepath.Join(dir, updateStatusName)); err != nil || info.Mode().Perm() != 0o644 {
+		t.Fatalf("status file mode: %v %v", info, err)
+	}
+
+	report = newUpdateReporter(dir, ChannelStable)
+	report.Done("v9.9.9")
+	status, err = readUpdateStatus()
+	if err != nil || status.State != UpdateStateDone || status.Progress != 100 || status.InstalledVersion != "v9.9.9" {
+		t.Fatalf("done status = %+v, %v", status, err)
+	}
+}
+
+func TestUpdateStatusIgnoresLinks(t *testing.T) {
+	dir := useUpdateRuntimeDir(t)
+	target := filepath.Join(t.TempDir(), "target")
+	if err := os.WriteFile(target, []byte(`{"state":"done"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, filepath.Join(dir, updateStatusName)); err != nil {
+		t.Fatal(err)
+	}
+	if status, err := readUpdateStatus(); err == nil || status != nil {
+		t.Fatalf("readUpdateStatus() through a link = %v, %v", status, err)
+	}
+	// The helper replaces the link with its own file and leaves the target alone.
+	newUpdateReporter(dir, ChannelStable).Info("hello")
+	if data, _ := os.ReadFile(target); string(data) != `{"state":"done"}` {
+		t.Fatalf("link target changed: %s", data)
+	}
+	if status, err := readUpdateStatus(); err != nil || status.State != UpdateStateRunning {
+		t.Fatalf("status after replace = %v, %v", status, err)
+	}
+}
+
+func TestUpdateReporterKeepsLogBounded(t *testing.T) {
+	dir := useUpdateRuntimeDir(t)
+	report := newUpdateReporter(dir, ChannelStable)
+	for i := 0; i < maxUpdateStatusLog+20; i++ {
+		report.Info("line %d", i)
+	}
+	status, err := readUpdateStatus()
+	if err != nil || len(status.Log) != maxUpdateStatusLog || status.Log[0].Message != "line 20" {
+		t.Fatalf("log = %d lines, first %+v, %v", len(status.Log), status.Log[0], err)
+	}
+}
+
+func TestUpdateStatusHandler(t *testing.T) {
+	dir := useUpdateRuntimeDir(t)
+	requestDir := dir
+
+	get := func() map[string]interface{} {
+		t.Helper()
+		w := httptest.NewRecorder()
+		(&Handler{}).UpdateStatus(w, httptest.NewRequest(http.MethodGet, "/api/system/updates/status", nil))
+		if w.Code != http.StatusOK || !strings.Contains(w.Header().Get("Cache-Control"), "no-store") {
+			t.Fatalf("status: %d %v", w.Code, w.Header())
+		}
+		var body map[string]interface{}
+		if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		return body
+	}
+
+	body := get()
+	if body["status"] != nil || body["requestPending"] != false {
+		t.Fatalf("idle status = %v", body)
+	}
+
+	if err := os.WriteFile(filepath.Join(requestDir, updateRequestName), []byte("dev"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	newUpdateReporter(dir, ChannelDev).Step(UpdateStepVerify, 76, "Checking SHA256SUMS")
+	body = get()
+	status, _ := body["status"].(map[string]interface{})
+	if body["requestPending"] != true || status["step"] != UpdateStepVerify || status["state"] != UpdateStateRunning {
+		t.Fatalf("running status = %v", body)
+	}
+}
+
+// githubStub answers release API calls in place of api.github.com.
+type githubStub struct {
+	calls   int
+	handler http.HandlerFunc
+}
+
+func useGitHubStub(t *testing.T, handler http.HandlerFunc) *githubStub {
+	t.Helper()
+	stub := &githubStub{handler: handler}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		stub.calls++
+		stub.handler(w, r)
+	}))
+	t.Cleanup(server.Close)
+	target, _ := url.Parse(server.URL)
+	oldClient := releaseHTTPClient
+	releaseCache.Lock()
+	releaseCache.byChannel = map[string]cachedRelease{}
+	releaseCache.Unlock()
+	t.Cleanup(func() {
+		releaseHTTPClient = oldClient
+		releaseCache.Lock()
+		releaseCache.byChannel = map[string]cachedRelease{}
+		releaseCache.Unlock()
+	})
+	releaseHTTPClient = &http.Client{Timeout: 5 * time.Second, Transport: rewriteTransport{target: target}}
+	return stub
+}
+
+type rewriteTransport struct{ target *url.URL }
+
+func (rt rewriteTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	r = r.Clone(r.Context())
+	r.URL.Scheme, r.URL.Host = rt.target.Scheme, rt.target.Host
+	return http.DefaultTransport.RoundTrip(r)
+}
+
+func checkUpdate(t *testing.T, query string) (int, map[string]interface{}) {
+	t.Helper()
+	w := httptest.NewRecorder()
+	(&Handler{}).CheckUpdate(w, httptest.NewRequest(http.MethodGet, "/api/system/updates/check"+query, nil))
+	if !strings.Contains(w.Header().Get("Cache-Control"), "no-store") {
+		t.Fatalf("check is cacheable: %v", w.Header())
+	}
+	var body map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+		t.Fatalf("%d %s", w.Code, w.Body.String())
+	}
+	return w.Code, body
+}
+
+func TestCheckUpdateCachesAndForces(t *testing.T) {
+	name := "v99.0.0"
+	stub := useGitHubStub(t, func(w http.ResponseWriter, r *http.Request) {
+		etag := `"` + name + `"`
+		if r.Header.Get("If-None-Match") == etag {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		w.Header().Set("ETag", etag)
+		_ = json.NewEncoder(w).Encode(GitHubRelease{TagName: name, Name: name})
+	})
+
+	code, body := checkUpdate(t, "?channel=stable")
+	if code != http.StatusOK || body["latestVersion"] != "v99.0.0" || stub.calls != 1 {
+		t.Fatalf("first check: %d %v calls=%d", code, body, stub.calls)
+	}
+	name = "v99.0.1"
+	if _, body = checkUpdate(t, "?channel=stable"); body["latestVersion"] != "v99.0.0" || stub.calls != 1 {
+		t.Fatalf("cached check: %v calls=%d", body, stub.calls)
+	}
+
+	// A forced check right after a fetch is still answered from the cache.
+	if _, body = checkUpdate(t, "?channel=stable&force=1"); stub.calls != 1 {
+		t.Fatalf("forced check within %s: %v calls=%d", releaseForceInterval, body, stub.calls)
+	}
+	releaseCache.Lock()
+	c := releaseCache.byChannel[ChannelStable]
+	c.fetched = c.fetched.Add(-releaseForceInterval)
+	releaseCache.byChannel[ChannelStable] = c
+	releaseCache.Unlock()
+	if _, body = checkUpdate(t, "?channel=stable&force=1"); body["latestVersion"] != "v99.0.1" || stub.calls != 2 {
+		t.Fatalf("forced check: %v calls=%d", body, stub.calls)
+	}
+
+	// An unchanged release is answered with 304 and keeps the cached one.
+	releaseCache.Lock()
+	c = releaseCache.byChannel[ChannelStable]
+	c.fetched = c.fetched.Add(-releaseCacheTTL)
+	releaseCache.byChannel[ChannelStable] = c
+	releaseCache.Unlock()
+	if _, body = checkUpdate(t, "?channel=stable"); body["latestVersion"] != "v99.0.1" || stub.calls != 3 {
+		t.Fatalf("not modified: %v calls=%d", body, stub.calls)
+	}
+}
+
+func TestCheckUpdateExplainsRateLimit(t *testing.T) {
+	stub := useGitHubStub(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("X-RateLimit-Remaining", "0")
+		w.Header().Set("X-RateLimit-Reset", "1800000000")
+		w.WriteHeader(http.StatusForbidden)
+	})
+	code, body := checkUpdate(t, "?channel=stable")
+	message, _ := body["message"].(string)
+	if code != http.StatusBadGateway || !strings.Contains(message, "rate limit") || !strings.Contains(message, "UTC") {
+		t.Fatalf("rate limited: %d %v", code, body)
+	}
+	// The failure is remembered briefly instead of asking GitHub on every check.
+	checkUpdate(t, "?channel=stable")
+	if stub.calls != 1 {
+		t.Fatalf("calls after a failure = %d, want 1", stub.calls)
 	}
 }

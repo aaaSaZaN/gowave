@@ -5,12 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"gowave/internal/httpx"
 )
 
 type GitHubRelease struct {
@@ -20,12 +24,23 @@ type GitHubRelease struct {
 }
 
 // GitHub allows 60 anonymous API calls an hour per address, and every open
-// dashboard asks for updates, so answers are kept for a while.
-const releaseCacheTTL = 10 * time.Minute
+// dashboard asks for updates, so answers are kept for a while. Repeated checks
+// send the previous ETag: a "304 Not Modified" answer does not count against
+// the limit. A failed check is remembered briefly so open dashboards do not
+// keep hitting a rate-limited API.
+const (
+	releaseCacheTTL      = 10 * time.Minute
+	releaseErrorTTL      = time.Minute
+	releaseForceInterval = 10 * time.Second
+)
 
 type cachedRelease struct {
-	release GitHubRelease
-	fetched time.Time
+	release   GitHubRelease
+	etag      string
+	fetched   time.Time
+	err       error
+	errAt     time.Time
+	hasResult bool
 }
 
 var releaseCache = struct {
@@ -33,29 +48,80 @@ var releaseCache = struct {
 	byChannel map[string]cachedRelease
 }{byChannel: map[string]cachedRelease{}}
 
-// fetchRelease returns the newest release of a channel. A dev release always
-// carries the "dev" tag, so its name holds the build version (dev-<sha>).
-func fetchRelease(channel string) (GitHubRelease, error) {
+// releaseHTTPClient is replaced in tests.
+var releaseHTTPClient = &http.Client{Timeout: 15 * time.Second}
+
+// fetchRelease returns the newest release of a channel and when GitHub was last
+// asked. A dev release always carries the "dev" tag, so its name holds the
+// build version (dev-<sha>). force skips the cache unless it is only seconds old.
+func fetchRelease(channel string, force bool) (GitHubRelease, time.Time, error) {
 	releaseCache.Lock()
 	defer releaseCache.Unlock()
-	if c, ok := releaseCache.byChannel[channel]; ok && time.Since(c.fetched) < releaseCacheTTL {
-		return c.release, nil
+	c := releaseCache.byChannel[channel]
+	now := time.Now()
+	if force {
+		if c.hasResult && now.Sub(c.fetched) < releaseForceInterval {
+			return c.release, c.fetched, nil
+		}
+		if c.err != nil && now.Sub(c.errAt) < releaseForceInterval {
+			return GitHubRelease{}, c.errAt, c.err
+		}
+	} else {
+		if c.hasResult && now.Sub(c.fetched) < releaseCacheTTL {
+			return c.release, c.fetched, nil
+		}
+		if c.err != nil && now.Sub(c.errAt) < releaseErrorTTL {
+			return GitHubRelease{}, c.errAt, c.err
+		}
 	}
-	client := &http.Client{Timeout: 15 * time.Second}
-	resp, err := client.Get(releaseAPIURL(channel))
+
+	release, etag, notModified, err := requestRelease(channel, c.etag)
 	if err != nil {
-		return GitHubRelease{}, err
+		c.err, c.errAt = err, now
+		releaseCache.byChannel[channel] = c
+		return GitHubRelease{}, now, err
+	}
+	if notModified && c.hasResult {
+		release, etag = c.release, c.etag
+	}
+	releaseCache.byChannel[channel] = cachedRelease{release: release, etag: etag, fetched: now, hasResult: true}
+	return release, now, nil
+}
+
+func requestRelease(channel, etag string) (release GitHubRelease, newETag string, notModified bool, err error) {
+	req, err := http.NewRequest(http.MethodGet, releaseAPIURL(channel), nil)
+	if err != nil {
+		return GitHubRelease{}, "", false, err
+	}
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "GoWave/"+AppVersion)
+	if etag != "" {
+		req.Header.Set("If-None-Match", etag)
+	}
+	resp, err := releaseHTTPClient.Do(req)
+	if err != nil {
+		return GitHubRelease{}, "", false, fmt.Errorf("GitHub is not reachable from the server: %w", err)
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return GitHubRelease{}, fmt.Errorf("GitHub releases returned %s", resp.Status)
+	switch {
+	case resp.StatusCode == http.StatusNotModified && etag != "":
+		return GitHubRelease{}, etag, true, nil
+	case resp.StatusCode == http.StatusOK:
+	case resp.StatusCode == http.StatusNotFound && channel == ChannelDev:
+		return GitHubRelease{}, "", false, errors.New("GitHub has no dev build right now; a new one may be being published, try again in a few minutes")
+	case (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusTooManyRequests) && resp.Header.Get("X-RateLimit-Remaining") == "0":
+		msg := "GitHub API rate limit for this server's address is exhausted (60 requests an hour)"
+		if reset, err := strconv.ParseInt(resp.Header.Get("X-RateLimit-Reset"), 10, 64); err == nil {
+			msg += "; it resets at " + time.Unix(reset, 0).UTC().Format("15:04 UTC")
+		}
+		return GitHubRelease{}, "", false, errors.New(msg)
+	default:
+		return GitHubRelease{}, "", false, fmt.Errorf("GitHub releases returned %s", resp.Status)
 	}
-	var release GitHubRelease
 	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&release); err != nil {
-		return GitHubRelease{}, err
+		return GitHubRelease{}, "", false, fmt.Errorf("read GitHub release: %w", err)
 	}
-	releaseCache.byChannel[channel] = cachedRelease{release: release, fetched: time.Now()}
-	return release, nil
+	return release, resp.Header.Get("ETag"), false, nil
 }
 
 func releaseVersion(channel string, release GitHubRelease) string {
@@ -82,17 +148,26 @@ func IsRunningInDocker() bool {
 	return false
 }
 
+// noStore keeps browsers and proxies from caching update answers.
+func noStore(w http.ResponseWriter) {
+	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+}
+
 // CheckUpdate reports the newest build of a channel: the current one, or the
-// one named by ?channel= when the admin is about to switch between stable and dev.
+// one named by ?channel= when the admin is about to switch between stable and
+// dev. ?force=1 asks GitHub again instead of answering from the cache.
 func (h *Handler) CheckUpdate(w http.ResponseWriter, r *http.Request) {
+	noStore(w)
 	channel, err := parseChannel(r.URL.Query().Get("channel"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httpx.Error(w, r, http.StatusBadRequest, httpx.CodeInternal, err.Error())
 		return
 	}
-	release, err := fetchRelease(channel)
+	force := r.URL.Query().Get("force") == "1" || r.URL.Query().Get("force") == "true"
+	release, checkedAt, err := fetchRelease(channel, force)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadGateway)
+		httpx.Error(w, r, http.StatusBadGateway, httpx.CodeInternal, "Could not check for updates: "+err.Error())
 		return
 	}
 	latest := releaseVersion(channel, release)
@@ -108,14 +183,14 @@ func (h *Handler) CheckUpdate(w http.ResponseWriter, r *http.Request) {
 		"hasUpdate":      latest != "" && AppVersion != "unknown" && (switching || latest != AppVersion),
 		"isDocker":       isDocker,
 		"canAutoUpdate":  !isDocker && updateHelperInstalled(),
+		"checkedAt":      checkedAt.UTC(),
 	}
 	if isDocker {
 		result["updateCommand"] = DockerUpdateCommand(channel)
 	} else if !updateHelperInstalled() {
 		result["updateCommand"] = installerCommand(channel)
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	httpx.JSON(w, http.StatusOK, result)
 }
 
 // DockerUpdateCommand is shown instead of in-panel updates: a container cannot
@@ -159,6 +234,7 @@ func updateHelperInstalled() bool {
 }
 
 func (h *Handler) ApplyUpdate(w http.ResponseWriter, r *http.Request) {
+	noStore(w)
 	// An optional {"channel": "stable"|"dev"} switches channels; without it the
 	// panel updates within its own channel.
 	var body struct {
@@ -166,35 +242,67 @@ func (h *Handler) ApplyUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.Body != nil {
 		if err := json.NewDecoder(io.LimitReader(r.Body, 1<<10)).Decode(&body); err != nil && !errors.Is(err, io.EOF) {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			httpx.Error(w, r, http.StatusBadRequest, httpx.CodeInternal, "Invalid request body")
 			return
 		}
 	}
 	channel, err := parseChannel(body.Channel)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httpx.Error(w, r, http.StatusBadRequest, httpx.CodeInternal, err.Error())
 		return
 	}
 	if IsRunningInDocker() {
-		http.Error(w, "In-panel updates are not available in Docker. Update on the server: "+DockerUpdateCommand(channel), http.StatusBadRequest)
+		httpx.Error(w, r, http.StatusBadRequest, httpx.CodeInternal, "In-panel updates are not available in Docker. Update on the server: "+DockerUpdateCommand(channel))
 		return
 	}
 	if !updateHelperInstalled() {
-		http.Error(w, "The update helper is not installed. Update on the server: "+installerCommand(channel), http.StatusConflict)
+		httpx.Error(w, r, http.StatusConflict, httpx.CodeInternal, "The update helper is not installed. Update on the server: "+installerCommand(channel))
 		return
 	}
 
-	dir := updateRequestDir
-	if runtimeDir := os.Getenv("RUNTIME_DIRECTORY"); runtimeDir != "" {
-		dir, _, _ = strings.Cut(runtimeDir, ":")
-	}
 	// The request names only the channel; the root helper accepts nothing else
 	// and downloads that channel's newest verified build.
-	if err := os.WriteFile(filepath.Join(dir, updateRequestName), []byte(channel), 0600); err != nil {
-		http.Error(w, "Failed to request the update: "+err.Error(), http.StatusInternalServerError)
+	requestedAt := time.Now().UTC()
+	if err := os.WriteFile(updateRequestPath(), []byte(channel), 0600); err != nil {
+		httpx.Error(w, r, http.StatusInternalServerError, httpx.CodeInternal, "Failed to request the update: "+err.Error())
 		return
 	}
+	log.Printf("panel update to the latest %s build requested; progress: journalctl -u gowave-update.service", channel)
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]bool{"success": true})
+	httpx.JSON(w, http.StatusOK, map[string]interface{}{"success": true, "channel": channel, "requestedAt": requestedAt})
+}
+
+// updateRuntimeDir holds the update request and the helper's status file.
+func updateRuntimeDir() string {
+	if runtimeDir := os.Getenv("RUNTIME_DIRECTORY"); runtimeDir != "" {
+		dir, _, _ := strings.Cut(runtimeDir, ":")
+		return dir
+	}
+	return updateRequestDir
+}
+
+func updateRequestPath() string {
+	return filepath.Join(updateRuntimeDir(), updateRequestName)
+}
+
+// UpdateStatus reports the progress of an in-panel update: whether the request
+// still waits for the root helper, and what the helper last reported.
+func (h *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
+	noStore(w)
+	_, err := os.Lstat(updateRequestPath())
+	result := map[string]interface{}{
+		"currentVersion":  AppVersion,
+		"channel":         CurrentChannel(),
+		"helperInstalled": updateHelperInstalled(),
+		"requestPending":  err == nil,
+		"serverTime":      time.Now().UTC(),
+		"status":          nil,
+	}
+	status, err := readUpdateStatus()
+	if err != nil {
+		result["statusError"] = err.Error()
+	} else if status != nil {
+		result["status"] = status
+	}
+	httpx.JSON(w, http.StatusOK, result)
 }
