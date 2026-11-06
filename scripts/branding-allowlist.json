@@ -216,6 +216,11 @@
       "count": 1,
       "sha256": "cea6f510bd5862422ba0aed529c0922f1ac98343a64c90e5c2c16dc060ed53b7"
     },
+    "frontend/src/features/ui/dashboard/nodes/get-node-geocheck/get-node-geocheck.feature.tsx": {
+      "reason": "Legacy upstream compatibility note describing which node builds expose geocheck.",
+      "count": 1,
+      "sha256": "82578cfd53c52f7bc6178b2c50dd4fedd58ac8ca4bbbd83a214750b7b4f93c6d"
+    },
     "frontend/src/shared/_modals/nodes/node-geocheck-modal/geocheck-result.widget.tsx": {
       "reason": "Existing external editor/template/help/geolocation resource dependency or upstream author identifier.",
       "count": 1,

@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	AppVersion = "v1.0.5"
+	AppVersion = "v1.2.4"
 	BuildTime  = "unknown"
 	BuildNum   = "1"
 )

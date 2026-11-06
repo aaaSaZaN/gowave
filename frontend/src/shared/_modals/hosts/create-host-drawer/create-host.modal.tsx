@@ -1,5 +1,5 @@
 import NiceModal, { useModal } from '@ebay/nice-modal-react'
-import { Button, CopyButton, Drawer, Group, Modal, Stack, Textarea, TextInput } from '@mantine/core'
+import { Button, Drawer, Group } from '@mantine/core'
 import { schemaResolver, useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import {
@@ -9,7 +9,6 @@ import {
 } from '@remnawave/backend-contract'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { queryClient } from '@shared/api'
-import { instance } from '@shared/api/axios'
 import {
     QueryKeys,
     useCreateHost,
@@ -19,12 +18,11 @@ import {
     useGetNodes,
     useGetSubscriptionTemplates
 } from '@shared/api/hooks'
-import { runAsync } from '@shared/lib/run-async'
-import { LoadingScreen } from '@shared/ui'
+import { HostClientConfigPreviewModal, LoadingScreen } from '@shared/ui'
 import { BaseHostForm } from '@shared/ui/forms/hosts/base-host-form'
+import type { HostPreviewPayload } from '@shared/ui/host-client-config-preview/host-client-config-preview'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { parseJsonField } from '@shared/utils/misc'
-import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiEye, PiListChecks } from 'react-icons/pi'
@@ -39,15 +37,41 @@ export const CreateHostDrawer = NiceModal.create(() => {
     })
 
     const [previewOpen, setPreviewOpen] = useState(false)
-    const [previewUA, setPreviewUA] = useState('ClashMeta')
-    const [previewContent, setPreviewContent] = useState('')
-    const [previewLoading, setPreviewLoading] = useState(false)
+    const [previewPayload, setPreviewPayload] = useState<HostPreviewPayload>({ host: {} })
+    const [previewInboundType, setPreviewInboundType] = useState<string | null>(null)
 
     const { data: configProfiles } = useGetConfigProfiles()
     const { data: nodes } = useGetNodes()
     const { data: internalSquads } = useGetInternalSquads()
     const { data: templates } = useGetSubscriptionTemplates()
     const { data: hostTags } = useGetHostTags()
+
+    const openPreview = () => {
+        const values = form.getValues()
+
+        const selectedProfile = configProfiles?.configProfiles.find(
+            (item) => item.uuid === values.inbound.configProfileUuid
+        )
+        const selectedInbound = selectedProfile?.inbounds.find(
+            (item) => item.uuid === values.inbound.configProfileInboundUuid
+        )
+
+        setPreviewPayload({
+            host: {
+                remark: values.remark || 'PreviewHost',
+                address: values.address || 'example.com',
+                port: Number(values.port) || 443,
+                path: values.path || '',
+                sni: values.sni || values.address || 'example.com',
+                fingerprint: values.fingerprint || 'chrome',
+                securityLayer: values.securityLayer || 'DEFAULT',
+                configProfileUuid: values.inbound.configProfileUuid,
+                configProfileInboundUuid: values.inbound.configProfileInboundUuid
+            }
+        })
+        setPreviewInboundType(selectedInbound?.type ?? null)
+        setPreviewOpen(true)
+    }
 
     const form = useForm<CreateHostCommand.RequestBody>({
         mode: 'uncontrolled',
@@ -76,39 +100,6 @@ export const CreateHostDrawer = NiceModal.create(() => {
             }
         }
     })
-
-    const handlePreview = async () => {
-        setPreviewLoading(true)
-        try {
-            const values = form.getValues()
-            const res = await instance.post('/api/hosts/preview', {
-                host: {
-                    remark: values.remark || 'PreviewHost',
-                    address: values.address || 'example.com',
-                    port: Number(values.port) || 443,
-                    path: values.path || '',
-                    sni: values.sni || values.address || 'example.com',
-                    fingerprint: values.fingerprint || 'chrome',
-                    securityLayer: values.securityLayer || 'DEFAULT'
-                },
-                userAgent: previewUA,
-                protocol: 'vless'
-            })
-            setPreviewContent(res.data.response?.previewContent || '')
-        } catch (err: unknown) {
-            const responseMessage = isAxiosError<{ message?: string }>(err)
-                ? err.response?.data?.message
-                : undefined
-            notifications.show({
-                title: 'Preview Error',
-                message:
-                    responseMessage || (err instanceof Error ? err.message : 'Failed to preview'),
-                color: 'red'
-            })
-        } finally {
-            setPreviewLoading(false)
-        }
-    }
 
     const { mutate: createHost, isPending: isCreateHostPending } = useCreateHost({
         mutationFns: {
@@ -192,8 +183,7 @@ export const CreateHostDrawer = NiceModal.create(() => {
                             color="cyan"
                             leftSection={<PiEye size={16} />}
                             onClick={() => {
-                                setPreviewOpen(true)
-                                runAsync(handlePreview())
+                                openPreview()
                             }}
                         >
                             Preview Config
@@ -217,43 +207,12 @@ export const CreateHostDrawer = NiceModal.create(() => {
                 )}
             </Drawer>
 
-            <Modal
-                opened={previewOpen}
+            <HostClientConfigPreviewModal
+                inboundType={previewInboundType}
                 onClose={() => setPreviewOpen(false)}
-                title="Host Client Config Preview"
-                size="lg"
-            >
-                <Stack gap="md">
-                    <Group align="flex-end">
-                        <TextInput
-                            label="Client User-Agent"
-                            value={previewUA}
-                            onChange={(e) => setPreviewUA(e.currentTarget.value)}
-                            placeholder="ClashMeta, Sing-Box, v2rayN..."
-                            style={{ flex: 1 }}
-                        />
-                        <Button loading={previewLoading} onClick={handlePreview}>
-                            Generate
-                        </Button>
-                    </Group>
-                    <Textarea
-                        label="Client Output"
-                        value={previewContent}
-                        readOnly
-                        rows={12}
-                        styles={{ input: { fontFamily: 'monospace', fontSize: '12px' } }}
-                    />
-                    <Group justify="flex-end">
-                        <CopyButton value={previewContent}>
-                            {({ copied, copy }) => (
-                                <Button color={copied ? 'teal' : 'blue'} onClick={copy}>
-                                    {copied ? 'Copied' : 'Copy Config'}
-                                </Button>
-                            )}
-                        </CopyButton>
-                    </Group>
-                </Stack>
-            </Modal>
+                opened={previewOpen}
+                payload={previewPayload}
+            />
         </>
     )
 })

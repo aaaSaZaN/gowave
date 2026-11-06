@@ -7,7 +7,7 @@ import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbMapSearch } from 'react-icons/tb'
 
-const MIN_NODE_VERSION = '3.3.0'
+const MIN_TS_NODE_VERSION = '3.3.0'
 
 interface IProps {
     node: GetNodeCommand.Response['response']
@@ -20,25 +20,30 @@ const GetNodeGeocheckFeatureComponent = (props: IProps) => {
     const nodeVersion = node.versions?.node
 
     const isSupported = useMemo(() => {
-        // GoWave Node (Go) has its own version line, which the panel marks with "(Go)";
-        // every release of it serves geocheck.
-        if (nodeVersion?.includes('(Go)')) {
-            return true
+        // Only legacy TypeScript Remnawave nodes before 3.3.0 lack geocheck.
+        // Every GoWave Node (Go) release supports geocheck out of the box.
+        if (nodeVersion?.includes('(TS)')) {
+            const version = semver.coerce(nodeVersion)
+            return version !== null && semver.gte(version, MIN_TS_NODE_VERSION)
         }
 
-        const version = semver.coerce(nodeVersion)
-
-        return version !== null && semver.gte(version, MIN_NODE_VERSION)
+        return true
     }, [nodeVersion])
 
+    const tooltipLabel = useMemo(() => {
+        if (!isSupported) {
+            return t('node-geocheck.requires-node-version', {
+                version: `TS ${MIN_TS_NODE_VERSION}`
+            })
+        }
+        if (!node.isConnected) {
+            return `${t('node-geocheck.title')} (${t('common.status.offline', { defaultValue: 'нода не в сети' })})`
+        }
+        return t('node-geocheck.title')
+    }, [isSupported, node.isConnected, t])
+
     return (
-        <Tooltip
-            label={
-                isSupported
-                    ? t('node-geocheck.title')
-                    : t('node-geocheck.requires-node-version', { version: MIN_NODE_VERSION })
-            }
-        >
+        <Tooltip label={tooltipLabel}>
             <ActionIcon
                 disabled={!isSupported}
                 color="indigo"

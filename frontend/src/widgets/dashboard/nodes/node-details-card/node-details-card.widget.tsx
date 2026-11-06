@@ -1,4 +1,5 @@
 import { GetActiveSessionsOnNodeFeature } from '@features/ui/dashboard/nodes/get-active-sesions-on-node'
+import { GetNodeGeocheckFeature } from '@features/ui/dashboard/nodes/get-node-geocheck'
 import { GetNodeInboundsHostsFeature } from '@features/ui/dashboard/nodes/get-node-inbounds-hosts'
 import { GetNodeLinkedHostsFeature } from '@features/ui/dashboard/nodes/get-node-linked-hosts'
 import { GetNodeUsersUsageFeature } from '@features/ui/dashboard/nodes/get-node-users-usage'
@@ -312,6 +313,7 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                             </ActionIcon>
                         </Tooltip>
                         <OpenNodeLogsFeature node={node} />
+                        <GetNodeGeocheckFeature node={node} />
                     </Group>
 
                     <Divider opacity={0.3} orientation="vertical" />

@@ -43,7 +43,8 @@ bin/
 *.sqlite
 *.sqlite3
 
-# Binar
+# Build & release binaries
+gowave
 /gowave-*
 /backend-go/gowave-*
 backend-go/server-linux-*

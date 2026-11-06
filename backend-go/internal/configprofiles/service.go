@@ -8,6 +8,7 @@ import (
 
 	"gowave/internal/database"
 	"gowave/internal/logx"
+	"gowave/internal/subtpl/js"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -659,6 +660,26 @@ type PreviewResponse struct {
 	PreviewContent string            `json:"previewContent"`
 }
 
+// Sample credentials shown instead of real user data; the panel already
+// replaces them with actual subscription values when rendering for a user.
+const (
+	previewSampleUUID     = "11111111-2222-3333-4444-555555555555"
+	previewSamplePassword = "11111111222233334444555555555555"
+)
+
+// lookupPreviewInbound resolves the stored inbound so the preview can mirror
+// the real protocol instead of trusting the requested one.
+func (s *Service) lookupPreviewInbound(inboundUUID string) (*database.ConfigProfileInbound, bool) {
+	if strings.TrimSpace(inboundUUID) == "" {
+		return nil, false
+	}
+	var inbound database.ConfigProfileInbound
+	if err := s.db.Where("uuid = ?", inboundUUID).First(&inbound).Error; err != nil {
+		return nil, false
+	}
+	return &inbound, true
+}
+
 func (s *Service) GenerateHostPreview(req PreviewRequest) (*PreviewResponse, error) {
 	var h CreateHostDTO
 	if req.Host != nil {
@@ -679,6 +700,9 @@ func (s *Service) GenerateHostPreview(req PreviewRequest) (*PreviewResponse, err
 			Fingerprint:   existing.Fingerprint,
 			SecurityLayer: existing.SecurityLayer,
 		}
+		if existing.ConfigProfileInboundUUID != nil {
+			h.ConfigProfileInboundUUID = *existing.ConfigProfileInboundUUID
+		}
 	} else {
 		return nil, fmt.Errorf("host details or hostUuid must be provided")
 	}
@@ -689,26 +713,79 @@ func (s *Service) GenerateHostPreview(req PreviewRequest) (*PreviewResponse, err
 	if h.Fingerprint == "" {
 		h.Fingerprint = "chrome"
 	}
+	if h.Sni == "" && h.Address != "" {
+		h.Sni = h.Address
+	}
+
+	inbound, found := s.lookupPreviewInbound(h.ConfigProfileInboundUUID)
 
 	proto := strings.ToLower(req.Protocol)
-	if proto == "" {
+	if found && strings.TrimSpace(inbound.Type) != "" {
+		proto = strings.ToLower(inbound.Type)
+	}
+	switch proto {
+	case "trojan":
+	case "shadowsocks":
+	default:
+		// The subscription itself skips inbound types it cannot link, previews
+		// fall back to VLESS so the output stays client-usable.
 		proto = "vless"
 	}
 
-	ua := strings.ToLower(req.UserAgent)
-	clientType := "Base64 / Standard"
-	contentType := "text/plain; charset=utf-8"
+	ssMethod := "chacha20-ietf-poly1305"
+	if found && inbound.Type == "shadowsocks" {
+		var raw struct {
+			Settings struct {
+				Method string `json:"method"`
+			} `json:"settings"`
+		}
+		if err := json.Unmarshal([]byte(inbound.RawInbound), &raw); err == nil && raw.Settings.Method != "" {
+			ssMethod = raw.Settings.Method
+		}
+	}
 
-	sampleUUID := "11111111-2222-3333-4444-555555555555"
+	linkTypeLabel := "VLESS Key"
+	switch proto {
+	case "trojan":
+		linkTypeLabel = "Trojan Key"
+	case "shadowsocks":
+		linkTypeLabel = "SS Key"
+	}
+
+	ua := strings.ToLower(req.UserAgent)
+	clientType := linkTypeLabel
+	contentType := "text/plain; charset=utf-8"
 
 	var content string
 
 	if strings.Contains(ua, "clash") {
 		clientType = "Clash / Mihomo"
 		contentType = "text/yaml; charset=utf-8"
-		content = fmt.Sprintf(`proxies:
+		switch proto {
+		case "shadowsocks":
+			content = fmt.Sprintf(`proxies:
   - name: "%s"
-    type: %s
+    type: ss
+    server: %s
+    port: %d
+    cipher: %s
+    password: %s
+`, h.Remark, h.Address, h.Port, ssMethod, previewSamplePassword)
+		case "trojan":
+			content = fmt.Sprintf(`proxies:
+  - name: "%s"
+    type: trojan
+    server: %s
+    port: %d
+    password: %s
+    tls: true
+    servername: %s
+    client-fingerprint: %s
+`, h.Remark, h.Address, h.Port, previewSamplePassword, h.Sni, h.Fingerprint)
+		default: // vless
+			content = fmt.Sprintf(`proxies:
+  - name: "%s"
+    type: vless
     server: %s
     port: %d
     uuid: %s
@@ -716,36 +793,172 @@ func (s *Service) GenerateHostPreview(req PreviewRequest) (*PreviewResponse, err
     tls: true
     servername: %s
     client-fingerprint: %s
-`, h.Remark, proto, h.Address, h.Port, sampleUUID, h.Sni, h.Fingerprint)
+`, h.Remark, h.Address, h.Port, previewSampleUUID, h.Sni, h.Fingerprint)
+		}
 	} else if strings.Contains(ua, "sing-box") || strings.Contains(ua, "singbox") {
 		clientType = "Sing-Box"
 		contentType = "application/json; charset=utf-8"
-		content = fmt.Sprintf(`{
+		tls := fmt.Sprintf(`"tls": {
+      "enabled": true,
+      "server_name": "%s",
+      "utls": {
+        "enabled": true,
+        "fingerprint": "%s"
+      }
+    }`, h.Sni, h.Fingerprint)
+		switch proto {
+		case "shadowsocks":
+			content = fmt.Sprintf(`{
   "outbounds": [
     {
-      "type": "%s",
+      "type": "shadowsocks",
+      "tag": "%s",
+      "server": "%s",
+      "server_port": %d,
+      "method": "%s",
+      "password": "%s"
+    }
+  ]
+}`, h.Remark, h.Address, h.Port, ssMethod, previewSamplePassword)
+		case "trojan":
+			content = fmt.Sprintf(`{
+  "outbounds": [
+    {
+      "type": "trojan",
+      "tag": "%s",
+      "server": "%s",
+      "server_port": %d,
+      "password": "%s",
+      %s
+    }
+  ]
+}`, h.Remark, h.Address, h.Port, previewSamplePassword, tls)
+		default: // vless
+			content = fmt.Sprintf(`{
+  "outbounds": [
+    {
+      "type": "vless",
       "tag": "%s",
       "server": "%s",
       "server_port": %d,
       "uuid": "%s",
-      "tls": {
-        "enabled": true,
-        "server_name": "%s",
-        "utls": {
-          "enabled": true,
+      %s
+    }
+  ]
+}`, h.Remark, h.Address, h.Port, previewSampleUUID, tls)
+		}
+	} else if strings.Contains(ua, "xray") {
+		clientType = "Xray-Json"
+		contentType = "application/json; charset=utf-8"
+		sec := "tls"
+		if h.SecurityLayer != "" && h.SecurityLayer != "DEFAULT" {
+			sec = strings.ToLower(h.SecurityLayer)
+		}
+		switch proto {
+		case "shadowsocks":
+			content = fmt.Sprintf(`{
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "protocol": "shadowsocks",
+      "settings": {
+        "servers": [
+          {
+            "address": "%s",
+            "port": %d,
+            "method": "%s",
+            "password": "%s"
+          }
+        ]
+      },
+      "streamSettings": {
+        "security": "%s",
+        "tlsSettings": {
+          "serverName": "%s",
           "fingerprint": "%s"
         }
       }
     }
   ]
-}`, proto, h.Remark, h.Address, h.Port, sampleUUID, h.Sni, h.Fingerprint)
+}`, h.Address, h.Port, ssMethod, previewSamplePassword, sec, h.Sni, h.Fingerprint)
+		case "trojan":
+			content = fmt.Sprintf(`{
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "protocol": "trojan",
+      "settings": {
+        "servers": [
+          {
+            "address": "%s",
+            "port": %d,
+            "password": "%s"
+          }
+        ]
+      },
+      "streamSettings": {
+        "security": "%s",
+        "tlsSettings": {
+          "serverName": "%s",
+          "fingerprint": "%s"
+        }
+      }
+    }
+  ]
+}`, h.Address, h.Port, previewSamplePassword, sec, h.Sni, h.Fingerprint)
+		default: // vless
+			content = fmt.Sprintf(`{
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "%s",
+            "port": %d,
+            "users": [
+              {
+                "id": "%s",
+                "encryption": "none"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "%s",
+        "tlsSettings": {
+          "serverName": "%s",
+          "fingerprint": "%s"
+        }
+      }
+    }
+  ]
+}`, h.Address, h.Port, previewSampleUUID, sec, h.Sni, h.Fingerprint)
+		}
 	} else {
 		security := "tls"
 		if h.SecurityLayer != "" && h.SecurityLayer != "DEFAULT" {
 			security = strings.ToLower(h.SecurityLayer)
 		}
-		content = fmt.Sprintf("%s://%s@%s:%d?security=%s&sni=%s&fp=%s#%s",
-			proto, sampleUUID, h.Address, h.Port, security, h.Sni, h.Fingerprint, h.Remark)
+		switch proto {
+		case "shadowsocks":
+			// Same serialization as the real subscription links.
+			content = "ss://" + js.Base64(ssMethod+":"+previewSamplePassword) +
+				fmt.Sprintf("@%s:%d#%s", h.Address, h.Port, js.EncodeURIComponent(h.Remark))
+		case "trojan":
+			content = fmt.Sprintf("trojan://%s@%s:%d?security=%s&sni=%s&fp=%s#%s",
+				js.EncodeURIComponent(previewSamplePassword), h.Address, h.Port,
+				security, js.EncodeURIComponent(h.Sni), js.EncodeURIComponent(h.Fingerprint),
+				js.EncodeURIComponent(h.Remark))
+		default: // vless
+			content = fmt.Sprintf("%s://%s@%s:%d?security=%s&sni=%s&fp=%s#%s",
+				proto, previewSampleUUID, h.Address, h.Port, security,
+				js.EncodeURIComponent(h.Sni), js.EncodeURIComponent(h.Fingerprint),
+				js.EncodeURIComponent(h.Remark))
+		}
 	}
 
 	headers := map[string]string{
