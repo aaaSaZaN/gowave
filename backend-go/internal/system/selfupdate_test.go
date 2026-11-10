@@ -416,6 +416,22 @@ func TestCheckUpdateCachesAndForces(t *testing.T) {
 	}
 }
 
+func TestCheckUpdateInDockerStaysOnCurrentChannel(t *testing.T) {
+	t.Setenv("IN_DOCKER", "true")
+	t.Setenv("GOWAVE_COMPOSE_DIR", "/opt/gowave-docker")
+	useGitHubStub(t, func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(GitHubRelease{TagName: "v99.0.0", Name: "v99.0.0"})
+	})
+
+	code, body := checkUpdate(t, "?channel=dev")
+	if code != http.StatusOK || body["channel"] != CurrentChannel() || body["targetChannel"] != CurrentChannel() {
+		t.Fatalf("check in Docker = %d %v, want the current channel", code, body)
+	}
+	if got, want := body["updateCommand"], "cd /opt/gowave-docker && docker compose pull && docker compose up -d"; got != want {
+		t.Errorf("updateCommand = %v, want %q", got, want)
+	}
+}
+
 func TestCheckUpdateExplainsRateLimit(t *testing.T) {
 	stub := useGitHubStub(t, func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("X-RateLimit-Remaining", "0")

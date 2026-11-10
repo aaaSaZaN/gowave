@@ -100,7 +100,7 @@ jobs:
           {
             echo "Unstable build of \`main\` at ${GITHUB_SHA}."
             echo
-            echo "Install or switch to it from the panel (Build Info → dev) or with \`install.sh --dev\`. Docker: \`ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/gowave:dev\`."
+            echo "Install or switch to it from the panel (Build Info → dev) or with \`install.sh --dev\`. Docker: change the image tag in \`docker-compose.yml\` to \`ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/gowave:dev\`."
             echo
             echo "### Latest commit"
             git log -1 --format='%s%n%n%b' "$GITHUB_SHA"

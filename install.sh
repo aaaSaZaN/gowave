@@ -232,12 +232,35 @@ panel_image() {
     esac
 }
 
+# compose_image reads the panel image from the Compose file. Projects created
+# before the image moved into docker-compose.yml use ${GOWAVE_IMAGE:-...}; their
+# callers fall back to .env.
+compose_image() {
+    local file=${1:-$DOCKER_DIR/docker-compose.yml}
+    [ -f "$file" ] || return 0
+    awk '
+        /^  gowave:[[:space:]]*$/ { panel = 1; next }
+        /^  [A-Za-z0-9_.-]+:[[:space:]]*$/ { panel = 0 }
+        panel && /^[[:space:]]*image:[[:space:]]*/ {
+            sub(/^[[:space:]]*image:[[:space:]]*/, "")
+            sub(/[[:space:]]+#.*$/, "")
+            gsub(/["'\'']/, "")
+            print
+            exit
+        }
+    ' "$file"
+}
+
 # installed_channel reads the channel of the existing install: the Compose image
 # tag, or the version of a trusted native binary (dev builds are dev-<sha>).
 installed_channel() {
-    local version
+    local image version
     if [ "$MODE" = docker ]; then
-        case $(env_get "$ENV_FILE" GOWAVE_IMAGE) in
+        image=$(compose_image)
+        case $image in
+        *'${GOWAVE_IMAGE'*) image=$(env_get "$ENV_FILE" GOWAVE_IMAGE) ;;
+        esac
+        case $image in
         *:dev | *:dev-*) echo dev ;;
         *) echo stable ;;
         esac
@@ -1414,11 +1437,29 @@ update_gowave() {
 }
 
 # set_docker_image points the Compose project at the chosen channel's image. An
-# image from elsewhere (a local build, a mirror) is left alone.
+# image from elsewhere (a local build, a mirror) is left alone. Older projects
+# keep the image in .env and are updated there.
 set_docker_image() {
     local image wanted
-    image=$(env_get "$ENV_FILE" GOWAVE_IMAGE)
+    [ -f "$DOCKER_DIR/docker-compose.yml" ] || return 0
+    image=$(compose_image)
     wanted=$(panel_image)
+    case $image in
+    *'${GOWAVE_IMAGE'*)
+        image=$(env_get "$ENV_FILE" GOWAVE_IMAGE)
+        case $image in
+        '' | "$IMAGE_REPO" | "$IMAGE_REPO":*) ;;
+        *)
+            warn "$(t "Используется свой образ $image, канал не меняю." "A custom image $image is configured, the channel is left unchanged.")"
+            return 0
+            ;;
+        esac
+        [ "$image" = "$wanted" ] && return 0
+        env_set "$ENV_FILE" GOWAVE_IMAGE "$wanted"
+        info "$(t 'Образ панели:' 'Panel image:') $wanted"
+        return 0
+        ;;
+    esac
     case $image in
     '' | "$IMAGE_REPO" | "$IMAGE_REPO":*) ;;
     *)
@@ -1427,7 +1468,20 @@ set_docker_image() {
         ;;
     esac
     [ "$image" = "$wanted" ] && return 0
-    env_set "$ENV_FILE" GOWAVE_IMAGE "$wanted"
+    # Rewrite only the panel service's image line; the PostgreSQL image and the
+    # rest of the file stay untouched.
+    local tmp
+    tmp=$(mktemp)
+    awk -v wanted="$wanted" '
+        /^  gowave:[[:space:]]*$/ { panel = 1 }
+        panel && /^[[:space:]]*image:/ {
+            sub(/image:.*/, "image: " wanted)
+            panel = 0
+        }
+        { print }
+    ' "$DOCKER_DIR/docker-compose.yml" >"$tmp"
+    cat "$tmp" >"$DOCKER_DIR/docker-compose.yml"
+    rm -f "$tmp"
     info "$(t 'Образ панели:' 'Panel image:') $wanted"
 }
 

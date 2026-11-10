@@ -164,6 +164,10 @@ func (h *Handler) CheckUpdate(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, r, http.StatusBadRequest, httpx.CodeInternal, err.Error())
 		return
 	}
+	isDocker := IsRunningInDocker()
+	if isDocker {
+		channel = CurrentChannel()
+	}
 	force := r.URL.Query().Get("force") == "1" || r.URL.Query().Get("force") == "true"
 	release, checkedAt, err := fetchRelease(channel, force)
 	if err != nil {
@@ -173,7 +177,6 @@ func (h *Handler) CheckUpdate(w http.ResponseWriter, r *http.Request) {
 	latest := releaseVersion(channel, release)
 	switching := channel != CurrentChannel()
 
-	isDocker := IsRunningInDocker()
 	result := map[string]interface{}{
 		"currentVersion": AppVersion,
 		"latestVersion":  latest,
@@ -186,7 +189,7 @@ func (h *Handler) CheckUpdate(w http.ResponseWriter, r *http.Request) {
 		"checkedAt":      checkedAt.UTC(),
 	}
 	if isDocker {
-		result["updateCommand"] = DockerUpdateCommand(channel)
+		result["updateCommand"] = DockerUpdateCommand()
 	} else if !updateHelperInstalled() {
 		result["updateCommand"] = installerCommand(channel)
 	}
@@ -196,17 +199,14 @@ func (h *Handler) CheckUpdate(w http.ResponseWriter, r *http.Request) {
 // DockerUpdateCommand is shown instead of in-panel updates: a container cannot
 // replace its own image, and giving the panel the Docker socket would make a
 // panel compromise a host compromise. GOWAVE_COMPOSE_DIR is written to .env by
-// `gowave migrate to-docker`. Switching channels rewrites GOWAVE_IMAGE there.
-func DockerUpdateCommand(channel string) string {
+// `gowave migrate to-docker`. The image tag in docker-compose.yml selects the
+// channel and is changed manually on the host.
+func DockerUpdateCommand() string {
 	dir := strings.TrimSpace(os.Getenv("GOWAVE_COMPOSE_DIR"))
 	if dir == "" {
 		dir = "/path/to/gowave-compose-dir"
 	}
-	if channel == CurrentChannel() {
-		return fmt.Sprintf("cd %s && docker compose pull && docker compose up -d", dir)
-	}
-	return fmt.Sprintf("cd %s && sed -i '/^GOWAVE_IMAGE=/d' .env && echo 'GOWAVE_IMAGE=%s:%s' >> .env && docker compose pull && docker compose up -d",
-		dir, dockerImage, dockerTag(channel))
+	return fmt.Sprintf("cd %s && docker compose pull && docker compose up -d", dir)
 }
 
 // InstallerUpdateCommand is shown when the native service has no update helper,
@@ -255,7 +255,7 @@ func (h *Handler) ApplyUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if IsRunningInDocker() {
-		httpx.Error(w, r, http.StatusBadRequest, httpx.CodeInternal, "In-panel updates are not available in Docker. Update on the server: "+DockerUpdateCommand(channel))
+		httpx.Error(w, r, http.StatusBadRequest, httpx.CodeInternal, "In-panel updates are not available in Docker. Update on the server: "+DockerUpdateCommand())
 		return
 	}
 	if !updateHelperInstalled() {

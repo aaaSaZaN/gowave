@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/rand"
 	_ "embed"
 	"encoding/hex"
@@ -60,8 +61,10 @@ type toDockerOptions struct {
 type toDockerPlan struct {
 	toDockerOptions
 	// SourceDB is the SQLite file to copy; empty when FromUpstream is set.
-	SourceDB    string
-	AppPort     string
+	SourceDB string
+	AppPort  string
+	// PanelImage is written to the image line of docker-compose.yml.
+	PanelImage  string
 	Env         map[string]string
 	HasSystemd  bool
 	WasActive   bool
@@ -218,7 +221,8 @@ func prepareToDocker(opts toDockerOptions) (*toDockerPlan, error) {
 		toDockerOptions: opts,
 		SourceDB:        sourceDB,
 		AppPort:         appPort,
-		Env:             buildDockerEnv(oldEnv, opts.DockerDir, image, password, pgPort),
+		PanelImage:      image,
+		Env:             buildDockerEnv(oldEnv, opts.DockerDir, password, pgPort),
 		HasSystemd:      exec.Command("systemctl", "cat", systemdUnit).Run() == nil,
 	}
 	plan.WasActive = plan.HasSystemd && exec.Command("systemctl", "is-active", "--quiet", systemdUnit).Run() == nil
@@ -264,21 +268,43 @@ func resolveSourceSQLite(fromDir string, env map[string]string) (string, error) 
 
 // buildDockerEnv keeps every setting of the host install (APP_SECRET hashes
 // admin passwords and API tokens, so it must not change) and adds the Docker
-// specific ones.
-func buildDockerEnv(oldEnv map[string]string, dockerDir, image, pgPassword, pgPort string) map[string]string {
-	env := make(map[string]string, len(oldEnv)+6)
+// specific ones. The image is not an environment variable: it is pinned in the
+// generated docker-compose.yml.
+func buildDockerEnv(oldEnv map[string]string, dockerDir, pgPassword, pgPort string) map[string]string {
+	env := make(map[string]string, len(oldEnv)+5)
 	for key, value := range oldEnv {
 		if !envKeysReplacedInDocker[key] {
 			env[key] = value
 		}
 	}
-	env["GOWAVE_IMAGE"] = image
+	// Older projects passed the image through .env; the generated compose file
+	// pins it instead.
+	delete(env, "GOWAVE_IMAGE")
 	env["GOWAVE_COMPOSE_DIR"] = dockerDir
 	env["POSTGRES_USER"] = "gowave"
 	env["POSTGRES_PASSWORD"] = pgPassword
 	env["POSTGRES_DB"] = "gowave"
 	env["POSTGRES_PORT"] = pgPort
 	return env
+}
+
+// renderDockerCompose pins the panel image in the embedded compose file.
+func renderDockerCompose(image string) ([]byte, error) {
+	if image == "" {
+		image = defaultGoWaveImage
+	}
+	if strings.ContainsAny(image, " \t\r\n#") {
+		return nil, fmt.Errorf("invalid image %q: whitespace and # are not allowed", image)
+	}
+	if image == defaultGoWaveImage {
+		return dockerComposeTemplate, nil
+	}
+	line := []byte("    image: " + defaultGoWaveImage)
+	rendered := bytes.Replace(dockerComposeTemplate, line, []byte("    image: "+image), 1)
+	if bytes.Equal(rendered, dockerComposeTemplate) {
+		return nil, errors.New("docker-compose.yml does not contain the expected panel image line")
+	}
+	return rendered, nil
 }
 
 var plainEnvValue = regexp.MustCompile(`^[A-Za-z0-9_./:@*,+=-]*$`)
@@ -319,7 +345,7 @@ func printToDockerPlan(plan *toDockerPlan) {
 		fmt.Printf("SQLite database:  %s (read only, kept for rollback)\n", plan.SourceDB)
 	}
 	fmt.Printf("New install:      %s (docker-compose.yml + .env)\n", plan.DockerDir)
-	fmt.Printf("Image:            %s\n", plan.Env["GOWAVE_IMAGE"])
+	fmt.Printf("Image:            %s\n", plan.PanelImage)
 	fmt.Printf("Panel port:       %s (unchanged)\n", plan.AppPort)
 	fmt.Println("\nSteps:")
 	fmt.Println("  1. Write the compose project, reusing APP_SECRET and all settings from the current .env")
@@ -342,6 +368,10 @@ func printToDockerPlan(plan *toDockerPlan) {
 }
 
 func executeToDocker(plan *toDockerPlan) error {
+	composeText, err := renderDockerCompose(plan.PanelImage)
+	if err != nil {
+		return err
+	}
 	envText, err := renderDockerEnv(plan.Env)
 	if err != nil {
 		return err
@@ -358,7 +388,7 @@ func executeToDocker(plan *toDockerPlan) error {
 	}
 	composePath := filepath.Join(plan.DockerDir, "docker-compose.yml")
 	envPath := filepath.Join(plan.DockerDir, ".env")
-	if err := os.WriteFile(composePath, dockerComposeTemplate, 0o644); err != nil {
+	if err := os.WriteFile(composePath, composeText, 0o644); err != nil {
 		return err
 	}
 	if err := os.WriteFile(envPath, []byte(envText), 0o600); err != nil {

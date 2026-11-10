@@ -246,6 +246,11 @@
       "count": 1,
       "sha256": "eb3fa02c265c850d76caefd9f2865e995c8b853ab6fa30e86e9a7fc392477714"
     },
+    ".env.sample": {
+      "reason": "Migration note listing environment variables inherited from the upstream panel; GoWave ignores them.",
+      "count": 2,
+      "sha256": "3e6fdd899f18bc1eb92d62adf4e86eef79c312fef4bd65f76e2b568105ec065a"
+    },
     "install.sh": {
       "reason": "Detect existing installations, container names, and database hosts during safe migration.",
       "count": 3,

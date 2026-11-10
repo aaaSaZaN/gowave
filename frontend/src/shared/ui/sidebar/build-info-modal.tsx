@@ -384,13 +384,17 @@ export function BuildInfoModal({ gowaveMetadata }: BuildInfoModalProps) {
     const [isRequesting, setIsRequesting] = useState(false)
     const [requestError, setRequestError] = useState<null | string>(null)
     const [dismissedStatus, setDismissedStatus] = useState<null | string>(null)
-    const isSwitching = targetChannel !== currentChannel
 
     // Docker installs and native installs without the root update helper are
     // updated on the server; the panel only shows the command.
-    const checkChannel = isSwitching ? targetChannel : undefined
+    const checkChannel = targetChannel !== currentChannel ? targetChannel : undefined
     const updateCheck = usePanelUpdateCheck(checkChannel)
     const forceCheck = useForceUpdateCheck(checkChannel)
+    const isDocker = Boolean(updateCheck.data?.isDocker)
+    // Docker images are pinned in docker-compose.yml; the panel cannot switch
+    // the channel of its own container.
+    const activeChannel = isDocker ? currentChannel : targetChannel
+    const isSwitching = activeChannel !== currentChannel
     const hasUpdate = Boolean(updateCheck.data?.hasUpdate)
     const serverUpdateCommand =
         updateCheck.data && !updateCheck.data.canAutoUpdate
@@ -444,7 +448,7 @@ export function BuildInfoModal({ gowaveMetadata }: BuildInfoModalProps) {
         try {
             // A root helper downloads and verifies the channel's newest build,
             // then restarts the panel; its progress is polled below.
-            const request = await requestPanelUpdate(targetChannel)
+            const request = await requestPanelUpdate(activeChannel)
             setUpdateRequest({
                 channel: request.channel,
                 fromVersion: gowaveMetadata.version,
@@ -466,39 +470,41 @@ export function BuildInfoModal({ gowaveMetadata }: BuildInfoModalProps) {
     let updateTitle = 'Update available'
     let updateDescription = `${updateCheck.data?.latestVersion ?? ''} is available`
     if (isSwitching) {
-        updateTitle = targetChannel === 'dev' ? 'Switch to dev' : 'Switch to stable'
+        updateTitle = activeChannel === 'dev' ? 'Switch to dev' : 'Switch to stable'
         updateDescription = `Installs ${updateCheck.data?.latestVersion ?? ''}`
     }
 
     return (
         <Stack gap="md">
-            <Stack gap={6}>
-                <Text c="dimmed" size="xs">
-                    Update channel
-                </Text>
-                <SegmentedControl
-                    data={[
-                        { label: 'Stable (releases)', value: 'stable' },
-                        { label: 'Dev (every commit)', value: 'dev' }
-                    ]}
-                    disabled={isUpdating}
-                    fullWidth
-                    onChange={(value) => setTargetChannel(value as UpdateChannel)}
-                    radius="md"
-                    size="xs"
-                    value={targetChannel}
-                />
-            </Stack>
+            {!isDocker && (
+                <Stack gap={6}>
+                    <Text c="dimmed" size="xs">
+                        Update channel
+                    </Text>
+                    <SegmentedControl
+                        data={[
+                            { label: 'Stable (releases)', value: 'stable' },
+                            { label: 'Dev (every commit)', value: 'dev' }
+                        ]}
+                        disabled={isUpdating || updateCheck.isLoading}
+                        fullWidth
+                        onChange={(value) => setTargetChannel(value as UpdateChannel)}
+                        radius="md"
+                        size="xs"
+                        value={targetChannel}
+                    />
+                </Stack>
+            )}
 
             {isSwitching && (
                 <Alert
-                    color={targetChannel === 'dev' ? 'red' : 'yellow'}
+                    color={activeChannel === 'dev' ? 'red' : 'yellow'}
                     icon={<TbAlertTriangle size={16} />}
                     radius="md"
                     variant="light"
                 >
                     <Text size="xs">
-                        {targetChannel === 'dev'
+                        {activeChannel === 'dev'
                             ? 'Dev builds are made from every commit to main and may be unstable. Make a backup first.'
                             : 'The latest stable release may be older than this dev build. Database changes made by newer dev builds stay in place; make a backup first.'}
                     </Text>
@@ -556,7 +562,7 @@ export function BuildInfoModal({ gowaveMetadata }: BuildInfoModalProps) {
                                 ? 'Checking for updates…'
                                 : hasUpdate
                                   ? `Checked ${formatCheckedAt(updateCheck.data?.checkedAt)}`
-                                  : `You are running the latest ${targetChannel} build. Checked ${formatCheckedAt(updateCheck.data?.checkedAt)}.`)}
+                                  : `You are running the latest ${activeChannel} build. Checked ${formatCheckedAt(updateCheck.data?.checkedAt)}.`)}
                     </Text>
                     <Button
                         leftSection={<TbRefresh size={14} />}

@@ -107,9 +107,10 @@ func TestBuildDockerEnvKeepsSecretsAndRendersLiterally(t *testing.T) {
 		"DATABASE_URL":       "/opt/gowave/gowave.sqlite3",
 		"FRONT_END_DOMAIN":   "*",
 		"TELEGRAM_BOT_TOKEN": "123:abc def",
+		"GOWAVE_IMAGE":       "ghcr.io/aaasazan/gowave:dev",
 	}
-	env := buildDockerEnv(old, "/opt/gowave-docker", defaultGoWaveImage, "pgpass", "5432")
-	for _, key := range []string{"DB_DRIVER", "DATABASE_URL"} {
+	env := buildDockerEnv(old, "/opt/gowave-docker", "pgpass", "5432")
+	for _, key := range []string{"DB_DRIVER", "DATABASE_URL", "GOWAVE_IMAGE"} {
 		if _, ok := env[key]; ok {
 			t.Errorf("%s must be dropped; the compose file sets it", key)
 		}
@@ -145,5 +146,31 @@ func TestBuildDockerEnvKeepsSecretsAndRendersLiterally(t *testing.T) {
 
 	if _, err := renderDockerEnv(map[string]string{"BAD": "it's"}); err == nil {
 		t.Error("values with single quotes must be rejected")
+	}
+}
+
+func TestRenderDockerComposePinsImage(t *testing.T) {
+	compose, err := renderDockerCompose("")
+	if err != nil || !bytes.Equal(compose, dockerComposeTemplate) {
+		t.Fatalf("default image: %v", err)
+	}
+
+	for _, image := range []string{"ghcr.io/aaasazan/gowave:dev", "registry.local/gowave:custom"} {
+		compose, err := renderDockerCompose(image)
+		if err != nil {
+			t.Fatalf("%s: %v", image, err)
+		}
+		if !bytes.Contains(compose, []byte("    image: "+image+"\n")) {
+			t.Errorf("%s is not pinned in the compose file:\n%s", image, compose)
+		}
+		if bytes.Count(compose, []byte("    image: ")) != bytes.Count(dockerComposeTemplate, []byte("    image: ")) {
+			t.Errorf("%s changed the number of image lines", image)
+		}
+	}
+
+	for _, image := range []string{"two words", "line\nbreak", "image#comment"} {
+		if _, err := renderDockerCompose(image); err == nil {
+			t.Errorf("image %q must be rejected", image)
+		}
 	}
 }

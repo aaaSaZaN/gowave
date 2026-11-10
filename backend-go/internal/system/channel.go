@@ -23,10 +23,7 @@ var (
 	CommitSha = ""
 )
 
-const (
-	githubRepo  = "aaaSaZaN/gowave"
-	dockerImage = "ghcr.io/aaasazan/gowave"
-)
+const githubRepo = "aaaSaZaN/gowave"
 
 // CurrentChannel is the channel this binary was built for.
 func CurrentChannel() string {
@@ -52,13 +49,6 @@ func releaseAPIURL(channel string) string {
 		return "https://api.github.com/repos/" + githubRepo + "/releases/tags/dev"
 	}
 	return "https://api.github.com/repos/" + githubRepo + "/releases/latest"
-}
-
-func dockerTag(channel string) string {
-	if channel == ChannelDev {
-		return ChannelDev
-	}
-	return "latest"
 }
 
 // readRequestedChannel reads the channel the panel asked for. The request file

@@ -124,16 +124,41 @@ reset_channel; choose_channel dev 2>/dev/null
 ask() { fail 'asked although the channel was given'; }
 reset_channel; GOWAVE_CHANNEL=dev; choose_channel stable
 
-# Docker: the channel is read from and written to GOWAVE_IMAGE; custom images stay.
+# Docker: the channel is read from and written to the image tag in Compose.
 MODE=docker
-printf 'GOWAVE_IMAGE=ghcr.io/aaasazan/gowave:latest\n' >"$ENV_FILE"
+DOCKER_DIR=$WORK/docker
+mkdir -p "$DOCKER_DIR"
+COMPOSE=$DOCKER_DIR/docker-compose.yml
+cat >"$COMPOSE" <<'YAML'
+services:
+  gowave:
+    image: ghcr.io/aaasazan/gowave:latest
+  postgres:
+    image: postgres:18-alpine
+YAML
+# A leftover GOWAVE_IMAGE in .env is ignored by the literal image in Compose.
+printf 'GOWAVE_IMAGE=ghcr.io/aaasazan/gowave:dev\n' >"$ENV_FILE"
 [ "$(installed_channel)" = stable ] || fail 'docker stable channel'
 reset_channel; GOWAVE_CHANNEL=dev; apply_channel; set_docker_image >/dev/null
-[ "$(env_get "$ENV_FILE" GOWAVE_IMAGE)" = ghcr.io/aaasazan/gowave:dev ] || fail 'docker switch to dev'
+[ "$(compose_image)" = ghcr.io/aaasazan/gowave:dev ] || fail 'docker switch to dev'
+[ "$(env_get "$ENV_FILE" GOWAVE_IMAGE)" = ghcr.io/aaasazan/gowave:dev ] || fail 'leftover GOWAVE_IMAGE rewritten'
+grep -q '^    image: postgres:18-alpine$' "$COMPOSE" || fail 'postgres image changed'
 [ "$(installed_channel)" = dev ] || fail 'docker dev channel'
-printf 'GOWAVE_IMAGE=registry.local/gowave:custom\n' >"$ENV_FILE"
+printf 'services:\n  gowave:\n    image: registry.local/gowave:custom\n' >"$COMPOSE"
 set_docker_image 2>/dev/null
-[ "$(env_get "$ENV_FILE" GOWAVE_IMAGE)" = registry.local/gowave:custom ] || fail 'custom image replaced'
+[ "$(compose_image)" = registry.local/gowave:custom ] || fail 'custom image replaced'
+
+# Older projects keep the image in .env and must keep working.
+cat >"$COMPOSE" <<'YAML'
+services:
+  gowave:
+    image: ${GOWAVE_IMAGE:-ghcr.io/aaasazan/gowave:latest}
+YAML
+printf 'GOWAVE_IMAGE=ghcr.io/aaasazan/gowave:dev\n' >"$ENV_FILE"
+[ "$(installed_channel)" = dev ] || fail 'legacy docker dev channel'
+reset_channel; GOWAVE_CHANNEL=stable; apply_channel; set_docker_image >/dev/null
+[ "$(env_get "$ENV_FILE" GOWAVE_IMAGE)" = ghcr.io/aaasazan/gowave:latest ] || fail 'legacy docker switch to stable'
+[ "$(compose_image)" = '${GOWAVE_IMAGE:-ghcr.io/aaasazan/gowave:latest}' ] || fail 'legacy compose rewritten'
 MODE=native
 
 # Native installs repair old CLI files and links even under a restrictive umask.
