@@ -150,6 +150,8 @@ func (c *Client) doRequest(ctx context.Context, method, url string, body interfa
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
+	// Request the real gowave-node release version instead of its compatibility version.
+	req.Header.Set("X-Better-One", "true")
 
 	if token, err := c.generateToken(); err == nil && token != "" {
 		req.Header.Set("Authorization", "Bearer "+token)

@@ -57,3 +57,30 @@ func TestCheckHealthExplainsForeignCertificate(t *testing.T) {
 		t.Fatalf("StatusMsg = %q", result.StatusMsg)
 	}
 }
+
+func TestNodeRequestsIdentifyGoWave(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("X-Better-One"); got != "true" {
+			t.Errorf("X-Better-One = %q, want true", got)
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+	client := &Client{httpClient: server.Client()}
+	for _, method := range []string{http.MethodGet, http.MethodPost} {
+		t.Run(method, func(t *testing.T) {
+			var body interface{}
+			if method == http.MethodPost {
+				body = map[string]string{"test": "request"}
+			}
+			response, err := client.doRequest(t.Context(), method, server.URL, body)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer response.Body.Close()
+			if response.StatusCode != http.StatusNoContent {
+				t.Fatalf("status = %d, want 204", response.StatusCode)
+			}
+		})
+	}
+}
