@@ -491,6 +491,11 @@ func formatHostResponse(db *gorm.DB, h *database.Host) (map[string]interface{}, 
 		nodes = []string{}
 	}
 
+	includeRules := []string(h.IncludeInSrrRules)
+	if includeRules == nil {
+		includeRules = []string{}
+	}
+
 	excludeTypes := []string(h.ExcludeFromSubscriptionTypes)
 	if excludeTypes == nil {
 		excludeTypes = []string{}
@@ -555,6 +560,7 @@ func formatHostResponse(db *gorm.DB, h *database.Host) (map[string]interface{}, 
 		"mihomoIpVersion":              nullableMihomoIpVersion(h.MihomoIpVersion),
 		"nodes":                        nodes,
 		"xrayJsonTemplateUuid":         nullableStringPtr(h.XrayJsonTemplateUUID),
+		"includeInSrrRules":            includeRules,
 		"excludeFromSubscriptionTypes": excludeTypes,
 		"mapper":                       mapper,
 		"internalSquads": map[string]interface{}{

@@ -86,6 +86,7 @@ type CreateHostInput struct {
 	MihomoIpVersion              *string         `json:"mihomoIpVersion"`
 	Nodes                        []string        `json:"nodes"`
 	XrayJsonTemplateUUID         *string         `json:"xrayJsonTemplateUuid"`
+	IncludeInSrrRules            []string        `json:"includeInSrrRules"`
 	ExcludeFromSubscriptionTypes []string        `json:"excludeFromSubscriptionTypes"`
 	Mapper                       json.RawMessage `json:"mapper"`
 	InternalSquads               *struct {
@@ -228,6 +229,7 @@ func (s *Service) CreateHostFromInput(input CreateHostInput) (*database.Host, er
 		MihomoIpVersion:              mihomoIp,
 		XrayJsonTemplateUUID:         xrayTmplUUID,
 		KeepSniBlank:                 keepSni,
+		IncludeInSrrRules:            database.StringArray(input.IncludeInSrrRules),
 		ExcludeFromSubscriptionTypes: database.StringArray(input.ExcludeFromSubscriptionTypes),
 		Mapper:                       mapperStr,
 		InternalSquadsMode:           squadsMode,

@@ -415,7 +415,8 @@ func templateHost(host *database.Host, rawInbound any, inboundTag string, xrayTe
 		KeepSniBlank: host.KeepSniBlank, VlessRouteID: host.VlessRouteId, ShuffleHost: host.ShuffleHost,
 		MihomoX25519: host.MihomoX25519, ConfigProfileUUID: host.ConfigProfileUUID,
 		ConfigProfileInboundUUID: host.ConfigProfileInboundUUID, ExcludeFromSubscriptionTypes: exclude,
-		Mapper: mapper, RawInbound: rawInbound, InboundTag: inboundTag, XrayJSONTemplate: xrayTemplate,
+		IncludeInSrrRules: []string(host.IncludeInSrrRules),
+		Mapper:            mapper, RawInbound: rawInbound, InboundTag: inboundTag, XrayJSONTemplate: xrayTemplate,
 	}
 }
 

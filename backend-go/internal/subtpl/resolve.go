@@ -17,6 +17,7 @@ type ResolveOptions struct {
 	User               *User
 	HostOverrides      *HostOverrides
 	Fallback           *FallbackOptions
+	MatchedRuleName    string
 	ExcludeHostsByTags map[string]bool
 	SubPublicDomain    string
 }
@@ -111,6 +112,15 @@ func ResolveProxyConfig(options ResolveOptions) []*Resolved {
 		return nil
 	}
 	hosts := options.Hosts
+	if options.MatchedRuleName != "" {
+		filtered := make([]*Host, 0, len(options.Hosts))
+		for _, host := range options.Hosts {
+			if len(host.IncludeInSrrRules) == 0 || contains(host.IncludeInSrrRules, options.MatchedRuleName) {
+				filtered = append(filtered, host)
+			}
+		}
+		hosts = filtered
+	}
 	if len(options.ExcludeHostsByTags) > 0 {
 		var kept []*Host
 		for _, host := range hosts {

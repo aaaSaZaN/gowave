@@ -27,7 +27,7 @@
         "@noble/curves": "2.4.0",
         "@noble/hashes": "2.4.0",
         "@noble/post-quantum": "0.7.1",
-        "@remnawave/backend-contract": "3.4.15",
+        "@remnawave/backend-contract": "3.4.17",
         "@remnawave/node-plugins": "0.8.3",
         "@remnawave/subscription-page-types": "0.6.2",
         "@scure/bip39": "2.4.0",
@@ -214,7 +214,7 @@
 
     "@remix-run/route-pattern": ["@remix-run/route-pattern@0.22.1", "", {}, "sha512-czdGJWh09Lapvcqt7Vb09KlrU2PhRJ8xQaI+AItTuD9aDJ5MAgxnS38lnys6Ll+6RJEqPiaUqTwIQhVLwFvv+w=="],
 
-    "@remnawave/backend-contract": ["@remnawave/backend-contract@3.4.15", "", { "dependencies": { "zod": "4.5.4" } }, "sha512-yJUkJn6TCVGWTF2IYIV5Mury7pph3n+VeWt5apH3A3Ka8K9zblYoiMxOLJv99H01I+QEBVlgxb1cMm4QIVrezw=="],
+    "@remnawave/backend-contract": ["@remnawave/backend-contract@3.4.17", "", { "dependencies": { "zod": "4.6.7" } }, "sha512-V7O1lpI7YHpTEvoyiWeVjQOLP99rgwxQEP3//fqwSPowFT8nyIqfZebEgagmtKbGId+eGzUQjwDwK3aWP1k6dw=="],
 
     "@remnawave/node-plugins": ["@remnawave/node-plugins@0.8.3", "", { "dependencies": { "zod": "4.5.4" } }, "sha512-GtJv0vOoAarwj4dmVndkrOgA9QzqxiX4Qm4AgMKPk+MmLOQhcOfZSXjGrLstekNkuXgvTZY2KnLBzzR1qGcYKA=="],
 

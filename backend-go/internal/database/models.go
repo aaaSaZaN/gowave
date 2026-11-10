@@ -257,6 +257,7 @@ type Host struct {
 	MihomoIpVersion              string                `gorm:"type:varchar(32)" json:"mihomoIpVersion"`
 	XrayJsonTemplateUUID         *string               `gorm:"type:varchar(64)" json:"xrayJsonTemplateUuid"`
 	KeepSniBlank                 bool                  `gorm:"default:false" json:"keepSniBlank"`
+	IncludeInSrrRules            StringArray           `gorm:"type:text[];default:'{}'" json:"includeInSrrRules"`
 	ExcludeFromSubscriptionTypes StringArray           `gorm:"type:text[];default:'{}'" json:"excludeFromSubscriptionTypes"`
 	Mapper                       string                `gorm:"type:text;default:'{}'" json:"mapper"`
 	InternalSquadsMode           string                `gorm:"type:varchar(32);default:'EXCLUDE'" json:"internalSquadsMode"`

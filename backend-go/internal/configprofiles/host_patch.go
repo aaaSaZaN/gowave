@@ -42,7 +42,7 @@ func patchHost(tx *gorm.DB, id string, patch map[string]json.RawMessage) (*datab
 				}
 				target.SetString(string(raw))
 			} else if string(raw) == "null" {
-				if target.Kind() == reflect.Bool || key == "port" || key == "remark" || key == "address" {
+				if target.Kind() == reflect.Bool || key == "port" || key == "remark" || key == "address" || key == "includeInSrrRules" {
 					return nil, fmt.Errorf("%s cannot be null", key)
 				}
 				target.Set(reflect.Zero(target.Type()))

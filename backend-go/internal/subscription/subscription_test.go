@@ -80,6 +80,46 @@ func setSettings(t *testing.T, db *gorm.DB, values map[string]interface{}) {
 
 var curl = map[string]string{"User-Agent": "curl/8.0"}
 
+func TestHostResponseRuleRestrictions(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		rules database.StringArray
+		path  string
+		want  bool
+	}{
+		{"unrestricted", nil, "", true},
+		{"matched", database.StringArray{"Other", "Selected"}, "", true},
+		{"unmatched", database.StringArray{"Other"}, "", false},
+		{"case sensitive", database.StringArray{"selected"}, "", false},
+		{"explicit client bypass", database.StringArray{"Other"}, "/json", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			db, user := subscriptionDB(t)
+			if err := db.Model(&database.Host{}).Where("remark = ?", "visible").Update("include_in_srr_rules", tc.rules).Error; err != nil {
+				t.Fatal(err)
+			}
+			setSettings(t, db, map[string]interface{}{
+				"response_rules": `{"version":"1","rules":[{"name":"Selected","enabled":true,"operator":"AND","conditions":[],"responseType":"XRAY_BASE64"}]}`,
+			})
+			w := get(subscriptionRouter(db), "/api/sub/"+user.ShortUUID+tc.path, curl)
+			if w.Code != http.StatusOK {
+				t.Fatalf("status %d: %s", w.Code, w.Body.String())
+			}
+			body := w.Body.Bytes()
+			if tc.path == "" {
+				var err error
+				body, err = base64.StdEncoding.DecodeString(w.Body.String())
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			if got := strings.Contains(string(body), "example.com"); got != tc.want {
+				t.Fatalf("host present = %t, want %t: %s", got, tc.want, body)
+			}
+		})
+	}
+}
+
 func TestResponseRuleHeaderFormats(t *testing.T) {
 	db, user := subscriptionDB(t)
 	router := subscriptionRouter(db)

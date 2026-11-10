@@ -260,6 +260,10 @@ func (h *Handler) serve(w http.ResponseWriter, r *http.Request, ctx *srrContext,
 	settings, overrides := h.applySquadOverrides(ctx.Settings, user.ExternalSquadUUID)
 	ctx.Settings = settings
 	tplUser := templateUser(user)
+	matchedRuleName := ""
+	if ctx.RuleName != nil {
+		matchedRuleName = *ctx.RuleName
+	}
 
 	render := func(hosts []*subtpl.Host, overrides *subtpl.HostOverrides, fallback *subtpl.FallbackOptions) (string, string) {
 		return subtpl.Render(subtpl.RenderRequest{
@@ -267,6 +271,7 @@ func (h *Handler) serve(w http.ResponseWriter, r *http.Request, ctx *srrContext,
 			OverrideTemplateName: ctx.OverrideTemplateName, IgnoreHostXrayJSONTemplate: ctx.IgnoreHostXrayJSONTemplate,
 			Resolve: subtpl.ResolveOptions{
 				Settings: settings.template(), Hosts: hosts, User: tplUser, HostOverrides: overrides, Fallback: fallback,
+				MatchedRuleName:    matchedRuleName,
 				ExcludeHostsByTags: ctx.ExcludeHostsByTags, SubPublicDomain: h.subPublicDomain,
 			},
 		}, h.templates)

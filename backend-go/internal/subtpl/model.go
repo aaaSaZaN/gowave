@@ -41,6 +41,7 @@ type Host struct {
 	MihomoX25519                 bool
 	ConfigProfileUUID            *string
 	ConfigProfileInboundUUID     *string
+	IncludeInSrrRules            []string
 	ExcludeFromSubscriptionTypes []string
 	// Mapper is THostMapper ({} when unset).
 	Mapper           *ojson.Object

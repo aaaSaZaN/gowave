@@ -127,7 +127,14 @@ func TestContractMutationProbe(t *testing.T) {
 		failures = append(failures, fmt.Sprintf("bulk disable changed %d of 2 hosts", disabled))
 	}
 	step("POST", "/api/hosts/bulk/enable", map[string]interface{}{"uuids": []string{host, clone}})
-	step("PATCH", "/api/hosts/bulk/update", map[string]interface{}{"uuids": []string{host, clone}, "tags": []string{"BULK"}})
+	step("PATCH", "/api/hosts/bulk/update", map[string]interface{}{"uuids": []string{host, clone}, "tags": []string{"BULK"}, "includeInSrrRules": []string{"Selected"}})
+	for _, id := range []string{host, clone} {
+		var saved database.Host
+		if err := e.db.First(&saved, "uuid = ?", id).Error; err != nil || len(saved.IncludeInSrrRules) != 1 || saved.IncludeInSrrRules[0] != "Selected" {
+			failures = append(failures, fmt.Sprintf("bulk rule update for %s: %v (%v)", id, saved.IncludeInSrrRules, err))
+		}
+		step("GET", "/api/hosts/"+id, nil)
+	}
 	step("POST", "/api/hosts/bulk/delete", map[string]interface{}{"uuids": []string{clone}})
 
 	external := responseField(step("POST", "/api/external-squads", map[string]interface{}{"name": "ext"}), "uuid")

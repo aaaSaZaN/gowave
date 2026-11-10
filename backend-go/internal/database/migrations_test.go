@@ -49,6 +49,23 @@ func TestMigrationsFreshAndExisting(t *testing.T) {
 			if err := AutoMigrate(db); err != nil {
 				t.Fatal(err)
 			}
+			host := Host{UUID: uuid.NewString(), Remark: "existing", Address: "example.com", Port: 443}
+			if err := db.Create(&host).Error; err != nil {
+				t.Fatal(err)
+			}
+			// Simulate a database from before host response-rule restrictions.
+			if err := db.Exec("ALTER TABLE hosts DROP COLUMN include_in_srr_rules").Error; err != nil {
+				t.Fatal(err)
+			}
+			if err := db.Exec("DELETE FROM gowave_migrations WHERE name = ?", "009_host_srr_rules.sql").Error; err != nil {
+				t.Fatal(err)
+			}
+			if err := AutoMigrate(db); err != nil {
+				t.Fatal("host rule migration:", err)
+			}
+			if err := db.First(&host, "uuid = ?", host.UUID).Error; err != nil || host.Remark != "existing" || len(host.IncludeInSrrRules) != 0 {
+				t.Fatalf("existing host changed: %+v (%v)", host, err)
+			}
 			if err := AutoMigrate(db); err != nil {
 				t.Fatal("migration replay:", err)
 			}
@@ -64,8 +81,8 @@ func TestMigrationsFreshAndExisting(t *testing.T) {
 			}
 			var count int64
 			db.Table("gowave_migrations").Count(&count)
-			if count != 8 {
-				t.Fatalf("expected 8 migrations, got %d", count)
+			if count != 9 {
+				t.Fatalf("expected 9 migrations, got %d", count)
 			}
 		})
 	}

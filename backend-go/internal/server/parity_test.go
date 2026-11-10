@@ -34,8 +34,8 @@ func loadContractCommands(t *testing.T) []contractCommand {
 	if err := json.Unmarshal(data, &file); err != nil {
 		t.Fatal(err)
 	}
-	if file.Version != "3.4.15" {
-		t.Fatalf("contract fixture is %s, expected pinned 3.4.15", file.Version)
+	if file.Version != "3.4.17" {
+		t.Fatalf("contract fixture is %s, expected pinned 3.4.17", file.Version)
 	}
 	return file.Commands
 }

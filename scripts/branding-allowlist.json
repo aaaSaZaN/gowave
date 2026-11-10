@@ -34,7 +34,7 @@
     "backend-go/internal/contracts/openapi.json": {
       "reason": "Pinned dependency contract export; routes, schemas, and scope identifiers remain byte-compatible.",
       "count": 1,
-      "sha256": "c75c1c80c5a0f8690f1c2edb4c578feafbbcb1a6148cc189bd47e6631eb1a6b3"
+      "sha256": "6c1cbc27625f40c9bc8cd35ead0cf8e4bc839e983af39c6509f045d7778e092d"
     },
     "backend-go/internal/contracts/registry.go": {
       "reason": "Pinned dependency contract export; routes, schemas, and scope identifiers remain byte-compatible.",

@@ -2,7 +2,7 @@
 
 ## Repository context
 
-Gowave combines a Go backend with a React frontend. Compatibility with `@remnawave/backend-contract` is a core constraint, including endpoint coverage, response envelopes, status codes, and subscription output. The frontend currently pins contract version `3.4.15`; `internal/server/parity_test.go` also checks that version explicitly.
+Gowave combines a Go backend with a React frontend. Compatibility with `@remnawave/backend-contract` is a core constraint, including endpoint coverage, response envelopes, status codes, and subscription output. The frontend currently pins contract version `3.4.17`; `internal/server/parity_test.go` also checks that version explicitly.
 
 - `backend-go/` is the Go module (`gowave`); run Go commands there, not at the repository root. Its `go.mod` declares Go `1.27.1`.
 - `frontend/` is a separate React/TypeScript/Vite application. Use Bun 1.4.2 for dependency installation and package scripts locally, in CI, and in Docker. `frontend/package.json` pins the version and `frontend/bun.lock` locks dependencies.
