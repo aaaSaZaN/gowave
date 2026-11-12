@@ -96,12 +96,23 @@ func TestReadProcMeminfo(t *testing.T) {
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	total, free, ok := readProcMeminfo(path)
-	if !ok || total != 16318412*1024 || free != 1048576*1024 {
-		t.Errorf("readProcMeminfo = %d, %d, %v", total, free, ok)
+	total, free, available, ok := readProcMeminfo(path)
+	if !ok || total != 16318412*1024 || free != 1048576*1024 || available != 8000000*1024 {
+		t.Errorf("readProcMeminfo = %d, %d, %d, %v", total, free, available, ok)
 	}
-	if _, _, ok := readProcMeminfo(filepath.Join(t.TempDir(), "missing")); ok {
+	if _, _, _, ok := readProcMeminfo(filepath.Join(t.TempDir(), "missing")); ok {
 		t.Error("missing file must not be reported as readable")
+	}
+
+	// Kernels without MemAvailable fall back to the MemFree formula.
+	path = filepath.Join(t.TempDir(), "meminfo-no-available")
+	content = "MemTotal:       16318412 kB\nMemFree:         1048576 kB\n"
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	total, free, available, ok = readProcMeminfo(path)
+	if !ok || total != 16318412*1024 || free != 1048576*1024 || available != 0 {
+		t.Errorf("readProcMeminfo without MemAvailable = %d, %d, %d, %v", total, free, available, ok)
 	}
 }
 
