@@ -21,6 +21,8 @@ import { Chart } from '../src/shared/ui/chart'
 import { InboundCheckboxCardShared } from '../src/shared/ui/config-profiles/inbound-checkbox-card/inbound-checkbox-card.shared'
 import CountryFlag from '../src/shared/ui/country-flag'
 import { CreateableTagInputShared } from '../src/shared/ui/createable-tag-input/createable-tag-input'
+import { HeaderControls } from '../src/shared/ui/header-buttons/HeaderControls'
+import { Logo } from '../src/shared/ui/logo'
 import Masonry from '../src/shared/ui/masonry'
 import { NavigationProgress, nprogress } from '../src/shared/ui/navigation-progress'
 import { SafeSvg } from '../src/shared/ui/safe-svg'
@@ -151,6 +153,41 @@ function AuthStatus() {
 }
 
 async function run() {
+    flushSync(() =>
+        root.render(
+            <MantineProvider>
+                <Logo size={32} />
+                <HeaderControls
+                    withGithub={false}
+                    withLanguage={false}
+                    withLogout={false}
+                    withVersion={false}
+                />
+            </MantineProvider>
+        )
+    )
+    const logo = requireValue(container.querySelector('img[alt="GoWave"]'), 'GoWave logo missing')
+    assert(
+        logo.getAttribute('src') === '/panel/favicons/logo.svg',
+        'Logo respects the dashboard base path'
+    )
+    const telegram = requireValue(
+        container.querySelector<HTMLAnchorElement>('a[aria-label="Telegram"]'),
+        'Telegram link missing'
+    )
+    assert(telegram.href === __TELEGRAM_CHAT_URL__, 'Telegram uses the configured chat URL')
+    assert(telegram.target === '_blank', 'Telegram opens in a new tab')
+    assert(telegram.rel === 'noopener noreferrer', 'Telegram isolates the new tab')
+    assert(telegram.querySelector('svg'), 'Telegram displays its icon')
+    const theme = requireValue(
+        container.querySelector<HTMLButtonElement>('button[aria-label*="theme"]'),
+        'Theme control missing'
+    )
+    assert(theme.nextElementSibling === telegram, 'Telegram sits next to the theme control')
+    const previousThemeLabel = theme.getAttribute('aria-label')
+    flushSync(() => theme.click())
+    assert(theme.getAttribute('aria-label') !== previousThemeLabel, 'Theme switching still works')
+
     flushSync(() =>
         root.render(
             <MantineProvider>

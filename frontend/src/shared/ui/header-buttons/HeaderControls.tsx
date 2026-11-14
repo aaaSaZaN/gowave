@@ -6,6 +6,7 @@ import { GithubControl } from './GithubControl'
 import { LanguageControl } from './LanguageControl'
 import { LogoutControl } from './LogoutControl'
 import { RecapControl } from './RecapControl'
+import { TelegramControl } from './TelegramControl'
 import { VersionControl } from './VersionControl'
 
 interface HeaderControlsProps extends BoxProps {
@@ -44,6 +45,7 @@ export function HeaderControls({
             )}
             {withRecap && <RecapControl />}
             {withColorScheme && <ColorSchemeControl />}
+            <TelegramControl />
             {withLanguage && <LanguageControl />}
             {withLogout && <LogoutControl />}
         </Group>

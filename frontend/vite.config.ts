@@ -4,6 +4,10 @@ import webfontDownload from 'vite-plugin-webfont-dl'
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '')
+    const telegramChatUrl = new URL(env['TELEGRAM_CHAT_URL']?.trim() || 'https://telegram.org')
+    if (!['https:', 'http:'].includes(telegramChatUrl.protocol)) {
+        throw new Error('TELEGRAM_CHAT_URL must be an HTTP(S) URL')
+    }
     return {
         base: './',
         assetsInclude: ['**/*.lottie'],
@@ -100,6 +104,7 @@ export default defineConfig(({ mode }) => {
             }
         },
         define: {
+            __TELEGRAM_CHAT_URL__: JSON.stringify(telegramChatUrl.href),
             __DOMAIN_BACKEND__: JSON.stringify(env['DOMAIN_BACKEND'] || 'example.com').trim(),
             __NODE_ENV__: JSON.stringify(process.env['NODE_ENV']).trim(),
             __DOMAIN_OVERRIDE__: JSON.stringify(env['DOMAIN_OVERRIDE'] || '0').trim(),

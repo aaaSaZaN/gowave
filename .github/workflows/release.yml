@@ -37,6 +37,8 @@ jobs:
 
       - name: Build Frontend
         working-directory: ./frontend
+        env:
+          TELEGRAM_CHAT_URL: ${{ vars.TELEGRAM_CHAT_URL }}
         run: |
           bun install --frozen-lockfile
           bun run editor:download
@@ -116,6 +118,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           build-args: |
+            TELEGRAM_CHAT_URL=${{ vars.TELEGRAM_CHAT_URL }}
             VERSION=${{ github.ref_name }}
             COMMIT_SHA=${{ github.sha }}
           tags: ${{ steps.meta.outputs.tags }}

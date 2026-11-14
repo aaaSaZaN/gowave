@@ -10,6 +10,8 @@ COPY frontend/package.json frontend/bun.lock ./
 RUN bun install --frozen-lockfile
 
 COPY frontend/ ./
+ARG TELEGRAM_CHAT_URL=https://telegram.org
+ENV TELEGRAM_CHAT_URL=${TELEGRAM_CHAT_URL}
 # The Xray validator runtime is fetched (hash-pinned) and shipped precompressed.
 RUN bun run editor:download && bun run build && bun run editor:compress
 

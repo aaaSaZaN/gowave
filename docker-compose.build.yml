@@ -6,3 +6,5 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        TELEGRAM_CHAT_URL: ${TELEGRAM_CHAT_URL:-https://telegram.org}
