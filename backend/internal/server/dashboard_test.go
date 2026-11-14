@@ -112,6 +112,7 @@ func TestDashboardPrecompressedAssets(t *testing.T) {
 		"xray.schema.json.gz":   gzipBytes(t, `{"schema":true}`),
 		"xray.schema.json":      []byte(`{"schema":true}`),
 		"assets/app.js.gz":      gzipBytes(t, "window.loaded=true"),
+		"assets/module.mjs.gz":  gzipBytes(t, "export default true"),
 		"assets/broken.wasm.gz": []byte("not gzip"),
 	} {
 		if err := os.WriteFile(filepath.Join(dir, name), body, 0600); err != nil {
@@ -135,6 +136,8 @@ func TestDashboardPrecompressedAssets(t *testing.T) {
 			{"assets/xray.schema.json", "identity", "", "application/json", `{"schema":true}`},
 			{"assets/app.js", "gzip", "gzip", "text/javascript; charset=utf-8", "window.loaded=true"},
 			{"assets/app.js", "", "", "text/javascript; charset=utf-8", "window.loaded=true"},
+			{"assets/module.mjs", "gzip", "gzip", "text/javascript; charset=utf-8", "export default true"},
+			{"assets/module.mjs", "", "", "text/javascript; charset=utf-8", "export default true"},
 		} {
 			r := httptest.NewRequest("GET", base+tc.path, nil)
 			if tc.accept != "" {

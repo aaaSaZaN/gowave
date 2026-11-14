@@ -101,6 +101,14 @@ func serveDashboardFile(w http.ResponseWriter, r *http.Request, name string) boo
 	if hasPacked {
 		w.Header().Add("Vary", "Accept-Encoding")
 	}
+	// Host MIME databases can override Go's JavaScript type. Keep script assets
+	// consistent across deployments and compressed/uncompressed responses.
+	ext := path.Ext(name)
+	if ext == ".js" || ext == ".mjs" {
+		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+	} else if ctype := mime.TypeByExtension(ext); ctype != "" {
+		w.Header().Set("Content-Type", ctype)
+	}
 	if !hasPacked || (hasPlain && !acceptsGzip(r)) {
 		f, err := os.Open(name)
 		if err != nil {
@@ -118,9 +126,6 @@ func serveDashboardFile(w http.ResponseWriter, r *http.Request, name string) boo
 		return true
 	}
 	defer f.Close()
-	if ctype := mime.TypeByExtension(path.Ext(name)); ctype != "" {
-		w.Header().Set("Content-Type", ctype)
-	}
 	if acceptsGzip(r) {
 		w.Header().Set("Content-Encoding", "gzip")
 		http.ServeContent(w, r, name, packed.ModTime(), f)
