@@ -508,16 +508,18 @@ func NewApp(cfg *config.Config, db *gorm.DB) *App {
 
 	r.Get("/api/system/health", sysHandler.GetHealth)
 	r.Head("/api/system/health", sysHandler.GetHealth)
-	r.Get("/api/auth/status", authHandler.GetStatus)
-	r.Head("/api/auth/status", authHandler.GetStatus)
-	r.Post("/api/auth/login", authHandler.Login)
-	r.Post("/api/auth/register", authHandler.Register)
-
-	r.Get("/api/auth/passkey/authentication/options", stubHandler.GetPasskeyAuthOptions)
-	r.Post("/api/auth/passkey/authentication/verify", stubHandler.VerifyPasskeyAuth)
-	r.Post("/api/auth/oauth2/authorize", stubHandler.OAuth2Authorize)
-	r.Post("/api/auth/oauth2/callback", stubHandler.OAuth2Callback)
-	r.Post("/api/auth/oauth2/tg/callback", stubHandler.OAuth2TelegramCallback)
+	r.Group(func(public chi.Router) {
+		public.Use(middleware.BodyLimit(16 << 10))
+		public.Get("/api/auth/status", authHandler.GetStatus)
+		public.Head("/api/auth/status", authHandler.GetStatus)
+		public.Post("/api/auth/login", authHandler.Login)
+		public.Post("/api/auth/register", authHandler.Register)
+		public.Get("/api/auth/passkey/authentication/options", stubHandler.GetPasskeyAuthOptions)
+		public.Post("/api/auth/passkey/authentication/verify", stubHandler.VerifyPasskeyAuth)
+		public.Post("/api/auth/oauth2/authorize", stubHandler.OAuth2Authorize)
+		public.Post("/api/auth/oauth2/callback", stubHandler.OAuth2Callback)
+		public.Post("/api/auth/oauth2/tg/callback", stubHandler.OAuth2TelegramCallback)
+	})
 
 	r.Get("/api/sub/{shortUuid}", subHandler.GetSubscription)
 	r.Get("/api/sub/{shortUuid}/info", subHandler.GetSubscriptionInfo)
