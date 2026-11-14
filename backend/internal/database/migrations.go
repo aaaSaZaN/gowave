@@ -2,6 +2,7 @@ package database
 
 import (
 	"embed"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
@@ -83,6 +84,11 @@ func applyMigrations(db *gorm.DB) error {
 					return fmt.Errorf("migration %s: %w", entry.Name(), err)
 				}
 			}
+			if entry.Name() == "010_gowave_logos.sql" {
+				if err := migrateStockLogos(tx); err != nil {
+					return fmt.Errorf("migration %s: %w", entry.Name(), err)
+				}
+			}
 			if err := tx.Exec("INSERT INTO gowave_migrations (name, applied_at) VALUES (?, ?)", entry.Name(), time.Now().UTC()).Error; err != nil {
 				return err
 			}
@@ -90,6 +96,84 @@ func applyMigrations(db *gorm.DB) error {
 		}
 		return nil
 	})
+}
+
+func migrateStockLogos(tx *gorm.DB) error {
+	var defaults struct {
+		Branding struct {
+			LogoURL string `json:"logoUrl"`
+		} `json:"brandingSettings"`
+	}
+	if err := json.Unmarshal([]byte(DefaultSubpageConfigData), &defaults); err != nil {
+		return err
+	}
+	var pages []SubscriptionPageConfig
+	if err := tx.Select("uuid", "config").Find(&pages).Error; err != nil {
+		return err
+	}
+	for _, page := range pages {
+		updated, err := replaceStockLogo(page.Config, true, defaults.Branding.LogoURL)
+		if err != nil {
+			return err
+		}
+		if updated != page.Config {
+			if err := tx.Model(&SubscriptionPageConfig{}).Where("uuid = ?", page.UUID).UpdateColumn("config", updated).Error; err != nil {
+				return err
+			}
+		}
+	}
+	var settings []PanelSetting
+	if err := tx.Select("id", "logo_url", "branding_settings").Find(&settings).Error; err != nil {
+		return err
+	}
+	for _, setting := range settings {
+		updated, err := replaceStockLogo(setting.BrandingSettings, false, "")
+		if err != nil {
+			return err
+		}
+		patch := map[string]interface{}{}
+		if updated != setting.BrandingSettings {
+			patch["branding_settings"] = updated
+		}
+		if setting.LogoURL == "https://docs.rw/img/logo.svg" {
+			patch["logo_url"] = ""
+		}
+		if len(patch) > 0 {
+			if err := tx.Model(&PanelSetting{}).Where("id = ?", setting.ID).UpdateColumns(patch).Error; err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func replaceStockLogo(raw string, nested bool, replacement string) (string, error) {
+	var config map[string]json.RawMessage
+	if json.Unmarshal([]byte(raw), &config) != nil || config == nil {
+		return raw, nil
+	}
+	var branding map[string]json.RawMessage
+	if nested {
+		if json.Unmarshal(config["brandingSettings"], &branding) != nil || branding == nil {
+			return raw, nil
+		}
+	} else {
+		branding = config
+	}
+	var logo string
+	if json.Unmarshal(branding["logoUrl"], &logo) != nil || logo != "https://docs.rw/img/logo.svg" {
+		return raw, nil
+	}
+	branding["logoUrl"], _ = json.Marshal(replacement)
+	if nested {
+		var err error
+		config["brandingSettings"], err = json.Marshal(branding)
+		if err != nil {
+			return "", err
+		}
+	}
+	encoded, err := json.Marshal(config)
+	return string(encoded), err
 }
 
 func migrateResponseRuleHeaders(tx *gorm.DB) error {

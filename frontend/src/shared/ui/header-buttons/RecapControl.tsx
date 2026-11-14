@@ -25,7 +25,7 @@ export function RecapControl() {
     }
 
     return (
-        <HeaderControl onClick={handleClick}>
+        <HeaderControl aria-label="Recap" onClick={handleClick}>
             <TbSparkles style={{ width: rem(22), height: rem(22) }} />
         </HeaderControl>
     )

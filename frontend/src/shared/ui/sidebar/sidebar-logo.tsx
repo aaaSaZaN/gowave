@@ -1,11 +1,10 @@
 import { Image } from '@mantine/core'
 import { useGetAuthStatus } from '@shared/api/hooks/auth/auth.query.hooks'
 import { ROUTES } from '@shared/constants'
-import { panelUrl } from '@shared/lib/panel-path'
 import { runAsync } from '@shared/lib/run-async'
 import { useNavigate } from 'react-router'
 
-import { Logo } from '../logo'
+import { GOWAVE_LOGO_SRC, Logo } from '../logo'
 import classes from './sidebar.module.css'
 
 export const SidebarLogoShared = () => {
@@ -22,7 +21,7 @@ export const SidebarLogoShared = () => {
             <Image
                 alt="logo"
                 className={classes.fadeIn}
-                fallbackSrc={panelUrl('/favicons/logo.svg')}
+                fallbackSrc={GOWAVE_LOGO_SRC}
                 fit="contain"
                 onClick={handleClick}
                 src={authStatus.branding.logoUrl}

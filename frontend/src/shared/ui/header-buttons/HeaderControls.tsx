@@ -43,9 +43,9 @@ export function HeaderControls({
                     {...optionalProp('stars', stars)}
                 />
             )}
+            <TelegramControl />
             {withRecap && <RecapControl />}
             {withColorScheme && <ColorSchemeControl />}
-            <TelegramControl />
             {withLanguage && <LanguageControl />}
             {withLogout && <LogoutControl />}
         </Group>

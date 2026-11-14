@@ -1,0 +1,1 @@
+-- The Go hook replaces stock logo URLs while preserving custom branding.

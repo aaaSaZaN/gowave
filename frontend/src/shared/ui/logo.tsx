@@ -4,6 +4,9 @@ import { panelUrl } from '@shared/lib/panel-path'
 
 import classes from './logo.module.css'
 
+// A branded path and build version bypass copies of the previous stock artwork.
+export const GOWAVE_LOGO_SRC = panelUrl(`/favicons/gowave.svg?v=${__BUILD_ID__}`)
+
 interface LogoProps
     extends ElementProps<'img', keyof BoxProps>,
         Omit<BoxProps, 'children' | 'ref'> {
@@ -16,7 +19,7 @@ export function Logo({ size, style, className, ...props }: LogoProps) {
             alt="GoWave"
             className={cx(classes.logo, className)}
             component="img"
-            src={panelUrl('/favicons/logo.svg')}
+            src={GOWAVE_LOGO_SRC}
             style={{ width: size, height: size, ...style }}
             {...props}
         />

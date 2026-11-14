@@ -13,7 +13,7 @@ import { use, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { createRoot } from 'react-dom/client'
 
-import logoSvg from '../public/favicons/logo.svg?raw'
+import logoSvg from '../public/favicons/gowave.svg?raw'
 import { languageDetector, localeBackend } from '../src/app/i18n/plugins'
 import desktopNavigationClasses from '../src/app/layouts/dashboard/main-layout/navbar/desktop-navigation.module.css'
 import mobileNavigationClasses from '../src/app/layouts/dashboard/main-layout/navbar/mobile-navigation.module.css'
@@ -205,9 +205,10 @@ async function run() {
             <MantineProvider>
                 <Logo size={32} />
                 <HeaderControls
-                    withGithub={false}
+                    githubLink="https://github.com/aaaSaZaN/gowave"
                     withLanguage={false}
                     withLogout={false}
+                    withRecap
                     withVersion={false}
                 />
             </MantineProvider>
@@ -215,8 +216,8 @@ async function run() {
     )
     const logo = requireValue(container.querySelector('img[alt="GoWave"]'), 'GoWave logo missing')
     assert(
-        logo.getAttribute('src') === '/panel/favicons/logo.svg',
-        'Logo respects the dashboard base path'
+        logo.getAttribute('src') === '/panel/favicons/gowave.svg?v=browser-test',
+        'GoWave artwork respects the dashboard base path and bypasses cached stock logos'
     )
     const telegram = requireValue(
         container.querySelector<HTMLAnchorElement>('a[aria-label="Telegram"]'),
@@ -230,7 +231,17 @@ async function run() {
         container.querySelector<HTMLButtonElement>('button[aria-label*="theme"]'),
         'Theme control missing'
     )
-    assert(theme.nextElementSibling === telegram, 'Telegram sits next to the theme control')
+    const github = requireValue(
+        container.querySelector('a[href="https://github.com/aaaSaZaN/gowave"]'),
+        'GitHub control missing'
+    )
+    const recap = requireValue(
+        container.querySelector('button[aria-label="Recap"]'),
+        'Recap control missing'
+    )
+    assert(github.nextElementSibling === telegram, 'Telegram follows GitHub')
+    assert(telegram.nextElementSibling === recap, 'Telegram precedes Recap')
+    assert(recap.nextElementSibling === theme, 'Theme control follows Recap')
     const previousThemeLabel = theme.getAttribute('aria-label')
     flushSync(() => theme.click())
     assert(theme.getAttribute('aria-label') !== previousThemeLabel, 'Theme switching still works')
