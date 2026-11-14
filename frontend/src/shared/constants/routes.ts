@@ -6,7 +6,7 @@ export const ROUTES = {
     },
     OAUTH2: {
         ROOT: '/oauth2/callback/:provider',
-        // Redirect URI the backend sends to providers (see backend-go/internal/auth/oauth.go).
+        // Redirect URI the backend sends to providers (see backend/internal/auth/oauth.go).
         AUTH_CALLBACK: '/auth/oauth2/callback/:provider'
     },
     DASHBOARD: {

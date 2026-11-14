@@ -7,6 +7,8 @@
 node_modules/
 dist/
 *.log
+*.tsbuildinfo
+.cache/
 .turbo
 build/
 .next/
@@ -45,9 +47,9 @@ bin/
 
 # Binar
 /gowave-*
-/backend-go/gowave-*
-backend-go/server-linux-*
-backend-go/sazan
+/backend/gowave-*
+backend/server-linux-*
+backend/sazan
 
 
 # Separate / excluded components
@@ -55,4 +57,11 @@ backend-ts/
 node-ts/
 node-go/
 openapi.json
-!backend-go/internal/contracts/openapi.json
+!backend/internal/contracts/openapi.json
+
+# Frontend editor assets downloaded by bun run editor:download.
+/frontend/public/assets/
+/frontend/public/main.wasm
+/frontend/public/wasm_exec.js
+/frontend/public/xray.schema.json
+/frontend/public/xray.schema.cn.json

@@ -1,5 +1,5 @@
 // Writes the deterministic subscription matrix used by the differential test:
-//   UPSTREAM_DIR=... node scripts/subscription-diff/matrix.mjs > backend-go/internal/subtpl/testdata/matrix.json
+//   UPSTREAM_DIR=... node scripts/subscription-diff/matrix.mjs > backend/internal/subtpl/testdata/matrix.json
 // Each case lists hosts (host row + raw inbound), user and settings overrides,
 // and the response types to render. Randomized host values ("a,b", "*") are
 // avoided except where the harness pins Math.random.

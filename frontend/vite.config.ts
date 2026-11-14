@@ -105,7 +105,7 @@ export default defineConfig(({ mode }) => {
         },
         define: {
             __TELEGRAM_CHAT_URL__: JSON.stringify(telegramChatUrl.href),
-            __DOMAIN_BACKEND__: JSON.stringify(env['DOMAIN_BACKEND'] || 'example.com').trim(),
+            __DOMAIN_BACKEND__: JSON.stringify(env['DOMAIN_BACKEND']?.trim() || ''),
             __NODE_ENV__: JSON.stringify(process.env['NODE_ENV']).trim(),
             __DOMAIN_OVERRIDE__: JSON.stringify(env['DOMAIN_OVERRIDE'] || '0').trim(),
             // Busts the browser cache of unhashed files such as locales on each build.

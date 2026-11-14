@@ -56,8 +56,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
-          go-version-file: backend-go/go.mod
-          cache-dependency-path: backend-go/go.sum
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
@@ -76,7 +76,7 @@ jobs:
           tar -czf ../gowave-frontend.tar.gz -C dist .
 
       - name: Build Backend Binaries
-        working-directory: ./backend-go
+        working-directory: ./backend
         run: |
           LDFLAGS="-s -w -X 'gowave/internal/system.AppVersion=${VERSION}' -X 'gowave/internal/system.Channel=dev' -X 'gowave/internal/system.CommitSha=${GITHUB_SHA}'"
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="$LDFLAGS" -o ../gowave-linux-amd64 ./cmd/server

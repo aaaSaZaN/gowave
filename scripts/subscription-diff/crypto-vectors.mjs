@@ -1,6 +1,6 @@
-// Regenerates backend-go/internal/subtpl/testdata/crypto-vectors.json with the
+// Regenerates backend/internal/subtpl/testdata/crypto-vectors.json with the
 // upstream helpers (node:crypto + @noble/post-quantum):
-//   UPSTREAM_DIR=... node scripts/subscription-diff/crypto-vectors.mjs > backend-go/internal/subtpl/testdata/crypto-vectors.json
+//   UPSTREAM_DIR=... node scripts/subscription-diff/crypto-vectors.mjs > backend/internal/subtpl/testdata/crypto-vectors.json
 import { randomBytes } from 'node:crypto';
 import { loadUpstream } from './load-upstream.mjs';
 

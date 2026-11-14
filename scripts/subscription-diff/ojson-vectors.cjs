@@ -1,5 +1,5 @@
-// Regenerates backend-go/internal/subtpl/ojson/testdata/vectors.json:
-//   node scripts/subscription-diff/ojson-vectors.cjs $UPSTREAM_DIR > backend-go/internal/subtpl/ojson/testdata/vectors.json
+// Regenerates backend/internal/subtpl/ojson/testdata/vectors.json:
+//   node scripts/subscription-diff/ojson-vectors.cjs $UPSTREAM_DIR > backend/internal/subtpl/ojson/testdata/vectors.json
 const U=process.argv[2]; const _=require(U+'/node_modules/lodash');
 const cases=[];
 for (const p of ['a.b[0].c',"a['b.c'].d",'a[0][1]','.a','a..b','a[]b','x["q\\"z"]']) cases.push({op:'toPath',path:p,out:_.toPath(p)});
