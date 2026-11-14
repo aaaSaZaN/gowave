@@ -1,3 +1,5 @@
+import '@mantine/core/styles.css'
+
 import { MantineProvider } from '@mantine/core'
 import { ModalsProvider, modals } from '@mantine/modals'
 import { Notifications } from '@mantine/notifications'
@@ -8,7 +10,10 @@ import { use, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { createRoot } from 'react-dom/client'
 
+import logoSvg from '../public/favicons/logo.svg?raw'
 import { languageDetector, localeBackend } from '../src/app/i18n/plugins'
+import desktopNavigationClasses from '../src/app/layouts/dashboard/main-layout/navbar/desktop-navigation.module.css'
+import mobileNavigationClasses from '../src/app/layouts/dashboard/main-layout/navbar/mobile-navigation.module.css'
 import { removeToken, setToken } from '../src/entities/auth'
 import { logoutEvents } from '../src/shared/emitters'
 import { AuthContext, AuthProvider } from '../src/shared/hocs/auth-provider/auth-provider'
@@ -187,6 +192,43 @@ async function run() {
     const previousThemeLabel = theme.getAttribute('aria-label')
     flushSync(() => theme.click())
     assert(theme.getAttribute('aria-label') !== previousThemeLabel, 'Theme switching still works')
+
+    flushSync(() =>
+        root.render(
+            <MantineProvider>
+                <div style={{ fontSize: 16 }}>
+                    <Logo data-size="16" />
+                    <Logo data-size="20" size={20} />
+                    <Logo data-size="32" size="2rem" />
+                    <Logo data-size="40" w="2.5rem" />
+                    <Logo data-size="48" w="3rem" />
+                    <Logo data-size="24" style={{ width: 24, height: 24 }} />
+                    <span className={desktopNavigationClasses.icon}>
+                        <Logo data-size="18" />
+                    </span>
+                    <div className={mobileNavigationClasses.sectionLink}>
+                        <Logo data-size="20" />
+                    </div>
+                </div>
+            </MantineProvider>
+        )
+    )
+    // Load the real artwork so intrinsic dimensions participate in layout.
+    // The browser harness does not serve public assets from its synthetic base URL.
+    for (const image of container.querySelectorAll<HTMLImageElement>('img[alt="GoWave"]')) {
+        image.src = `data:image/svg+xml,${encodeURIComponent(logoSvg)}`
+        await image.decode()
+        const expected = Number(image.dataset['size'])
+        const bounds = image.getBoundingClientRect()
+        assert(
+            Math.abs(bounds.width - expected) < 0.1,
+            `Logo width should be ${expected}px, got ${bounds.width}px`
+        )
+        assert(
+            Math.abs(bounds.height - expected) < 0.1,
+            `Logo height should be ${expected}px, got ${bounds.height}px`
+        )
+    }
 
     flushSync(() =>
         root.render(

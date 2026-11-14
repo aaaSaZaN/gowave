@@ -1,0 +1,8 @@
+.logo {
+    display: block;
+    width: 1em;
+    height: auto;
+    aspect-ratio: 1;
+    flex-shrink: 0;
+    object-fit: contain;
+}
