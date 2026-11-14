@@ -90,7 +90,8 @@ export const EditHostDrawerContent = (props: IProps) => {
                 nodes: host.nodes ?? undefined,
                 xrayJsonTemplateUuid: host.xrayJsonTemplateUuid ?? undefined,
                 internalSquads: host.internalSquads ?? undefined,
-                excludeFromSubscriptionTypes: host.excludeFromSubscriptionTypes ?? undefined
+                excludeFromSubscriptionTypes: host.excludeFromSubscriptionTypes ?? undefined,
+                includeInSrrRules: host.includeInSrrRules
             })
         }
     }, [
@@ -127,6 +128,7 @@ export const EditHostDrawerContent = (props: IProps) => {
         host.address,
         host.host,
         host.excludeFromSubscriptionTypes,
+        host.includeInSrrRules,
         host.alpn,
         form.initialize
     ])

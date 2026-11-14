@@ -226,6 +226,15 @@ export const HOST_OPTION_FIELDS: IHostOptionField[] = [
         labelKey: 'base-host-form.exclude-from-subscription-type'
     },
     {
+        name: 'includeInSrrRules',
+        Component: Controls.ResponseRulesOption,
+        fields: [list('includeInSrrRules')],
+        group: 'group-subscription',
+        helpKey: 'base-host-form.response-rules-description',
+        kind: 'stacked',
+        labelKey: 'constants.response-rules'
+    },
+    {
         name: 'isHidden',
         Component: Controls.IsHiddenOption,
         helpKey: 'base-host-form.hidden-host-description',

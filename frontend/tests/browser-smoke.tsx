@@ -1,10 +1,13 @@
 import '@mantine/core/styles.css'
 
 import { MantineProvider } from '@mantine/core'
+import { useForm } from '@mantine/form'
 import { ModalsProvider, modals } from '@mantine/modals'
 import { Notifications } from '@mantine/notifications'
+import { UpdateManyHostsCommand } from '@remnawave/backend-contract'
 import { requireValue } from '@shared/lib/invariant'
 import { runAsync } from '@shared/lib/run-async'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Highcharts from 'highcharts'
 import { use, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
@@ -15,6 +18,7 @@ import { languageDetector, localeBackend } from '../src/app/i18n/plugins'
 import desktopNavigationClasses from '../src/app/layouts/dashboard/main-layout/navbar/desktop-navigation.module.css'
 import mobileNavigationClasses from '../src/app/layouts/dashboard/main-layout/navbar/mobile-navigation.module.css'
 import { removeToken, setToken } from '../src/entities/auth'
+import { subscriptionSettingsQueryKeys } from '../src/shared/api/hooks/subscription-settings/subscription-settings.query.hooks'
 import { logoutEvents } from '../src/shared/emitters'
 import { AuthContext, AuthProvider } from '../src/shared/hocs/auth-provider/auth-provider'
 import { ErrorBoundary } from '../src/shared/hocs/error-boundary/error-boundary-hoc'
@@ -26,6 +30,7 @@ import { Chart } from '../src/shared/ui/chart'
 import { InboundCheckboxCardShared } from '../src/shared/ui/config-profiles/inbound-checkbox-card/inbound-checkbox-card.shared'
 import CountryFlag from '../src/shared/ui/country-flag'
 import { CreateableTagInputShared } from '../src/shared/ui/createable-tag-input/createable-tag-input'
+import { BaseHostForm } from '../src/shared/ui/forms/hosts/base-host-form'
 import { HeaderControls } from '../src/shared/ui/header-buttons/HeaderControls'
 import { Logo } from '../src/shared/ui/logo'
 import Masonry from '../src/shared/ui/masonry'
@@ -155,6 +160,43 @@ function ErrorBoundaryFixture() {
 function AuthStatus() {
     const auth = requireValue(use(AuthContext), 'Auth context is missing')
     return <output>{`${auth.isInitialized}:${auth.isAuthenticated}`}</output>
+}
+
+function HostRulesFixture({ rules, bulk = false }: { rules?: string[]; bulk?: boolean }) {
+    const form = useForm<UpdateManyHostsCommand.RequestBody>({
+        mode: 'uncontrolled',
+        initialValues: {
+            uuids: ['11111111-1111-4111-8111-111111111111'],
+            ...(rules ? { includeInSrrRules: rules } : {})
+        }
+    })
+    const [submitted, setSubmitted] = useState('')
+
+    return (
+        <>
+            <BaseHostForm
+                configProfiles={[]}
+                form={form}
+                handleSubmit={form.onSubmit((values) => {
+                    const patch = UpdateManyHostsCommand.RequestBodySchema.parse({
+                        ...Object.fromEntries(
+                            Object.entries(values).filter(([key]) => form.isDirty(key))
+                        ),
+                        uuids: values.uuids
+                    })
+                    setSubmitted(JSON.stringify(patch))
+                })}
+                hostTags={[]}
+                internalSquads={[]}
+                isBulkEdit={bulk}
+                isSubmitting={false}
+                nodes={[]}
+                removeRequiredFields
+                subscriptionTemplates={[]}
+            />
+            <output>{submitted}</output>
+        </>
+    )
 }
 
 async function run() {
@@ -426,6 +468,164 @@ async function run() {
         )
     )
     assert(container.querySelector('input')?.value === 'TWO', 'tag input follows changed values')
+
+    const hostQueryClient = new QueryClient()
+    hostQueryClient.setQueryData(subscriptionSettingsQueryKeys.getSubscriptionSettings.queryKey, {
+        responseRules: {
+            rules: [
+                { name: 'Browser Subscription' },
+                { name: 'Prizrak-Core Clients' },
+                { name: 'Mihomo Clients' },
+                { name: 'Prizrak-Core Clients' }
+            ]
+        }
+    })
+    const renderHostRules = (rules?: string[], bulk = false) =>
+        flushSync(() =>
+            root.render(
+                <MantineProvider>
+                    <QueryClientProvider client={hostQueryClient}>
+                        <HostRulesFixture
+                            key={JSON.stringify([rules, bulk])}
+                            {...(rules ? { rules } : {})}
+                            bulk={bulk}
+                        />
+                    </QueryClientProvider>
+                </MantineProvider>
+            )
+        )
+    const findButton = (label: string) =>
+        requireValue(
+            Array.from(container.querySelectorAll('button')).find((button) =>
+                button.textContent?.includes(label)
+            ),
+            `Button missing: ${label}`
+        )
+    const addRules = async () => {
+        findButton('common.action.add').click()
+        await wait()
+        requireValue(
+            document.querySelector<HTMLElement>(
+                '[data-combobox-option][value="includeInSrrRules"]'
+            ),
+            'Response rules is available in the add-option menu'
+        ).click()
+        await wait()
+    }
+    const rulesInput = () =>
+        requireValue(
+            container.querySelector<HTMLInputElement>(
+                'input[placeholder="base-host-form.response-rules-placeholder"]'
+            ),
+            'Response rules input missing'
+        )
+    const enterRule = async (name: string) => {
+        const input = rulesInput()
+        input.focus()
+        requireValue(
+            Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set,
+            'Native input setter missing'
+        ).call(input, name)
+        input.dispatchEvent(new Event('input', { bubbles: true }))
+        await wait()
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+        await wait()
+    }
+    renderHostRules()
+    await addRules()
+    rulesInput().focus()
+    await wait()
+    requireValue(
+        document.querySelector<HTMLElement>('[data-combobox-option][value="Prizrak-Core Clients"]'),
+        'Configured response rule is suggested'
+    ).click()
+    await wait()
+    findButton('common.action.save').click()
+    await wait()
+    assert(
+        container
+            .querySelector('output')
+            ?.textContent?.includes('"includeInSrrRules":["Prizrak-Core Clients"]'),
+        'Selecting a response rule submits its exact name'
+    )
+    await enterRule('prizrak-core clients')
+    findButton('common.action.save').click()
+    await wait()
+    assert(
+        container
+            .querySelector('output')
+            ?.textContent?.includes(
+                '"includeInSrrRules":["Prizrak-Core Clients","prizrak-core clients"]'
+            ),
+        'Manually entered names preserve case-sensitive rule identities'
+    )
+
+    renderHostRules(['Previously saved rule', 'Browser Subscription'])
+    await wait()
+    assert(
+        container.textContent?.includes('Previously saved rule'),
+        'Saved rule names remain editable even if absent from the current configuration'
+    )
+    rulesInput().focus()
+    rulesInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }))
+    await wait()
+    findButton('common.action.save').click()
+    await wait()
+    assert(
+        container
+            .querySelector('output')
+            ?.textContent?.includes('"includeInSrrRules":["Previously saved rule"]'),
+        'Editing response rules preserves remaining saved names'
+    )
+    requireValue(
+        container.querySelector<HTMLButtonElement>('button[aria-label="common.action.remove"]'),
+        'Remove response rules option missing'
+    ).click()
+    await wait()
+    findButton('common.action.save').click()
+    await wait()
+    assert(
+        container.querySelector('output')?.textContent?.includes('"includeInSrrRules":[]'),
+        'Removing the option clears persisted response rule restrictions'
+    )
+
+    hostQueryClient.setQueryData(subscriptionSettingsQueryKeys.getSubscriptionSettings.queryKey, {
+        responseRules: null
+    })
+    renderHostRules()
+    await addRules()
+    await enterRule('Future, client rule')
+    findButton('common.action.save').click()
+    await wait()
+    assert(
+        container
+            .querySelector('output')
+            ?.textContent?.includes('"includeInSrrRules":["Future, client rule"]'),
+        'Empty configurations allow manual rule names containing commas'
+    )
+
+    renderHostRules(undefined, true)
+    await addRules()
+    findButton('common.action.save').click()
+    await wait()
+    assert(
+        container.querySelector('output')?.textContent?.includes('"includeInSrrRules":[]'),
+        'Activating empty response rules in bulk edit explicitly clears restrictions'
+    )
+    requireValue(
+        container.querySelector<HTMLButtonElement>(
+            'button[aria-label="base-host-form.leave-field-untouched"]'
+        ),
+        'Leave response rules untouched action missing'
+    ).click()
+    await wait()
+    findButton('common.action.save').click()
+    await wait()
+    assert(
+        !container.querySelector('output')?.textContent?.includes('includeInSrrRules'),
+        'Removing the bulk option leaves existing response rule assignments untouched'
+    )
+    hostQueryClient.clear()
     flushSync(() => root.render(<ClockFixture />))
     const firstTime = Number(container.textContent)
     await wait(60)

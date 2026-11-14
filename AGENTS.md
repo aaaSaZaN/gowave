@@ -1,5 +1,11 @@
 # Working in Gowave
 
+## README changes
+
+Treat the root `README.md` as user-managed. Edit it only when the user directly
+instructs you to change that README. Code, configuration, dependency, and repository
+restructuring requests do not authorize automatic README updates.
+
 ## Repository context
 
 Gowave combines a Go backend with a React frontend. Compatibility with `@remnawave/backend-contract` is a core constraint, including endpoint coverage, response envelopes, status codes, and subscription output. The frontend currently pins contract version `3.4.17`; `internal/server/parity_test.go` also checks that version explicitly.
@@ -7,7 +13,7 @@ Gowave combines a Go backend with a React frontend. Compatibility with `@remnawa
 - `backend/` is the Go module (`gowave`); run Go commands there, not at the repository root. Its `go.mod` declares Go `1.27.1`.
 - `frontend/` is a separate React/TypeScript/Vite application. Use Bun 1.4.2 for dependency installation and package scripts locally, in CI, and in Docker. `frontend/package.json` pins the version and `frontend/bun.lock` locks dependencies.
 - `scripts/` contains contract export/validation, subscription differential fixtures, and a node migration installer.
-- Root `README.md` contains development instructions and links to installation/deployment documentation. For defaults, consult executable configuration (`backend/config/config.go`); the default SQLite filename is `gowave.db`.
+- Root `README.md` links to the external project documentation and Ansible repository. For defaults, consult executable configuration (`backend/config/config.go`); the default SQLite filename is `gowave.db`.
 
 ## Commands and verification
 
