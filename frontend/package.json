@@ -14,30 +14,21 @@
   },
   "type": "module",
   "scripts": {
-    "start:dev": "vite",
-    "start:build": "NODE_ENV=production tsc && vite build",
-    "cb": "vite build",
-    "start:preview": "vite preview --port 3333",
-    "serve": "NODE_ENV=production tsc && vite build && vite preview --port 3333",
-    "serve:dev": "tsc && vite build && vite preview --port 3333",
-    "typecheck": "bun run css:types:check && tsc --noEmit && tsc --project tsconfig.node.json",
-    "generate-pwa-assets": "pwa-assets-generator --preset minimal-2023 public/favicons/logo.svg",
-    "toc": "bun scripts/translation-resources.mjs && biome format --write @types/resources.ts",
-    "crowdin:download": "crowdin download translations --language=af --branch=dev",
-    "crowdin:upload": "crowdin upload sources --branch=dev",
-    "format": "biome format . --error-on-warnings",
-    "format:fix": "biome format --write .",
-    "lint": "biome lint . --error-on-warnings",
-    "lint:fix": "biome lint --write .",
+    "dev": "bun run --no-orphans --parallel dev:backend dev:frontend",
+    "dev:backend": "cd ../backend && go run ./cmd/server",
+    "dev:frontend": "vite",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 3333 --strictPort",
     "check": "biome check . --error-on-warnings",
     "fix": "biome check --write .",
-    "build": "vite build",
-    "editor:download": "bun scripts/editor-assets.cjs download",
-    "editor:compress": "bun scripts/editor-assets.cjs compress",
+    "typecheck": "bun run css:types:check && tsc --noEmit && tsc --project tsconfig.node.json",
     "test": "bun test ./src",
     "test:browser": "bun tests/run-browser.mjs",
     "css:types": "bun scripts/css-types.mjs",
-    "css:types:check": "bun scripts/css-types.mjs --check"
+    "css:types:check": "bun scripts/css-types.mjs --check",
+    "editor:download": "bun scripts/editor-assets.cjs download",
+    "editor:compress": "bun scripts/editor-assets.cjs compress",
+    "i18n:types": "bun scripts/translation-resources.mjs && biome format --write @types/resources.ts"
   },
   "dependencies": {
     "@dnd-kit/abstract": "0.5.1",
@@ -104,7 +95,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",
-    "@crowdin/cli": "5.5.0",
     "@types/node": "26.6.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
@@ -114,11 +104,6 @@
     "typescript": "7.0.2",
     "vite": "8.3.5",
     "vite-plugin-webfont-dl": "3.13.1"
-  },
-  "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
   },
   "overrides": {
     "zod": "4.6.7"

@@ -16,7 +16,7 @@ func TestDockerComposeTemplateMatchesRepository(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(root, dockerComposeTemplate) {
-		t.Fatal("backend-go/internal/cli/docker-compose.yml differs from the repository docker-compose.yml; run: cp docker-compose.yml backend-go/internal/cli/docker-compose.yml")
+		t.Fatal("backend/internal/cli/docker-compose.yml differs from the repository docker-compose.yml; run: cp docker-compose.yml backend/internal/cli/docker-compose.yml")
 	}
 }
 

@@ -6,7 +6,7 @@
  * @link https://www.i18next.com/overview/typescript
  */
 import 'i18next'
-// resources.ts file is generated with `bun run toc`
+// resources.ts file is generated with `bun run i18n:types`
 import resources from './resources.ts'
 
 declare module 'i18next' {

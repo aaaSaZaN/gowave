@@ -1,5 +1,5 @@
-// Regenerates backend-go/internal/subtpl/js/testdata/vectors.json (run with TZ=UTC):
-//   TZ=UTC node scripts/subscription-diff/js-vectors.cjs $UPSTREAM_DIR > backend-go/internal/subtpl/js/testdata/vectors.json
+// Regenerates backend/internal/subtpl/js/testdata/vectors.json (run with TZ=UTC):
+//   TZ=UTC node scripts/subscription-diff/js-vectors.cjs $UPSTREAM_DIR > backend/internal/subtpl/js/testdata/vectors.json
 const U = process.argv[2];
 const dayjs = require(U + '/node_modules/dayjs');
 const xbytes = require(U + '/node_modules/xbytes');

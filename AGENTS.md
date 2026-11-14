@@ -4,14 +4,14 @@
 
 Gowave combines a Go backend with a React frontend. Compatibility with `@remnawave/backend-contract` is a core constraint, including endpoint coverage, response envelopes, status codes, and subscription output. The frontend currently pins contract version `3.4.17`; `internal/server/parity_test.go` also checks that version explicitly.
 
-- `backend-go/` is the Go module (`gowave`); run Go commands there, not at the repository root. Its `go.mod` declares Go `1.27.1`.
+- `backend/` is the Go module (`gowave`); run Go commands there, not at the repository root. Its `go.mod` declares Go `1.27.1`.
 - `frontend/` is a separate React/TypeScript/Vite application. Use Bun 1.4.2 for dependency installation and package scripts locally, in CI, and in Docker. `frontend/package.json` pins the version and `frontend/bun.lock` locks dependencies.
 - `scripts/` contains contract export/validation, subscription differential fixtures, and a node migration installer.
-- Root `README.md` documents installation, reverse proxy configuration, subscription-page deployment, and rescue/import commands, mostly in Russian. For defaults, consult executable configuration (`backend-go/config/config.go`); the default SQLite filename is `gowave.db`.
+- Root `README.md` contains development instructions and links to installation/deployment documentation. For defaults, consult executable configuration (`backend/config/config.go`); the default SQLite filename is `gowave.db`.
 
 ## Commands and verification
 
-### Backend (working directory: `backend-go`)
+### Backend (working directory: `backend`)
 
 ```sh
 go run ./cmd/server
@@ -35,7 +35,7 @@ CI provides PostgreSQL 18. `internal/testdb.Open` creates a separate schema for 
 
 ```sh
 bun install --frozen-lockfile
-bun run start:dev
+bun run dev
 bun run typecheck
 bun run test
 bun run build
@@ -43,12 +43,12 @@ bun run check
 ```
 
 - Commit dependency changes together with `bun.lock`; use `bun install` to update it. Biome is pinned in `package.json` and configured in `biome.json`.
-- `build` runs only `vite build`; it does **not** typecheck. CI runs `typecheck` separately. `start:build` runs TypeScript followed by the production build.
-- `check` runs Biome lint, formatting and import checks and fails on warnings. `format:fix`, `lint:fix` and `fix` apply safe fixes. CI runs `check`, unit tests, typecheck, build and contract checks.
+- `build` runs only `vite build`; it does **not** typecheck. CI runs `typecheck` separately. `dev` runs the Go backend and Vite together with Bun parallel scripts; `dev:frontend` and `dev:backend` run either component separately. Backend setup requires a private `APP_SECRET` in the root/backend `.env`.
+- `check` runs Biome lint, formatting and import checks and fails on warnings. `fix` applies safe fixes. CI runs `check`, unit tests, typecheck, build and contract checks.
 - `typecheck` verifies generated CSS declarations and checks application/tests and Vite configuration under the shared strict options in `tsconfig.base.json`. Run `bun run css:types` after changing CSS class names; commit the generated `*.module.d.css.ts` files. `skipLibCheck` remains enabled for incompatible upstream declarations; application code is still checked strictly.
 - `bun run test` runs frontend unit and crypto interoperability tests with Bun's built-in test runner. `bun run test:browser` runs UI smoke checks using a local Chromium executable (`CHROMIUM_BIN` overrides its path). Backend tests and schema probes cover API compatibility.
-- Vite listens on `0.0.0.0:3333` with `strictPort`; `/api` proxies to `127.0.0.1:3000`. `start:preview` also uses port 3333.
-- `bun run editor:download` (or `just download-monaco-deps` from `frontend/`) fetches the hash-pinned Xray validator WASM, `wasm_exec.js`, and Xray schemas into `public/assets/`; `bun run editor:compress` writes `.gz` siblings into `dist` and keeps `main.wasm` only as `main.wasm.gz`. Release and Docker builds run both. Monaco and the validator load lazily in the administrator's browser, never at startup. See the asset-serving caveat below before changing their paths.
+- Vite listens on `0.0.0.0:3333` with `strictPort`; `/api` proxies to `127.0.0.1:3000`. `preview` serves an existing build on loopback port 3333 and proxies `/api` to the same backend; start the API separately.
+- `bun run editor:download` fetches the hash-pinned Xray validator WASM, `wasm_exec.js`, and Xray schemas into `public/assets/`; `bun run editor:compress` writes `.gz` siblings into `dist` and keeps `main.wasm` only as `main.wasm.gz`. Release and Docker builds run both. Monaco and the validator load lazily in the administrator's browser, never at startup. See the asset-serving caveat below before changing their paths.
 
 ### API contract checks
 
@@ -56,15 +56,15 @@ After frontend dependencies are installed, run from the repository root:
 
 ```sh
 bun scripts/export-contract.cjs > /tmp/commands.json
-diff -u backend-go/internal/contracts/commands.json /tmp/commands.json
+diff -u backend/internal/contracts/commands.json /tmp/commands.json
 bun scripts/export-contract.cjs --openapi > /tmp/openapi.json
-cmp backend-go/internal/contracts/openapi.json /tmp/openapi.json
+cmp backend/internal/contracts/openapi.json /tmp/openapi.json
 ```
 
 To capture and validate live handler responses:
 
 ```sh
-# From backend-go:
+# From backend:
 GOWAVE_PROBE_OUT=/tmp/probe.json go test ./internal/server -run Probe -count=1
 # From the repository root:
 bun scripts/validate-contract.cjs /tmp/probe.json
@@ -108,10 +108,10 @@ Use `internal/httpx` for upstream-compatible JSON: success is commonly `{"respon
 - Page `connectors` fetch data and handle loading before passing props to page `components`; `config-profiles` is a representative example. Filenames use role suffixes such as `.page.connector.tsx`, `.page.component.tsx`, `.widget.tsx`, and `.feature.tsx`.
 - API hooks live in `shared/api/hooks/<domain>`. They use command definitions from `@remnawave/backend-contract` and reusable factories in `shared/api/tsq-helpers`, including Zod schemas, route/query parameters, and query keys. Extend these patterns for related endpoints.
 - `shared/api/axios.ts` owns backend-domain selection, authorization headers, browser-client headers, and logout on 401. Production defaults to `window.location.origin`; `DOMAIN_OVERRIDE=1` forces the compiled backend domain. Vite injects `DOMAIN_BACKEND`, `DOMAIN_OVERRIDE`, and `NODE_ENV` at build time.
-- The sample frontend environment points at port **3003** with override enabled, while the Go default and Vite proxy target are **3000**. Adjust environment values deliberately when setting up development.
+- The sample frontend environment uses an empty `DOMAIN_BACKEND` and `DOMAIN_OVERRIDE=0`, so development and preview requests use Vite’s proxy to the Go default port **3000**. Remote APIs require a full `DOMAIN_BACKEND` and `DOMAIN_OVERRIDE=1`. Do not pin `NODE_ENV` in frontend environment files.
 - TypeScript aliases for `@shared`, `@entities`, `@features`, `@widgets`, `@pages`, and `@public` are declared in `tsconfig.json`; Vite resolves those paths. Do not assume every formatter import group has a matching TypeScript alias.
 - Styling uses Mantine and colocated CSS modules. `biome.json` defines four spaces for code, single quotes, optional semicolons, no trailing commas, and import organization. Biome enforces React hook/compiler and promise rules and rejects explicit `any` and non-null assertions. Use bracket access for index signatures as required by TypeScript; the conflicting stylistic `useLiteralKeys` rule is disabled. Local CSS classes have generated exact declarations; use native media-query breakpoint values with the existing Mantine PostCSS mixins.
-- Translations live in `public/locales`; `bun run toc` regenerates `@types/resources.ts` from English resources. Existing Crowdin scripts target the `dev` branch; the download script explicitly selects Afrikaans.
+- Translations live in `public/locales`; `bun run i18n:types` regenerates `@types/resources.ts` from English resources. Translations are maintained locally; Crowdin is not used.
 
 ## Tests and fixtures
 
@@ -123,13 +123,13 @@ Fixture regeneration has a separate runtime requirement: `setup-upstream.sh <wor
 
 ## Runtime and deployment gotchas
 
-- Go configuration loads `.env` and `../.env` relative to the working directory. `APP_SECRET` must be private and at least 32 characters; startup rejects known placeholder values. Optional notification settings also have validation gates. Consult `backend-go/config/config.go` rather than assuming every variable in `.env.sample` is consumed.
+- Go configuration loads `.env` and `../.env` relative to the working directory. `APP_SECRET` must be private and at least 32 characters; startup rejects known placeholder values. Optional notification settings also have validation gates. Consult `backend/config/config.go` rather than assuming every variable in `.env.sample` is consumed.
 - Defaults are API port 3000 and metrics port 3001. PostgreSQL is inferred from a PostgreSQL DSN when `DB_DRIVER` is absent; otherwise SQLite is the default.
 - The frontend is **not embedded in the Go binary**. `NewApp` searches, in order, `./frontend/dist`, `./dist`, `../frontend/dist`, `./static`, `/opt/gowave/frontend/dist`, and `/opt/gowave/dist`. The first existing directory wins at construction time.
 - Static serving has an `/assets/` fallback to files in the static root for editor WASM/runtime/schema URLs. A `name.gz` sibling is served with `Content-Encoding: gzip` when accepted and decoded otherwise. Missing file-like requests return 404; extensionless SPA routes fall back to `index.html`. Keep this behavior when modifying asset paths or router fallback.
 - The native service runs as `gowave`; `internal/serviceunit/install.sh` (embedded, run by `gowave service install`) keeps `gowave-server` and `frontend/` root-owned, makes the install directory `root:gowave` with the sticky bit for SQLite files, and installs `gowave-update.path`/`.service`. In-panel updates only drop `/run/gowave/update-request`; the root helper `gowave update apply <dir>` verifies `SHA256SUMS` and refuses to run unless its binary and directory are root-controlled. Never make code paths writable by the service account: root executes the same binary for installer and CLI commands. Running the server as root only logs a warning; root services are not migrated automatically.
 - Running the executable as root attempts to create/update `/usr/local/bin/gowave`. `scripts/migrate-node.sh` is a privileged systemd installer for a separate GoWave Node binary and can stop a Docker node; it is not a local development setup script.
-- `.github/workflows/release.yml` triggers on `v*` tags and publishes separate frontend tarballs and Linux amd64/arm64 backend binaries. Version metadata is injected with `-X gowave/internal/system.AppVersion=${VERSION}`. The release first runs `ci.yml` (via `workflow_call`), verifies the embedded version with `--version`, publishes `SHA256SUMS`, and pushes a multi-arch image to `ghcr.io/<owner>/gowave`; tags containing `-` become pre-releases. The frontend justfile's `tag-release` creates `v<package.json version>`.
+- `.github/workflows/release.yml` triggers on `v*` tags and publishes separate frontend tarballs and Linux amd64/arm64 backend binaries. Version metadata is injected with `-X gowave/internal/system.AppVersion=${VERSION}`. The release first runs `ci.yml` (via `workflow_call`), verifies the embedded version with `--version`, publishes `SHA256SUMS`, and pushes a multi-arch image to `ghcr.io/<owner>/gowave`; tags containing `-` become pre-releases.
 
 ## Branding and dashboard location
 

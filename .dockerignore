@@ -16,6 +16,6 @@ frontend/dist
 /gowave-*
 sazan
 server-*
-backend-go/gowave-*
-backend-go/sazan
-backend-go/server-*
+backend/gowave-*
+backend/sazan
+backend/server-*

@@ -2,7 +2,7 @@
 // SubscriptionController and SubscriptionService on Express 5 (CQRS buses
 // stubbed from each scenario) and records status, headers and body:
 //   TZ=UTC UPSTREAM_DIR=... $NODE24 scripts/subscription-diff/run-upstream-http.mjs \
-//     backend-go/internal/subtpl/testdata/matrix.json | gzip -9 > backend-go/internal/subscription/testdata/http.json.gz
+//     backend/internal/subtpl/testdata/matrix.json | gzip -9 > backend/internal/subscription/testdata/http.json.gz
 // The Go side (internal/subscription/diff_test.go) seeds a database from
 // the same scenarios and compares the responses.
 import { readFileSync } from 'node:fs';

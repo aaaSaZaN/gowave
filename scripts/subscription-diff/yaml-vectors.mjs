@@ -1,6 +1,6 @@
 // Dumps tricky scalars with upstream's js-yaml so the Go port of dump() can
 // be checked byte for byte:
-//   UPSTREAM_DIR=... $NODE24 scripts/subscription-diff/yaml-vectors.mjs > backend-go/internal/subtpl/testdata/yaml-vectors.json
+//   UPSTREAM_DIR=... $NODE24 scripts/subscription-diff/yaml-vectors.mjs > backend/internal/subtpl/testdata/yaml-vectors.json
 import { loadUpstream } from './load-upstream.mjs';
 
 const jiti = loadUpstream(process.env.UPSTREAM_DIR);

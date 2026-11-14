@@ -26,10 +26,10 @@ ARG COMMIT_SHA=
 ARG TARGETOS TARGETARCH
 WORKDIR /src
 
-COPY backend-go/go.mod backend-go/go.sum ./
+COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 
-COPY backend-go/ ./
+COPY backend/ ./
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath \
     -ldflags="-s -w -X gowave/internal/system.AppVersion=${VERSION} -X gowave/internal/system.Channel=${CHANNEL} -X gowave/internal/system.CommitSha=${COMMIT_SHA}" \
     -o /out/gowave ./cmd/server

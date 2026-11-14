@@ -1,7 +1,7 @@
 // Renders every case of matrix.json with upstream's RenderTemplatesService
 // and writes the golden outputs the Go test compares against:
 //   TZ=UTC UPSTREAM_DIR=... $NODE24 scripts/subscription-diff/run-upstream.mjs \
-//     backend-go/internal/subtpl/testdata/matrix.json | gzip -9 > backend-go/internal/subtpl/testdata/golden.json.gz
+//     backend/internal/subtpl/testdata/matrix.json | gzip -9 > backend/internal/subtpl/testdata/golden.json.gz
 // Time is pinned to matrix.now and Math.random to 0 so shuffles and random
 // picks are deterministic on both sides.
 import { readFileSync } from 'node:fs';

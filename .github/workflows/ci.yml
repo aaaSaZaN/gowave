@@ -33,14 +33,14 @@ jobs:
           --health-retries 10
     defaults:
       run:
-        working-directory: backend-go
+        working-directory: backend
     steps:
       - uses: actions/checkout@v7
 
       - uses: actions/setup-go@v7
         with:
-          go-version-file: backend-go/go.mod
-          cache-dependency-path: backend-go/go.sum
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
 
       - name: Formatting
         run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
@@ -110,9 +110,9 @@ jobs:
       - name: Contract fixture is current
         run: |
           bun scripts/export-contract.cjs > /tmp/commands.json
-          diff -u backend-go/internal/contracts/commands.json /tmp/commands.json
+          diff -u backend/internal/contracts/commands.json /tmp/commands.json
           bun scripts/export-contract.cjs --openapi > /tmp/openapi.json
-          cmp backend-go/internal/contracts/openapi.json /tmp/openapi.json
+          cmp backend/internal/contracts/openapi.json /tmp/openapi.json
 
       - uses: actions/download-artifact@v8
         with:

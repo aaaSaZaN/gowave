@@ -1,6 +1,6 @@
 // Replays metric operations on upstream's METRIC_PROVIDERS with prom-client
 // and records the exposition text after each snapshot:
-//   UPSTREAM_DIR=... $NODE24 scripts/subscription-diff/prom-vectors.mjs > backend-go/internal/metrics/testdata/prom-vectors.json
+//   UPSTREAM_DIR=... $NODE24 scripts/subscription-diff/prom-vectors.mjs > backend/internal/metrics/testdata/prom-vectors.json
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { loadUpstream } from './load-upstream.mjs';
