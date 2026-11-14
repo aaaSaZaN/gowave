@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <title>GoWave</title>
-  <rect width="512" height="512" rx="128" fill="#162029"/>
   <g transform="matrix(0.65 0 0 -0.65 37 433)">
     <g>
       <path d="M 140 270 C 195 270 230 170 280 170 C 335 170 370 275 415 275 C 460 275 485 230 535 190 Q 515 65 338 65 Q 140 65 140 270 Z" fill="#00abd7"/>

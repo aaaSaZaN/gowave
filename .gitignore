@@ -9,6 +9,7 @@ dist/
 *.log
 *.tsbuildinfo
 .cache/
+/.dev/
 .turbo
 build/
 .next/

@@ -268,8 +268,25 @@ async function run() {
     )
     // Load the real artwork so intrinsic dimensions participate in layout.
     // The browser harness does not serve public assets from its synthetic base URL.
+    const artwork = new Image()
+    artwork.src = `data:image/svg+xml,${encodeURIComponent(logoSvg)}`
+    await artwork.decode()
+    const canvas = document.createElement('canvas')
+    canvas.width = 512
+    canvas.height = 512
+    const context = requireValue(canvas.getContext('2d'), 'Logo canvas unavailable')
+    context.drawImage(artwork, 0, 0, 512, 512)
+    assert(
+        context.getImageData(0, 0, 1, 1).data[3] === 0,
+        'Logo background outside the mark is transparent'
+    )
+    assert(
+        context.getImageData(256, 180, 1, 1).data[3] === 0,
+        'Logo interior above the wave is transparent'
+    )
+    assert(context.getImageData(256, 100, 1, 1).data[3] === 255, 'Logo ring remains opaque')
     for (const image of container.querySelectorAll<HTMLImageElement>('img[alt="GoWave"]')) {
-        image.src = `data:image/svg+xml,${encodeURIComponent(logoSvg)}`
+        image.src = artwork.src
         await image.decode()
         const expected = Number(image.dataset['size'])
         const bounds = image.getBoundingClientRect()
