@@ -1355,11 +1355,7 @@ print_done() {
     else
         echo "$(t 'Конфигурация:  ' 'Configuration: ') $INSTALL_DIR/.env ($(t 'логи' 'logs'): journalctl -u gowave -f)"
     fi
-    if [ "$DB_MODE" = docker ]; then
-        echo "$(t 'Консоль:       ' 'Console:       ') gowave rescue"
-    else
-        echo "$(t 'Консоль:       ' 'Console:       ') cd $INSTALL_DIR && sudo -u gowave gowave rescue"
-    fi
+    echo "$(t 'Консоль:       ' 'Console:       ') gowave cli"
     if [ "$SOURCE" != none ]; then
         echo "$(t "Старая панель остановлена и не запускается при загрузке. Её файлы остались в $SOURCE_DIR." \
             "The old panel is stopped and will not start on boot. Its files are still in $SOURCE_DIR.")"

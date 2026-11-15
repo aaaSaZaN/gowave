@@ -55,6 +55,10 @@ func ensureGlobalSymlink() {
 		return
 	}
 	exe, _ = filepath.EvalSymlinks(exe)
+	tmp := os.TempDir()
+	if strings.HasPrefix(exe, tmp) || strings.Contains(exe, "go-build") {
+		return
+	}
 	symlinkPath := "/usr/local/bin/gowave"
 	if info, err := os.Lstat(symlinkPath); err == nil && info.Mode()&os.ModeSymlink == 0 {
 		// A regular file is the wrapper `migrate to-docker` installs to forward
@@ -97,13 +101,56 @@ func warnWritableExecutable() {
 	}
 }
 
+func parseGlobalFlags(args []string) (cleaned []string, customDB string, keepRoot bool) {
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		lower := strings.ToLower(arg)
+		if lower == "--yes-i-know-root-db-mode-enough-go-ahead-please" ||
+			lower == "--yes-i-know-dns-manual-mode-enough-go-ahead-please" ||
+			lower == "--keep-root-db" ||
+			lower == "--no-chown" {
+			keepRoot = true
+			continue
+		}
+		if arg == "--db" || arg == "--database" || arg == "--database-url" {
+			if i+1 < len(args) {
+				customDB = args[i+1]
+				i++
+				continue
+			}
+		}
+		if strings.HasPrefix(arg, "--db=") {
+			customDB = strings.TrimPrefix(arg, "--db=")
+			continue
+		}
+		if strings.HasPrefix(arg, "--database=") {
+			customDB = strings.TrimPrefix(arg, "--database=")
+			continue
+		}
+		if strings.HasPrefix(arg, "--database-url=") {
+			customDB = strings.TrimPrefix(arg, "--database-url=")
+			continue
+		}
+		cleaned = append(cleaned, arg)
+	}
+	return cleaned, customDB, keepRoot
+}
+
 func Run() {
 	// The panel keeps every timestamp in UTC like upstream's container; pgx and
 	// encoding/json would otherwise render the host's zone.
 	time.Local = time.UTC
-	args := os.Args[1:]
+	rawArgs := os.Args[1:]
+	args, customDB, keepRoot := parseGlobalFlags(rawArgs)
+	if keepRoot {
+		database.DisablePermissionFix = true
+	}
 	if len(args) == 1 && (args[0] == "--version" || args[0] == "version") {
 		fmt.Println(system.AppVersion)
+		return
+	}
+	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h" || args[0] == "help") {
+		cli.PrintUsage()
 		return
 	}
 	if len(args) >= 2 && args[0] == "service" && args[1] == "install" {
@@ -133,6 +180,16 @@ func Run() {
 		return
 	}
 	cfg := config.Load()
+	if customDB != "" {
+		cfg.DatabaseURL = customDB
+		if !strings.HasPrefix(customDB, "postgres://") && !strings.HasPrefix(customDB, "postgresql://") {
+			cfg.DBDriver = "sqlite"
+		}
+	}
+	if keepRoot {
+		cfg.KeepRootDB = true
+		fmt.Println("[!] Note: root database ownership preserved (--yes-I-know-root-db-mode-enough-go-ahead-please).")
+	}
 	if cli.IsPostgresToSQLiteMigrationCommand(args) {
 		cli.RunRescue(nil, cfg, args)
 		return
@@ -164,20 +221,25 @@ func Run() {
 		logx.Errorf("database", "Migration failed: %v", err)
 		os.Exit(1)
 	}
+	if !cfg.KeepRootDB {
+		_ = database.FixPermissions(cfg.DatabaseURL)
+	}
 	if serving {
 		applied := countMigrations(db)
 		logx.Infof("database", "Connected to %s; schema has %d migrations, %d applied now (%s)",
 			describeDatabase(cfg), applied, applied-appliedBefore, time.Since(migrateStart).Round(time.Millisecond))
 	}
 
-	if len(os.Args) > 1 {
-		firstArg := os.Args[1]
+	if len(args) > 0 {
+		firstArg := args[0]
 		if firstArg == "--rescue" || firstArg == "rescue" || firstArg == "cli" || firstArg == "--cli" {
-			cli.RunRescue(db, cfg, os.Args[2:])
+			cli.RunRescue(db, cfg, args[1:])
+			closeAndFixDB(db, cfg)
 			return
 		}
 		if firstArg == "--import-3x-ui" || firstArg == "import-3x-ui" || firstArg == "import" || firstArg == "--import" || firstArg == "--import-pasarguard" || firstArg == "import-pasarguard" || firstArg == "migrate" || firstArg == "--migrate" || firstArg == "--migrate-pg-to-sqlite" || firstArg == "--migrate-sqlite-to-pg" || firstArg == "migrate-sqlite-to-pg" || firstArg == "--migrate-pg-to-pg" || firstArg == "migrate-pg-to-pg" {
-			cli.RunRescue(db, cfg, os.Args[1:])
+			cli.RunRescue(db, cfg, args)
+			closeAndFixDB(db, cfg)
 			return
 		}
 	}
@@ -244,9 +306,21 @@ func Run() {
 	}
 	// Background writers flush what requests queued before the shutdown.
 	app.wait(5 * time.Second)
+	closeAndFixDB(db, cfg)
 	logx.Infof("startup", "GoWave stopped")
 	if exitCode != 0 {
 		os.Exit(exitCode)
+	}
+}
+
+func closeAndFixDB(db *gorm.DB, cfg *config.Config) {
+	if db != nil {
+		if sqlDB, err := db.DB(); err == nil {
+			_ = sqlDB.Close()
+		}
+	}
+	if cfg != nil && !cfg.KeepRootDB {
+		_ = database.FixPermissions(cfg.DatabaseURL)
 	}
 }
 
@@ -703,7 +777,15 @@ func NewApp(cfg *config.Config, db *gorm.DB) *App {
 	_ = mime.AddExtensionType(".js", "application/javascript")
 
 	var staticDir string
-	for _, dir := range staticDirs {
+	candidates := staticDirs
+	if cfg != nil && cfg.InstallDir != "" {
+		candidates = append(candidates,
+			filepath.Join(cfg.InstallDir, "frontend/dist"),
+			filepath.Join(cfg.InstallDir, "dist"),
+			filepath.Join(cfg.InstallDir, "static"),
+		)
+	}
+	for _, dir := range candidates {
 		if _, err := os.Stat(dir); err == nil {
 			staticDir = dir
 			break

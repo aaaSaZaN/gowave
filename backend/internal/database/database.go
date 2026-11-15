@@ -48,6 +48,7 @@ func Init(driver string, databaseURL string) (*gorm.DB, error) {
 			if err := db.Exec("PRAGMA foreign_keys = ON").Error; err != nil {
 				return nil, err
 			}
+			_ = FixPermissions(databaseURL)
 		} else {
 			SetMaxConnections(db, DefaultMaxConnections)
 			sqlDB.SetConnMaxIdleTime(10 * time.Minute)

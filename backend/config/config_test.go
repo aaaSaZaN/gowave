@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -91,5 +93,44 @@ func TestSubUserCacheConfig(t *testing.T) {
 		if err := Load().Validate(); err == nil || !strings.Contains(err.Error(), "SUB_USER_CACHE_TTL") {
 			t.Errorf("SUB_USER_CACHE_TTL=%q should be rejected, got %v", bad, err)
 		}
+	}
+}
+
+func TestDetectInstallDir(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("GOWAVE_INSTALL_DIR", tmp)
+	if got := DetectInstallDir(); got != tmp {
+		t.Fatalf("DetectInstallDir() = %q, want %q", got, tmp)
+	}
+}
+
+func TestLoadFromInstallDir(t *testing.T) {
+	tmp := t.TempDir()
+	envContent := "APP_PORT=3999\nAPP_SECRET=0123456789abcdef0123456789abcdef\n"
+	if err := os.WriteFile(filepath.Join(tmp, ".env"), []byte(envContent), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GOWAVE_INSTALL_DIR", tmp)
+	cfg := Load()
+	if cfg.AppPort != "3999" {
+		t.Fatalf("cfg.AppPort = %q, want 3999", cfg.AppPort)
+	}
+	if cfg.InstallDir != tmp {
+		t.Fatalf("cfg.InstallDir = %q, want %q", cfg.InstallDir, tmp)
+	}
+}
+
+func TestRelativeDatabaseURLResolvesToInstallDir(t *testing.T) {
+	tmp := t.TempDir()
+	dbFile := filepath.Join(tmp, "gowave.db")
+	if err := os.WriteFile(dbFile, []byte(""), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GOWAVE_INSTALL_DIR", tmp)
+	t.Setenv("DATABASE_URL", "gowave.db")
+	t.Setenv("DB_DRIVER", "sqlite")
+	cfg := Load()
+	if cfg.DatabaseURL != dbFile {
+		t.Fatalf("cfg.DatabaseURL = %q, want %q", cfg.DatabaseURL, dbFile)
 	}
 }

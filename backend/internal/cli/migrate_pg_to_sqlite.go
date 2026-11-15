@@ -254,6 +254,7 @@ func MigratePostgresToSQLite(_ *config.Config, sourceDSN, destPath string) error
 		return fmt.Errorf("publish migrated SQLite database: %w", err)
 	}
 	published = true
+	_ = database.FixPermissions(absDestPath)
 	if err := os.Remove(tmpPath); err != nil {
 		return fmt.Errorf("SQLite database was published at %s, but temporary file cleanup failed: %w", absDestPath, err)
 	}

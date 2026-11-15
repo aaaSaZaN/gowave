@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -38,11 +39,15 @@ func IsPostgresToSQLiteMigrationCommand(args []string) bool {
 	return IsMigrationCommand(args)
 }
 
-func migrationDestination(args []string, index int) string {
+func migrationDestination(cfg *config.Config, args []string, index int) string {
+	dest := "gowave-migrated.sqlite"
 	if len(args) > index && strings.TrimSpace(args[index]) != "" {
-		return strings.TrimSpace(args[index])
+		dest = strings.TrimSpace(args[index])
 	}
-	return "gowave-migrated.sqlite"
+	if !filepath.IsAbs(dest) && cfg != nil && cfg.InstallDir != "" {
+		dest = filepath.Join(cfg.InstallDir, dest)
+	}
+	return dest
 }
 
 func runToDocker(args []string) {
@@ -126,6 +131,17 @@ func runPGToPG(cfg *config.Config, args []string) {
 }
 
 func RunRescue(db *gorm.DB, cfg *config.Config, args []string) {
+	defer func() {
+		if db != nil {
+			if sqlDB, err := db.DB(); err == nil {
+				_ = sqlDB.Close()
+			}
+		}
+		if cfg != nil && !cfg.KeepRootDB {
+			_ = database.FixPermissions(cfg.DatabaseURL)
+		}
+	}()
+
 	if len(args) > 0 {
 		switch args[0] {
 		case "--reset-admin":
@@ -198,7 +214,7 @@ func RunRescue(db *gorm.DB, cfg *config.Config, args []string) {
 			if len(args) > 1 {
 				dsn = args[1]
 			}
-			dest := migrationDestination(args, 2)
+			dest := migrationDestination(cfg, args, 2)
 			if err := MigratePostgresToSQLite(cfg, dsn, dest); err != nil {
 				fmt.Printf("[-] Migration failed: %v\n", err)
 				os.Exit(1)
@@ -235,14 +251,14 @@ func RunRescue(db *gorm.DB, cfg *config.Config, args []string) {
 			if len(args) > argOffset {
 				dsn = args[argOffset]
 			}
-			dest := migrationDestination(args, argOffset+1)
+			dest := migrationDestination(cfg, args, argOffset+1)
 			if err := MigratePostgresToSQLite(cfg, dsn, dest); err != nil {
 				fmt.Printf("[-] Migration failed: %v\n", err)
 				os.Exit(1)
 			}
 			return
 		case "--help", "-h":
-			printUsage()
+			PrintUsage()
 			return
 		}
 	}
@@ -260,15 +276,15 @@ func PrintNodeSecretKey(db *gorm.DB) {
 	fmt.Printf("[+] Node SECRET_KEY:\n%s\n", key)
 }
 
-func printUsage() {
-	fmt.Println("Usage: gowave-server rescue [flag]")
-	fmt.Println("       gowave-server import pasarguard [path/dsn/backup.zip]")
-	fmt.Println("       gowave-server import 3x-ui [path]")
-	fmt.Println("       gowave-server migrate pg-to-sqlite [dsn] [destination]")
-	fmt.Println("       gowave-server migrate pg-to-pg [source_dsn] [target_dsn] [--force]")
-	fmt.Println("       gowave-server migrate to-docker [--dir /opt/gowave-docker] [--image ref] [--yes]")
-	fmt.Println("       gowave-server migrate sqlite-to-pg [source_sqlite] [target_dsn] [--force]")
-	fmt.Println("       gowave-server cli [flag]")
+func PrintUsage() {
+	fmt.Println("Usage: gowave cli [flag]")
+	fmt.Println("       gowave rescue [flag]")
+	fmt.Println("       gowave import pasarguard [path/dsn/backup.zip]")
+	fmt.Println("       gowave import 3x-ui [path]")
+	fmt.Println("       gowave migrate pg-to-sqlite [dsn] [destination]")
+	fmt.Println("       gowave migrate pg-to-pg [source_dsn] [target_dsn] [--force]")
+	fmt.Println("       gowave migrate to-docker [--dir /opt/gowave-docker] [--image ref] [--yes]")
+	fmt.Println("       gowave migrate sqlite-to-pg [source_sqlite] [target_dsn] [--force]")
 	fmt.Println("\nAvailable commands / flags:")
 	fmt.Println("  --import-pasarguard [path]       Import users, traffic and HWIDs from PasarGuard (SQLite or Postgres)")
 	fmt.Println("  import pasarguard [path]         Import users, traffic and HWIDs from PasarGuard")
@@ -291,6 +307,10 @@ func printUsage() {
 	fmt.Println("  --enable-password-auth          Force-enable password authentication in database")
 	fmt.Println("  --print-secret-key-raw          Print only the node secret key (for scripts)")
 	fmt.Println("  --print-secret-key              Generate and print a valid SECRET_KEY for GoWave Node")
+	fmt.Println("  --db <path>                     Override database path (e.g. /path/to/gowave.db)")
+	fmt.Println("  --keep-root-db                  Keep database files owned by root (do not chown to gowave)")
+	fmt.Println("  --yes-I-know-root-db-mode-enough-go-ahead-please")
+	fmt.Println("                                  Force keeping root ownership of database files")
 	fmt.Println("  --help, -h                      Show this help message")
 	fmt.Println("\nRun without flags to start the interactive rescue menu.")
 }

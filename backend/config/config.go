@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -14,6 +15,10 @@ import (
 )
 
 type Config struct {
+	// InstallDir is the root directory of the GoWave installation.
+	InstallDir string
+	// KeepRootDB preserves root ownership of database files (skips chown to gowave).
+	KeepRootDB bool
 	// AppHost is the address the panel and metrics listeners bind to. It
 	// defaults to loopback so the panel is only reachable through a reverse
 	// proxy with HTTPS; Docker sets 0.0.0.0 inside the container.
@@ -88,8 +93,92 @@ type ServiceConfig struct {
 	ExportToStream          bool
 }
 
+// hasGoWaveMarkers checks if a directory contains characteristic GoWave files.
+func hasGoWaveMarkers(dir string) bool {
+	markers := []string{".env", "gowave.db", "gowave-server", "gowave", "go.mod"}
+	for _, m := range markers {
+		if _, err := os.Stat(filepath.Join(dir, m)); err == nil {
+			return true
+		}
+	}
+	return false
+}
+
+// DetectInstallDir locates the GoWave installation root directory.
+// It inspects GOWAVE_INSTALL_DIR, the resolved executable path (following symlinks
+// such as /usr/local/bin/gowave -> /opt/gowave/gowave-server), the current working
+// directory and parent directory, or standard install locations (/opt/gowave).
+func DetectInstallDir() string {
+	if envDir := strings.TrimSpace(os.Getenv("GOWAVE_INSTALL_DIR")); envDir != "" {
+		if fi, err := os.Stat(envDir); err == nil && fi.IsDir() {
+			if abs, err := filepath.Abs(envDir); err == nil {
+				return abs
+			}
+			return envDir
+		}
+	}
+
+	if exe, err := os.Executable(); err == nil {
+		if resolved, err := filepath.EvalSymlinks(exe); err == nil {
+			exe = resolved
+		}
+		dir := filepath.Dir(exe)
+		tmp := os.TempDir()
+		if !strings.Contains(dir, "go-build") && dir != tmp && dir != "/usr/bin" && dir != "/usr/local/bin" && dir != "/bin" {
+			if hasGoWaveMarkers(dir) || (!strings.HasPrefix(dir, tmp) && dir != "/" && dir != "/tmp") {
+				if abs, err := filepath.Abs(dir); err == nil {
+					return abs
+				}
+				return dir
+			}
+		}
+	}
+
+	if cwd, err := os.Getwd(); err == nil {
+		if hasGoWaveMarkers(cwd) {
+			return cwd
+		}
+		parent := filepath.Dir(cwd)
+		if hasGoWaveMarkers(parent) {
+			return parent
+		}
+	}
+
+	defaultDir := "/opt/gowave"
+	if fi, err := os.Stat(defaultDir); err == nil && fi.IsDir() {
+		return defaultDir
+	}
+
+	return ""
+}
+
 func Load() *Config {
-	_ = godotenv.Load(".env", "../.env")
+	installDir := DetectInstallDir()
+
+	var envFiles []string
+	if _, err := os.Stat(".env"); err == nil {
+		envFiles = append(envFiles, ".env")
+	}
+	if _, err := os.Stat("../.env"); err == nil {
+		envFiles = append(envFiles, "../.env")
+	}
+	if len(envFiles) == 0 && installDir != "" {
+		installEnv := filepath.Join(installDir, ".env")
+		if _, err := os.Stat(installEnv); err == nil {
+			envFiles = append(envFiles, installEnv)
+		}
+	}
+	if len(envFiles) == 0 {
+		if _, err := os.Stat("/opt/gowave/.env"); err == nil {
+			envFiles = append(envFiles, "/opt/gowave/.env")
+		}
+	}
+
+	if len(envFiles) > 0 {
+		_ = godotenv.Load(envFiles...)
+	} else {
+		_ = godotenv.Load(".env", "../.env")
+	}
 
 	host := strings.TrimSpace(os.Getenv("APP_HOST"))
 	if host == "" {
@@ -127,6 +216,17 @@ func Load() *Config {
 		}
 	}
 
+	if dbDriver != "postgres" && !filepath.IsAbs(dbURL) && !strings.HasPrefix(dbURL, "file:") && dbURL != ":memory:" {
+		if installDir != "" {
+			candidate := filepath.Join(installDir, dbURL)
+			if _, err := os.Stat(candidate); err == nil {
+				dbURL = candidate
+			} else if _, err := os.Stat(dbURL); os.IsNotExist(err) {
+				dbURL = candidate
+			}
+		}
+	}
+
 	feDomain := os.Getenv("FRONT_END_DOMAIN")
 	if feDomain == "" {
 		feDomain = "*"
@@ -150,6 +250,7 @@ func Load() *Config {
 	}
 
 	cfg := &Config{
+		InstallDir:      installDir,
 		AppHost:         host,
 		AppPort:         port,
 		MetricsPort:     metricsPort,
