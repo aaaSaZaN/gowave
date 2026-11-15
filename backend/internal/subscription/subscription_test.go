@@ -345,3 +345,171 @@ func TestBrowserAndInfo(t *testing.T) {
 		t.Fatalf("%d %s", w.Code, w.Body.String())
 	}
 }
+
+func TestUserCacheTrafficUpdate(t *testing.T) {
+	db, user := subscriptionDB(t)
+	h := NewHandler(db, "sub.example")
+	h.SetUserCache(100, 30*time.Second)
+
+	router := chi.NewRouter()
+	router.Get("/api/sub/{shortUuid}", h.GetSubscription)
+
+	twoGB := int64(2 * 1024 * 1024 * 1024)
+	fifteenGB := int64(15 * 1024 * 1024 * 1024)
+
+	// User starts with 2 GB consumed traffic
+	if err := db.Model(&database.UserTraffic{}).Where("id = ?", user.ID).Update("used_traffic_bytes", twoGB).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	// 1. Initial subscription request
+	w := get(router, "/api/sub/"+user.ShortUUID, curl)
+	if w.Code != 200 {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	userInfo := w.Header().Get("Subscription-Userinfo")
+	expectedInitial := fmt.Sprintf("download=%d", twoGB)
+	if !strings.Contains(userInfo, expectedInitial) {
+		t.Fatalf("expected 2 GB in header (%s), got %q", expectedInitial, userInfo)
+	}
+
+	// Verify user is cached
+	if _, ok := h.userCache.Get(user.ShortUUID); !ok {
+		t.Fatal("expected user to be cached")
+	}
+
+	// 2. User smoothly consumes 15 GB more traffic in 3 chunks of 5 GB
+	for chunk := 1; chunk <= 3; chunk++ {
+		fiveGB := int64(5 * 1024 * 1024 * 1024)
+		if err := db.Exec("UPDATE user_traffic SET used_traffic_bytes = used_traffic_bytes + ? WHERE id = ?", fiveGB, user.ID).Error; err != nil {
+			t.Fatal(err)
+		}
+		res := get(router, "/api/sub/"+user.ShortUUID, curl)
+		if res.Code != 200 {
+			t.Fatalf("chunk %d: expected 200, got %d", chunk, res.Code)
+		}
+		expectedChunkTotal := twoGB + int64(chunk)*fiveGB
+		expectedChunkHeader := fmt.Sprintf("download=%d", expectedChunkTotal)
+		if !strings.Contains(res.Header().Get("Subscription-Userinfo"), expectedChunkHeader) {
+			t.Fatalf("chunk %d: expected %s, got %s", chunk, expectedChunkHeader, res.Header().Get("Subscription-Userinfo"))
+		}
+	}
+
+	// 3. Verify final state: total consumed is 2 GB + 15 GB = 17 GB (18253611008 bytes)
+	expectedTotal := twoGB + fifteenGB
+	expectedFinalHeader := fmt.Sprintf("download=%d", expectedTotal)
+
+	// Check consecutive request (should hit cache with the updated traffic data)
+	w = get(router, "/api/sub/"+user.ShortUUID, curl)
+	if !strings.Contains(w.Header().Get("Subscription-Userinfo"), expectedFinalHeader) {
+		t.Fatalf("expected final header %s, got %s", expectedFinalHeader, w.Header().Get("Subscription-Userinfo"))
+	}
+	if cached, ok := h.userCache.Get(user.ShortUUID); !ok || cached.User.Traffic.UsedTrafficBytes != uint64(expectedTotal) {
+		t.Fatalf("expected cached traffic to be %d, got %+v", expectedTotal, cached)
+	}
+
+	// 4. Test admin/bot updates expiration date
+	newExpire := time.Now().Add(30 * 24 * time.Hour).Truncate(time.Second)
+	if err := db.Model(&database.User{}).Where("id = ?", user.ID).Update("expire_at", newExpire).Error; err != nil {
+		t.Fatal(err)
+	}
+	w = get(router, "/api/sub/"+user.ShortUUID, curl)
+	expectedExpire := fmt.Sprintf("expire=%d", newExpire.Unix())
+	if !strings.Contains(w.Header().Get("Subscription-Userinfo"), expectedExpire) {
+		t.Fatalf("expected updated expire %s, got %s", expectedExpire, w.Header().Get("Subscription-Userinfo"))
+	}
+}
+
+func TestUserLRUCacheBasic(t *testing.T) {
+	cache := newUserLRUCache(nil, 3, 50*time.Millisecond)
+	if cache == nil {
+		t.Fatal("expected non-nil cache")
+	}
+
+	u1 := &database.User{ID: 1, ShortUUID: "u1", Username: "user1"}
+	u2 := &database.User{ID: 2, ShortUUID: "u2", Username: "user2"}
+	u3 := &database.User{ID: 3, ShortUUID: "u3", Username: "user3"}
+	u4 := &database.User{ID: 4, ShortUUID: "u4", Username: "user4"}
+
+	cache.Set("u1", &CachedUserData{User: u1, InternalSquads: []string{"sq1"}})
+	cache.Set("u2", &CachedUserData{User: u2, InternalSquads: []string{"sq2"}})
+	cache.Set("u3", &CachedUserData{User: u3, InternalSquads: []string{"sq3"}})
+
+	// Access u1 so u2 becomes oldest
+	if _, ok := cache.Get("u1"); !ok {
+		t.Fatal("expected u1 in cache")
+	}
+
+	// Add u4 -> u2 should be evicted
+	cache.Set("u4", &CachedUserData{User: u4, InternalSquads: []string{"sq4"}})
+
+	if _, ok := cache.Get("u2"); ok {
+		t.Fatal("expected u2 to be evicted")
+	}
+	if d, ok := cache.Get("u1"); !ok || d.User.Username != "user1" {
+		t.Fatal("expected u1 still in cache")
+	}
+	if d, ok := cache.Get("u4"); !ok || d.User.Username != "user4" {
+		t.Fatal("expected u4 in cache")
+	}
+
+	// Test expiration
+	time.Sleep(60 * time.Millisecond)
+	if _, ok := cache.Get("u1"); ok {
+		t.Fatal("expected u1 to expire after TTL")
+	}
+}
+
+func TestUserLRUCacheInvalidation(t *testing.T) {
+	db := testdb.Open(t)
+	cache := newUserLRUCache(db, 10, time.Minute)
+
+	user := database.User{ShortUUID: "inv-user", Username: "inv_user", ExpireAt: time.Now().Add(time.Hour)}
+	if err := db.Create(&user).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	cache.Set("inv-user", &CachedUserData{User: &user, InternalSquads: []string{"s1"}})
+	if _, ok := cache.Get("inv-user"); !ok {
+		t.Fatal("expected user in cache")
+	}
+
+	// Update user in DB -> hook should purge user cache
+	if err := db.Model(&database.User{}).Where("id = ?", user.ID).Update("status", "DISABLED").Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if _, ok := cache.Get("inv-user"); ok {
+		t.Fatal("expected user cache to be purged on user update")
+	}
+
+	// Test user_traffic raw update invalidation
+	cache.Set("inv-user", &CachedUserData{User: &user, InternalSquads: []string{"s1"}})
+	if _, ok := cache.Get("inv-user"); !ok {
+		t.Fatal("expected user in cache")
+	}
+	if err := db.Exec("UPDATE user_traffic SET used_traffic_bytes = 100 WHERE id = ?", user.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := cache.Get("inv-user"); ok {
+		t.Fatal("expected user cache to be purged on user_traffic raw update")
+	}
+}
+
+func TestUserLRUCacheConcurrent(t *testing.T) {
+	cache := newUserLRUCache(nil, 100, time.Second)
+	var wg sync.WaitGroup
+
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			uuid := fmt.Sprintf("user-%d", id)
+			cache.Set(uuid, &CachedUserData{User: &database.User{ID: uint64(id), ShortUUID: uuid}})
+			for j := 0; j < 50; j++ {
+				cache.Get(uuid)
+			}
+		}(i)
+	}
+	wg.Wait()
+}

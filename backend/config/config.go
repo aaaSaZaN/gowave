@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -48,6 +49,11 @@ type Config struct {
 	DBMaxConnections int
 	MetricsUser      string
 	MetricsPass      string
+
+	// SubUserCacheSize is SUB_USER_CACHE_SIZE: max users cached in RAM (default 10000, 0 to disable).
+	SubUserCacheSize int
+	// SubUserCacheTTL is SUB_USER_CACHE_TTL: TTL for cached user data (supports s, m, h, d; default 2d).
+	SubUserCacheTTL time.Duration
 
 	errors []string
 }
@@ -265,6 +271,41 @@ func (c *Config) loadOptional() {
 			c.UserUsageIgnoreBelowBytes = value
 		}
 	}
+
+	c.SubUserCacheSize = 10000
+	if raw := os.Getenv("SUB_USER_CACHE_SIZE"); raw != "" {
+		value, err := strconv.Atoi(raw)
+		if err != nil || value < 0 {
+			c.errors = append(c.errors, "SUB_USER_CACHE_SIZE must be a non-negative integer")
+		} else {
+			c.SubUserCacheSize = value
+		}
+	}
+
+	c.SubUserCacheTTL = 48 * time.Hour
+	if raw := os.Getenv("SUB_USER_CACHE_TTL"); raw != "" {
+		if d, err := parseDurationWithDays(raw); err == nil && d > 0 {
+			c.SubUserCacheTTL = d
+		} else {
+			c.errors = append(c.errors, `SUB_USER_CACHE_TTL must be a valid duration (e.g. "2d", "12h", "30m", "15s")`)
+		}
+	}
+}
+
+var dayDurationPattern = regexp.MustCompile(`(?i)(\d+(?:\.\d+)?)d`)
+
+func parseDurationWithDays(s string) (time.Duration, error) {
+	s = strings.TrimSpace(s)
+	expanded := dayDurationPattern.ReplaceAllStringFunc(s, func(match string) string {
+		numStr := match[:len(match)-1]
+		val, err := strconv.ParseFloat(numStr, 64)
+		if err != nil {
+			return match
+		}
+		hours := val * 24
+		return fmt.Sprintf("%fh", hours)
+	})
+	return time.ParseDuration(expanded)
 }
 
 // IsLoopbackHost reports whether AppHost only accepts local connections.

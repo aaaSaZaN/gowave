@@ -420,12 +420,14 @@ func templateHost(host *database.Host, rawInbound any, inboundTag string, xrayTe
 	}
 }
 
-// hostsForUser ports GetHostsForUserQuery: hosts reachable through the
-// user's internal squads (honouring each host's ALLOW_ONLY/EXCLUDE squad
-// list), joined with their inbound and Xray JSON template. The host graph
-// is cached; only the user's squads are read per request. The hosts are
-// shared between requests and must not be modified.
-func (h *Handler) hostsForUser(userID uint64, withDisabled, withHidden bool) ([]*subtpl.Host, error) {
+func (h *Handler) userInternalSquads(userID uint64) ([]string, error) {
+	var squads []string
+	err := h.db.Model(&database.InternalSquadMember{}).Where("user_id = ?", userID).
+		Pluck("internal_squad_uuid", &squads).Error
+	return squads, err
+}
+
+func (h *Handler) hostsForSquads(squads []string, withDisabled, withHidden bool) ([]*subtpl.Host, error) {
 	var index *hostIndex
 	var err error
 	if snap := h.cache.snapshot(); snap == nil {
@@ -436,12 +438,20 @@ func (h *Handler) hostsForUser(userID uint64, withDisabled, withHidden bool) ([]
 	if err != nil {
 		return nil, err
 	}
-	var squads []string
-	if err := h.db.Model(&database.InternalSquadMember{}).Where("user_id = ?", userID).
-		Pluck("internal_squad_uuid", &squads).Error; err != nil {
+	return index.forSquads(squads, withDisabled, withHidden), nil
+}
+
+// hostsForUser ports GetHostsForUserQuery: hosts reachable through the
+// user's internal squads (honouring each host's ALLOW_ONLY/EXCLUDE squad
+// list), joined with their inbound and Xray JSON template. The host graph
+// is cached; only the user's squads are read per request. The hosts are
+// shared between requests and must not be modified.
+func (h *Handler) hostsForUser(userID uint64, withDisabled, withHidden bool) ([]*subtpl.Host, error) {
+	squads, err := h.userInternalSquads(userID)
+	if err != nil {
 		return nil, err
 	}
-	return index.forSquads(squads, withDisabled, withHidden), nil
+	return h.hostsForSquads(squads, withDisabled, withHidden)
 }
 
 // hostIndex is the host graph hostsForUser filters per user.

@@ -230,12 +230,12 @@ func (h *Handler) findUser(column, value string) (*database.User, error) {
 // SubscriptionService.getSubscriptionByShortUuid.
 func (h *Handler) serve(w http.ResponseWriter, r *http.Request, ctx *srrContext, shortUUID string) {
 	if ctx.ResponseType == "BROWSER" {
-		user, err := h.findUser("short_uuid", shortUUID)
+		user, squads, err := h.findUserWithSquads(shortUUID)
 		if err != nil {
 			notFound(w, r)
 			return
 		}
-		info, err := h.subscriptionInfo(user, nil, false)
+		info, err := h.subscriptionInfoWithSquads(user, squads, nil, false)
 		if err != nil {
 			notFound(w, r)
 			return
@@ -243,7 +243,7 @@ func (h *Handler) serve(w http.ResponseWriter, r *http.Request, ctx *srrContext,
 		expressJSON(w, r, http.StatusOK, info)
 		return
 	}
-	user, err := h.findUser("short_uuid", shortUUID)
+	user, squads, err := h.findUserWithSquads(shortUUID)
 	if err != nil {
 		notFound(w, r)
 		return
@@ -319,7 +319,7 @@ func (h *Handler) serve(w http.ResponseWriter, r *http.Request, ctx *srrContext,
 		matchesAny(jsonFallbackPatterns, ctx.UserAgent) {
 		ctx.ResponseType = "XRAY_JSON"
 	}
-	hosts, err := h.hostsForUser(user.ID, false, ctx.ResponseType == "XRAY_JSON" || ctx.ResponseType == "MIHOMO")
+	hosts, err := h.hostsForSquads(squads, false, ctx.ResponseType == "XRAY_JSON" || ctx.ResponseType == "MIHOMO")
 	if err != nil {
 		notFound(w, r)
 		return

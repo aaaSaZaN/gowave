@@ -22,10 +22,71 @@ type Handler struct {
 	disableHistory  bool
 	history         *historyWriter
 	cache           *subCache
+	userCache       *UserLRUCache
 }
 
 func NewHandler(db *gorm.DB, subPublicDomain string) *Handler {
-	return &Handler{db: db, subPublicDomain: subPublicDomain, history: newHistoryWriter(db), cache: newSubCache(db)}
+	return &Handler{
+		db:              db,
+		subPublicDomain: subPublicDomain,
+		history:         newHistoryWriter(db),
+		cache:           newSubCache(db),
+		userCache:       newUserLRUCache(db, 10000, 15*time.Second),
+	}
+}
+
+// SetUserCache configures the size and TTL of the in-memory user cache.
+// Size 0 disables the user cache.
+func (h *Handler) SetUserCache(size int, ttl time.Duration) {
+	if size <= 0 {
+		h.userCache = nil
+		return
+	}
+	h.userCache = newUserLRUCache(h.db, size, ttl)
+}
+
+func (h *Handler) findUserWithSquads(shortUUID string) (*database.User, []string, error) {
+	if h.userCache != nil {
+		if cached, ok := h.userCache.Get(shortUUID); ok {
+			return cloneUser(cached.User), cloneSquads(cached.InternalSquads), nil
+		}
+	}
+	if h.userCache == nil {
+		user, err := h.findUser("short_uuid", shortUUID)
+		if err != nil {
+			return nil, nil, err
+		}
+		squads, err := h.userInternalSquads(user.ID)
+		if err != nil {
+			return nil, nil, err
+		}
+		return user, squads, nil
+	}
+
+	val, err, _ := h.userCache.sf.Do(shortUUID, func() (interface{}, error) {
+		if cached, ok := h.userCache.Get(shortUUID); ok {
+			return cached, nil
+		}
+		user, err := h.findUser("short_uuid", shortUUID)
+		if err != nil {
+			return nil, err
+		}
+		squads, err := h.userInternalSquads(user.ID)
+		if err != nil {
+			return nil, err
+		}
+		data := &CachedUserData{
+			User:           user,
+			InternalSquads: squads,
+		}
+		h.userCache.Set(shortUUID, data)
+		return data, nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	data := val.(*CachedUserData)
+	return cloneUser(data.User), cloneSquads(data.InternalSquads), nil
 }
 
 // RunHistoryWriter records subscription requests in the background until ctx
@@ -43,12 +104,12 @@ func (h *Handler) SetDisableHistory(disabled bool) {
 
 // GetSubscriptionInfo serves GetSubscriptionInfoByShortUuidCommand.
 func (h *Handler) GetSubscriptionInfo(w http.ResponseWriter, r *http.Request) {
-	user, err := h.findUser("short_uuid", chi.URLParam(r, "shortUuid"))
+	user, squads, err := h.findUserWithSquads(chi.URLParam(r, "shortUuid"))
 	if err != nil {
 		httpx.Error(w, r, http.StatusNotFound, "A025", "User not found")
 		return
 	}
-	info, err := h.subscriptionInfo(user, nil, false)
+	info, err := h.subscriptionInfoWithSquads(user, squads, nil, false)
 	if err != nil {
 		httpx.Error(w, r, http.StatusInternalServerError, "A001", "Server error")
 		return
@@ -68,6 +129,11 @@ func prettyBytes(value int64) string {
 // subscriptionInfo ports SubscriptionService.getSubscriptionInfo; settings
 // may be preloaded by the caller.
 func (h *Handler) subscriptionInfo(user *database.User, settings *subSettings, authenticated bool) (*ojson.Object, error) {
+	squads, _ := h.userInternalSquads(user.ID)
+	return h.subscriptionInfoWithSquads(user, squads, settings, authenticated)
+}
+
+func (h *Handler) subscriptionInfoWithSquads(user *database.User, squads []string, settings *subSettings, authenticated bool) (*ojson.Object, error) {
 	if settings == nil {
 		loaded, err := h.loadSettings()
 		if err != nil {
@@ -82,7 +148,7 @@ func (h *Handler) subscriptionInfo(user *database.User, settings *subSettings, a
 	tplUser := templateUser(user)
 	links := []string{}
 	if !settings.Hwid.Enabled || authenticated {
-		hosts, err := h.hostsForUser(user.ID, false, false)
+		hosts, err := h.hostsForSquads(squads, false, false)
 		if err != nil {
 			hosts = nil
 		}

@@ -477,6 +477,7 @@ func NewApp(cfg *config.Config, db *gorm.DB) *App {
 	cpService.SetSyncer(nodeService)
 	cpHandler := configprofiles.NewHandler(cpService)
 	subHandler := subscription.NewHandler(db, cfg.SubPublicDomain)
+	subHandler.SetUserCache(cfg.SubUserCacheSize, cfg.SubUserCacheTTL)
 	metricsExporter := prometheus.NewExporter(db, nodeService)
 	subHandler.SetDisableHistory(cfg.Service.DisableSrhRecords)
 	sysHandler := system.NewHandler(db)

@@ -3,6 +3,7 @@ package config
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestAppHostDefaultsToLoopback(t *testing.T) {
@@ -47,6 +48,48 @@ func TestMetricsEnabled(t *testing.T) {
 		t.Setenv("METRICS_ENABLED", value)
 		if got := Load().MetricsEnabled; got != want {
 			t.Fatalf("METRICS_ENABLED=%q: got %v, want %v", value, got, want)
+		}
+	}
+}
+
+func TestSubUserCacheConfig(t *testing.T) {
+	t.Setenv("APP_SECRET", "0123456789abcdef0123456789abcdef")
+
+	// Defaults: size 10000, ttl 2d (48h)
+	t.Setenv("SUB_USER_CACHE_SIZE", "")
+	t.Setenv("SUB_USER_CACHE_TTL", "")
+	cfg := Load()
+	if cfg.SubUserCacheSize != 10000 {
+		t.Fatalf("SubUserCacheSize default = %d, want 10000", cfg.SubUserCacheSize)
+	}
+	if cfg.SubUserCacheTTL != 48*time.Hour {
+		t.Fatalf("SubUserCacheTTL default = %v, want 48h", cfg.SubUserCacheTTL)
+	}
+
+	// Supports s, m, h, d
+	cases := map[string]time.Duration{
+		"2d":    48 * time.Hour,
+		"1d":    24 * time.Hour,
+		"3d":    72 * time.Hour,
+		"0.5d":  12 * time.Hour,
+		"12h":   12 * time.Hour,
+		"30m":   30 * time.Minute,
+		"15s":   15 * time.Second,
+		"1d12h": 36 * time.Hour,
+	}
+	for raw, want := range cases {
+		t.Setenv("SUB_USER_CACHE_TTL", raw)
+		c := Load()
+		if c.SubUserCacheTTL != want || c.Validate() != nil {
+			t.Errorf("SUB_USER_CACHE_TTL=%q got %v (err: %v), want %v", raw, c.SubUserCacheTTL, c.Validate(), want)
+		}
+	}
+
+	// Invalid durations
+	for _, bad := range []string{"-1s", "0s", "invalid", "2weeks"} {
+		t.Setenv("SUB_USER_CACHE_TTL", bad)
+		if err := Load().Validate(); err == nil || !strings.Contains(err.Error(), "SUB_USER_CACHE_TTL") {
+			t.Errorf("SUB_USER_CACHE_TTL=%q should be rejected, got %v", bad, err)
 		}
 	}
 }
