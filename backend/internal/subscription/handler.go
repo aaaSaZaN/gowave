@@ -3,6 +3,7 @@ package subscription
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -63,7 +64,10 @@ func (h *Handler) findUserWithSquads(shortUUID string) (*database.User, []string
 		return user, squads, nil
 	}
 
-	val, err, _ := h.userCache.sf.Do(shortUUID, func() (interface{}, error) {
+	generation := h.userCache.Generation()
+	// Requests after invalidation must not join a load of the previous generation.
+	key := strconv.FormatUint(generation, 10) + ":" + shortUUID
+	val, err, _ := h.userCache.sf.Do(key, func() (interface{}, error) {
 		if cached, ok := h.userCache.Get(shortUUID); ok {
 			return cached, nil
 		}
@@ -79,7 +83,7 @@ func (h *Handler) findUserWithSquads(shortUUID string) (*database.User, []string
 			User:           user,
 			InternalSquads: squads,
 		}
-		h.userCache.Set(shortUUID, data)
+		h.userCache.Set(shortUUID, data, generation)
 		return data, nil
 	})
 	if err != nil {

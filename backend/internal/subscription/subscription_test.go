@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -431,9 +432,9 @@ func TestUserLRUCacheBasic(t *testing.T) {
 	u3 := &database.User{ID: 3, ShortUUID: "u3", Username: "user3"}
 	u4 := &database.User{ID: 4, ShortUUID: "u4", Username: "user4"}
 
-	cache.Set("u1", &CachedUserData{User: u1, InternalSquads: []string{"sq1"}})
-	cache.Set("u2", &CachedUserData{User: u2, InternalSquads: []string{"sq2"}})
-	cache.Set("u3", &CachedUserData{User: u3, InternalSquads: []string{"sq3"}})
+	cache.Set("u1", &CachedUserData{User: u1, InternalSquads: []string{"sq1"}}, cache.Generation())
+	cache.Set("u2", &CachedUserData{User: u2, InternalSquads: []string{"sq2"}}, cache.Generation())
+	cache.Set("u3", &CachedUserData{User: u3, InternalSquads: []string{"sq3"}}, cache.Generation())
 
 	// Access u1 so u2 becomes oldest
 	if _, ok := cache.Get("u1"); !ok {
@@ -441,7 +442,7 @@ func TestUserLRUCacheBasic(t *testing.T) {
 	}
 
 	// Add u4 -> u2 should be evicted
-	cache.Set("u4", &CachedUserData{User: u4, InternalSquads: []string{"sq4"}})
+	cache.Set("u4", &CachedUserData{User: u4, InternalSquads: []string{"sq4"}}, cache.Generation())
 
 	if _, ok := cache.Get("u2"); ok {
 		t.Fatal("expected u2 to be evicted")
@@ -469,7 +470,7 @@ func TestUserLRUCacheInvalidation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cache.Set("inv-user", &CachedUserData{User: &user, InternalSquads: []string{"s1"}})
+	cache.Set("inv-user", &CachedUserData{User: &user, InternalSquads: []string{"s1"}}, cache.Generation())
 	if _, ok := cache.Get("inv-user"); !ok {
 		t.Fatal("expected user in cache")
 	}
@@ -484,7 +485,7 @@ func TestUserLRUCacheInvalidation(t *testing.T) {
 	}
 
 	// Test user_traffic raw update invalidation
-	cache.Set("inv-user", &CachedUserData{User: &user, InternalSquads: []string{"s1"}})
+	cache.Set("inv-user", &CachedUserData{User: &user, InternalSquads: []string{"s1"}}, cache.Generation())
 	if _, ok := cache.Get("inv-user"); !ok {
 		t.Fatal("expected user in cache")
 	}
@@ -505,11 +506,71 @@ func TestUserLRUCacheConcurrent(t *testing.T) {
 		go func(id int) {
 			defer wg.Done()
 			uuid := fmt.Sprintf("user-%d", id)
-			cache.Set(uuid, &CachedUserData{User: &database.User{ID: uint64(id), ShortUUID: uuid}})
+			cache.Set(uuid, &CachedUserData{User: &database.User{ID: uint64(id), ShortUUID: uuid}}, cache.Generation())
 			for j := 0; j < 50; j++ {
 				cache.Get(uuid)
 			}
 		}(i)
 	}
 	wg.Wait()
+}
+
+func TestUserCacheInvalidationDuringLoad(t *testing.T) {
+	db, user := subscriptionDB(t)
+	h := NewHandler(db, "sub.example")
+	h.SetUserCache(100, 48*time.Hour)
+	read := make(chan struct{})
+	resume := make(chan struct{})
+	var release sync.Once
+	defer release.Do(func() { close(resume) })
+	var paused atomic.Bool
+	// Hold the first request after reading ACTIVE, before it can populate the cache.
+	if err := db.Callback().Query().After("gorm:after_query").Register("test:pause_user_read", func(tx *gorm.DB) {
+		if tx.Statement.Table == "users" && paused.CompareAndSwap(false, true) {
+			close(read)
+			<-resume
+		}
+	}); err != nil {
+		t.Fatal(err)
+	}
+	first := make(chan error, 1)
+	go func() {
+		_, _, err := h.findUserWithSquads(user.ShortUUID)
+		first <- err
+	}()
+	select {
+	case <-read:
+	case <-time.After(5 * time.Second):
+		t.Fatal("first request did not read user")
+	}
+	if err := db.Model(&database.User{}).Where("id = ?", user.ID).Update("status", "DISABLED").Error; err != nil {
+		t.Fatal(err)
+	}
+	second := make(chan error, 1)
+	go func() {
+		got, _, err := h.findUserWithSquads(user.ShortUUID)
+		if err == nil && got.Status != "DISABLED" {
+			err = fmt.Errorf("status after committed disable = %s", got.Status)
+		}
+		second <- err
+	}()
+	select {
+	case err := <-second:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("request after invalidation joined the stale in-flight load")
+	}
+	release.Do(func() { close(resume) })
+	if err := <-first; err != nil {
+		t.Fatal(err)
+	}
+	got, _, err := h.findUserWithSquads(user.ShortUUID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Status != "DISABLED" {
+		t.Fatalf("stale load repopulated cache: status = %s", got.Status)
+	}
 }

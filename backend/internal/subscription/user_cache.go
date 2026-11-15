@@ -55,12 +55,13 @@ type userCacheItem struct {
 // UserLRUCache is a thread-safe, bounded in-memory cache for user records
 // and their squad memberships, automatically invalidated on user writes.
 type UserLRUCache struct {
-	mu       sync.Mutex
-	capacity int
-	ttl      time.Duration
-	items    map[string]*userCacheItem
-	evict    *list.List
-	sf       singleflight.Group
+	mu         sync.Mutex
+	capacity   int
+	ttl        time.Duration
+	items      map[string]*userCacheItem
+	evict      *list.List
+	sf         singleflight.Group
+	generation uint64
 }
 
 func newUserLRUCache(db *gorm.DB, capacity int, ttl time.Duration) *UserLRUCache {
@@ -114,12 +115,23 @@ func (c *UserLRUCache) Get(shortUUID string) (*CachedUserData, bool) {
 	return item.data, true
 }
 
-func (c *UserLRUCache) Set(shortUUID string, data *CachedUserData) {
+func (c *UserLRUCache) Generation() uint64 {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.generation
+}
+
+// Set only publishes a load if no invalidation occurred since it started.
+func (c *UserLRUCache) Set(shortUUID string, data *CachedUserData, generation uint64) {
 	if c == nil || c.capacity <= 0 {
 		return
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	if generation != c.generation {
+		return
+	}
 
 	data.ExpiresAt = time.Now().Add(c.ttl)
 
@@ -147,6 +159,7 @@ func (c *UserLRUCache) Delete(shortUUID string) {
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	c.generation++
 	if item, ok := c.items[shortUUID]; ok {
 		c.removeItem(item)
 	}
@@ -158,6 +171,7 @@ func (c *UserLRUCache) Purge() {
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	c.generation++
 	c.items = make(map[string]*userCacheItem, c.capacity)
 	c.evict.Init()
 }

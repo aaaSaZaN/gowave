@@ -3,8 +3,31 @@ package database
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
+
+func TestFixDirectoryPermissionsPreservesStickyBit(t *testing.T) {
+	if runtime.GOOS != "linux" && runtime.GOOS != "darwin" {
+		t.Skip("Unix directory permissions required")
+	}
+	dir := t.TempDir()
+	if err := os.Chmod(dir, os.ModeSticky|0o700); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 2; i++ {
+		if err := fixDirectoryPermissions(dir, os.Getgid()); err != nil {
+			t.Fatal(err)
+		}
+		info, err := os.Stat(dir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode()&os.ModeSticky == 0 || info.Mode().Perm() != 0o770 {
+			t.Fatalf("directory mode = %v, want sticky 0770", info.Mode())
+		}
+	}
+}
 
 func TestFixPermissionsNoop(t *testing.T) {
 	// In-memory and PostgreSQL paths should always succeed without errors.

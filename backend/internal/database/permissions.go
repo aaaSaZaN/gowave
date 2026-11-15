@@ -88,15 +88,25 @@ func FixPermissions(databaseURL string) error {
 	// Ensure the database directory has group gowave and group write/execute
 	// permissions if it is a dedicated install directory (like /opt/gowave).
 	if dir != "/" && dir != "/tmp" && dir != "/root" && !strings.HasPrefix(dir, "/home") {
-		if fi, err := os.Stat(dir); err == nil && fi.IsDir() {
-			if stat, ok := fi.Sys().(*syscall.Stat_t); ok {
-				if stat.Gid != uint32(gid) {
-					_ = os.Chown(dir, int(stat.Uid), gid)
-				}
-				_ = os.Chmod(dir, fi.Mode().Perm()|0o070)
-			}
-		}
+		_ = fixDirectoryPermissions(dir, gid)
 	}
 
+	return nil
+}
+
+func fixDirectoryPermissions(dir string, gid int) error {
+	fi, err := os.Stat(dir)
+	if err != nil {
+		return err
+	}
+	if stat, ok := fi.Sys().(*syscall.Stat_t); ok && fi.IsDir() {
+		if stat.Gid != uint32(gid) {
+			if err := os.Chown(dir, int(stat.Uid), gid); err != nil {
+				return err
+			}
+		}
+		// Preserve the sticky bit protecting root-owned code in the shared directory.
+		return os.Chmod(dir, fi.Mode()|0o070)
+	}
 	return nil
 }
