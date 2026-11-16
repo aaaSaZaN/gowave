@@ -64,3 +64,20 @@ func TestSpreadKeepsExistingPosition(t *testing.T) {
 		t.Fatal(got)
 	}
 }
+
+func BenchmarkStringify(b *testing.B) {
+	data, err := os.ReadFile("testdata/vectors.json")
+	if err != nil {
+		b.Fatal(err)
+	}
+	obj, _ := Parse(data)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	b.SetParallelism(128)
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			Stringify(obj)
+		}
+	})
+}

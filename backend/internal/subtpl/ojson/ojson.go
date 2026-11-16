@@ -14,6 +14,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode/utf8"
 )
 
@@ -213,11 +214,34 @@ func FromGo(value any) any {
 	return parsed
 }
 
+var bufferPool = sync.Pool{
+	New: func() any {
+		b := new(bytes.Buffer)
+		b.Grow(4096)
+		return b
+	},
+}
+
+func getBuffer() *bytes.Buffer {
+	b := bufferPool.Get().(*bytes.Buffer)
+	b.Reset()
+	return b
+}
+
+func putBuffer(b *bytes.Buffer) {
+	if b.Cap() <= 64*1024 {
+		b.Reset()
+		bufferPool.Put(b)
+	}
+}
+
 // Stringify mirrors JSON.stringify(value) (indent 0).
 func Stringify(value any) string {
-	var b strings.Builder
-	writeValue(&b, value, "", "")
-	return b.String()
+	b := getBuffer()
+	writeValue(b, value, "", "")
+	s := b.String()
+	putBuffer(b)
+	return s
 }
 
 // MarshalJSON lets encoding/json embed an Object with its key order.
@@ -230,9 +254,11 @@ func (o *Object) MarshalJSON() ([]byte, error) {
 
 // StringifyIndent mirrors JSON.stringify(value, null, indent).
 func StringifyIndent(value any, indent int) string {
-	var b strings.Builder
-	writeValue(&b, value, strings.Repeat(" ", indent), "")
-	return b.String()
+	b := getBuffer()
+	writeValue(b, value, strings.Repeat(" ", indent), "")
+	s := b.String()
+	putBuffer(b)
+	return s
 }
 
 // FormatNumber renders a float64 like JavaScript's Number#toString.
@@ -255,7 +281,7 @@ func FormatNumber(f float64) string {
 	return strconv.FormatFloat(f, 'f', -1, 64)
 }
 
-func writeValue(b *strings.Builder, value any, indent, prefix string) bool {
+func writeValue(b *bytes.Buffer, value any, indent, prefix string) bool {
 	switch v := value.(type) {
 	case nil:
 		b.WriteString("null")
@@ -348,7 +374,7 @@ func writeValue(b *strings.Builder, value any, indent, prefix string) bool {
 
 // writeString quotes like JSON.stringify: only ", \, control characters and
 // lone surrogates are escaped; HTML characters and U+2028 stay literal.
-func writeString(b *strings.Builder, s string) {
+func writeString(b *bytes.Buffer, s string) {
 	b.WriteByte('"')
 	for i := 0; i < len(s); {
 		r, size := utf8.DecodeRuneInString(s[i:])

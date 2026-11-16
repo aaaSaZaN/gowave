@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/sync/singleflight"
@@ -52,16 +53,59 @@ type userCacheItem struct {
 	element   *list.Element
 }
 
+type userCacheShard struct {
+	mu       sync.Mutex
+	capacity int
+	items    map[string]*userCacheItem
+	evict    *list.List
+}
+
+func newShard(capacity int) *userCacheShard {
+	return &userCacheShard{
+		capacity: capacity,
+		items:    make(map[string]*userCacheItem, capacity),
+		evict:    list.New(),
+	}
+}
+
+func (s *userCacheShard) removeItem(item *userCacheItem) {
+	s.evict.Remove(item.element)
+	delete(s.items, item.shortUUID)
+}
+
+func (s *userCacheShard) evictOldest() {
+	elem := s.evict.Back()
+	if elem != nil {
+		item := elem.Value.(*userCacheItem)
+		s.removeItem(item)
+	}
+}
+
+func fnv32(key string) uint32 {
+	var h uint32 = 2166136261
+	for i := 0; i < len(key); i++ {
+		h ^= uint32(key[i])
+		h *= 16777619
+	}
+	return h
+}
+
 // UserLRUCache is a thread-safe, bounded in-memory cache for user records
 // and their squad memberships, automatically invalidated on user writes.
 type UserLRUCache struct {
-	mu         sync.Mutex
+	shards     []*userCacheShard
+	mask       uint32
 	capacity   int
 	ttl        time.Duration
-	items      map[string]*userCacheItem
-	evict      *list.List
 	sf         singleflight.Group
-	generation uint64
+	generation atomic.Uint64
+}
+
+func (c *UserLRUCache) shard(key string) *userCacheShard {
+	if c.mask == 0 {
+		return c.shards[0]
+	}
+	return c.shards[fnv32(key)&c.mask]
 }
 
 func newUserLRUCache(db *gorm.DB, capacity int, ttl time.Duration) *UserLRUCache {
@@ -71,11 +115,22 @@ func newUserLRUCache(db *gorm.DB, capacity int, ttl time.Duration) *UserLRUCache
 	if ttl <= 0 {
 		ttl = 48 * time.Hour
 	}
+	numShards := 16
+	if capacity < 16 {
+		numShards = 1
+	}
+	shardCap := capacity / numShards
+	if shardCap < 1 {
+		shardCap = 1
+	}
 	c := &UserLRUCache{
 		capacity: capacity,
 		ttl:      ttl,
-		items:    make(map[string]*userCacheItem, capacity),
-		evict:    list.New(),
+		shards:   make([]*userCacheShard, numShards),
+		mask:     uint32(numShards - 1),
+	}
+	for i := 0; i < numShards; i++ {
+		c.shards[i] = newShard(shardCap)
 	}
 	if db != nil {
 		c.registerInvalidator(db)
@@ -100,25 +155,24 @@ func (c *UserLRUCache) Get(shortUUID string) (*CachedUserData, bool) {
 	if c == nil {
 		return nil, false
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	s := c.shard(shortUUID)
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	item, ok := c.items[shortUUID]
+	item, ok := s.items[shortUUID]
 	if !ok {
 		return nil, false
 	}
 	if time.Now().After(item.data.ExpiresAt) {
-		c.removeItem(item)
+		s.removeItem(item)
 		return nil, false
 	}
-	c.evict.MoveToFront(item.element)
+	s.evict.MoveToFront(item.element)
 	return item.data, true
 }
 
 func (c *UserLRUCache) Generation() uint64 {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.generation
+	return c.generation.Load()
 }
 
 // Set only publishes a load if no invalidation occurred since it started.
@@ -126,42 +180,47 @@ func (c *UserLRUCache) Set(shortUUID string, data *CachedUserData, generation ui
 	if c == nil || c.capacity <= 0 {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	if generation != c.generation.Load() {
+		return
+	}
+	s := c.shard(shortUUID)
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	if generation != c.generation {
+	if generation != c.generation.Load() {
 		return
 	}
 
 	data.ExpiresAt = time.Now().Add(c.ttl)
 
-	if item, ok := c.items[shortUUID]; ok {
+	if item, ok := s.items[shortUUID]; ok {
 		item.data = data
-		c.evict.MoveToFront(item.element)
+		s.evict.MoveToFront(item.element)
 		return
 	}
 
-	if c.evict.Len() >= c.capacity {
-		c.evictOldest()
+	if s.evict.Len() >= s.capacity {
+		s.evictOldest()
 	}
 
 	item := &userCacheItem{
 		shortUUID: shortUUID,
 		data:      data,
 	}
-	item.element = c.evict.PushFront(item)
-	c.items[shortUUID] = item
+	item.element = s.evict.PushFront(item)
+	s.items[shortUUID] = item
 }
 
 func (c *UserLRUCache) Delete(shortUUID string) {
 	if c == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.generation++
-	if item, ok := c.items[shortUUID]; ok {
-		c.removeItem(item)
+	c.generation.Add(1)
+	s := c.shard(shortUUID)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if item, ok := s.items[shortUUID]; ok {
+		s.removeItem(item)
 	}
 }
 
@@ -169,23 +228,12 @@ func (c *UserLRUCache) Purge() {
 	if c == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.generation++
-	c.items = make(map[string]*userCacheItem, c.capacity)
-	c.evict.Init()
-}
-
-func (c *UserLRUCache) removeItem(item *userCacheItem) {
-	c.evict.Remove(item.element)
-	delete(c.items, item.shortUUID)
-}
-
-func (c *UserLRUCache) evictOldest() {
-	elem := c.evict.Back()
-	if elem != nil {
-		item := elem.Value.(*userCacheItem)
-		c.removeItem(item)
+	c.generation.Add(1)
+	for _, s := range c.shards {
+		s.mu.Lock()
+		s.items = make(map[string]*userCacheItem, s.capacity)
+		s.evict.Init()
+		s.mu.Unlock()
 	}
 }
 

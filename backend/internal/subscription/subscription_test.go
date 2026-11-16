@@ -574,3 +574,59 @@ func TestUserCacheInvalidationDuringLoad(t *testing.T) {
 		t.Fatalf("stale load repopulated cache: status = %s", got.Status)
 	}
 }
+
+func BenchmarkUserLRUCache_ConcurrentGet(b *testing.B) {
+	const userCount = 1000
+	cache := newUserLRUCache(nil, 10000, 48*time.Hour)
+	users := make([]string, userCount)
+	for i := 0; i < userCount; i++ {
+		uuid := fmt.Sprintf("bench-user-%04d", i)
+		users[i] = uuid
+		cache.Set(uuid, &CachedUserData{
+			User:           &database.User{ID: uint64(i + 1), ShortUUID: uuid},
+			InternalSquads: []string{"squad-1"},
+		}, cache.Generation())
+	}
+
+	b.ResetTimer()
+	b.SetParallelism(128)
+	b.RunParallel(func(pb *testing.PB) {
+		idx := 0
+		for pb.Next() {
+			cache.Get(users[idx%userCount])
+			idx++
+		}
+	})
+}
+
+func BenchmarkUserLRUCache_ConcurrentMixed(b *testing.B) {
+	const userCount = 1000
+	cache := newUserLRUCache(nil, 10000, 48*time.Hour)
+	users := make([]string, userCount)
+	for i := 0; i < userCount; i++ {
+		uuid := fmt.Sprintf("bench-user-%04d", i)
+		users[i] = uuid
+		cache.Set(uuid, &CachedUserData{
+			User:           &database.User{ID: uint64(i + 1), ShortUUID: uuid},
+			InternalSquads: []string{"squad-1"},
+		}, cache.Generation())
+	}
+
+	b.ResetTimer()
+	b.SetParallelism(128)
+	b.RunParallel(func(pb *testing.PB) {
+		idx := 0
+		for pb.Next() {
+			uuid := users[idx%userCount]
+			if idx%10 == 0 {
+				cache.Set(uuid, &CachedUserData{
+					User:           &database.User{ID: uint64(idx + 1), ShortUUID: uuid},
+					InternalSquads: []string{"squad-1"},
+				}, cache.Generation())
+			} else {
+				cache.Get(uuid)
+			}
+			idx++
+		}
+	})
+}

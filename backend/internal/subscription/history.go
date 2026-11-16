@@ -34,8 +34,9 @@ func newHistoryWriter(db *gorm.DB) *historyWriter {
 	return &historyWriter{db: db, queue: make(chan database.UserSubscriptionRequestHistory, historyQueue)}
 }
 
-// add queues a row, or writes it inline when no writer runs (tests, CLI) or
-// the queue is full, so history is never dropped.
+// add queues a row, or writes it inline when no writer runs (tests, CLI).
+// When the writer is running and the queue is full under overload, the event
+// is dropped so inline database writes never degrade client subscription latency.
 func (w *historyWriter) add(record database.UserSubscriptionRequestHistory) {
 	w.mu.RLock()
 	if w.running {
@@ -44,6 +45,8 @@ func (w *historyWriter) add(record database.UserSubscriptionRequestHistory) {
 			w.mu.RUnlock()
 			return
 		default:
+			w.mu.RUnlock()
+			return
 		}
 	}
 	w.mu.RUnlock()
