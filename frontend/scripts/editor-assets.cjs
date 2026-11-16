@@ -18,10 +18,10 @@ const zlib = require('node:zlib')
 const BASE_URL = process.env.EDITOR_ASSETS_URL || 'https://remnawave.github.io/xray-monaco-editor'
 
 const FILES = {
-    'main.wasm': '45b31aca38f8de5febdb4ef032f691e033d0b7139ba04bf792ef3a57b7c595cc',
+    'main.wasm': 'ef9f3d3bd566daeae2687d26302b21c1db8d56261839e91dc8b7744339a93e70',
     'wasm_exec.js': '0c949f4996f9a89698e4b5c586de32249c3b69b7baadb64d220073cc04acba14',
-    'xray.schema.json': '030b345365213d523d7bd7d2dd17c3916f8d2cb95f44fd555934758d632fefbe',
-    'xray.schema.cn.json': 'c778deb9e7dd841faab10354935d772fcd656bd1f92d6797bf06015f0114e503'
+    'xray.schema.json': '561299d0461425132b46c4305c5847ffe827b74a0853e14751f070ef28eb55de',
+    'xray.schema.cn.json': '75a6da5a2a27533de204e3cb18d1ea6f5cb57141ca99fee524bce2abb5780207'
 }
 
 // Text assets keep their originals for clients without gzip. The WebAssembly
