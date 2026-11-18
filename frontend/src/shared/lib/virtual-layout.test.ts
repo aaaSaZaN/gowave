@@ -70,7 +70,7 @@ test('virtual layout handles empty lists, hidden viewports, boundaries and shrin
     )
 })
 
-test('node version metadata supports contract versions and optional GoWave flags', () => {
+test('node version metadata supports contract versions and optional Gowave flags', () => {
     assert.equal(isGoNodeVersion(null), false)
     assert.equal(isGoNodeVersion({ node: '3.3.0' }), false)
     assert.equal(isGoNodeVersion({ node: '1.0.0 (Go)' }), true)

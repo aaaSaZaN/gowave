@@ -55,9 +55,9 @@ func TestDetectMigrationPaths(t *testing.T) {
 		DatabaseURL: sqliteFile,
 	}
 
-	detected, err := DetectGoWaveSQLitePath(cfg)
+	detected, err := DetectGowaveSQLitePath(cfg)
 	if err != nil {
-		t.Fatalf("DetectGoWaveSQLitePath failed: %v", err)
+		t.Fatalf("DetectGowaveSQLitePath failed: %v", err)
 	}
 	if detected != sqliteFile {
 		t.Errorf("got %s, want %s", detected, sqliteFile)
@@ -133,7 +133,7 @@ func TestMigrateSQLiteToPostgres_Integration(t *testing.T) {
 	sourceCounts := tableCounts(t, source, sourceTables)
 	_ = closeGormDB(source)
 
-	// The target mirrors `docker compose up`: GoWave already started on it
+	// The target mirrors `docker compose up`: Gowave already started on it
 	// and seeded its defaults before the migration runs.
 	target, targetDSN := openIsolatedPostgres(t, pgDSN)
 	if err := database.AutoMigrate(target); err != nil {

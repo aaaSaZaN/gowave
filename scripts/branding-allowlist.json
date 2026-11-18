@@ -34,7 +34,7 @@
     "backend/internal/contracts/openapi.json": {
       "reason": "Pinned dependency contract export; routes, schemas, and scope identifiers remain byte-compatible.",
       "count": 1,
-      "sha256": "6c1cbc27625f40c9bc8cd35ead0cf8e4bc839e983af39c6509f045d7778e092d"
+      "sha256": "a7e49045f3940e26c2b04e1718962fa13420129a315c3e5564ad7fe9374e8681"
     },
     "backend/internal/contracts/registry.go": {
       "reason": "Pinned dependency contract export; routes, schemas, and scope identifiers remain byte-compatible.",
@@ -49,7 +49,7 @@
     "backend/internal/database/default_data.go": {
       "reason": "Legacy protocol or stored data identifier required for compatibility.",
       "count": 1,
-      "sha256": "6f874d997f2a6940f136a154c7afdf41cf65e653fd4b68907d600c03361823df"
+      "sha256": "2c2d26cad87873bfa391661ec688a16a4764c0bbf28d30ffc25ddd821d5402d9"
     },
     "backend/internal/database/migrations/postgres/001_initial.sql": {
       "reason": "Historical schema identifiers and stock-title upgrade matching; preserves imported databases and custom titles.",
@@ -64,7 +64,7 @@
     "backend/internal/database/migrations/postgres/005_gowave_branding.sql": {
       "reason": "Historical schema identifiers and stock-title upgrade matching; preserves imported databases and custom titles.",
       "count": 1,
-      "sha256": "5fd79cda65bf115cce0e5c02a578ffc6965281192fed35d539605da133627531"
+      "sha256": "264f0685de5454c0c385c4dd121d1f204b37b80e00fe2c91ff3e188df62a2c72"
     },
     "backend/internal/database/migrations/sqlite/001_initial.sql": {
       "reason": "Historical schema identifiers and stock-title upgrade matching; preserves imported databases and custom titles.",
@@ -79,12 +79,12 @@
     "backend/internal/database/migrations/sqlite/005_gowave_branding.sql": {
       "reason": "Historical schema identifiers and stock-title upgrade matching; preserves imported databases and custom titles.",
       "count": 1,
-      "sha256": "5fd79cda65bf115cce0e5c02a578ffc6965281192fed35d539605da133627531"
+      "sha256": "264f0685de5454c0c385c4dd121d1f204b37b80e00fe2c91ff3e188df62a2c72"
     },
     "backend/internal/database/migrations_test.go": {
       "reason": "Historical schema identifiers and stock-title upgrade matching; preserves imported databases and custom titles.",
       "count": 4,
-      "sha256": "050906351afc48a34b14f42938f785618954fa617bafa80837ad743e9dc2d9e3"
+      "sha256": "8a34b6b12585cce5a0b8ddc20ca7a169102e3b5c5c5bac3446747bf87b6e7ef0"
     },
     "backend/internal/database/models.go": {
       "reason": "Legacy protocol or stored data identifier required for compatibility.",
@@ -174,7 +174,7 @@
     "backend/internal/subtpl/defaults_test.go": {
       "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
       "count": 1,
-      "sha256": "54e234ad60a5a9a7d6368cfcc9150029a387521503d3b29611554ed90e2e3128"
+      "sha256": "197f4833783cbd4c328c238e68e42fda2b6fa3847d9cd05ae8ba2a895b676c5d"
     },
     "backend/internal/subtpl/gen_mihomo.go": {
       "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
@@ -247,9 +247,9 @@
       "sha256": "eb3fa02c265c850d76caefd9f2865e995c8b853ab6fa30e86e9a7fc392477714"
     },
     ".env.sample": {
-      "reason": "Migration note listing environment variables inherited from the upstream panel; GoWave ignores them.",
+      "reason": "Migration note listing environment variables inherited from the upstream panel; Gowave ignores them.",
       "count": 2,
-      "sha256": "3e6fdd899f18bc1eb92d62adf4e86eef79c312fef4bd65f76e2b568105ec065a"
+      "sha256": "f6f3bd7d3546d9e92fb32fc56565f965a23f6d348501e94476d813d8d07f38ac"
     },
     "install.sh": {
       "reason": "Detect existing installations, container names, and database hosts during safe migration.",
@@ -280,6 +280,16 @@
       "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
       "count": 1,
       "sha256": "379d140ab3437802b4bf936e3b3736306ee4164dd89393dba05d46d05008ba50"
+    },
+    "backend/internal/database/migrations/postgres/011_gowave_title.sql": {
+      "reason": "Update the stock panel title in the existing settings table.",
+      "count": 1,
+      "sha256": "8c57e90da14a45c354194536b120766ace173c7600770b4b55f36b8bd58df978"
+    },
+    "backend/internal/database/migrations/sqlite/011_gowave_title.sql": {
+      "reason": "Update the stock panel title in the existing settings table.",
+      "count": 1,
+      "sha256": "8c57e90da14a45c354194536b120766ace173c7600770b4b55f36b8bd58df978"
     }
   }
 }

@@ -16,13 +16,13 @@ import (
 	"gowave/internal/database"
 )
 
-// ErrSameDatabase is returned when the upstream source and the GoWave target
+// ErrSameDatabase is returned when the upstream source and the Gowave target
 // resolve to the same PostgreSQL database and schema.
 var ErrSameDatabase = errors.New("source and target point at the same PostgreSQL database")
 
-// ErrSourceIsGoWave is returned when the source already carries the GoWave
+// ErrSourceIsGowave is returned when the source already carries the Gowave
 // schema, so it is not an upstream panel database.
-var ErrSourceIsGoWave = errors.New("source database already holds the GoWave schema")
+var ErrSourceIsGowave = errors.New("source database already holds the Gowave schema")
 
 // pgToPGBatchRows bounds a multi-row INSERT; the column count further limits it
 // so a batch stays under PostgreSQL's 65535 bind parameters.
@@ -45,18 +45,18 @@ type databaseFingerprint struct {
 type PGToPGReport struct {
 	// Rows holds the number of copied rows per target table.
 	Rows map[string]int64
-	// SkippedTables lists source tables with no counterpart in GoWave.
+	// SkippedTables lists source tables with no counterpart in Gowave.
 	SkippedTables []string
-	// DroppedColumns lists "table.column" pairs the GoWave schema does not have.
+	// DroppedColumns lists "table.column" pairs the Gowave schema does not have.
 	DroppedColumns []string
-	// EmptyTargetTables lists GoWave tables the source could not fill.
+	// EmptyTargetTables lists Gowave tables the source could not fill.
 	EmptyTargetTables []string
 	// NormalizedNulls counts NULL values mapped to a Go zero value.
 	NormalizedNulls int64
 }
 
 // MigratePostgresToPostgres copies an upstream panel PostgreSQL database into a
-// GoWave PostgreSQL database. The source is only ever read, inside a read-only
+// Gowave PostgreSQL database. The source is only ever read, inside a read-only
 // repeatable-read transaction; the target is written in a single transaction, so
 // a failure leaves it exactly as it was. A target that already holds users,
 // nodes or hosts is only replaced when force is set.
@@ -79,15 +79,15 @@ func MigratePostgresToPostgres(_ *config.Config, sourceDSN, targetDSN string, fo
 	}
 	defer closeGormDB(sourceDB)
 
-	fmt.Printf("[*] Connecting to the GoWave PostgreSQL target: %s\n", redactDSN(targetDSN))
+	fmt.Printf("[*] Connecting to the Gowave PostgreSQL target: %s\n", redactDSN(targetDSN))
 	targetDB, err := gorm.Open(postgres.Open(targetDSN), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		return nil, fmt.Errorf("connect to the target PostgreSQL: %w", err)
 	}
 	defer closeGormDB(targetDB)
 
-	// Both guards run before the GoWave schema is applied: afterwards a source
-	// that is really the target would look like a GoWave database either way.
+	// Both guards run before the Gowave schema is applied: afterwards a source
+	// that is really the target would look like a Gowave database either way.
 	if err := assertDistinctDatabases(sourceDB, targetDB); err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func MigratePostgresToPostgres(_ *config.Config, sourceDSN, targetDSN string, fo
 		return nil, err
 	}
 
-	fmt.Println("[*] Applying the GoWave schema to the target...")
+	fmt.Println("[*] Applying the Gowave schema to the target...")
 	if err := database.MigrateSchema(targetDB); err != nil {
 		return nil, fmt.Errorf("initialize the target schema: %w", err)
 	}
@@ -124,9 +124,9 @@ func MigratePostgresToPostgres(_ *config.Config, sourceDSN, targetDSN string, fo
 		return nil, fmt.Errorf("copy upstream data: %w", err)
 	}
 
-	// GoWave owns tables and rows the upstream panel never had, such as the
+	// Gowave owns tables and rows the upstream panel never had, such as the
 	// default subscription page configuration and the built-in templates.
-	fmt.Println("[*] Seeding GoWave defaults the upstream panel does not provide...")
+	fmt.Println("[*] Seeding Gowave defaults the upstream panel does not provide...")
 	database.SeedDefaults(targetDB)
 
 	printPGToPGReport(report)
@@ -145,7 +145,7 @@ func assertDistinctDatabases(source, target *gorm.DB) error {
 		return fmt.Errorf("identify the target database: %w", err)
 	}
 	if sourcePrint != nil && targetPrint != nil && sameDatabase(*sourcePrint, *targetPrint) {
-		return fmt.Errorf("%w (%s.%s); pass the upstream panel DSN as the source and the GoWave DSN as the target",
+		return fmt.Errorf("%w (%s.%s); pass the upstream panel DSN as the source and the Gowave DSN as the target",
 			ErrSameDatabase, sourcePrint.Database, sourcePrint.Schema)
 	}
 	return nil
@@ -187,14 +187,14 @@ func equalOptionalInt(a, b *int) bool {
 }
 
 // assertUpstreamSource checks the source carries the upstream panel tables and
-// not the GoWave schema, so a GoWave database is never copied onto itself.
+// not the Gowave schema, so a Gowave database is never copied onto itself.
 func assertUpstreamSource(sourceTables []string) error {
 	present := make(map[string]struct{}, len(sourceTables))
 	for _, table := range sourceTables {
 		present[table] = struct{}{}
 	}
 	if _, ok := present[migrationsTable]; ok {
-		return fmt.Errorf("%w; to copy one GoWave database into another use pg_dump, or migrate sqlite-to-pg from a SQLite install", ErrSourceIsGoWave)
+		return fmt.Errorf("%w; to copy one Gowave database into another use pg_dump, or migrate sqlite-to-pg from a SQLite install", ErrSourceIsGowave)
 	}
 	var missing []string
 	for table := range requiredUpstreamTables {
@@ -248,7 +248,7 @@ func copyPostgresDatabase(source, target *gorm.DB, sourceTables []string, report
 	}
 	sort.Strings(report.EmptyTargetTables)
 
-	// Every table the GoWave schema owns is cleared, not only the ones the
+	// Every table the Gowave schema owns is cleared, not only the ones the
 	// source fills: CASCADE would otherwise wipe rows copied earlier.
 	clear := make([]string, 0, len(targetTables))
 	for _, table := range targetTables {
@@ -263,7 +263,7 @@ func copyPostgresDatabase(source, target *gorm.DB, sourceTables []string, report
 		}
 	}
 
-	fmt.Printf("[*] Copying %d tables into the GoWave schema...\n", len(targets))
+	fmt.Printf("[*] Copying %d tables into the Gowave schema...\n", len(targets))
 	for _, table := range targets {
 		count, normalized, dropped, err := copyPostgresTable(source, target, table)
 		if err != nil {
@@ -284,7 +284,7 @@ func copyPostgresDatabase(source, target *gorm.DB, sourceTables []string, report
 
 // copyPostgresTable copies the columns the two schemas share. It returns the
 // copied row count, how many NULLs became a Go zero value, and the source
-// columns GoWave does not store.
+// columns Gowave does not store.
 func copyPostgresTable(source, target *gorm.DB, table string) (int64, int64, []string, error) {
 	sourceColumns, err := listPostgresColumns(source, table)
 	if err != nil {
@@ -467,7 +467,7 @@ func postgresCastType(column postgresColumn) string {
 }
 
 // postgresRejectsEmptyText reports whether "" would fail the target column's
-// input parser; upstream rows store it where GoWave keeps NULL.
+// input parser; upstream rows store it where Gowave keeps NULL.
 func postgresRejectsEmptyText(column postgresColumn) bool {
 	switch column.DataType {
 	case "uuid", "json", "jsonb", "numeric", "money", "interval",
@@ -480,16 +480,16 @@ func postgresRejectsEmptyText(column postgresColumn) bool {
 func printPGToPGReport(report *PGToPGReport) {
 	if len(report.SkippedTables) > 0 {
 		sort.Strings(report.SkippedTables)
-		fmt.Printf("[i] %d source tables have no GoWave counterpart and were skipped: %s\n",
+		fmt.Printf("[i] %d source tables have no Gowave counterpart and were skipped: %s\n",
 			len(report.SkippedTables), strings.Join(report.SkippedTables, ", "))
 	}
 	if len(report.DroppedColumns) > 0 {
 		sort.Strings(report.DroppedColumns)
-		fmt.Printf("[i] %d source columns are not stored by GoWave: %s\n",
+		fmt.Printf("[i] %d source columns are not stored by Gowave: %s\n",
 			len(report.DroppedColumns), strings.Join(report.DroppedColumns, ", "))
 	}
 	if len(report.EmptyTargetTables) > 0 {
-		fmt.Printf("[i] %d GoWave tables have no source table and stay empty: %s\n",
+		fmt.Printf("[i] %d Gowave tables have no source table and stay empty: %s\n",
 			len(report.EmptyTargetTables), strings.Join(report.EmptyTargetTables, ", "))
 	}
 	if report.NormalizedNulls > 0 {
@@ -499,15 +499,15 @@ func printPGToPGReport(report *PGToPGReport) {
 	for _, count := range report.Rows {
 		total += count
 	}
-	fmt.Printf("\n[✔] %d rows copied into the GoWave PostgreSQL database.\n", total)
-	fmt.Println("Set DB_DRIVER=postgres and DATABASE_URL to the target DSN, then start GoWave and verify the panel.")
-	fmt.Println("The upstream panel database was only read; stop the old panel once GoWave looks correct.")
+	fmt.Printf("\n[✔] %d rows copied into the Gowave PostgreSQL database.\n", total)
+	fmt.Println("Set DB_DRIVER=postgres and DATABASE_URL to the target DSN, then start Gowave and verify the panel.")
+	fmt.Println("The upstream panel database was only read; stop the old panel once Gowave looks correct.")
 }
 
 // MigratePGToPGInteractive asks for both DSNs and runs the migration.
 func MigratePGToPGInteractive(cfg *config.Config, reader *bufio.Reader) {
 	fmt.Println("\n=============================================================")
-	fmt.Println("  Migrate upstream panel PostgreSQL to GoWave PostgreSQL     ")
+	fmt.Println("  Migrate upstream panel PostgreSQL to Gowave PostgreSQL     ")
 	fmt.Println("=============================================================")
 
 	detectedSource, _ := DetectUpstreamPostgresDSN()
@@ -525,10 +525,10 @@ func MigratePGToPGInteractive(cfg *config.Config, reader *bufio.Reader) {
 
 	detectedTarget, _ := DetectPostgresTargetDSN(cfg)
 	if detectedTarget != "" {
-		fmt.Printf("[*] GoWave PostgreSQL target: %s\n", redactDSN(detectedTarget))
+		fmt.Printf("[*] Gowave PostgreSQL target: %s\n", redactDSN(detectedTarget))
 		fmt.Print("Press ENTER to use it, or type a custom target DSN: ")
 	} else {
-		fmt.Print("Enter the GoWave PostgreSQL DSN: ")
+		fmt.Print("Enter the Gowave PostgreSQL DSN: ")
 	}
 	input, _ = reader.ReadString('\n')
 	targetDSN := strings.TrimSpace(input)

@@ -21,7 +21,7 @@ func AutoMigrate(db *gorm.DB) error {
 	return nil
 }
 
-// MigrateSchema creates or updates the GoWave schema without inserting app data.
+// MigrateSchema creates or updates the Gowave schema without inserting app data.
 // Importers use this to prepare an empty destination before copying source rows.
 func MigrateSchema(db *gorm.DB) error {
 	if err := applyMigrations(db); err != nil {

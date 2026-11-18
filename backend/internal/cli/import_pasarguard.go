@@ -163,7 +163,7 @@ func pasarGuardEnvValue(data, key string) (string, bool) {
 
 // parsePasarGuardDatabaseURL converts an SQLAlchemy URL such as
 // sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3 or
-// postgresql+asyncpg://user:pass@127.0.0.1:6432/pasarguard into a GoWave
+// postgresql+asyncpg://user:pass@127.0.0.1:6432/pasarguard into a Gowave
 // driver and DSN. ok is false when raw is not a database URL.
 func parsePasarGuardDatabaseURL(raw, baseDir string) (driver, dsn string, ok bool, err error) {
 	scheme, rest, found := strings.Cut(strings.TrimSpace(raw), "://")
@@ -207,7 +207,7 @@ func parsePasarGuardDatabaseURL(raw, baseDir string) (driver, dsn string, ok boo
 		parsed.RawQuery = query.Encode()
 		return "postgres", parsed.String(), true, nil
 	case "mysql", "mariadb":
-		return "", "", false, fmt.Errorf("PasarGuard uses %s; GoWave can import only from SQLite or PostgreSQL", dialect)
+		return "", "", false, fmt.Errorf("PasarGuard uses %s; Gowave can import only from SQLite or PostgreSQL", dialect)
 	default:
 		return "", "", false, nil
 	}

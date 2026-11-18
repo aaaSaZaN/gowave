@@ -108,7 +108,7 @@ trap - EXIT
 # root oneshot installs the latest release after checking SHA256SUMS.
 cat > "$unit_dir/gowave-update.service" <<UNIT
 [Unit]
-Description=GoWave panel update from a verified release
+Description=Gowave panel update from a verified release
 After=network-online.target
 Wants=network-online.target
 
@@ -119,7 +119,7 @@ TimeoutStartSec=15min
 UNIT
 cat > "$unit_dir/gowave-update.path" <<UNIT
 [Unit]
-Description=Watch for GoWave panel update requests
+Description=Watch for Gowave panel update requests
 
 [Path]
 PathExists=/run/gowave/update-request

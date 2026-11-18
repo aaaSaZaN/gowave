@@ -1,6 +1,6 @@
 {
-  "name": "GoWave",
-  "short_name": "GoWave",
+  "name": "Gowave",
+  "short_name": "Gowave",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#161B23",
@@ -8,32 +8,32 @@
   "id": "./",
   "orientation": "any",
   "scope": "./",
-  "description": "GoWave Dashboard",
+  "description": "Gowave Dashboard",
   "theme_color": "#161B23",
   "icons": [
     {
-      "src": "./favicons/favicon-64x64.png?v=3517f5350933",
+      "src": "./favicons/favicon-64x64.png?v=e7a2f76fa154",
       "sizes": "64x64",
       "type": "image/png"
     },
     {
-      "src": "./favicons/favicon-192x192.png?v=3517f5350933",
+      "src": "./favicons/favicon-192x192.png?v=e7a2f76fa154",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "./favicons/favicon-512x512.png?v=3517f5350933",
+      "src": "./favicons/favicon-512x512.png?v=e7a2f76fa154",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "./favicons/favicon-512x512.png?v=3517f5350933",
+      "src": "./favicons/favicon-512x512.png?v=e7a2f76fa154",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./favicons/favicon-512x512.png?v=3517f5350933",
+      "src": "./favicons/favicon-512x512.png?v=e7a2f76fa154",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

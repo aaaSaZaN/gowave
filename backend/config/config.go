@@ -15,7 +15,7 @@ import (
 )
 
 type Config struct {
-	// InstallDir is the root directory of the GoWave installation.
+	// InstallDir is the root directory of the Gowave installation.
 	InstallDir string
 	// KeepRootDB preserves root ownership of database files (skips chown to gowave).
 	KeepRootDB bool
@@ -93,8 +93,8 @@ type ServiceConfig struct {
 	ExportToStream          bool
 }
 
-// hasGoWaveMarkers checks if a directory contains characteristic GoWave files.
-func hasGoWaveMarkers(dir string) bool {
+// hasGowaveMarkers checks if a directory contains characteristic Gowave files.
+func hasGowaveMarkers(dir string) bool {
 	markers := []string{".env", "gowave.db", "gowave-server", "gowave", "go.mod"}
 	for _, m := range markers {
 		if _, err := os.Stat(filepath.Join(dir, m)); err == nil {
@@ -104,7 +104,7 @@ func hasGoWaveMarkers(dir string) bool {
 	return false
 }
 
-// DetectInstallDir locates the GoWave installation root directory.
+// DetectInstallDir locates the Gowave installation root directory.
 // It inspects GOWAVE_INSTALL_DIR, the resolved executable path (following symlinks
 // such as /usr/local/bin/gowave -> /opt/gowave/gowave-server), the current working
 // directory and parent directory, or standard install locations (/opt/gowave).
@@ -125,7 +125,7 @@ func DetectInstallDir() string {
 		dir := filepath.Dir(exe)
 		tmp := os.TempDir()
 		if !strings.Contains(dir, "go-build") && dir != tmp && dir != "/usr/bin" && dir != "/usr/local/bin" && dir != "/bin" {
-			if hasGoWaveMarkers(dir) || (!strings.HasPrefix(dir, tmp) && dir != "/" && dir != "/tmp") {
+			if hasGowaveMarkers(dir) || (!strings.HasPrefix(dir, tmp) && dir != "/" && dir != "/tmp") {
 				if abs, err := filepath.Abs(dir); err == nil {
 					return abs
 				}
@@ -135,11 +135,11 @@ func DetectInstallDir() string {
 	}
 
 	if cwd, err := os.Getwd(); err == nil {
-		if hasGoWaveMarkers(cwd) {
+		if hasGowaveMarkers(cwd) {
 			return cwd
 		}
 		parent := filepath.Dir(cwd)
-		if hasGoWaveMarkers(parent) {
+		if hasGowaveMarkers(parent) {
 			return parent
 		}
 	}

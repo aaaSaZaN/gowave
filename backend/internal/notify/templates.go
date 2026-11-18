@@ -236,7 +236,7 @@ func (n *Notifier) render(event Event) (string, []inlineKeyboard) {
 
 	case "service.panel_started":
 		return "\n" + emoji("5418304400152096012", "🌊") + " <b>#panel_started</b>\n" + separator + "\n" +
-			emoji("5461117441612462242", "✅") + " GoWave v" + f.s("panelVersion") + " is up and running.\n\n" +
+			emoji("5461117441612462242", "✅") + " Gowave v" + f.s("panelVersion") + " is up and running.\n\n" +
 			emoji("5415680458602081205", "📚") + " Documentation: https://aaasazan.github.io/gowave-docs/", []inlineKeyboard{
 			{URL: "https://github.com/aaaSaZaN/gowave", Text: "Leave a star", CustomEmoji: "5258039825805624495"},
 		}

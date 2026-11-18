@@ -1,4 +1,4 @@
-# GoWave + PostgreSQL. Settings live in .env next to this file (see .env.docker.example).
+# Gowave + PostgreSQL. Settings live in .env next to this file (see .env.docker.example).
 # Update: docker compose pull && docker compose up -d
 # Build locally instead of pulling: docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 name: gowave

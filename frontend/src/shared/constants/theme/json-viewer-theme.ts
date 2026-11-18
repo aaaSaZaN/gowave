@@ -7,7 +7,7 @@ import { githubDarkTheme } from '@json-edit-react/themes'
  */
 export const jsonViewerTheme = {
     ...githubDarkTheme,
-    displayName: 'GoWave',
+    displayName: 'Gowave',
     fragments: {
         purple: 'var(--gw-json-purple)',
         skyBlue: 'var(--gw-json-string)',

@@ -94,7 +94,7 @@ func requestRelease(channel, etag string) (release GitHubRelease, newETag string
 		return GitHubRelease{}, "", false, err
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("User-Agent", "GoWave/"+AppVersion)
+	req.Header.Set("User-Agent", "Gowave/"+AppVersion)
 	if etag != "" {
 		req.Header.Set("If-None-Match", etag)
 	}

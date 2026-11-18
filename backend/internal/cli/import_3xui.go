@@ -46,7 +46,7 @@ func ImportFrom3xUI(dst *gorm.DB, source string) error {
 	return dst.Transaction(func(tx *gorm.DB) error {
 		for _, b := range inbounds {
 			if b.Protocol != "vless" && b.Protocol != "trojan" && b.Protocol != "shadowsocks" {
-				return fmt.Errorf("inbound %d protocol %s cannot be represented by GoWave users", b.ID, b.Protocol)
+				return fmt.Errorf("inbound %d protocol %s cannot be represented by Gowave users", b.ID, b.Protocol)
 			}
 			var settings struct {
 				Clients []struct {
@@ -195,7 +195,7 @@ func ImportFrom3xUI(dst *gorm.DB, source string) error {
 				}
 			}
 		}
-		fmt.Println("[+] 3x-ui clients, traffic, inbound profiles and squads imported. Configure GoWave nodes and public hosts before enabling service. Panel logins, IP limits and panel settings require manual conversion.")
+		fmt.Println("[+] 3x-ui clients, traffic, inbound profiles and squads imported. Configure Gowave nodes and public hosts before enabling service. Panel logins, IP limits and panel settings require manual conversion.")
 		return nil
 	})
 }

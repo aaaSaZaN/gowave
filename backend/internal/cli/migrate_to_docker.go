@@ -33,7 +33,7 @@ var dockerComposeTemplate []byte
 
 const (
 	defaultDockerDir   = "/opt/gowave-docker"
-	defaultGoWaveImage = "ghcr.io/aaasazan/gowave:latest"
+	defaultGowaveImage = "ghcr.io/aaasazan/gowave:latest"
 	cliWrapperPath     = "/usr/local/bin/gowave"
 	systemdUnit        = "gowave.service"
 	// Fixed by the `name:` and `container_name:` entries of the compose file.
@@ -51,7 +51,7 @@ type toDockerOptions struct {
 	Image     string
 	Yes       bool
 	// FromUpstream copies an upstream panel's PostgreSQL straight into the new
-	// Docker PostgreSQL instead of an existing GoWave SQLite install.
+	// Docker PostgreSQL instead of an existing Gowave SQLite install.
 	FromUpstream bool
 	UpstreamDSN  string
 }
@@ -195,7 +195,7 @@ func prepareToDocker(opts toDockerOptions) (*toDockerPlan, error) {
 		}
 	}
 	if exec.Command("docker", "volume", "inspect", dockerVolumeName).Run() == nil {
-		return nil, fmt.Errorf("Docker volume %s already exists (an earlier GoWave PostgreSQL); remove it with `docker volume rm %s` if it is not needed", dockerVolumeName, dockerVolumeName)
+		return nil, fmt.Errorf("Docker volume %s already exists (an earlier Gowave PostgreSQL); remove it with `docker volume rm %s` if it is not needed", dockerVolumeName, dockerVolumeName)
 	}
 
 	appPort := oldEnv["APP_PORT"]
@@ -214,7 +214,7 @@ func prepareToDocker(opts toDockerOptions) (*toDockerPlan, error) {
 	}
 	image := opts.Image
 	if image == "" {
-		image = defaultGoWaveImage
+		image = defaultGowaveImage
 	}
 
 	plan := &toDockerPlan{
@@ -291,15 +291,15 @@ func buildDockerEnv(oldEnv map[string]string, dockerDir, pgPassword, pgPort stri
 // renderDockerCompose pins the panel image in the embedded compose file.
 func renderDockerCompose(image string) ([]byte, error) {
 	if image == "" {
-		image = defaultGoWaveImage
+		image = defaultGowaveImage
 	}
 	if strings.ContainsAny(image, " \t\r\n#") {
 		return nil, fmt.Errorf("invalid image %q: whitespace and # are not allowed", image)
 	}
-	if image == defaultGoWaveImage {
+	if image == defaultGowaveImage {
 		return dockerComposeTemplate, nil
 	}
-	line := []byte("    image: " + defaultGoWaveImage)
+	line := []byte("    image: " + defaultGowaveImage)
 	rendered := bytes.Replace(dockerComposeTemplate, line, []byte("    image: "+image), 1)
 	if bytes.Equal(rendered, dockerComposeTemplate) {
 		return nil, errors.New("docker-compose.yml does not contain the expected panel image line")
@@ -336,7 +336,7 @@ func renderDockerEnv(env map[string]string) (string, error) {
 
 func printToDockerPlan(plan *toDockerPlan) {
 	fmt.Println("\n========================================================")
-	fmt.Println("  Move GoWave to Docker (PostgreSQL)")
+	fmt.Println("  Move Gowave to Docker (PostgreSQL)")
 	fmt.Println("========================================================")
 	fmt.Printf("Current install:  %s\n", plan.FromDir)
 	if plan.FromUpstream {
@@ -472,7 +472,7 @@ func executeToDocker(plan *toDockerPlan) error {
 		installCLIWrapper(plan)
 	}
 
-	fmt.Println("\n[✔] GoWave now runs in Docker with PostgreSQL.")
+	fmt.Println("\n[✔] Gowave now runs in Docker with PostgreSQL.")
 	fmt.Printf("    Project:  %s\n", plan.DockerDir)
 	fmt.Printf("    Logs:     cd %s && docker compose logs -f gowave\n", plan.DockerDir)
 	fmt.Printf("    Update:   cd %s && docker compose pull && docker compose up -d\n", plan.DockerDir)
@@ -485,7 +485,7 @@ func executeToDocker(plan *toDockerPlan) error {
 		fmt.Println("\nThe upstream panel's database was only read, so it is still the way back:")
 		fmt.Printf("    cd %s && docker compose down\n", plan.DockerDir)
 		fmt.Println("    then start the upstream panel again from its own directory")
-		fmt.Println("Changes made in GoWave are not copied back to the upstream panel.")
+		fmt.Println("Changes made in Gowave are not copied back to the upstream panel.")
 		return nil
 	}
 
@@ -508,7 +508,7 @@ func installCLIWrapper(plan *toDockerPlan) {
 		return
 	}
 	script := fmt.Sprintf(`#!/bin/sh
-# Installed by "gowave migrate to-docker": GoWave runs in Docker (%[1]s).
+# Installed by "gowave migrate to-docker": Gowave runs in Docker (%[1]s).
 exec docker compose --project-directory %[1]s exec gowave /app/gowave "$@"
 `, plan.DockerDir)
 	_ = os.Remove(cliWrapperPath)

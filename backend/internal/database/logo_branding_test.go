@@ -28,8 +28,8 @@ func TestStockLogoUpgradePreservesCustomBranding(t *testing.T) {
 		t.Fatal("default subscription logo must be self-contained")
 	}
 	artwork, err := base64.StdEncoding.DecodeString(payload)
-	if err != nil || !strings.Contains(string(artwork), "<title>GoWave</title>") {
-		t.Fatalf("default logo is not GoWave artwork: %v", err)
+	if err != nil || !strings.Contains(string(artwork), "<title>Gowave</title>") {
+		t.Fatalf("default logo is not Gowave artwork: %v", err)
 	}
 	stamp := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
 	stock := `{"brandingSettings":{"logoUrl":"https://docs.rw/img/logo.svg","title":"Custom title"},"future":9007199254740993}`

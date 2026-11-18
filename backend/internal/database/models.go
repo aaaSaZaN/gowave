@@ -346,7 +346,7 @@ func (ConfigProfileInboundsToNodes) TableName() string {
 
 type PanelSetting struct {
 	ID                  uint   `gorm:"primaryKey" json:"id"`
-	Title               string `gorm:"type:varchar(128);default:'GoWave'"`
+	Title               string `gorm:"type:varchar(128);default:'Gowave'"`
 	LogoURL             string `gorm:"type:varchar(255)" json:"logoUrl"`
 	IsLoginAllowed      bool   `gorm:"default:true" json:"isLoginAllowed"`
 	IsRegisterAllowed   bool   `gorm:"default:false" json:"isRegisterAllowed"`

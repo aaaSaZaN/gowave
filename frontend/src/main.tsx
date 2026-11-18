@@ -38,6 +38,6 @@ if (typeof window !== 'undefined') {
 }
 
 const container = document.getElementById('root')
-if (!container) throw new Error('GoWave root element is missing')
+if (!container) throw new Error('Gowave root element is missing')
 const root = createRoot(container)
 root.render(<App />)

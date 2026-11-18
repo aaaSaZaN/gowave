@@ -575,7 +575,7 @@ func (h *Handler) GetSettings(w http.ResponseWriter, r *http.Request) {
 
 	var setting database.PanelSetting
 	h.db.First(&setting)
-	title := "GoWave"
+	title := "Gowave"
 	if setting.Title != "" {
 		title = setting.Title
 	}
@@ -688,7 +688,7 @@ func (h *Handler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	h.db.First(&setting)
 	if setting.ID == 0 {
 		setting.ID = 1
-		setting.Title = "GoWave"
+		setting.Title = "Gowave"
 		setting.IsLoginAllowed = true
 		setting.PasswordAuthEnabled = true
 		h.db.Create(&setting)

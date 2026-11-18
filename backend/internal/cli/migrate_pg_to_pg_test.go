@@ -53,8 +53,8 @@ func TestAssertUpstreamSource(t *testing.T) {
 	}
 
 	err := assertUpstreamSource(append(append([]string{}, complete...), migrationsTable))
-	if !errors.Is(err, ErrSourceIsGoWave) {
-		t.Errorf("GoWave source: got %v, want ErrSourceIsGoWave", err)
+	if !errors.Is(err, ErrSourceIsGowave) {
+		t.Errorf("Gowave source: got %v, want ErrSourceIsGowave", err)
 	}
 
 	err = assertUpstreamSource([]string{"users", "nodes"})
@@ -108,7 +108,7 @@ func TestIsMigrationCommandCoversPGToPG(t *testing.T) {
 // TestMigratePostgresToPostgres_Integration migrates a fixture that carries the
 // upstream panel's own PostgreSQL types — native enums, uuid, jsonb,
 // timestamptz(3), numeric and arrays — plus upstream-only tables and columns,
-// into the GoWave schema.
+// into the Gowave schema.
 func TestMigratePostgresToPostgres_Integration(t *testing.T) {
 	pgDSN := os.Getenv("GOWAVE_TEST_POSTGRES")
 	if pgDSN == "" {
@@ -119,7 +119,7 @@ func TestMigratePostgresToPostgres_Integration(t *testing.T) {
 	applyUpstreamFixture(t, source)
 	fixture := seedUpstreamSource(t, source)
 
-	// The target mirrors `docker compose up`: GoWave already started on it and
+	// The target mirrors `docker compose up`: Gowave already started on it and
 	// seeded its defaults before the migration runs.
 	target, targetDSN := openIsolatedPostgres(t, pgDSN)
 	if err := database.AutoMigrate(target); err != nil {
@@ -174,13 +174,13 @@ func TestMigratePostgresToPostgresRefusesSameDatabase(t *testing.T) {
 	if _, err := MigratePostgresToPostgres(nil, sourceDSN, sourceDSN, true); !errors.Is(err, ErrSameDatabase) {
 		t.Fatalf("source as its own target: got %v, want ErrSameDatabase", err)
 	}
-	// The refused run must not have created the GoWave schema in the source.
+	// The refused run must not have created the Gowave schema in the source.
 	if source.Migrator().HasTable(migrationsTable) {
 		t.Errorf("the refused migration created %s in the upstream source", migrationsTable)
 	}
 }
 
-func TestMigratePostgresToPostgresRefusesGoWaveSource(t *testing.T) {
+func TestMigratePostgresToPostgresRefusesGowaveSource(t *testing.T) {
 	pgDSN := os.Getenv("GOWAVE_TEST_POSTGRES")
 	if pgDSN == "" {
 		t.Skip("Skipping integration test: GOWAVE_TEST_POSTGRES is not set")
@@ -188,12 +188,12 @@ func TestMigratePostgresToPostgresRefusesGoWaveSource(t *testing.T) {
 
 	source, sourceDSN := openIsolatedPostgres(t, pgDSN)
 	if err := database.AutoMigrate(source); err != nil {
-		t.Fatalf("prepare GoWave source: %v", err)
+		t.Fatalf("prepare Gowave source: %v", err)
 	}
 	_, targetDSN := openIsolatedPostgres(t, pgDSN)
 
-	if _, err := MigratePostgresToPostgres(nil, sourceDSN, targetDSN, true); !errors.Is(err, ErrSourceIsGoWave) {
-		t.Fatalf("GoWave source: got %v, want ErrSourceIsGoWave", err)
+	if _, err := MigratePostgresToPostgres(nil, sourceDSN, targetDSN, true); !errors.Is(err, ErrSourceIsGowave) {
+		t.Fatalf("Gowave source: got %v, want ErrSourceIsGowave", err)
 	}
 }
 
@@ -306,7 +306,7 @@ func seedUpstreamSource(t *testing.T, db *gorm.DB) upstreamFixture {
 		}
 		statements = append(statements,
 			// The second user leaves every optional column NULL, including the
-			// ones GoWave stores in a non-pointer Go field.
+			// ones Gowave stores in a non-pointer Go field.
 			seedStatement{`INSERT INTO users (revision, id, short_uuid, username, status, traffic_limit_bytes, traffic_limit_strategy, expire_at, trojan_password, vless_uuid, ss_password, description, tag, telegram_id, email, hwid_device_limit, last_triggered_threshold, created_at, updated_at, uuid, first_connected_at) VALUES (1, ?, ?, ?, CAST(? AS "USERS_STATUS"), 1024, CAST(? AS "RESET_PERIODS"), ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`, []interface{}{
 				userID, name, name, status, strategy, now.Add(24 * time.Hour),
 				nullableFor(userID, "trojan-"+name), vless, nullableFor(userID, "ss-"+name),
@@ -366,7 +366,7 @@ func assertUpstreamMigration(t *testing.T, target *gorm.DB, report *PGToPGReport
 		if report.Rows[table] != want {
 			t.Errorf("%s: report says %d rows, source has %d", table, report.Rows[table], want)
 		}
-		// GoWave seeds one template per type it ships, so this table legitimately
+		// Gowave seeds one template per type it ships, so this table legitimately
 		// ends up with more rows than the source had; it is checked separately.
 		if table == "subscription_templates" {
 			continue
@@ -389,7 +389,7 @@ func assertUpstreamMigration(t *testing.T, target *gorm.DB, report *PGToPGReport
 			t.Errorf("dropped columns = %v, want %s among them", report.DroppedColumns, column)
 		}
 	}
-	// GoWave-only tables must be reported, and the outbox must stay empty so no
+	// Gowave-only tables must be reported, and the outbox must stay empty so no
 	// stale work is replayed against the nodes.
 	for _, table := range []string{"jobs", "keygen", "user_meta", "node_meta"} {
 		if !containsString(report.EmptyTargetTables, table) {
@@ -404,7 +404,7 @@ func assertUpstreamMigration(t *testing.T, target *gorm.DB, report *PGToPGReport
 		}
 	}
 
-	// Enums, uuid, non-pointer NULLs and jsonb all land as GoWave text.
+	// Enums, uuid, non-pointer NULLs and jsonb all land as Gowave text.
 	var first database.User
 	if err := target.Where("username = ?", "upstream-user-1").First(&first).Error; err != nil {
 		t.Fatalf("migrated user 1: %v", err)
@@ -432,7 +432,7 @@ func assertUpstreamMigration(t *testing.T, target *gorm.DB, report *PGToPGReport
 	if second.Status != "LIMITED" || second.TrafficLimitStrategy != "MONTH" {
 		t.Errorf("user 2 status/strategy = %q/%q, want LIMITED/MONTH", second.Status, second.TrafficLimitStrategy)
 	}
-	// A NULL in a column GoWave stores in a non-pointer field becomes its zero value.
+	// A NULL in a column Gowave stores in a non-pointer field becomes its zero value.
 	if second.Description != "" || second.Email != "" || second.TrojanPassword != "" {
 		t.Errorf("user 2 kept %q/%q/%q, want empty strings", second.Description, second.Email, second.TrojanPassword)
 	}
@@ -507,7 +507,7 @@ func assertUpstreamMigration(t *testing.T, target *gorm.DB, report *PGToPGReport
 		}
 	}
 
-	// GoWave seeds the templates and the page configuration the upstream panel
+	// Gowave seeds the templates and the page configuration the upstream panel
 	// did not supply, without duplicating the ones it did.
 	var mihomo int64
 	if err := target.Table("subscription_templates").Where("template_type = ?", "MIHOMO").Count(&mihomo).Error; err != nil {
@@ -521,7 +521,7 @@ func assertUpstreamMigration(t *testing.T, target *gorm.DB, report *PGToPGReport
 		t.Fatal(err)
 	}
 	if singbox != 1 {
-		t.Errorf("SINGBOX templates = %d, want GoWave's default seeded", singbox)
+		t.Errorf("SINGBOX templates = %d, want Gowave's default seeded", singbox)
 	}
 
 	// Sequences continue after the copied IDs instead of colliding with them.

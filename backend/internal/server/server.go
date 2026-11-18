@@ -79,7 +79,7 @@ func warnIfRoot() {
 	if os.Geteuid() != 0 {
 		return
 	}
-	logx.Warnf("security", "GoWave is running as root. This is not recommended; install.sh sets up an unprivileged service.")
+	logx.Warnf("security", "Gowave is running as root. This is not recommended; install.sh sets up an unprivileged service.")
 }
 
 // warnWritableExecutable flags installations whose binary the service account can
@@ -202,7 +202,7 @@ func Run() {
 		if err := logx.Setup(cfg.LogLevel, cfg.LogFormat); err != nil {
 			logx.Warnf("config", "%v; using LOG_LEVEL=info, LOG_FORMAT=text", err)
 		}
-		logx.Infof("startup", "GoWave %s starting (%s channel%s, %s, %s/%s, pid %d)",
+		logx.Infof("startup", "Gowave %s starting (%s channel%s, %s, %s/%s, pid %d)",
 			system.AppVersion, system.CurrentChannel(), commitSuffix(), runtime.Version(), runtime.GOOS, runtime.GOARCH, os.Getpid())
 	}
 
@@ -284,7 +284,7 @@ func Run() {
 
 	serveErr := make(chan error, 1)
 	go func() {
-		logx.Infof("http", "GoWave %s is ready on http://%s", system.AppVersion, serverAddr)
+		logx.Infof("http", "Gowave %s is ready on http://%s", system.AppVersion, serverAddr)
 		serveErr <- srv.Serve(listener)
 	}()
 
@@ -307,7 +307,7 @@ func Run() {
 	// Background writers flush what requests queued before the shutdown.
 	app.wait(5 * time.Second)
 	closeAndFixDB(db, cfg)
-	logx.Infof("startup", "GoWave stopped")
+	logx.Infof("startup", "Gowave stopped")
 	if exitCode != 0 {
 		os.Exit(exitCode)
 	}

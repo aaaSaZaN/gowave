@@ -1,4 +1,4 @@
--- Upstream panel PostgreSQL fixture: GoWave column names carrying the upstream types
+-- Upstream panel PostgreSQL fixture: Gowave column names carrying the upstream types
 -- (native enums, uuid, jsonb, timestamptz(3)) plus upstream-only tables and columns.
 -- One statement per line, like internal/database/migrations.
 CREATE TYPE "USERS_STATUS" AS ENUM ('ACTIVE', 'DISABLED', 'LIMITED', 'EXPIRED');

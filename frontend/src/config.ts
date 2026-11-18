@@ -1,6 +1,6 @@
 import { panelUrl } from '@shared/lib/panel-path'
 export const app = {
-    name: 'GoWave',
+    name: 'Gowave',
     githubRepo: 'https://github.com/aaaSaZaN/gowave',
     githubStars: 'https://github.com/aaaSaZaN/gowave/stargazers',
     githubIssues: 'https://github.com/aaaSaZaN/gowave/issues',

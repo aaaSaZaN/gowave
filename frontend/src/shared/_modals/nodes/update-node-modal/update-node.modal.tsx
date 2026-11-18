@@ -263,7 +263,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
         mutationFn: async () => {
             if (activeTab === 'node') {
                 if (!nodeTargetVersion)
-                    throw new Error('Нет подходящего релиза GoWave Node для этой архитектуры.')
+                    throw new Error('Нет подходящего релиза Gowave Node для этой архитектуры.')
                 const res = await instance.post(`/api/nodes/${node.uuid}/updates/apply`, {
                     type: 'node',
                     repo: NODE_REPOSITORY,
@@ -382,7 +382,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                     title="Перезапуск службы"
                     variant="light"
                 >
-                    Установка GoWave Node или Xray перезапустит службу. Активные соединения
+                    Установка Gowave Node или Xray перезапустит службу. Активные соединения
                     кратковременно прервутся.
                 </Alert>
 
@@ -395,7 +395,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                     value={activeTab}
                 >
                     <Tabs.List grow>
-                        <Tabs.Tab value="node">GoWave Node Go</Tabs.Tab>
+                        <Tabs.Tab value="node">Gowave Node Go</Tabs.Tab>
                         <Tabs.Tab leftSection={<TbCpu size={16} />} value="core">
                             Xray Core
                         </Tabs.Tab>
@@ -442,7 +442,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                         {activeTab === 'node' ? (
                             <Stack gap="sm">
                                 <Text fw={600} size="sm">
-                                    Выберите релиз GoWave Node Go
+                                    Выберите релиз Gowave Node Go
                                 </Text>
                                 {releaseSelector(
                                     nodeChannel,
@@ -451,7 +451,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                                     setSelectedNodeVersion,
                                     nodeOptions,
                                     nodeTargetVersion,
-                                    'Релиз GoWave Node Go'
+                                    'Релиз Gowave Node Go'
                                 )}
                             </Stack>
                         ) : (
@@ -509,7 +509,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                         <Checkbox
                             checked={confirmed}
                             color="orange"
-                            label={`Подтверждаю установку ${activeTab === 'node' ? 'GoWave Node Go' : 'Xray Core'} и перезапуск службы`}
+                            label={`Подтверждаю установку ${activeTab === 'node' ? 'Gowave Node Go' : 'Xray Core'} и перезапуск службы`}
                             onChange={(event) => setConfirmed(event.currentTarget.checked)}
                             size="sm"
                         />
@@ -517,7 +517,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                         {applyMutation.isSuccess && (
                             <Alert color="teal" icon={<TbCheck size={18} />} title="Запрос принят">
                                 {activeTab === 'node'
-                                    ? `GoWave Node обновляется до ${nodeTargetVersion}.`
+                                    ? `Gowave Node обновляется до ${nodeTargetVersion}.`
                                     : `Xray Core обновляется${coreDownloadUrl.trim() ? ' по указанной ссылке' : ` до ${coreTargetVersion}`}.`}{' '}
                                 Служба перезапускается.
                             </Alert>

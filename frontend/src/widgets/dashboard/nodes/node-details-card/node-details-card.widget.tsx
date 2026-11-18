@@ -563,7 +563,7 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                                         <Tooltip
                                             label={
                                                 isGoNode
-                                                    ? 'Нажмите, чтобы выбрать версию GoWave Node'
+                                                    ? 'Нажмите, чтобы выбрать версию Gowave Node'
                                                     : t(
                                                           'node-details-card.widget.gowave-node-version'
                                                       )
@@ -572,7 +572,7 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                                             <UnstyledButton
                                                 aria-label={
                                                     isGoNode
-                                                        ? `Выбрать версию GoWave Node. Установлена ${node.versions.node}`
+                                                        ? `Выбрать версию Gowave Node. Установлена ${node.versions.node}`
                                                         : t(
                                                               'node-details-card.widget.gowave-node-version'
                                                           )

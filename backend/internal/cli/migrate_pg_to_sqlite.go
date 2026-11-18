@@ -133,7 +133,7 @@ func isUpstreamEnvPath(path string) bool {
 
 // MigratePostgresToSQLite reads the source in a read-only transaction and builds
 // a fresh SQLite database beside the requested destination. It never rewrites
-// the source DB, GoWave .env, or upstream containers.
+// the source DB, Gowave .env, or upstream containers.
 func MigratePostgresToSQLite(_ *config.Config, sourceDSN, destPath string) error {
 	if sourceDSN == "" {
 		detected, err := DetectUpstreamPostgresDSN()
@@ -193,7 +193,7 @@ func MigratePostgresToSQLite(_ *config.Config, sourceDSN, destPath string) error
 		return fmt.Errorf("disable SQLite foreign keys during import: %w", err)
 	}
 	if err := database.MigrateSchema(sqliteDB); err != nil {
-		return fmt.Errorf("create GoWave SQLite schema: %w", err)
+		return fmt.Errorf("create Gowave SQLite schema: %w", err)
 	}
 
 	var normalizedNulls int64
@@ -259,7 +259,7 @@ func MigratePostgresToSQLite(_ *config.Config, sourceDSN, destPath string) error
 		return fmt.Errorf("SQLite database was published at %s, but temporary file cleanup failed: %w", absDestPath, err)
 	}
 	fmt.Printf("\n[✔] PostgreSQL data copied and validated: %s\n", absDestPath)
-	fmt.Printf("Set DB_DRIVER=sqlite and DATABASE_URL=%s in the GoWave environment, then restart GoWave.\n", absDestPath)
+	fmt.Printf("Set DB_DRIVER=sqlite and DATABASE_URL=%s in the Gowave environment, then restart Gowave.\n", absDestPath)
 	if normalizedNulls > 0 {
 		fmt.Printf("[i] %d NULL values in non-pointer Go model fields were mapped to their Go zero values.\n", normalizedNulls)
 	}
@@ -449,7 +449,7 @@ func closeGormDB(db *gorm.DB) error {
 
 func MigratePGToSQLiteInteractive(cfg *config.Config, reader *bufio.Reader) {
 	fmt.Println("\n=======================================================")
-	fmt.Println("  Migrate upstream panel PostgreSQL data to GoWave SQLite  ")
+	fmt.Println("  Migrate upstream panel PostgreSQL data to Gowave SQLite  ")
 	fmt.Println("=======================================================")
 
 	detected, _ := DetectUpstreamPostgresDSN()
@@ -479,5 +479,5 @@ func MigratePGToSQLiteInteractive(cfg *config.Config, reader *bufio.Reader) {
 		return
 	}
 	fmt.Println("[*] The original PostgreSQL database and upstream panel services are untouched.")
-	fmt.Println("[*] Point GoWave to the validated SQLite file, restart it, and verify the panel before stopping the upstream panel.")
+	fmt.Println("[*] Point Gowave to the validated SQLite file, restart it, and verify the panel before stopping the upstream panel.")
 }

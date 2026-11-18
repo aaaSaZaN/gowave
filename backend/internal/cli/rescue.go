@@ -76,7 +76,7 @@ func runSQLiteToPG(cfg *config.Config, args []string) {
 		target = positional[1]
 	}
 	if source == "" {
-		detected, err := DetectGoWaveSQLitePath(cfg)
+		detected, err := DetectGowaveSQLitePath(cfg)
 		if err != nil {
 			fmt.Printf("[-] %v\n", err)
 			os.Exit(1)
@@ -98,7 +98,7 @@ func runSQLiteToPG(cfg *config.Config, args []string) {
 }
 
 // runPGToPG handles "[source_dsn] [target_dsn] [--force]" for the upstream
-// PostgreSQL -> GoWave PostgreSQL command.
+// PostgreSQL -> Gowave PostgreSQL command.
 func runPGToPG(cfg *config.Config, args []string) {
 	force := false
 	var positional []string
@@ -296,17 +296,17 @@ func PrintUsage() {
 	fmt.Println("      --image <ref>                    Panel image (default ghcr.io/aaasazan/gowave:latest)")
 	fmt.Println("      --from <path>                    Current install directory (default: this binary's)")
 	fmt.Println("      --yes                            Do not ask for confirmation")
-	fmt.Println("  --migrate-pg-to-pg [src_dsn] [dsn]   Copy upstream panel PostgreSQL data into GoWave PostgreSQL")
-	fmt.Println("  migrate pg-to-pg [src_dsn] [dsn]     Copy upstream panel PostgreSQL data into GoWave PostgreSQL")
+	fmt.Println("  --migrate-pg-to-pg [src_dsn] [dsn]   Copy upstream panel PostgreSQL data into Gowave PostgreSQL")
+	fmt.Println("  migrate pg-to-pg [src_dsn] [dsn]     Copy upstream panel PostgreSQL data into Gowave PostgreSQL")
 	fmt.Println("      --force                         Replace existing users, nodes and hosts in the target")
-	fmt.Println("  --migrate-sqlite-to-pg [src] [dsn]   Copy GoWave SQLite data into an existing PostgreSQL")
-	fmt.Println("  migrate sqlite-to-pg [src] [dsn]     Copy GoWave SQLite data into an existing PostgreSQL")
+	fmt.Println("  --migrate-sqlite-to-pg [src] [dsn]   Copy Gowave SQLite data into an existing PostgreSQL")
+	fmt.Println("  migrate sqlite-to-pg [src] [dsn]     Copy Gowave SQLite data into an existing PostgreSQL")
 	fmt.Println("      --force                         Replace existing users, nodes and hosts in the target")
 	fmt.Println("  --reset-admin                   Remove all admins to re-trigger first-time web onboarding")
 	fmt.Println("  --list-admins                   List all existing administrators")
 	fmt.Println("  --enable-password-auth          Force-enable password authentication in database")
 	fmt.Println("  --print-secret-key-raw          Print only the node secret key (for scripts)")
-	fmt.Println("  --print-secret-key              Generate and print a valid SECRET_KEY for GoWave Node")
+	fmt.Println("  --print-secret-key              Generate and print a valid SECRET_KEY for Gowave Node")
 	fmt.Println("  --db <path>                     Override database path (e.g. /path/to/gowave.db)")
 	fmt.Println("  --keep-root-db                  Keep database files owned by root (do not chown to gowave)")
 	fmt.Println("  --yes-I-know-root-db-mode-enough-go-ahead-please")
@@ -319,7 +319,7 @@ func interactiveMenu(db *gorm.DB, cfg *config.Config) {
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Println("\n==========================================")
-		fmt.Println("          GoWave - Rescue CLI             ")
+		fmt.Println("          Gowave - Rescue CLI             ")
 		fmt.Println("==========================================")
 		fmt.Println("1) Reset superadmin (removes admin to re-trigger initial setup)")
 		fmt.Println("2) Reset superadmin password")
@@ -330,7 +330,7 @@ func interactiveMenu(db *gorm.DB, cfg *config.Config) {
 		fmt.Println("7) Import database from PasarGuard (SQLite/PostgreSQL)")
 		fmt.Println("8) Migrate from upstream panel PostgreSQL -> Gowave SQLite (and purge Docker)")
 		fmt.Println("9) Move Gowave to Docker (SQLite -> PostgreSQL)")
-		fmt.Println("10) Migrate from upstream panel PostgreSQL -> GoWave PostgreSQL")
+		fmt.Println("10) Migrate from upstream panel PostgreSQL -> Gowave PostgreSQL")
 		fmt.Println("11) Import database from 3x-ui (SQLite)")
 		fmt.Println("0) Exit")
 		fmt.Print("\nSelect an option [0-11]: ")

@@ -81,8 +81,8 @@ func TestMigrationsFreshAndExisting(t *testing.T) {
 			}
 			var count int64
 			db.Table("gowave_migrations").Count(&count)
-			if count != 10 {
-				t.Fatalf("expected 10 migrations, got %d", count)
+			if count != 11 {
+				t.Fatalf("expected 11 migrations, got %d", count)
 			}
 		})
 	}
@@ -137,14 +137,14 @@ func TestBrandingMigrationPreservesCustomTitles(t *testing.T) {
 			if err := db.First(&fresh).Error; err != nil {
 				t.Fatal(err)
 			}
-			if fresh.Title != "GoWave" {
+			if fresh.Title != "Gowave" {
 				t.Fatalf("fresh title %q", fresh.Title)
 			}
-			for _, title := range []string{"Remnawave", "Custom Company", "{cyan}My{white}Panel"} {
+			for _, title := range []string{"Remnawave", "GoWave", "Custom Company", "{cyan}My{white}Panel"} {
 				if err := db.Model(&PanelSetting{}).Where("id = ?", fresh.ID).Update("title", title).Error; err != nil {
 					t.Fatal(err)
 				}
-				if err := db.Exec("DELETE FROM gowave_migrations WHERE name = ?", "005_gowave_branding.sql").Error; err != nil {
+				if err := db.Exec("DELETE FROM gowave_migrations WHERE name IN (?, ?)", "005_gowave_branding.sql", "011_gowave_title.sql").Error; err != nil {
 					t.Fatal(err)
 				}
 				if err := AutoMigrate(db); err != nil {
@@ -155,8 +155,8 @@ func TestBrandingMigrationPreservesCustomTitles(t *testing.T) {
 					t.Fatal(err)
 				}
 				want := title
-				if title == "Remnawave" {
-					want = "GoWave"
+				if title == "Remnawave" || title == "GoWave" {
+					want = "Gowave"
 				}
 				if saved.Title != want {
 					t.Fatalf("%q became %q; want %q", title, saved.Title, want)

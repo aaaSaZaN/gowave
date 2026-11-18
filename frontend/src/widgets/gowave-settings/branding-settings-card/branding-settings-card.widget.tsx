@@ -159,7 +159,7 @@ export const BrandingSettingsCardWidget = (props: IProps) => {
                                         {t('branding-settings-card.widget.example-mantine-colors')}:
                                     </Text>
                                     <Code block c="blue" fz="xs">
-                                        {'{cyan}Go{white}Wave'}
+                                        {'{cyan}Go{white}wave'}
                                     </Code>
                                 </Box>
 

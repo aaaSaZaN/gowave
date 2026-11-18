@@ -102,7 +102,7 @@ export const LoginPage = () => {
 
         return [
             { text: 'Go', color: 'cyan' },
-            { text: 'Wave', color: 'white' }
+            { text: 'wave', color: 'white' }
         ]
     }, [authStatus])
 

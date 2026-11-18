@@ -31,8 +31,8 @@ const sqliteToPGBatchRows = 500
 // keeps its own rows instead of the source's.
 const migrationsTable = "gowave_migrations"
 
-// DetectGoWaveSQLitePath attempts to locate an existing GoWave SQLite database file.
-func DetectGoWaveSQLitePath(cfg *config.Config) (string, error) {
+// DetectGowaveSQLitePath attempts to locate an existing Gowave SQLite database file.
+func DetectGowaveSQLitePath(cfg *config.Config) (string, error) {
 	if cfg != nil && cfg.DBDriver == "sqlite" && strings.TrimSpace(cfg.DatabaseURL) != "" {
 		if fi, err := os.Stat(cfg.DatabaseURL); err == nil && !fi.IsDir() {
 			return cfg.DatabaseURL, nil
@@ -52,7 +52,7 @@ func DetectGoWaveSQLitePath(cfg *config.Config) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("no existing GoWave SQLite database found automatically; please specify the path")
+	return "", fmt.Errorf("no existing Gowave SQLite database found automatically; please specify the path")
 }
 
 // DetectPostgresTargetDSN finds the PostgreSQL DSN from the config, the
@@ -105,7 +105,7 @@ func redactDSN(dsn string) string {
 	return dsnPasswordPattern.ReplaceAllString(dsn, "${1}xxxxx")
 }
 
-// MigrateSQLiteToPostgres copies all tables from a GoWave SQLite database into
+// MigrateSQLiteToPostgres copies all tables from a Gowave SQLite database into
 // PostgreSQL in one transaction. Tables are cleared once up front and loaded
 // in foreign-key order, so constraints stay enforced and no superuser role is
 // needed. A target that already has users, nodes or hosts is only replaced
@@ -146,7 +146,7 @@ func MigrateSQLiteToPostgres(_ *config.Config, sourcePath, targetDSN string, for
 	}
 	defer closeGormDB(pgDB)
 
-	fmt.Println("[*] Applying GoWave schema to PostgreSQL...")
+	fmt.Println("[*] Applying Gowave schema to PostgreSQL...")
 	if err := database.MigrateSchema(pgDB); err != nil {
 		return fmt.Errorf("initialize PostgreSQL schema: %w", err)
 	}
@@ -223,7 +223,7 @@ func MigrateSQLiteToPostgres(_ *config.Config, sourcePath, targetDSN string, for
 
 	fmt.Println("\n[✔] Data migration completed successfully!")
 	if os.Getenv("IN_DOCKER") == "" {
-		fmt.Println("To run GoWave with PostgreSQL, update your .env or docker-compose.yml:")
+		fmt.Println("To run Gowave with PostgreSQL, update your .env or docker-compose.yml:")
 		fmt.Printf("  DB_DRIVER=postgres\n  DATABASE_URL=%s  (password hidden)\n", redactDSN(targetDSN))
 	}
 	return nil

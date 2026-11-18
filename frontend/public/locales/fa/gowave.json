@@ -20,7 +20,7 @@
     "tools": "ابزارها",
     "srh-inspector": "بازرسی SRH",
     "response-rules": "قوانین پاسخ",
-    "gowave-settings": "تنظیمات GoWave",
+    "gowave-settings": "تنظیمات Gowave",
     "node-plugins": "Plugins",
     "quick-open": "Quick open",
     "tb-reports": "Torrent Blocker Reports",
@@ -298,7 +298,7 @@
       "subscription-qr-code": "اشتراک کد QR",
       "edit-user-headline": "ویرایش کاربر",
       "subscription-url-description-line-1": "دامنه و مسیر استخراج شده از فایل .env:",
-      "subscription-url-description-line-2": "برای تغییر این مقدار لطفا فایل .env را ویرایش کرده و سپس GoWave را با این کامند ریستارت کنید:",
+      "subscription-url-description-line-2": "برای تغییر این مقدار لطفا فایل .env را ویرایش کرده و سپس Gowave را با این کامند ریستارت کنید:",
       "management": "مدیریت",
       "danger-zone": "هشدار",
       "detailed-info": "اطلاعات دقیق",
@@ -335,9 +335,9 @@
     "single-domain": "تک‌دامنه",
     "default-mode-for-one-domain": "حالت پیشفرض برای یک دامنه",
     "multi-domain": "چند دامنه",
-    "multi-domain-description": "چندین دامنه که با کاما (,) جدا شده‌اند، GoWave یکی از دامنه‌ها را به صورت تصادفی انتخاب خواهد کرد.",
+    "multi-domain-description": "چندین دامنه که با کاما (,) جدا شده‌اند، Gowave یکی از دامنه‌ها را به صورت تصادفی انتخاب خواهد کرد.",
     "wildcard-domain": "دامنه wildcard",
-    "wildcard-domain-description": "الگوی wildcard برای دامنه. GoWave به جای * یک رشته متنی رندوم جایگذاری خواهد کرد",
+    "wildcard-domain-description": "الگوی wildcard برای دامنه. Gowave به جای * یک رشته متنی رندوم جایگذاری خواهد کرد",
     "override-sni-from-address": "بازنویسی SNI از آدرس دامنه",
     "override-sni-from-address-description": "این گزینه مقدار SNI را با آدرس مشخص شده جایگزین خواهد کرد که برای کانفیگ‌های چند دامنه‌ای و wildcard قابل استفاده می‌باشد",
     "shuffled-hosts-hover-card": "هاست‌های به هم زده شده در بالای لیست قرار گرفته و به صورت تصادفی مرتب خواهند شد.",
@@ -354,7 +354,7 @@
     "keep-sni-blank": "SNI خالی بماند",
     "keep-sni-blank-description": "در برخی موارد باید SNI خالی بماند. از این گزینه برای خالی گذاشتن SNI استفاده کنید. توجه داشته باشید که این گزینه بالاترین اولویت را دارد، بنابراین حتی اگر SNI از قبل تنظیم شده باشد، اعمال خواهد شد.",
     "exclude-from-subscription-type": "Exclude from subscription type",
-    "hidden-host-description": "By default, GoWave will not include hidden hosts in the subscription. Hidden hosts can be used with Mihomo, Xray-Json Advanced, and Raw.",
+    "hidden-host-description": "By default, Gowave will not include hidden hosts in the subscription. Hidden hosts can be used with Mihomo, Xray-Json Advanced, and Raw.",
     "server-description-1": "In supported clients, the protocol name (e.g. vless) will be replaced with the description specified here.",
     "server-description-2": "Not all client applications support this feature. For more details, refer to the documentation of the apps listed below.",
     "supported-clients": "Supported clients",
@@ -408,7 +408,7 @@
     "page": {
       "online-stats": "آمار آنلاین شدن کاربرها",
       "bandwidth": "پهنای باند",
-      "gowave-usage": "مصرف منابع GoWave"
+      "gowave-usage": "مصرف منابع Gowave"
     }
   },
   "login-form": {
@@ -575,7 +575,7 @@
     "widget": {
       "requirements": "پیش‌نیازها",
       "warning-activity": "An IP address will be shown when <highlight>Xray Core</highlight> considers the <highlight>connection still open</highlight>. As a result, some of the IP addresses shown may no longer be connected. Use the <highlight>clock</highlight> icon to track the last activity of a given IP.",
-      "warning-version": "نود GoWave نسخه <highlight>{{version}}</highlight> یا بالاتر",
+      "warning-version": "نود Gowave نسخه <highlight>{{version}}</highlight> یا بالاتر",
       "warning-patience": "دریافت اطلاعات ممکن است زمانبر باشد، این پنجره را نبندید!",
       "warning-n-plus-one": "<highlight>Please note</highlight>: this request performs <highlight>N+1</highlight> calls to the gRPC API of <highlight>Xray Core</highlight> due to the lack of bulk data retrieval methods. <highlight>N</highlight> is the number of users currently online on the given node.",
       "fetching": "درحال دریافت نشست‌های فعال ...",
@@ -763,10 +763,10 @@
       "widget": {
         "please-select-a-provider-and-billing-node": "لطفاً یک ارائه‌دهنده و نود صورتحساب انتخاب کنید",
         "next-billing-at": "صورتحساب بعدی در",
-        "next-billing-at-description": "تاریخ و زمانی که نود صورتحساب بعدی صادر می‌شود. GoWave شما را مطلع خواهد کرد.",
+        "next-billing-at-description": "تاریخ و زمانی که نود صورتحساب بعدی صادر می‌شود. Gowave شما را مطلع خواهد کرد.",
         "existing": "Existing",
         "custom": "Custom",
-        "custom-name-description": "Use a custom name when the node is not managed by GoWave."
+        "custom-name-description": "Use a custom name when the node is not managed by Gowave."
       }
     }
   },
@@ -884,7 +884,7 @@
   "disclaimer-overlay": {
     "title": "Disclaimer",
     "subtitle": "Please read this notice before you continue.",
-    "intro": "GoWave is an <highlight>open-source, self-hosted</highlight> proxy and user-management tool. It is provided <warning>\"as is\", without any warranty</warning> of any kind, express or implied.",
+    "intro": "Gowave is an <highlight>open-source, self-hosted</highlight> proxy and user-management tool. It is provided <warning>\"as is\", without any warranty</warning> of any kind, express or implied.",
     "responsibility": "You are <highlight>solely responsible</highlight> for how you deploy and use this software.",
     "compliance": "You must comply with <highlight>all laws and regulations</highlight> applicable in your jurisdiction.",
     "liability": "The developers and contributors accept <warning>no liability</warning> for any misuse, damage, or data loss.",
@@ -939,7 +939,7 @@
       "disable-node": "غیرفعالسازی نود",
       "config-profile-or-inbounds-is-missing": "پروفایل پیکربندی یا اینباند وجود ندارد",
       "xray-core-version": "نسخه هسته Xray",
-      "gowave-node-version": "نسخه نود، GoWave Node"
+      "gowave-node-version": "نسخه نود، Gowave Node"
     }
   },
   "config-profiles": {
@@ -1062,7 +1062,7 @@
     }
   },
   "create-node-step-1-connection": {
-    "run-the-install-command": "دستور را با دکمه زیر کپی کنید و روی سرور نود اجرا کنید: نود GoWave (gowave-node) را با این کلید مخفی و پورت نصب می‌کند.",
+    "run-the-install-command": "دستور را با دکمه زیر کپی کنید و روی سرور نود اجرا کنید: نود Gowave (gowave-node) را با این کلید مخفی و پورت نصب می‌کند.",
     "learn-more": "اطلاعات بیشتر.",
     "domain-or-ip": "دامنه یا آیپی",
     "additional-options": "تنظیمات بیشتر"
@@ -1070,7 +1070,7 @@
   "create-node-step-3-status": {
     "establishing-mtls-connection": "درحال برقراری اتصال mTLS",
     "xray-core-is-up-and-running": "هسته Xray درحال اجرا می‌باشد!",
-    "gowave-will-try-to-reconnect-shortly": "به زودی GoWave برای اتصال مجدد تلاش خواهد کرد",
+    "gowave-will-try-to-reconnect-shortly": "به زودی Gowave برای اتصال مجدد تلاش خواهد کرد",
     "no-errors-so-far": "تا کنون خطایی وجود نداشته است"
   },
   "external-squad-card": {
@@ -1196,7 +1196,7 @@
   },
   "branding-settings-card": {
     "widget": {
-      "customize-your-gowave-instance": "پنل GoWave خود را شخصی‌سازی کنید",
+      "customize-your-gowave-instance": "پنل Gowave خود را شخصی‌سازی کنید",
       "branding-settings": "تنظیمات برندینگ",
       "the-title-that-will-be-displayed-on-login-page": "عنوانی که در صفحه ورود نشان داده خواهد شد",
       "brand-name": "اسم برند",
@@ -1416,7 +1416,7 @@
     "tab": {
       "widget": {
         "subscription-page-config": "پیکربندی صفحه اشتراک",
-        "subscription-page-config-description": "شما می‌توانید پیکربندی صفحه اشتراک (صفحه اشتراک GoWave) را برای این گروه خارجی override کنید.",
+        "subscription-page-config-description": "شما می‌توانید پیکربندی صفحه اشتراک (صفحه اشتراک Gowave) را برای این گروه خارجی override کنید.",
         "subpage-config": "تنظیمات صفحه اشتراک",
         "select-config": "کانفیگ را انتخاب کنید..."
       }
@@ -1773,7 +1773,7 @@
     "failed-description": "The node could not complete the GeoCheck.",
     "view-image": "Report",
     "no-image": "No image in the report, open JSON",
-    "requires-node-version": "نیازمند GoWave Node نسخه {{version}} یا بالاتر"
+    "requires-node-version": "نیازمند Gowave Node نسخه {{version}} یا بالاتر"
   },
   "quick-open": {
     "page": {

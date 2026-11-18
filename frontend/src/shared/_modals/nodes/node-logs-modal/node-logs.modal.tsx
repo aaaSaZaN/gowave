@@ -117,7 +117,7 @@ export const NodeLogsModal = NiceModal.create((props: IProps) => {
                         <SegmentedControl
                             data={[
                                 { label: 'Xray Core', value: 'xray' },
-                                { label: 'GoWave Node (Go)', value: 'node' }
+                                { label: 'Gowave Node (Go)', value: 'node' }
                             ]}
                             onChange={(val) => setActiveTab(val as 'xray' | 'node')}
                             size="xs"

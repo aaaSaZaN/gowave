@@ -56,7 +56,7 @@ const responseRuleSchema = baseResponseRuleSchema.meta({
         .parse(ResponseRuleSchema.meta()?.['defaultSnippets'])
 })
 
-// GoWave uses header objects; all other fields follow the pinned upstream contract.
+// Gowave uses header objects; all other fields follow the pinned upstream contract.
 export const ResponseRulesConfigSchema = UpstreamResponseRulesConfigSchema.extend({
     rules: z.array(responseRuleSchema)
 })

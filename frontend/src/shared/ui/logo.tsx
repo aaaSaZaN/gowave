@@ -16,7 +16,7 @@ interface LogoProps
 export function Logo({ size, style, className, ...props }: LogoProps) {
     return (
         <Box
-            alt="GoWave"
+            alt="Gowave"
             className={cx(classes.logo, className)}
             component="img"
             src={GOWAVE_LOGO_SRC}

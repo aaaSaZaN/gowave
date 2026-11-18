@@ -82,7 +82,7 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 	var setting database.PanelSetting
 	if err := h.db.First(&setting, 1).Error; err != nil {
 		setting = database.PanelSetting{
-			Title:               "GoWave",
+			Title:               "Gowave",
 			IsLoginAllowed:      true,
 			IsRegisterAllowed:   false,
 			PasswordAuthEnabled: false,
@@ -144,7 +144,7 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	title := setting.Title
 	if title == "" {
-		title = "GoWave"
+		title = "Gowave"
 	}
 	resp.Response.Branding.Title = &title
 	if setting.LogoURL != "" {

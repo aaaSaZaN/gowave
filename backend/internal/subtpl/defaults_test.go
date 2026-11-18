@@ -45,7 +45,7 @@ func TestSeededTemplatesMatchUpstream(t *testing.T) {
 			got, _ = value.(*ojson.Object)
 		}
 		// Keep the original fixture intact; only stock display labels are rebranded.
-		expected := strings.ReplaceAll(ojson.StringifyIndent(want, 1), "→ Remnawave", "→ GoWave")
+		expected := strings.ReplaceAll(ojson.StringifyIndent(want, 1), "→ Remnawave", "→ Gowave")
 		if ojson.StringifyIndent(got, 1) != expected {
 			t.Errorf("%s default template differs from upstream", kind)
 			reportDiff(t, ojson.StringifyIndent(got, 1), expected)

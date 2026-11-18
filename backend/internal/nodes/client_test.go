@@ -58,7 +58,7 @@ func TestCheckHealthExplainsForeignCertificate(t *testing.T) {
 	}
 }
 
-func TestNodeRequestsIdentifyGoWave(t *testing.T) {
+func TestNodeRequestsIdentifyGowave(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if got := r.Header.Get("X-Better-One"); got != "true" {
 			t.Errorf("X-Better-One = %q, want true", got)

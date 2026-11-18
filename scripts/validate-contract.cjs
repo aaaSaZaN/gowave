@@ -11,7 +11,7 @@ const {
     TestSrrMatcherResponseSchema,
 } = require('../frontend/src/shared/api/schemas/subscription-settings.schema.ts');
 
-// GoWave's documented extension makes Response Rules headers objects. Keep all
+// Gowave's documented extension makes Response Rules headers objects. Keep all
 // other fields checked against the pinned contract through the shared schemas.
 const responseSchemas = {
     GetSubscriptionSettingsCommand: SubscriptionSettingsResponseSchema,

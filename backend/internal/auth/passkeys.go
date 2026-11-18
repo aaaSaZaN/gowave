@@ -52,7 +52,7 @@ func (h *PasskeyHandler) configured() (*webauthn.WebAuthn, error) {
 	if !config.Enabled || config.RPID == "" || config.Origin == "" {
 		return nil, errors.New("passkey authentication is disabled or unconfigured")
 	}
-	return webauthn.New(&webauthn.Config{RPID: config.RPID, RPDisplayName: "GoWave", RPOrigins: []string{config.Origin, "https://" + config.RPID}, AuthenticatorSelection: protocol.AuthenticatorSelection{ResidentKey: protocol.ResidentKeyRequirementPreferred, UserVerification: protocol.VerificationRequired}})
+	return webauthn.New(&webauthn.Config{RPID: config.RPID, RPDisplayName: "Gowave", RPOrigins: []string{config.Origin, "https://" + config.RPID}, AuthenticatorSelection: protocol.AuthenticatorSelection{ResidentKey: protocol.ResidentKeyRequirementPreferred, UserVerification: protocol.VerificationRequired}})
 }
 
 func (h *PasskeyHandler) loadUser(id string) (*passkeyUser, error) {

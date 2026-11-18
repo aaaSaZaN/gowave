@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# GoWave installer. Run it again on the same server to update, change the
-# domain or remove GoWave.
+# Gowave installer. Run it again on the same server to update, change the
+# domain or remove Gowave.
 #
 #   sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/aaaSaZaN/gowave/main/install.sh)"
 #
@@ -128,7 +128,7 @@ ask_language() {
 
 usage() {
     cat <<'USAGE'
-GoWave installer / Установщик GoWave
+Gowave installer / Установщик Gowave
 
 Usage: install.sh [options]
   sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/aaaSaZaN/gowave/main/install.sh)" _ [options]
@@ -305,7 +305,7 @@ detect_system() {
     case $(uname -m) in
     x86_64 | amd64) ARCH=amd64 ;;
     aarch64 | arm64) ARCH=arm64 ;;
-    *) die "$(t "Архитектура $(uname -m) не поддерживается: релизы GoWave собираются для amd64 и arm64." "Architecture $(uname -m) is not supported: GoWave releases are built for amd64 and arm64.")" ;;
+    *) die "$(t "Архитектура $(uname -m) не поддерживается: релизы Gowave собираются для amd64 и arm64." "Architecture $(uname -m) is not supported: Gowave releases are built for amd64 and arm64.")" ;;
     esac
     : >>"$LOG"
     chmod 600 "$LOG"
@@ -541,7 +541,7 @@ check_web_ports() {
     return 1
 }
 
-# ---------------------------------------------------------------- GoWave files
+# ---------------------------------------------------------------- Gowave files
 
 release_url() {
     if [ "$GOWAVE_VERSION" = latest ]; then
@@ -556,7 +556,7 @@ release_url() {
 install_release() {
     local dir="$WORK/release" file
     mkdir -p "$dir"
-    info "$(t 'Скачиваю' 'Downloading') GoWave ($GOWAVE_VERSION, linux-$ARCH)"
+    info "$(t 'Скачиваю' 'Downloading') Gowave ($GOWAVE_VERSION, linux-$ARCH)"
     for file in "gowave-linux-$ARCH" gowave-frontend.tar.gz SHA256SUMS; do
         curl -fsSL --retry 3 -o "$dir/$file" "$(release_url "$file")" || die "$(t 'Не удалось скачать' 'Could not download') $file"
     done
@@ -659,7 +659,7 @@ write_unit() {
     if [ ! -f "$UNIT_FILE" ]; then
         cat >"$UNIT_FILE" <<EOF
 [Unit]
-Description=GoWave Panel
+Description=Gowave Panel
 After=network-online.target
 Wants=network-online.target
 
@@ -808,7 +808,7 @@ configure_caddy() {
     local backup="$WORK/Caddyfile.bak"
     install_caddy
     cat >"$CADDY_SITE" <<EOF
-# Managed by GoWave install.sh
+# Managed by Gowave install.sh
 $DOMAIN {
 	# Covers application/wasm; the Xray validator itself is already served gzip-compressed.
 	encode zstd gzip
@@ -816,8 +816,8 @@ $DOMAIN {
 }
 EOF
     [ -f "$CADDYFILE" ] && cp -p "$CADDYFILE" "$backup"
-    if [ ! -s "$CADDYFILE" ] || grep -q '^# Managed by GoWave' "$CADDYFILE" || is_stock_caddyfile; then
-        printf '# Managed by GoWave install.sh\nimport %s\n' "$CADDY_SITE" >"$CADDYFILE"
+    if [ ! -s "$CADDYFILE" ] || grep -q '^# Managed by Go[Ww]ave' "$CADDYFILE" || is_stock_caddyfile; then
+        printf '# Managed by Gowave install.sh\nimport %s\n' "$CADDY_SITE" >"$CADDYFILE"
     elif ! grep -qF "import $CADDY_SITE" "$CADDYFILE"; then
         printf '\nimport %s\n' "$CADDY_SITE" >>"$CADDYFILE"
     fi
@@ -834,8 +834,8 @@ EOF
 remove_caddy_site() {
     [ -f "$CADDY_SITE" ] || return 0
     rm -f "$CADDY_SITE"
-    if grep -q '^# Managed by GoWave' "$CADDYFILE" 2>/dev/null; then
-        # Caddy was set up only for GoWave.
+    if grep -q '^# Managed by Go[Ww]ave' "$CADDYFILE" 2>/dev/null; then
+        # Caddy was set up only for Gowave.
         systemctl disable --now caddy >/dev/null 2>&1 || true
         printf ':80 {\n\troot * /usr/share/caddy\n\tfile_server\n}\n' >"$CADDYFILE"
     else
@@ -903,7 +903,7 @@ EOF
         )
     fi
     cat >"$NGINX_SITE" <<EOF
-# Managed by GoWave install.sh
+# Managed by Gowave install.sh
 map \$http_upgrade \$gowave_connection_upgrade {
     default upgrade;
     ""      close;
@@ -922,7 +922,7 @@ $http2
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305;
     ssl_session_timeout 1d;
-    ssl_session_cache shared:GoWaveSSL:10m;
+    ssl_session_cache shared:GowaveSSL:10m;
     ssl_session_tickets off;
 
     client_max_body_size 50M;
@@ -932,7 +932,7 @@ $http2
     gzip_proxied any;
     gzip_comp_level 6;
     gzip_min_length 256;
-    # application/wasm: the Xray validator. GoWave already sends it gzip-compressed,
+    # application/wasm: the Xray validator. Gowave already sends it gzip-compressed,
     # and Nginx passes such responses through without compressing them again.
     gzip_types application/javascript application/json application/manifest+json application/wasm application/xml image/svg+xml text/css text/javascript text/plain text/xml;
 
@@ -971,7 +971,7 @@ configure_nginx() {
     [ -z "$taken" ] || die "$(t "Домен $DOMAIN уже описан в $taken. Уберите этот server-блок и запустите установщик снова." "Domain $DOMAIN is already defined in $taken. Remove that server block and run the installer again.")"
     mkdir -p "$ACME_ROOT"
     {
-        echo '# Managed by GoWave install.sh (certificate request)'
+        echo '# Managed by Gowave install.sh (certificate request)'
         nginx_http_block
     } >"$NGINX_SITE"
     nginx_apply
@@ -1179,19 +1179,19 @@ fresh_install() {
     detect_old_panels
     local options=() sources=() modes=() pick
     if [ "$HAS_UPSTREAM" = true ]; then
-        options+=("$(t 'Перенести прежнюю панель в GoWave (SQLite)' 'Migrate upstream panel to GoWave (SQLite)')"
-            "$(t 'Перенести прежнюю панель в GoWave (PostgreSQL в Docker)' 'Migrate upstream panel to GoWave (PostgreSQL in Docker)')")
+        options+=("$(t 'Перенести прежнюю панель в Gowave (SQLite)' 'Migrate upstream panel to Gowave (SQLite)')"
+            "$(t 'Перенести прежнюю панель в Gowave (PostgreSQL в Docker)' 'Migrate upstream panel to Gowave (PostgreSQL in Docker)')")
         sources+=(upstream upstream)
         modes+=(sqlite docker)
     fi
     if [ "$HAS_PASARGUARD" = true ]; then
-        options+=("$(t 'Перенести PasarGuard в GoWave (SQLite)' 'Migrate PasarGuard to GoWave (SQLite)')"
-            "$(t 'Перенести PasarGuard в GoWave (PostgreSQL в Docker)' 'Migrate PasarGuard to GoWave (PostgreSQL in Docker)')")
+        options+=("$(t 'Перенести PasarGuard в Gowave (SQLite)' 'Migrate PasarGuard to Gowave (SQLite)')"
+            "$(t 'Перенести PasarGuard в Gowave (PostgreSQL в Docker)' 'Migrate PasarGuard to Gowave (PostgreSQL in Docker)')")
         sources+=(pasarguard pasarguard)
         modes+=(sqlite docker)
     fi
     if [ ${#options[@]} -gt 0 ]; then
-        options+=("$(t 'Установить GoWave без переноса' 'Install GoWave without migration')")
+        options+=("$(t 'Установить Gowave без переноса' 'Install Gowave without migration')")
         pick=$(choose "$(t 'На сервере найдена другая панель. Что сделать?' 'Another panel was found on this server. What should be done?')" "${options[@]}")
         if [ "$pick" -le ${#sources[@]} ]; then
             SOURCE=${sources[$((pick - 1))]}
@@ -1210,7 +1210,7 @@ fresh_install() {
     ask_domain
     ask_panel_path
     INSTALL_NODE=false
-    confirm "$(t 'Установить GoWave Node на этом сервере после установки панели?' 'Install GoWave Node on this server after the panel is ready?')" && INSTALL_NODE=true
+    confirm "$(t 'Установить Gowave Node на этом сервере после установки панели?' 'Install Gowave Node on this server after the panel is ready?')" && INSTALL_NODE=true
 
     if [ "$PROXY" != external ] && ! check_web_ports true; then
         die "$(t 'Освободите порты 80/443 (или выберите другой прокси) и запустите установщик снова.' 'Free ports 80/443 (or pick another proxy) and run the installer again.')"
@@ -1281,9 +1281,9 @@ OLD_PANEL_STOPPED=false
 
 # rollback_fresh_install removes what a fresh install created before the
 # panel first started, so a rerun does not take the leftovers for an
-# installed GoWave. Nothing else in $INSTALL_DIR is touched.
+# installed Gowave. Nothing else in $INSTALL_DIR is touched.
 rollback_fresh_install() {
-    warn "$(t 'Установка не завершена, убираю созданные файлы GoWave.' 'Installation did not finish, removing the GoWave files it created.')"
+    warn "$(t 'Установка не завершена, убираю созданные файлы Gowave.' 'Installation did not finish, removing the Gowave files it created.')"
     systemctl disable --now gowave >/dev/null 2>&1 || true
     systemctl disable --now gowave-update.path >/dev/null 2>&1 || true
     rm -f "$UNIT_FILE" "${UNIT_FILE}.d/90-unprivileged.conf" "$UPDATE_PATH_UNIT" "$UPDATE_SERVICE_UNIT"
@@ -1329,7 +1329,7 @@ print_external_proxy() {
 }
 
 print_done() {
-    printf '\n%s\n' "${GREEN}${BOLD}$(t 'GoWave установлена:' 'GoWave is installed:') https://$DOMAIN$PANEL_BASE_PATH${RESET}"
+    printf '\n%s\n' "${GREEN}${BOLD}$(t 'Gowave установлена:' 'Gowave is installed:') https://$DOMAIN$PANEL_BASE_PATH${RESET}"
     [ "$PROXY" = external ] && print_external_proxy
     case $SOURCE in
     none)
@@ -1423,7 +1423,7 @@ update_gowave() {
         run systemctl restart gowave
         wait_healthy "$APP_PORT" || die "$(t 'Панель не запустилась после обновления (journalctl -u gowave).' 'The panel did not start after the update (journalctl -u gowave).')"
     fi
-    info "$(t 'GoWave обновлена' 'GoWave is updated')"
+    info "$(t 'Gowave обновлена' 'Gowave is updated')"
 
     if [ -z "$(configured_proxy)" ]; then
         warn "$(t 'Панель слушает только 127.0.0.1, а домен с HTTPS не настроен.' 'The panel listens on 127.0.0.1 only and no domain with HTTPS is set up.')"
@@ -1555,19 +1555,19 @@ uninstall_gowave() {
     rm -f "$CLI_PATH"
     remove_caddy_site
     remove_nginx_site
-    info "$(t 'GoWave удалена. Caddy/Nginx, Docker и сертификаты оставлены.' 'GoWave is removed. Caddy/Nginx, Docker and certificates are left in place.')"
+    info "$(t 'Gowave удалена. Caddy/Nginx, Docker и сертификаты оставлены.' 'Gowave is removed. Caddy/Nginx, Docker and certificates are left in place.')"
 }
 
 manage_existing() {
     local where=$INSTALL_DIR
     [ "$MODE" = docker ] && where=$DOCKER_DIR
-    case $(choose "$(t "GoWave уже установлена ($where). Что сделать?" "GoWave is already installed ($where). What should be done?")" \
-        "$(t 'Обновить GoWave' 'Update GoWave')" \
+    case $(choose "$(t "Gowave уже установлена ($where). Что сделать?" "Gowave is already installed ($where). What should be done?")" \
+        "$(t 'Обновить Gowave' 'Update Gowave')" \
         "$(t 'Настроить домен и HTTPS' 'Set up domain and HTTPS')" \
         "$(t 'Изменить путь панели' 'Change dashboard path')" \
         "$(t 'Установить или обновить локальную ноду' 'Install or update the local node')" \
         "$(t 'Перенести уведомления Telegram и вебхуки из старой панели' 'Copy Telegram and webhook notifications from the old panel')" \
-        "$(t 'Удалить GoWave' 'Uninstall GoWave')" \
+        "$(t 'Удалить Gowave' 'Uninstall Gowave')" \
         "$(t 'Выход' 'Exit')") in
     1) update_gowave ;;
     2) configure_domain ;;
@@ -1588,7 +1588,7 @@ main() {
     ensure_tools
     detect_existing
     if [ "$GOWAVE_ACTION" = update ]; then
-        [ -n "$MODE" ] || die "$(t 'GoWave не установлена: --update обновляет только существующую установку.' 'GoWave is not installed: --update only updates an existing install.')"
+        [ -n "$MODE" ] || die "$(t 'Gowave не установлена: --update обновляет только существующую установку.' 'Gowave is not installed: --update only updates an existing install.')"
         update_gowave
     elif [ -n "$MODE" ]; then
         manage_existing

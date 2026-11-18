@@ -20,7 +20,7 @@ func dashboardFixture(t *testing.T) string {
 	dir := t.TempDir()
 	for name, body := range map[string]string{
 		"index.html":    `<html><head><base href="/" data-gowave-base /><script type="module" src="./assets/app.js"></script></head></html>`,
-		"assets/app.js": "window.loaded=true", "main.wasm": "wasm", "locales/en/gowave.json": `{"hello":"GoWave"}`,
+		"assets/app.js": "window.loaded=true", "main.wasm": "wasm", "locales/en/gowave.json": `{"hello":"Gowave"}`,
 		"site.webmanifest": `{"start_url":"./","scope":"./","icons":[{"src":"./favicons/logo.svg"}]}`,
 	} {
 		file := filepath.Join(dir, name)
@@ -49,7 +49,7 @@ func TestDashboardMount(t *testing.T) {
 					t.Fatal("HTML is cacheable")
 				}
 			}
-			for suffix, want := range map[string]string{"assets/app.js": "window.loaded=true", "assets/main.wasm": "wasm", "locales/en/gowave.json": `{"hello":"GoWave"}`} {
+			for suffix, want := range map[string]string{"assets/app.js": "window.loaded=true", "assets/main.wasm": "wasm", "locales/en/gowave.json": `{"hello":"Gowave"}`} {
 				w := httptest.NewRecorder()
 				h.ServeHTTP(w, httptest.NewRequest("GET", base+suffix, nil))
 				if w.Code != 200 || w.Body.String() != want {

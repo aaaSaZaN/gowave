@@ -214,10 +214,10 @@ async function run() {
             </MantineProvider>
         )
     )
-    const logo = requireValue(container.querySelector('img[alt="GoWave"]'), 'GoWave logo missing')
+    const logo = requireValue(container.querySelector('img[alt="Gowave"]'), 'Gowave logo missing')
     assert(
         logo.getAttribute('src') === '/panel/favicons/gowave.svg?v=browser-test',
-        'GoWave artwork respects the dashboard base path and bypasses cached stock logos'
+        'Gowave artwork respects the dashboard base path and bypasses cached stock logos'
     )
     const telegram = requireValue(
         container.querySelector<HTMLAnchorElement>('a[aria-label="Telegram"]'),
@@ -285,7 +285,7 @@ async function run() {
         'Logo interior above the wave is transparent'
     )
     assert(context.getImageData(256, 100, 1, 1).data[3] === 255, 'Logo ring remains opaque')
-    for (const image of container.querySelectorAll<HTMLImageElement>('img[alt="GoWave"]')) {
+    for (const image of container.querySelectorAll<HTMLImageElement>('img[alt="Gowave"]')) {
         image.src = artwork.src
         await image.decode()
         const expected = Number(image.dataset['size'])

@@ -20,7 +20,7 @@
     "tools": "Tools",
     "srh-inspector": "SRH Inspector",
     "response-rules": "Response Rules",
-    "gowave-settings": "GoWave Settings",
+    "gowave-settings": "Gowave Settings",
     "node-plugins": "Plugins",
     "quick-open": "Quick open",
     "tb-reports": "Torrent Blocker Reports",
@@ -300,7 +300,7 @@
       "subscription-qr-code": "Subscription QR code",
       "edit-user-headline": "Edit user",
       "subscription-url-description-line-1": "Domain and path resolved from .env variable:",
-      "subscription-url-description-line-2": "If you want to change it, please change it in the .env file and restart GoWave using command:",
+      "subscription-url-description-line-2": "If you want to change it, please change it in the .env file and restart Gowave using command:",
       "management": "Management",
       "danger-zone": "Danger zone",
       "detailed-info": "Detailed info",
@@ -337,9 +337,9 @@
     "single-domain": "Single domain",
     "default-mode-for-one-domain": "Default mode for one domain",
     "multi-domain": "Multi domain",
-    "multi-domain-description": "Multiple domains separated by commas. GoWave will randomly choose one of the domains.",
+    "multi-domain-description": "Multiple domains separated by commas. Gowave will randomly choose one of the domains.",
     "wildcard-domain": "Wildcard domain",
-    "wildcard-domain-description": "Wildcard pattern for subdomains. GoWave will replace * with the randomly generated string.",
+    "wildcard-domain-description": "Wildcard pattern for subdomains. Gowave will replace * with the randomly generated string.",
     "override-sni-from-address": "Override SNI from address",
     "override-sni-from-address-description": "This option replaces the SNI value with the specified Address field value. This is particularly useful for multi-domain or wildcard domain configurations.",
     "shuffled-hosts-hover-card": "Shuffled hosts will be placed at the top of the list and sorted randomly.",
@@ -358,7 +358,7 @@
     "exclude-from-subscription-type": "Exclude from subscription type",
     "response-rules-placeholder": "Select or enter rule names",
     "response-rules-description": "When a response rule matches, include this host only if its name is selected. Names are case-sensitive. Leave empty to allow all rules. Explicit client-type subscription URLs bypass this restriction.",
-    "hidden-host-description": "By default, GoWave will not include hidden hosts in the subscription. Hidden hosts can be used with Mihomo, Xray-Json Advanced, and Raw.",
+    "hidden-host-description": "By default, Gowave will not include hidden hosts in the subscription. Hidden hosts can be used with Mihomo, Xray-Json Advanced, and Raw.",
     "server-description-1": "In supported clients, the protocol name (e.g. vless) will be replaced with the description specified here.",
     "server-description-2": "Not all client applications support this feature. For more details, refer to the documentation of the apps listed below.",
     "supported-clients": "Supported clients",
@@ -401,7 +401,7 @@
     "notify-percent": "Notification %",
     "e-g-50": "e.g. 50",
     "consumption-m-line-1": "Applies the selected multiplier to the user's traffic (1.0 = normal, 0.5 = half, 2.0 = double).",
-    "consumption-m-line-2": "In simple terms, this means that if a user's traffic limit is 1 GiB and the consumption multiplier is 2.0, the user will be able to use only 0.5 GiB of traffic (real usage), but GoWave will show usage as 1 GiB and the user will be LIMITED.",
+    "consumption-m-line-2": "In simple terms, this means that if a user's traffic limit is 1 GiB and the consumption multiplier is 2.0, the user will be able to use only 0.5 GiB of traffic (real usage), but Gowave will show usage as 1 GiB and the user will be LIMITED.",
     "node-vitals": "Vitals",
     "consumption": "Consumption",
     "core-configuration": "Core configuration",
@@ -421,7 +421,7 @@
     "page": {
       "online-stats": "Online stats",
       "bandwidth": "Bandwidth",
-      "gowave-usage": "GoWave usage"
+      "gowave-usage": "Gowave usage"
     }
   },
   "login-form": {
@@ -588,7 +588,7 @@
     "widget": {
       "requirements": "Requirements",
       "warning-activity": "An IP address will be shown when <highlight>Xray Core</highlight> considers the <highlight>connection still open</highlight>. As a result, some of the IP addresses shown may no longer be connected. Use the <highlight>clock</highlight> icon to track the last activity of a given IP.",
-      "warning-version": "GoWave Node version <highlight>{{version}}</highlight> or higher",
+      "warning-version": "Gowave Node version <highlight>{{version}}</highlight> or higher",
       "warning-patience": "Fetching data may take some time, do not close this window!",
       "warning-n-plus-one": "<highlight>Please note</highlight>: this request performs <highlight>N+1</highlight> calls to the gRPC API of <highlight>Xray Core</highlight> due to the lack of bulk data retrieval methods. <highlight>N</highlight> is the number of users currently online on the given node.",
       "fetching": "Fetching active sessions...",
@@ -776,10 +776,10 @@
       "widget": {
         "please-select-a-provider-and-billing-node": "Please select a provider and billing node",
         "next-billing-at": "Next billing at",
-        "next-billing-at-description": "The date and time for the next billing of this node. GoWave will notify you about upcoming billing.",
+        "next-billing-at-description": "The date and time for the next billing of this node. Gowave will notify you about upcoming billing.",
         "existing": "Existing",
         "custom": "Custom",
-        "custom-name-description": "Use a custom name when the node is not managed by GoWave."
+        "custom-name-description": "Use a custom name when the node is not managed by Gowave."
       }
     }
   },
@@ -897,7 +897,7 @@
   "disclaimer-overlay": {
     "title": "Disclaimer",
     "subtitle": "Please read this notice before you continue.",
-    "intro": "GoWave is an <highlight>open-source, self-hosted</highlight> proxy and user-management tool. It is provided <warning>\"as is\", without any warranty</warning> of any kind, express or implied.",
+    "intro": "Gowave is an <highlight>open-source, self-hosted</highlight> proxy and user-management tool. It is provided <warning>\"as is\", without any warranty</warning> of any kind, express or implied.",
     "responsibility": "You are <highlight>solely responsible</highlight> for how you deploy and use this software.",
     "compliance": "You must comply with <highlight>all laws and regulations</highlight> applicable in your jurisdiction.",
     "liability": "The developers and contributors accept <warning>no liability</warning> for any misuse, damage, or data loss.",
@@ -952,7 +952,7 @@
       "disable-node": "Disable node",
       "config-profile-or-inbounds-is-missing": "Config profile or inbounds is missing",
       "xray-core-version": "Xray Core version",
-      "gowave-node-version": "Node version, GoWave Node"
+      "gowave-node-version": "Node version, Gowave Node"
     }
   },
   "config-profiles": {
@@ -1077,7 +1077,7 @@
     }
   },
   "create-node-step-1-connection": {
-    "run-the-install-command": "Copy the command with the button below and run it on the node server: it installs the GoWave node (gowave-node) with this secret key and port.",
+    "run-the-install-command": "Copy the command with the button below and run it on the node server: it installs the Gowave node (gowave-node) with this secret key and port.",
     "learn-more": "Learn more.",
     "domain-or-ip": "Domain or IP",
     "additional-options": "Additional options"
@@ -1085,7 +1085,7 @@
   "create-node-step-3-status": {
     "establishing-mtls-connection": "Establishing mTLS connection...",
     "xray-core-is-up-and-running": "Xray Core is up and running!",
-    "gowave-will-try-to-reconnect-shortly": "GoWave will try to reconnect shortly...",
+    "gowave-will-try-to-reconnect-shortly": "Gowave will try to reconnect shortly...",
     "no-errors-so-far": "No errors so far"
   },
   "external-squad-card": {
@@ -1211,7 +1211,7 @@
   },
   "branding-settings-card": {
     "widget": {
-      "customize-your-gowave-instance": "Customize the look of your GoWave instance",
+      "customize-your-gowave-instance": "Customize the look of your Gowave instance",
       "branding-settings": "Branding settings",
       "the-title-that-will-be-displayed-on-login-page": "The title that will be displayed on login page",
       "brand-name": "Brand name",
@@ -1357,7 +1357,7 @@
       "open-svg-library": "Open SVG library",
       "installation-guides-design": "Installation guides design"
     },
-    "subpage-config-saved-line-1": "To apply the changes, please restart the GoWave Subscription-page Docker container.",
+    "subpage-config-saved-line-1": "To apply the changes, please restart the Gowave Subscription-page Docker container.",
     "subpage-config-saved-line-2": "For example, you can use the following command in your terminal:"
   },
   "app-editor-drawer-content": {
@@ -1431,7 +1431,7 @@
     "tab": {
       "widget": {
         "subscription-page-config": "Subscription page config",
-        "subscription-page-config-description": "You can override the subscription page configuration (GoWave Subscription Page) for this external squad.",
+        "subscription-page-config-description": "You can override the subscription page configuration (Gowave Subscription Page) for this external squad.",
         "subpage-config": "Subpage config",
         "select-config": "Select config..."
       }
@@ -1788,7 +1788,7 @@
     "failed-description": "The node could not complete the GeoCheck.",
     "view-image": "Report",
     "no-image": "No image in the report, open JSON",
-    "requires-node-version": "Requires GoWave Node {{version}} or newer"
+    "requires-node-version": "Requires Gowave Node {{version}} or newer"
   },
   "quick-open": {
     "page": {

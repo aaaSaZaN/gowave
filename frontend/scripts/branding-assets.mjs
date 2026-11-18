@@ -85,5 +85,5 @@ writeFileSync(
     readFileSync(defaultsPath, 'utf8').replace(/("logoUrl":")[^"]*(")/g, `$1${logoData}$2`)
 )
 process.stdout.write(
-    `Generated 8 favicons and ${startupCount} startup images from GoWave artwork\n`
+    `Generated 8 favicons and ${startupCount} startup images from Gowave artwork\n`
 )
