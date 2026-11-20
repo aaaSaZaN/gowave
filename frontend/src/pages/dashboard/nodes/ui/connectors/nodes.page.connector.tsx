@@ -1,6 +1,5 @@
 import {
     useGetConfigProfiles,
-    useGetNodeIntegrations,
     useGetNodePlugins,
     useGetNodeSecretKey,
     useGetNodes,
@@ -12,8 +11,6 @@ import NodesPageComponent from '../components/nodes.page.component'
 export function NodesPageConnector() {
     const { data: nodes, isLoading } = useGetNodes()
     const { data: nodePlugins, isLoading: isNodePluginsLoading } = useGetNodePlugins()
-    const { data: nodeIntegrations, isLoading: isNodeIntegrationsLoading } =
-        useGetNodeIntegrations()
     const { isLoading: isConfigProfilesLoading } = useGetConfigProfiles()
 
     useGetNodeSecretKey()
@@ -22,17 +19,9 @@ export function NodesPageConnector() {
 
     return (
         <NodesPageComponent
-            isLoading={
-                isLoading ||
-                isConfigProfilesLoading ||
-                isNodePluginsLoading ||
-                isNodeIntegrationsLoading ||
-                !nodePlugins ||
-                !nodeIntegrations
-            }
+            isLoading={isLoading || isConfigProfilesLoading || isNodePluginsLoading || !nodePlugins}
             nodes={nodes}
             nodePlugins={nodePlugins}
-            nodeIntegrations={nodeIntegrations}
         />
     )
 }

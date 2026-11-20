@@ -19,6 +19,10 @@ import { languageDetector, localeBackend } from '../src/app/i18n/plugins'
 import desktopNavigationClasses from '../src/app/layouts/dashboard/main-layout/navbar/desktop-navigation.module.css'
 import mobileNavigationClasses from '../src/app/layouts/dashboard/main-layout/navbar/mobile-navigation.module.css'
 import { removeToken, setToken } from '../src/entities/auth'
+import {
+    NODES_VIEW_MODE,
+    useViewPreferencesStore
+} from '../src/entities/dashboard/view-preferences-store'
 import { LoginFormFeature } from '../src/features/auth/login-form'
 import { instance } from '../src/shared/api/axios'
 import { subscriptionSettingsQueryKeys } from '../src/shared/api/hooks/subscription-settings/subscription-settings.query.hooks'
@@ -41,6 +45,7 @@ import { NavigationProgress, nprogress } from '../src/shared/ui/navigation-progr
 import { SafeSvg } from '../src/shared/ui/safe-svg'
 import { Sparkline } from '../src/shared/ui/sparkline'
 import { RemarksManager } from '../src/widgets/dashboard/subscription-settings/settings/cards/managers/remarks-manager.widget'
+import { ExperimentalSettingsCardWidget } from '../src/widgets/gowave-settings/experimental-settings-card/experimental-settings-card.widget'
 
 function assert(condition: unknown, message: string): void {
     if (!condition) throw new Error(message)
@@ -232,6 +237,59 @@ function HostRulesFixture({ rules, bulk = false }: { rules?: string[]; bulk?: bo
 }
 
 async function run() {
+    localStorage.setItem(
+        'viewPreferencesStore',
+        JSON.stringify({
+            version: 2,
+            state: {
+                experimental: {
+                    legacyLayoutStyle: true,
+                    sshTerminal: true,
+                    nodeIntegrations: true,
+                    quickLauncher: true
+                },
+                nodesViewMode: NODES_VIEW_MODE.TABLE,
+                nodesActiveTag: 'production',
+                launcherColumns: 3,
+                quickLinks: []
+            }
+        })
+    )
+    await useViewPreferencesStore.persist.rehydrate()
+    flushSync(() =>
+        root.render(
+            <MantineProvider>
+                <ExperimentalSettingsCardWidget />
+            </MantineProvider>
+        )
+    )
+    const experimentalControls = container.querySelectorAll<HTMLButtonElement>('[role="checkbox"]')
+    assert(experimentalControls.length === 1, 'only the legacy layout setting is available')
+    const legacyLayoutControl = requireValue(
+        experimentalControls[0],
+        'legacy layout toggle missing'
+    )
+    assert(legacyLayoutControl.getAttribute('aria-checked') === 'true', 'saved layout is restored')
+    assert(
+        useViewPreferencesStore.getState().nodesViewMode === NODES_VIEW_MODE.TABLE &&
+            useViewPreferencesStore.getState().nodesActiveTag === 'production',
+        'node view preferences survive the settings change'
+    )
+    flushSync(() => legacyLayoutControl.click())
+    assert(legacyLayoutControl.getAttribute('aria-checked') === 'false', 'layout remains editable')
+    const savedPreferences = localStorage.getItem('viewPreferencesStore') ?? ''
+    for (const key of [
+        'sshTerminal',
+        'nodeIntegrations',
+        'quickLauncher',
+        'launcherColumns',
+        'quickLinks'
+    ]) {
+        assert(!savedPreferences.includes(key), 'retired preferences are dropped on save')
+    }
+    useViewPreferencesStore.getState().actions.resetState()
+    localStorage.removeItem('viewPreferencesStore')
+
     flushSync(() =>
         root.render(
             <MantineProvider>

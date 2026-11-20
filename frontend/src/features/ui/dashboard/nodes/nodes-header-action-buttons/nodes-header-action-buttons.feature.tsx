@@ -1,4 +1,4 @@
-import { NODES_VIEW_MODE, useExperimentalFeature } from '@entities/dashboard/view-preferences-store'
+import { NODES_VIEW_MODE } from '@entities/dashboard/view-preferences-store'
 import { ActionIcon, ActionIconGroup, Group, Stack, Tooltip } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { spotlight } from '@mantine/spotlight'
@@ -11,7 +11,6 @@ import { PiSpiral } from 'react-icons/pi'
 import {
     TbAlertCircle,
     TbCards,
-    TbPlugConnected,
     TbPlus,
     TbRefresh,
     TbRocket,
@@ -28,8 +27,6 @@ export const NodesHeaderActionButtonsFeature = (props: IProps) => {
     const { setViewMode, viewMode } = props
 
     const { t } = useTranslation()
-
-    const isNodeIntegrationsEnabled = useExperimentalFeature('nodeIntegrations')
 
     const {
         isLoading: isGetNodesPending,
@@ -134,21 +131,6 @@ export const NodesHeaderActionButtonsFeature = (props: IProps) => {
                     </ActionIcon>
                 </Tooltip>
             </ActionIconGroup>
-
-            {isNodeIntegrationsEnabled && (
-                <ActionIconGroup>
-                    <Tooltip label={t('node-integrations.modal.title')} withArrow>
-                        <ActionIcon
-                            color="pink"
-                            onClick={() => showModal('nodeIntegrations_nodeIntegrationsModal')}
-                            size="input-md"
-                            variant="soft"
-                        >
-                            <TbPlugConnected size="24px" />
-                        </ActionIcon>
-                    </Tooltip>
-                </ActionIconGroup>
-            )}
 
             <ActionIconGroup>
                 <Tooltip

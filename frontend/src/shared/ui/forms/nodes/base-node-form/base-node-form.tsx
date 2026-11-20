@@ -6,7 +6,6 @@ import { Button, CopyButton, Group, Menu, px, Stack } from '@mantine/core'
 import type { UseFormReturnType } from '@mantine/form'
 import type {
     GetNodeCommand,
-    GetNodeIntegrationsCommand,
     GetNodePluginsCommand,
     GetNodeSecretKeyCommand,
     UpdateNodeCommand
@@ -58,7 +57,6 @@ interface IProps<T extends UpdateNodeCommand.RequestBody> {
     isDataSubmitting: boolean
     node: GetNodeCommand.Response['response']
     nodeDetailsCard?: ReactNode
-    nodeIntegrations: GetNodeIntegrationsCommand.Response['response']['nodeIntegrations']
     nodePlugins: GetNodePluginsCommand.Response['response']['nodePlugins']
     nodeSystemCard?: ReactNode
     secretKey: GetNodeSecretKeyCommand.Response['response'] | undefined
@@ -69,7 +67,6 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
     const {
         form,
         node,
-        nodeIntegrations,
         nodePlugins,
         secretKey,
         nodeDetailsCard,
@@ -105,7 +102,6 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
                         cardVariants={cardVariants}
                         form={form}
                         motionWrapper={MotionWrapper}
-                        nodeIntegrations={nodeIntegrations}
                         nodePlugins={nodePlugins}
                         nodeUuid={node.uuid}
                         secretKey={secretKey}
@@ -156,7 +152,6 @@ export const BaseNodeForm = <T extends UpdateNodeCommand.RequestBody>(props: IPr
                             cardVariants={cardVariants}
                             form={form}
                             motionWrapper={MotionWrapper}
-                            nodeIntegrations={nodeIntegrations}
                             nodePlugins={nodePlugins}
                             nodeUuid={node.uuid}
                             secretKey={secretKey}

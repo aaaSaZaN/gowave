@@ -6,7 +6,6 @@ import {
     nodesQueryKeys,
     type TTrafficTrackingStart,
     useGetNode,
-    useGetNodeIntegrations,
     useGetNodePlugins,
     useGetNodeSecretKey,
     useUpdateNode
@@ -47,7 +46,6 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
 
     const { data: secretKey } = useGetNodeSecretKey()
     const { data: nodePlugins } = useGetNodePlugins()
-    const { data: nodeIntegrations } = useGetNodeIntegrations()
 
     const { data: fetchedNode } = useGetNode({
         route: {
@@ -101,7 +99,6 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
                 consumptionMultiplier: fetchedNode.consumptionMultiplier ?? undefined,
                 nodeConsumptionMultiplier: fetchedNode.nodeConsumptionMultiplier ?? undefined,
                 tags: fetchedNode.tags ?? undefined,
-                integrationUuids: fetchedNode.integrationUuids ?? [],
                 ips: fetchedNode.ips ?? [],
                 proxyUrl: fetchedNode.proxyUrl ?? undefined,
                 configProfile: {
@@ -154,7 +151,7 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
         })
     })
 
-    if (!fetchedNode || !secretKey || !nodePlugins || !nodeIntegrations) {
+    if (!fetchedNode || !secretKey || !nodePlugins) {
         return (
             <motion.div
                 animate={{ opacity: 1 }}
@@ -174,7 +171,6 @@ export const EditNodeByUuidModalContent = (props: IProps) => {
             isDataSubmitting={isUpdateNodePending}
             node={fetchedNode}
             nodeDetailsCard={<NodeDetailsCardWidget node={fetchedNode} />}
-            nodeIntegrations={nodeIntegrations.nodeIntegrations}
             nodePlugins={nodePlugins.nodePlugins}
             nodeSystemCard={<NodeSystemCardWidget node={fetchedNode} />}
             secretKey={secretKey}

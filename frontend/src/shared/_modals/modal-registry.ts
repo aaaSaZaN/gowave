@@ -23,7 +23,6 @@ import {
     InternalSquadsInboundsDrawer,
     InternalSquadsUsageDrawer
 } from './internal-squads'
-import { NodeIntegrationEditorModal, NodeIntegrationsModal } from './node-integrations'
 import { NodePluginExecutorDrawer } from './node-plugins'
 import {
     CreateNodeModal,
@@ -33,7 +32,6 @@ import {
     NodeGeocheckModal,
     NodeInboundsHostsDrawer,
     NodeLogsModal,
-    NodeSshTerminalWindow,
     NodesConfigProfilesDrawer,
     NodesUsageStatsModal,
     NodeUsageStatsDrawer,
@@ -47,7 +45,6 @@ import {
     EditTagsModalShared,
     HelpDrawerShared,
     JsonEditorModal,
-    QuickLinksModalShared,
     RenameModalShared
 } from './universal'
 import {
@@ -75,7 +72,6 @@ export const MODAL_REGISTRY = {
     createModal: CreateModal,
     jsonEditorModal: JsonEditorModal,
     base64EditorModal: Base64EditorModal,
-    quickLinksModal: QuickLinksModalShared,
 
     users_viewUserModal: ViewUserModal,
     users_detailedUserInfoDrawer: DetailedUserInfoDrawer,
@@ -102,7 +98,6 @@ export const MODAL_REGISTRY = {
     nodes_nodesConfigProfilesDrawer: NodesConfigProfilesDrawer,
     nodes_nodeInboundsHostsDrawer: NodeInboundsHostsDrawer,
     nodes_nodeGeocheckModal: NodeGeocheckModal,
-    nodes_nodeSshTerminal: NodeSshTerminalWindow,
     nodes_nodeLogsModal: NodeLogsModal,
     nodes_updateNodeModal: UpdateNodeModal,
 
@@ -116,9 +111,6 @@ export const MODAL_REGISTRY = {
     configProfiles_configProfileInboundsDrawer: ConfigProfileInboundsDrawer,
 
     nodePlugins_nodePluginExecutorDrawer: NodePluginExecutorDrawer,
-
-    nodeIntegrations_nodeIntegrationsModal: NodeIntegrationsModal,
-    nodeIntegrations_nodeIntegrationEditorModal: NodeIntegrationEditorModal,
 
     infraBilling_viewInfraProviderModal: ViewInfraProviderModal,
     infraBilling_createInfraProviderModal: CreateInfraProviderModal,

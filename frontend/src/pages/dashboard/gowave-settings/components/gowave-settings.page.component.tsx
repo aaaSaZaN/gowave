@@ -1,5 +1,6 @@
 import { Container } from '@mantine/core'
 import type { GetApiTokensCommand, GetRemnawaveSettingsCommand } from '@remnawave/backend-contract'
+import { useIsMobile } from '@shared/hooks'
 import { LoadingScreen, Logo, Page, PageHeaderShared } from '@shared/ui'
 import Masonry from '@shared/ui/masonry'
 import { ApiTokensCardWidget } from '@widgets/gowave-settings/api-tokens-card/api-tokens-card.widget'
@@ -17,6 +18,7 @@ export const GowaveSettingsPageComponent = (props: IProps) => {
     const { gowaveSettings, apiTokensData } = props
 
     const { t } = useTranslation()
+    const isMobile = useIsMobile()
 
     if (!gowaveSettings || !apiTokensData) {
         return <LoadingScreen />
@@ -45,7 +47,7 @@ export const GowaveSettingsPageComponent = (props: IProps) => {
                     <BrandingSettingsCardWidget
                         brandingSettings={gowaveSettings.brandingSettings}
                     />
-                    <ExperimentalSettingsCardWidget />
+                    {!isMobile && <ExperimentalSettingsCardWidget />}
                 </Masonry>
             </Container>
         </Page>

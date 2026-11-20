@@ -22,7 +22,7 @@ import { HiServer } from 'react-icons/hi'
 import type { IProps } from './interfaces'
 
 export default function NodesPageComponent(props: IProps) {
-    const { nodes, isLoading, nodePlugins, nodeIntegrations } = props
+    const { nodes, isLoading, nodePlugins } = props
 
     const { t } = useTranslation()
 
@@ -124,11 +124,7 @@ export default function NodesPageComponent(props: IProps) {
                             />
                         </motion.div>
                     ) : (
-                        <NodesTableWidget
-                            nodes={nodes}
-                            nodePlugins={nodePlugins}
-                            nodeIntegrations={nodeIntegrations}
-                        />
+                        <NodesTableWidget nodes={nodes} nodePlugins={nodePlugins} />
                     )}
                 </Grid.Col>
             </Grid>

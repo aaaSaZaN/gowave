@@ -4,13 +4,11 @@ import { useMediaQuery } from '@mantine/hooks'
 import { useIsMobile } from '@shared/hooks'
 import { optionalProp } from '@shared/lib/optional-prop'
 import { HeaderControls } from '@shared/ui/header-buttons'
-import { QuickLauncher } from '@shared/ui/quick-launcher'
 
 import { DASHBOARD_LINKS } from './layout-shared'
 import { CompactLayout } from './layout-variants/compact.layout'
 import { MobileLayout } from './layout-variants/mobile.layout'
 import { SidebarLayout } from './layout-variants/sidebar.layout'
-import { useQuickLauncherRoutes } from './menu-sections/use-quick-launcher-routes'
 
 import '@shared/_modals/modal-registry'
 
@@ -25,7 +23,6 @@ export function MainLayout() {
 
     const gowaveInfo = useGowaveInfo()
     const isLoadingUpdates = useIsLoadingGowaveUpdates()
-    const launcherRoutes = useQuickLauncherRoutes()
 
     const headerControls = (
         <HeaderControls
@@ -48,14 +45,9 @@ export function MainLayout() {
         )
     }
 
-    return (
-        <>
-            {isLegacyLayoutStyle ? (
-                <SidebarLayout headerControls={headerControls} />
-            ) : (
-                <CompactLayout headerControls={headerControls} isHiResDesktop={isHiResDesktop} />
-            )}
-            <QuickLauncher routes={launcherRoutes} />
-        </>
+    return isLegacyLayoutStyle ? (
+        <SidebarLayout headerControls={headerControls} />
+    ) : (
+        <CompactLayout headerControls={headerControls} isHiResDesktop={isHiResDesktop} />
     )
 }

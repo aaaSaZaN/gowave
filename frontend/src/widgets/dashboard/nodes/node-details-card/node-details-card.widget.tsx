@@ -3,7 +3,6 @@ import { GetNodeInboundsHostsFeature } from '@features/ui/dashboard/nodes/get-no
 import { GetNodeLinkedHostsFeature } from '@features/ui/dashboard/nodes/get-node-linked-hosts'
 import { GetNodeUsersUsageFeature } from '@features/ui/dashboard/nodes/get-node-users-usage'
 import { OpenNodeLogsFeature } from '@features/ui/dashboard/nodes/open-node-logs'
-import { OpenNodeSshFeature } from '@features/ui/dashboard/nodes/open-node-ssh'
 import {
     ActionIcon,
     Badge,
@@ -324,7 +323,6 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                     <Divider opacity={0.3} orientation="vertical" />
 
                     <Group gap="xs" justify="center">
-                        <OpenNodeSshFeature node={node} />
                         <GetNodeUsersUsageFeature nodeUuid={node.uuid} />
                         <GetActiveSessionsOnNodeFeature nodeUuid={node.uuid} />
                     </Group>

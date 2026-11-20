@@ -7,6 +7,5 @@ export interface IProps {
     isDragOverlay?: boolean
     isMobile: boolean
     node: GetNodesCommand.Response['response'][number]
-    integrationsNames: string[]
     pluginsName: string | undefined
 }

@@ -25,8 +25,7 @@
     "quick-open": "快捷方式",
     "tb-reports": "Torrent 屏蔽报告",
     "sessions-explorer": "会话管理器",
-    "http-stats": "HTTP 状态",
-    "quick-launcher": "开始菜单"
+    "http-stats": "HTTP 状态"
   },
   "common": {
     "action": {
@@ -1730,20 +1729,6 @@
       "linked": "已关联"
     }
   },
-  "node-integrations": {
-    "modal": {
-      "title": "节点集合",
-      "delete-description": "集合将从所有节点中移除，受影响的节点将重新启动。"
-    },
-    "editor": {
-      "description-placeholder": "这个集合做了什么",
-      "config-must-be-an-object": "配置必须是JSON对象"
-    },
-    "select": {
-      "label": "集合",
-      "placeholder": "选择集合"
-    }
-  },
   "shared-lists": {
     "modal": {
       "subtitle": "可重用的 IP 和 ASN 列表，插件引用为 ext:name",
@@ -1779,84 +1764,5 @@
     "page": {
       "description": "输入ID用来打开UI，或方便分享直达连接"
     }
-  },
-  "node-ssh": {
-    "title": "SSH 终端",
-    "key-imported": "您的密钥",
-    "key-description-imported": "签名使用您导入的密钥；它永远不会离开您的浏览器。请确保它的公钥在服务器上的授权密钥中。",
-    "key-use-own": "使用自己的密钥",
-    "key-generate-new": "生成一个新密钥",
-    "key-import": "导入密钥",
-    "key-import-title": "使用您自己的密钥",
-    "key-import-label": "私钥",
-    "key-import-description": "保留在此浏览器中，用于加密密码库。不支持密码保护密钥。",
-    "key-error": {
-      "encrypted": "此密钥受密码保护。删除密码短语，或导入一个不带密码的副本。",
-      "malformed": "无法读取密钥。请复制整个文件，包括BEGIN和END行。",
-      "unsupported-algo": "仅支持Ed25519和RSA密钥。",
-      "unsupported-format": "这看起来不像一个私钥文件。"
-    },
-    "vault-setup-title": "设置密码库",
-    "vault-unlock-title": "解锁密码库",
-    "seed-warning": "将这12字恢复密钥记下并妥善保存。 他们是恢复您的 SSH 密钥的唯一途径——注意：面板无法再次查看，也无法恢复关键字。",
-    "create-vault": "创建密码库",
-    "unlock": "解锁",
-    "unlock-description": "输入创建密码库时保存的12字恢复密钥。",
-    "seed-invalid": "这不是一个有效的 12 个单词的恢复密钥",
-    "seed-mismatch": "此恢复密语与此浏览器中存储的密码库不匹配",
-    "key-title": "安装公钥",
-    "key-description": "已为此节点生成专用密钥，永远不会离开您的浏览器。将下面的行添加到服务器上授权的密钥，然后连接。",
-    "authorized-keys": "授权密钥条目",
-    "host": "主机",
-    "host-hint": "留空则使用节点地址",
-    "connect": "连接",
-    "hostkey-new-title": "未定义的快捷键",
-    "hostkey-new-description": "这是您第一次从这个浏览器连接到这个主机。在信任它之前验证指纹。",
-    "hostkey-changed-title": "主机密钥已更改",
-    "hostkey-changed-description": "主机密钥与您以前信任的不匹配。 这可能意味着服务器已经重新安装——或者有人正在拦截连接。",
-    "fingerprint": "指纹",
-    "known-fingerprint": "之前信任的",
-    "trust-and-connect": "信任并连接",
-    "abort": "中止",
-    "disconnected": "会话已关闭",
-    "passcode-required-description": "此浏览器还没有密码，因此您不必每次输入恢复短语。",
-    "passcode-save": "保存密码",
-    "passcode-title": "为此浏览器设置密码",
-    "passcode-description": "重新加载后解锁此浏览器上的密码库。",
-    "passcode-length": "{{length}} 字符，其中至少有一个字母。",
-    "passcode-needs-letter": "至少添加一个字母。",
-    "passcode-unlock-description": "输入您为此浏览器设置的密码。",
-    "passcode-wrong": "密码错误",
-    "passcode-attempts": "剩余尝试次数: {{count}}",
-    "passcode-exhausted": "密码错误次数过多，密码被锁定，使用恢复短语解锁并设置新恢复短语。",
-    "use-phrase": "忘记了您的密码？",
-    "use-passcode": "返回到密码",
-    "connection-settings": "设置",
-    "resize": "调整窗口大小",
-    "retry": "重试",
-    "ticket-failed": "面板拒绝建立会话。",
-    "vault-manage": "管理密码库",
-    "export": "导出密码库",
-    "export-locked": "先解锁密码库 — — 备份只能从进入密码库后进行。",
-    "export-description": "使用您的节点密钥和地址保存加密文件。 没有恢复短语，它中的任何东西都无法读取，因此它可以安全地留在任何地方。",
-    "import": "导入密码库",
-    "import-description": "从备份文件还原密钥。请输入备份中创建的恢复短语。",
-    "import-select": "选择备份文件",
-    "import-ready": "从 {{date}} 恢复",
-    "create-new-instead": "创建新密码库",
-    "reset-really": "是的，删除所有密钥",
-    "import-invalid": "此文件不是密码库备份",
-    "import-mismatch": "恢复短语不能用于这个备份",
-    "reset": "重置密码库",
-    "reset-description": "删除密码库和其中的所有 SSH 密钥。 节点会拒绝旧的密钥，所以您必须在每个密钥上安装新的公钥。面板访问不受影响。",
-    "lost-everything": "忘记密码和恢复短语？",
-    "snippets-title": "片段",
-    "snippets-empty": "目前还没有片段",
-    "snippet-command": "命令",
-    "snippet-add": "添加片段",
-    "snippet-edit": "编辑片段",
-    "connections-title": "已保存的连接",
-    "connections-empty": "尚无保存的连接",
-    "connections-current": "当前设置"
   }
 }

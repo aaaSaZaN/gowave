@@ -1,63 +1,17 @@
 import {
-    type IExperimentalFeatures,
-    useExperimentalFeatures,
+    useExperimentalFeature,
     useViewPreferencesStoreActions
 } from '@entities/dashboard/view-preferences-store'
-import { Checkbox, Group, Stack, Text, ThemeIcon, type ThemeIconProps } from '@mantine/core'
-import { useIsMobile } from '@shared/hooks'
-import { optionalProp } from '@shared/lib/optional-prop'
+import { Checkbox, Group, Text, ThemeIcon } from '@mantine/core'
 import { SettingsCardShared } from '@shared/ui/settings-card'
-import type { TFunction } from 'i18next'
-import type { ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TbFlask, TbLayoutSidebar, TbPlugConnected, TbRocket, TbTerminal2 } from 'react-icons/tb'
+import { TbFlask, TbLayoutSidebar } from 'react-icons/tb'
 
 import classes from './ExperimentalSettingsCard.module.css'
 
-interface IExperimentalFeatureItem {
-    color: ThemeIconProps['color']
-    desktopOnly?: boolean
-    feature: keyof IExperimentalFeatures
-    IconComponent: ComponentType<{ size: number }>
-    label: string
-}
-
-const getExperimentalFeatures = (t: TFunction): IExperimentalFeatureItem[] => [
-    {
-        color: 'cyan',
-        desktopOnly: true,
-        feature: 'legacyLayoutStyle',
-        IconComponent: TbLayoutSidebar,
-        label: t('experimental-settings-card.widget.legacy-layout-style')
-    },
-    {
-        color: 'pink',
-        feature: 'nodeIntegrations',
-        IconComponent: TbPlugConnected,
-        label: t('node-integrations.modal.title')
-    },
-    {
-        color: 'cyan',
-        desktopOnly: true,
-        feature: 'sshTerminal',
-        IconComponent: TbTerminal2,
-        label: t('node-ssh.title')
-    },
-    {
-        color: 'teal',
-        desktopOnly: true,
-        feature: 'quickLauncher',
-        IconComponent: TbRocket,
-        label: t('constants.quick-launcher')
-    }
-]
-
 export const ExperimentalSettingsCardWidget = () => {
     const { t } = useTranslation()
-
-    const isMobile = useIsMobile()
-
-    const experimental = useExperimentalFeatures()
+    const isLegacyLayoutStyle = useExperimentalFeature('legacyLayoutStyle')
     const { setExperimentalFeature } = useViewPreferencesStoreActions()
 
     return (
@@ -71,38 +25,26 @@ export const ExperimentalSettingsCardWidget = () => {
             />
 
             <SettingsCardShared.Content>
-                <Stack gap="xs">
-                    {getExperimentalFeatures(t)
-                        .filter(({ desktopOnly }) => !desktopOnly || !isMobile)
-                        .map(({ color, feature, IconComponent, label }) => (
-                            <Checkbox.Card
-                                checked={experimental[feature]}
-                                className={classes.feature}
-                                key={feature}
-                                onClick={() =>
-                                    setExperimentalFeature(feature, !experimental[feature])
-                                }
-                                radius="md"
-                            >
-                                <Group align="center" gap="sm" wrap="nowrap">
-                                    <ThemeIcon
-                                        {...optionalProp('color', color)}
-                                        radius="md"
-                                        size="lg"
-                                        variant="soft"
-                                    >
-                                        <IconComponent size={20} />
-                                    </ThemeIcon>
+                <Checkbox.Card
+                    checked={isLegacyLayoutStyle}
+                    className={classes.feature}
+                    onClick={() =>
+                        setExperimentalFeature('legacyLayoutStyle', !isLegacyLayoutStyle)
+                    }
+                    radius="md"
+                >
+                    <Group align="center" gap="sm" wrap="nowrap">
+                        <ThemeIcon color="cyan" radius="md" size="lg" variant="soft">
+                            <TbLayoutSidebar size={20} />
+                        </ThemeIcon>
 
-                                    <Text className={classes.label} flex={1} size="sm" truncate>
-                                        {label}
-                                    </Text>
+                        <Text className={classes.label} flex={1} size="sm" truncate>
+                            {t('experimental-settings-card.widget.legacy-layout-style')}
+                        </Text>
 
-                                    <Checkbox.Indicator size="sm" />
-                                </Group>
-                            </Checkbox.Card>
-                        ))}
-                </Stack>
+                        <Checkbox.Indicator size="sm" />
+                    </Group>
+                </Checkbox.Card>
             </SettingsCardShared.Content>
         </SettingsCardShared.Container>
     )

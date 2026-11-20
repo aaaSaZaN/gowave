@@ -24,7 +24,7 @@ import {
     PiMemoryDuotone,
     PiUsersDuotone
 } from 'react-icons/pi'
-import { TbAlertCircle, TbPackage, TbPlugConnected } from 'react-icons/tb'
+import { TbAlertCircle, TbPackage } from 'react-icons/tb'
 
 import { NodeStatusBadgeWidget } from '../node-status-badge'
 import type { IProps } from './interfaces'
@@ -83,7 +83,6 @@ export const NodeCardWidget = memo((props: IProps) => {
         isDragOverlay = false,
         isMobile,
         disableReordering = false,
-        integrationsNames,
         pluginsName
     } = props
 
@@ -508,25 +507,6 @@ export const NodeCardWidget = memo((props: IProps) => {
                                         {pluginsName}
                                     </Text>
                                 </Flex>
-                            )}
-                            {integrationsNames.length > 0 && (
-                                <Tooltip
-                                    label={integrationsNames.join(', ')}
-                                    multiline
-                                    radius="md"
-                                    w={250}
-                                >
-                                    <Flex align="center" gap={4} maw={220}>
-                                        <TbPlugConnected
-                                            color="var(--mantine-color-pink-5)"
-                                            size={12}
-                                            style={{ flexShrink: 0 }}
-                                        />
-                                        <Text c="dimmed" ff="monospace" size="xs" truncate="end">
-                                            {integrationsNames.join(', ')}
-                                        </Text>
-                                    </Flex>
-                                </Tooltip>
                             )}
 
                             <Flex align="center" gap={4}>
