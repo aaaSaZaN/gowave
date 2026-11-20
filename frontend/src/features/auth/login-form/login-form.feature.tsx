@@ -1,47 +1,40 @@
 import { Button, Container, Paper, PasswordInput, TextInput } from '@mantine/core'
-import { schemaResolver, useForm } from '@mantine/form'
+import { useForm } from '@mantine/form'
 import { LoginCommand } from '@remnawave/backend-contract'
 import { useLogin } from '@shared/api/hooks'
-import { useAuth } from '@shared/hooks/use-auth'
 import { handleFormErrors } from '@shared/utils/misc'
+import type { SubmitEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiSignInDuotone } from 'react-icons/pi'
 
 export const LoginFormFeature = () => {
     const { t } = useTranslation()
 
-    const { setIsAuthenticated } = useAuth()
-
     const form = useForm({
         mode: 'uncontrolled',
-        validate: schemaResolver(LoginCommand.RequestBodySchema),
         initialValues: { username: '', password: '' }
     })
 
     const { mutate: login, isPending: isLoading } = useLogin()
 
-    const handleSubmit = form.onSubmit((variables) => {
-        login(
-            {
-                variables: {
-                    username: variables.username,
-                    password: variables.password
-                }
-            },
-            {
-                onSuccess: () => {
-                    setIsAuthenticated(true)
-                },
-                onError: (error) => handleFormErrors(form, error)
-            }
-        )
-    })
+    const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        // Password managers can fill these inputs without dispatching a change event.
+        const fields = new FormData(event.currentTarget)
+        const result = LoginCommand.RequestBodySchema.safeParse(Object.fromEntries(fields))
+        if (!result.success) {
+            handleFormErrors(form, result.error)
+            return
+        }
+        login({ variables: result.data }, { onError: (error) => handleFormErrors(form, error) })
+    }
 
     return (
         <form onSubmit={handleSubmit}>
             <Container size="100%">
                 <Paper>
                     <TextInput
+                        autoComplete="username"
                         label={t('common.field.username')}
                         name="username"
                         placeholder={t('common.field.username')}
@@ -49,6 +42,7 @@ export const LoginFormFeature = () => {
                         {...form.getInputProps('username')}
                     />
                     <PasswordInput
+                        autoComplete="current-password"
                         label={t('common.field.password')}
                         mt="md"
                         name="password"

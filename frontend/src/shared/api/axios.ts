@@ -35,7 +35,7 @@ export const instance = axios.create({
 })
 
 instance.interceptors.request.use((config) => {
-    config.headers.set('Authorization', `Bearer ${authorizationToken}`)
+    config.headers.set('Authorization', authorizationToken ? `Bearer ${authorizationToken}` : null)
     config.headers.set(REMNAWAVE_CLIENT_TYPE_HEADER, REMNAWAVE_CLIENT_TYPE_BROWSER)
     return config
 })
@@ -51,8 +51,14 @@ instance.interceptors.response.use(
     (response) => {
         return response
     },
-    (error) => {
-        if (error.response?.status === 401) {
+    (error: unknown) => {
+        // A request started before sign-in can finish after the token has changed.
+        if (
+            axios.isAxiosError(error) &&
+            error.response?.status === 401 &&
+            authorizationToken &&
+            error.config?.headers.get('Authorization') === `Bearer ${authorizationToken}`
+        ) {
             consola.error('Received 401 Unauthorized from backend. Logging out.')
             logoutEvents.emit()
         }

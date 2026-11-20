@@ -8,6 +8,7 @@ import { UpdateManyHostsCommand } from '@remnawave/backend-contract'
 import { requireValue } from '@shared/lib/invariant'
 import { runAsync } from '@shared/lib/run-async'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { AxiosError } from 'axios'
 import Highcharts from 'highcharts'
 import { use, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
@@ -18,6 +19,8 @@ import { languageDetector, localeBackend } from '../src/app/i18n/plugins'
 import desktopNavigationClasses from '../src/app/layouts/dashboard/main-layout/navbar/desktop-navigation.module.css'
 import mobileNavigationClasses from '../src/app/layouts/dashboard/main-layout/navbar/mobile-navigation.module.css'
 import { removeToken, setToken } from '../src/entities/auth'
+import { LoginFormFeature } from '../src/features/auth/login-form'
+import { instance } from '../src/shared/api/axios'
 import { subscriptionSettingsQueryKeys } from '../src/shared/api/hooks/subscription-settings/subscription-settings.query.hooks'
 import { logoutEvents } from '../src/shared/emitters'
 import { AuthContext, AuthProvider } from '../src/shared/hocs/auth-provider/auth-provider'
@@ -160,6 +163,35 @@ function ErrorBoundaryFixture() {
 function AuthStatus() {
     const auth = requireValue(use(AuthContext), 'Auth context is missing')
     return <output>{`${auth.isInitialized}:${auth.isAuthenticated}`}</output>
+}
+
+async function unauthorizedRequest(beforeResponse?: () => void) {
+    await instance
+        .get('/api/system/stats', {
+            adapter: (config) => {
+                beforeResponse?.()
+                const response = {
+                    config,
+                    status: 401,
+                    statusText: 'Unauthorized',
+                    data: {},
+                    headers: {}
+                }
+                return Promise.reject(
+                    new AxiosError('Unauthorized', undefined, config, undefined, response)
+                )
+            }
+        })
+        .then(
+            () => {
+                throw new Error('Expected the request to fail')
+            },
+            (error: unknown) =>
+                assert(
+                    error instanceof AxiosError && error.response?.status === 401,
+                    '401 reaches the caller'
+                )
+        )
 }
 
 function HostRulesFixture({ rules, bulk = false }: { rules?: string[]; bulk?: boolean }) {
@@ -687,10 +719,76 @@ async function run() {
     assert(container.textContent === 'true:false', 'auth initializes without token')
     flushSync(() => setToken({ token: 'browser-token' }))
     assert(container.textContent === 'true:true', 'auth reacts to token changes')
+    await unauthorizedRequest(() => setToken({ token: 'replacement-token' }))
+    await wait()
+    assert(
+        container.textContent === 'true:true',
+        'late 401 from a previous token preserves the new session'
+    )
+    await unauthorizedRequest()
+    await wait()
+    assert(container.textContent === 'true:false', '401 from the current token ends the session')
+    await unauthorizedRequest(() => setToken({ token: 'browser-token' }))
+    await wait()
+    assert(container.textContent === 'true:true', 'late anonymous 401 preserves the new session')
     flushSync(() => logoutEvents.emit())
     assert(container.textContent === 'true:false', 'logout updates context and removes token')
     flushSync(() => logoutEvents.emit())
     assert(container.textContent === 'true:false', 'repeated logout remains safe')
+
+    const loginClient = new QueryClient()
+    const originalAdapter = requireValue(instance.defaults.adapter, 'default Axios adapter')
+    try {
+        const submitted: unknown[] = []
+        instance.defaults.adapter = (config) => {
+            submitted.push(config.data)
+            return Promise.resolve({
+                config,
+                data: { response: { accessToken: 'autofill-token' } },
+                headers: {},
+                status: 200,
+                statusText: 'OK'
+            })
+        }
+        flushSync(() =>
+            root.render(
+                <MantineProvider>
+                    <QueryClientProvider client={loginClient}>
+                        <AuthProvider>
+                            <LoginFormFeature />
+                            <AuthStatus />
+                        </AuthProvider>
+                    </QueryClientProvider>
+                </MantineProvider>
+            )
+        )
+        const loginForm = requireValue(container.querySelector('form'), 'login form')
+        const username = requireValue(
+            loginForm.querySelector<HTMLInputElement>('input[name="username"]'),
+            'username input'
+        )
+        const password = requireValue(
+            loginForm.querySelector<HTMLInputElement>('input[name="password"]'),
+            'password input'
+        )
+        const credentials = { username: 'admin', password: 'autofilled password' }
+        username.value = credentials.username
+        password.value = credentials.password
+        loginForm.requestSubmit()
+        await wait()
+        assert(
+            submitted.length === 1 && submitted[0] === JSON.stringify(credentials),
+            'first submit sends autofilled credentials without change events'
+        )
+        assert(
+            container.querySelector('output')?.textContent === 'true:true',
+            'autofilled credentials establish a session'
+        )
+    } finally {
+        instance.defaults.adapter = originalAdapter
+        loginClient.clear()
+        removeToken()
+    }
 
     flushSync(() =>
         root.render(
