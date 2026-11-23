@@ -19,10 +19,11 @@ import {
     UnstyledButton
 } from '@mantine/core'
 import { modals } from '@mantine/modals'
-import type { GetNodeCommand, UpdateNodeCommand } from '@remnawave/backend-contract'
+import type { UpdateNodeCommand } from '@remnawave/backend-contract'
 import { showModal } from '@shared/_modals/show-modal'
 import { queryClient } from '@shared/api'
 import {
+    type NodeDetails,
     QueryKeys,
     useDisableNode,
     useEnableNode,
@@ -49,7 +50,7 @@ import {
 import { TbChevronRight, TbJson, TbPower, TbSum, TbWifi, TbWifiOff } from 'react-icons/tb'
 
 interface IProps {
-    node: GetNodeCommand.Response['response']
+    node: NodeDetails
 }
 
 export const NodeDetailsCardWidget = memo((props: IProps) => {
@@ -432,6 +433,10 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                             (() => {
                                 const isGoNode = isGoNodeVersion(node.versions)
                                 const isCustomXray = isCustomXrayVersion(node.versions)
+                                const localCore = node.versions.coreSource === 'local'
+                                const coreLabel = localCore
+                                    ? t('node-details-card.widget.local-core')
+                                    : t('node-details-card.widget.xray-core-version')
                                 return (
                                     <Paper
                                         p="xs"
@@ -447,20 +452,16 @@ export const NodeDetailsCardWidget = memo((props: IProps) => {
                                     >
                                         <Tooltip
                                             label={
-                                                isGoNode
+                                                isGoNode && !localCore
                                                     ? 'Нажмите, чтобы выбрать версию Xray Core'
-                                                    : t(
-                                                          'node-details-card.widget.xray-core-version'
-                                                      )
+                                                    : coreLabel
                                             }
                                         >
                                             <UnstyledButton
                                                 aria-label={
-                                                    isGoNode
+                                                    isGoNode && !localCore
                                                         ? `Выбрать версию Xray Core. Установлена ${node.versions.xray}`
-                                                        : t(
-                                                              'node-details-card.widget.xray-core-version'
-                                                          )
+                                                        : coreLabel
                                                 }
                                                 disabled={!isGoNode}
                                                 onClick={() =>

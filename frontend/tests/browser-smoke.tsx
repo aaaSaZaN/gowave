@@ -1,5 +1,6 @@
 import '@mantine/core/styles.css'
 
+import NiceModal from '@ebay/nice-modal-react'
 import { MantineProvider } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { ModalsProvider, modals } from '@mantine/modals'
@@ -24,7 +25,9 @@ import {
     useViewPreferencesStore
 } from '../src/entities/dashboard/view-preferences-store'
 import { LoginFormFeature } from '../src/features/auth/login-form'
+import { UpdateNodeModal } from '../src/shared/_modals/nodes/update-node-modal/update-node.modal'
 import { instance } from '../src/shared/api/axios'
+import { nodesQueryKeys } from '../src/shared/api/hooks/nodes/nodes.query.hooks'
 import { subscriptionSettingsQueryKeys } from '../src/shared/api/hooks/subscription-settings/subscription-settings.query.hooks'
 import { logoutEvents } from '../src/shared/emitters'
 import { AuthContext, AuthProvider } from '../src/shared/hocs/auth-provider/auth-provider'
@@ -236,7 +239,119 @@ function HostRulesFixture({ rules, bulk = false }: { rules?: string[]; bulk?: bo
     )
 }
 
+async function testLocallyManagedCore() {
+    const client = new QueryClient()
+    const node = {
+        uuid: '11111111-1111-4111-8111-111111111111',
+        name: 'Browser node',
+        versions: { coreSource: 'local', node: 'v1 (Go)', xray: 'v1' }
+    }
+    const queryKey = nodesQueryKeys.getNode({ uuid: node.uuid }).queryKey
+    client.setQueryData(queryKey, node)
+    const originalAdapter = requireValue(instance.defaults.adapter, 'default Axios adapter')
+    const requests: string[] = []
+    instance.defaults.adapter = (config) => {
+        requests.push(config.url ?? '')
+        if (config.method === 'post') {
+            const response = {
+                config,
+                data: { errorCode: 'GW_NODE_LOCAL_CORE' },
+                headers: {},
+                status: 409,
+                statusText: 'Conflict'
+            }
+            return Promise.reject(
+                new AxiosError('Conflict', undefined, config, undefined, response)
+            )
+        }
+        return Promise.resolve({
+            config,
+            data: {
+                response: {
+                    architecture: 'arm64',
+                    os: 'linux',
+                    allReleases: [
+                        {
+                            tag_name: 'v2',
+                            prerelease: false,
+                            assets: [
+                                { name: 'gowave-node-linux-arm64' },
+                                { name: 'Xray-linux-arm64-v8a.zip' }
+                            ]
+                        }
+                    ]
+                }
+            },
+            headers: {},
+            status: 200,
+            statusText: 'OK'
+        })
+    }
+    const dialog = () =>
+        requireValue(document.querySelector('[role="dialog"]'), 'node update dialog')
+    const findButton = (label: string) =>
+        Array.from(dialog().querySelectorAll('button')).find(
+            (button) => button.textContent === label
+        )
+    try {
+        flushSync(() =>
+            root.render(
+                <MantineProvider>
+                    <QueryClientProvider client={client}>
+                        <NiceModal.Provider />
+                    </QueryClientProvider>
+                </MantineProvider>
+            )
+        )
+        runAsync(NiceModal.show(UpdateNodeModal, { node, initialTab: 'core' }))
+        await wait(300)
+        assert(
+            dialog().textContent?.includes('gowave-node core update'),
+            'local update instructions'
+        )
+        assert(!findButton('Установить сейчас'), 'local core cannot be installed from the panel')
+        assert(requests.length === 0, 'local core tab does not fetch releases')
+
+        requireValue(findButton('Gowave Node Go'), 'node releases tab').click()
+        await wait()
+        requireValue(
+            dialog().querySelector<HTMLInputElement>('input[type="checkbox"]'),
+            'node confirmation'
+        ).click()
+        assert(
+            findButton('Установить сейчас')?.disabled === false,
+            'node binary remains installable'
+        )
+
+        client.setQueryData(queryKey, {
+            ...node,
+            versions: { ...node.versions, coreSource: 'panel' }
+        })
+        requireValue(findButton('Xray Core'), 'core releases tab').click()
+        await wait()
+        assert(
+            dialog().querySelector('input[placeholder^="https://"]'),
+            'panel core accepts a direct URL'
+        )
+        requireValue(
+            dialog().querySelector<HTMLInputElement>('input[type="checkbox"]'),
+            'core confirmation'
+        ).click()
+        requireValue(findButton('Установить сейчас'), 'install Xray button').click()
+        await wait()
+        assert(
+            dialog().textContent?.includes('gowave-node core update') &&
+                !findButton('Установить сейчас'),
+            'node conflict locks the tab even with stale health data'
+        )
+    } finally {
+        instance.defaults.adapter = originalAdapter
+        client.clear()
+    }
+}
+
 async function run() {
+    await testLocallyManagedCore()
     localStorage.setItem(
         'viewPreferencesStore',
         JSON.stringify({

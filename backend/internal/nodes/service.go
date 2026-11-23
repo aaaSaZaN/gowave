@@ -48,10 +48,11 @@ type NodeHotMetrics struct {
 }
 
 type NodeVersionsResponse struct {
-	Xray     string `json:"xray"`
-	Node     string `json:"node"`
-	IsCustom bool   `json:"isCustom"`
-	NodeType string `json:"nodeType"`
+	Xray       string `json:"xray"`
+	Node       string `json:"node"`
+	IsCustom   bool   `json:"isCustom"`
+	NodeType   string `json:"nodeType"`
+	CoreSource string `json:"coreSource,omitempty"`
 }
 
 type Service struct {
@@ -299,10 +300,11 @@ func (s *Service) CheckNodeHealth(node *database.Node) (bool, string) {
 	var versionsResp *NodeVersionsResponse
 	if nodeVer != "" || xrayVer != "" || hr.NodeType != "" {
 		versionsResp = &NodeVersionsResponse{
-			Xray:     xrayVer,
-			Node:     nodeVer,
-			IsCustom: hr.IsCustomCore,
-			NodeType: hr.NodeType,
+			Xray:       xrayVer,
+			Node:       nodeVer,
+			IsCustom:   hr.IsCustomCore,
+			NodeType:   hr.NodeType,
+			CoreSource: hr.CoreSource,
 		}
 	}
 

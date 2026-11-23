@@ -4,6 +4,7 @@ import {
     Badge,
     Button,
     Checkbox,
+    Code,
     Divider,
     Group,
     Loader,
@@ -14,16 +15,18 @@ import {
     Text,
     TextInput
 } from '@mantine/core'
-import type { GetNodeCommand } from '@remnawave/backend-contract'
 import { useNiceMantineModal } from '@shared/_modals/use-nice-modal'
 import { instance } from '@shared/api/axios'
+import { type NodeDetails, useGetNode } from '@shared/api/hooks/nodes/nodes.query.hooks'
 import { BaseOverlayHeader } from '@shared/ui/overlays/base-overlay-header'
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { isAxiosError } from 'axios'
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { TbAlertTriangle, TbArrowRight, TbCheck, TbCloudDownload, TbCpu } from 'react-icons/tb'
 
 interface IProps {
-    node: GetNodeCommand.Response['response']
+    node: Pick<NodeDetails, 'name' | 'uuid' | 'versions'>
     initialTab?: 'node' | 'core'
 }
 
@@ -126,6 +129,13 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
     const { node, initialTab = 'node' } = props
     const modal = useModal()
     const { modalProps, hide } = useNiceMantineModal({ modal })
+    const { t } = useTranslation()
+    const { data: nodeDetails } = useGetNode({
+        route: { uuid: node.uuid },
+        rQueryParams: { enabled: modal.visible }
+    })
+    const versions = nodeDetails ? nodeDetails.versions : node.versions
+    const coreManagedLocally = versions?.coreSource === 'local'
 
     const [activeTab, setActiveTab] = useState<'node' | 'core'>(initialTab)
     const [nodeChannel, setNodeChannel] = useState<ReleaseChannel>('stable')
@@ -164,7 +174,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
             )
             return res.data.response
         },
-        enabled: activeTab === 'core',
+        enabled: activeTab === 'core' && !coreManagedLocally,
         refetchOnWindowFocus: false
     })
 
@@ -272,6 +282,10 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                 return res.data
             }
 
+            if (coreManagedLocally) {
+                throw new Error(t('node-details-card.widget.local-core'))
+            }
+
             const downloadUrl = coreDownloadUrl.trim()
             if (downloadUrl) {
                 if (!downloadUrl.startsWith('https://')) {
@@ -294,6 +308,11 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
             return res.data
         }
     })
+
+    const coreUpdateRejected =
+        isAxiosError<{ errorCode?: string }>(applyMutation.error) &&
+        applyMutation.error.response?.data?.errorCode === 'GW_NODE_LOCAL_CORE'
+    const coreTabLocked = activeTab === 'core' && (coreManagedLocally || coreUpdateRejected)
 
     const isLoading = activeTab === 'node' ? nodeUpdatesQuery.isLoading : coreUpdatesQuery.isLoading
     const updateInfo = activeTab === 'node' ? nodeUpdatesQuery.data : coreUpdatesQuery.data
@@ -375,16 +394,18 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
             }
         >
             <Stack gap="md">
-                <Alert
-                    color="orange"
-                    icon={<TbAlertTriangle size={20} />}
-                    radius="md"
-                    title="Перезапуск службы"
-                    variant="light"
-                >
-                    Установка Gowave Node или Xray перезапустит службу. Активные соединения
-                    кратковременно прервутся.
-                </Alert>
+                {!coreTabLocked && (
+                    <Alert
+                        color="orange"
+                        icon={<TbAlertTriangle size={20} />}
+                        radius="md"
+                        title="Перезапуск службы"
+                        variant="light"
+                    >
+                        Установка Gowave Node или Xray перезапустит службу. Активные соединения
+                        кратковременно прервутся.
+                    </Alert>
+                )}
 
                 <Tabs
                     onChange={(value) => {
@@ -402,7 +423,21 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                     </Tabs.List>
                 </Tabs>
 
-                {isLoading ? (
+                {coreTabLocked ? (
+                    <Alert
+                        color="blue"
+                        icon={<TbCpu size={20} />}
+                        title={t('node-details-card.widget.local-core')}
+                        variant="light"
+                    >
+                        <Stack gap="xs">
+                            <Text size="sm">
+                                {t('node-details-card.widget.local-core-override')}
+                            </Text>
+                            <Code>gowave-node core update</Code>
+                        </Stack>
+                    </Alert>
+                ) : isLoading ? (
                     <Group justify="center" p="xl">
                         <Loader color="blue" size="sm" />
                         <Text c="dimmed" size="xs">
@@ -428,7 +463,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                                     {activeTab === 'node'
                                         ? updateInfo?.currentVersion || 'не получена'
                                         : updateInfo?.currentCoreVersion ||
-                                          node.versions?.xray ||
+                                          versions?.xray ||
                                           'не получена'}
                                 </Badge>
                             </Group>
@@ -491,7 +526,7 @@ export const UpdateNodeModal = NiceModal.create((props: IProps) => {
                                 {activeTab === 'node'
                                     ? updateInfo?.currentVersion || 'текущая версия'
                                     : updateInfo?.currentCoreVersion ||
-                                      node.versions?.xray ||
+                                      versions?.xray ||
                                       'текущая версия'}
                             </Badge>
                             <TbArrowRight size={14} />

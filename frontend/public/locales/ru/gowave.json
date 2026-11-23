@@ -951,7 +951,9 @@
       "disable-node": "Выключить ноду",
       "config-profile-or-inbounds-is-missing": "Не задан профиль или инбаунды",
       "xray-core-version": "Версия Xray Core",
-      "gowave-node-version": "Версия ноды, Gowave Node"
+      "gowave-node-version": "Версия ноды, Gowave Node",
+      "local-core": "Ядро Xray управляется на ноде",
+      "local-core-override": "Нода использует CUSTOM_CORE_URL из файла .env. Чтобы обновить ядро Xray, выполните эту команду на ноде."
     }
   },
   "config-profiles": {

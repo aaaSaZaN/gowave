@@ -6,11 +6,90 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 
 	"gowave/internal/database"
 	"gowave/internal/testdb"
+
+	"github.com/go-chi/chi/v5"
 )
+
+func TestLocalCoreStatusAndUpdateConflict(t *testing.T) {
+	db := testdb.Open(t)
+	node := database.Node{UUID: "local-core", Name: "Local Core", Address: "example.com", IsConnected: true}
+	if err := db.Create(&node).Error; err != nil {
+		t.Fatal(err)
+	}
+	coreSource := "local"
+	client := &Client{httpClient: &http.Client{Transport: nodeRoundTrip(func(r *http.Request) (*http.Response, error) {
+		reply := httptest.NewRecorder()
+		switch r.URL.Path {
+		case "/node/xray/healthcheck":
+			if r.Header.Get("X-Better-One") != "true" {
+				t.Fatal("health request missing X-Better-One")
+			}
+			_, _ = reply.WriteString(`{"response":{"isAlive":true,"xrayInternalStatusCached":true,"coreSource":"` + coreSource + `"}}`)
+		case "/node/updates/apply":
+			var update struct{ Type string }
+			if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
+				t.Fatal(err)
+			}
+			switch {
+			case update.Type == "node":
+				reply.WriteHeader(http.StatusServiceUnavailable)
+				_, _ = reply.WriteString(`{"error":"releases unavailable"}`)
+			case coreSource == "local":
+				reply.WriteHeader(http.StatusConflict)
+				_, _ = reply.WriteString(`{"error":"Xray core is managed locally"}`)
+			default:
+				reply.WriteHeader(http.StatusConflict)
+				_, _ = reply.WriteString(`{"error":"another update is in progress"}`)
+			}
+		default:
+			t.Fatalf("unexpected node request %s", r.URL.Path)
+		}
+		return reply.Result(), nil
+	})}}
+	service := NewService(db, client)
+	handler := NewHandler(service)
+	router := chi.NewRouter()
+	router.Get("/api/nodes/{uuid}", handler.GetNode)
+	router.Post("/api/nodes/{uuid}/updates/apply", handler.ApplyNodeUpdate)
+	const path = "/api/nodes/local-core"
+
+	service.CheckNodeHealth(&node)
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+	var details struct {
+		Response struct{ Versions NodeVersionsResponse }
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &details); err != nil {
+		t.Fatal(err)
+	}
+	if recorder.Code != http.StatusOK || details.Response.Versions.CoreSource != "local" {
+		t.Fatalf("GET node: %d %s", recorder.Code, recorder.Body)
+	}
+
+	for _, tc := range []struct {
+		name, source, body, message string
+		status                      int
+	}{
+		{"custom URL", "local", `{"type":"core","downloadUrl":"https://example.com/core.zip"}`, "GW_NODE_LOCAL_CORE", http.StatusConflict},
+		{"Xray release", "local", `{"type":"core","version":"v1"}`, "GW_NODE_LOCAL_CORE", http.StatusConflict},
+		{"node binary", "local", `{"type":"node","version":"v1"}`, "releases unavailable", http.StatusBadGateway},
+		{"panel can manage the core after the override is removed", "panel", `{"type":"core","version":"v1"}`, "another update is in progress", http.StatusBadGateway},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			coreSource = tc.source
+			recorder := httptest.NewRecorder()
+			router.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, path+"/updates/apply", strings.NewReader(tc.body)))
+			if recorder.Code != tc.status || !strings.Contains(recorder.Body.String(), tc.message) {
+				t.Fatalf("POST update: %d %s", recorder.Code, recorder.Body)
+			}
+		})
+	}
+}
 
 // TestGetNodesBatchesInboundsLikeSingleNode checks that the batched list keeps
 // the per-node rules: linked inbounds win, otherwise the whole active profile.

@@ -45,12 +45,17 @@ export const useGetNodes = createGetQueryHook({
     errorHandler: (error) => errorHandler(error, 'Get All Nodes')
 })
 
-// The stored traffic tracking mode is a Gowave extension of the node response.
 const GetNodeResponseSchema = GetNodeCommand.ResponseSchema.extend({
     response: GetNodeCommand.ResponseSchema.shape.response.extend({
-        trafficTrackingStart: z.enum(TRAFFIC_TRACKING_START).nullish()
+        trafficTrackingStart: z.enum(TRAFFIC_TRACKING_START).nullish(),
+        versions: GetNodeCommand.ResponseSchema.shape.response.shape.versions
+            .unwrap()
+            .extend({ coreSource: z.string().optional() })
+            .nullable()
     })
 })
+
+export type NodeDetails = z.infer<typeof GetNodeResponseSchema>['response']
 
 export const useGetNode = createGetQueryHook({
     endpoint: GetNodeCommand.TSQ_url,

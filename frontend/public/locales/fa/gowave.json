@@ -938,7 +938,9 @@
       "disable-node": "غیرفعالسازی نود",
       "config-profile-or-inbounds-is-missing": "پروفایل پیکربندی یا اینباند وجود ندارد",
       "xray-core-version": "نسخه هسته Xray",
-      "gowave-node-version": "نسخه نود، Gowave Node"
+      "gowave-node-version": "نسخه نود، Gowave Node",
+      "local-core": "هسته Xray روی نود مدیریت می‌شود",
+      "local-core-override": "نود از CUSTOM_CORE_URL در فایل .env استفاده می‌کند. برای به‌روزرسانی هسته Xray، این فرمان را روی نود اجرا کنید."
     }
   },
   "config-profiles": {

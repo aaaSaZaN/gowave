@@ -174,6 +174,7 @@ type NodeHealthCheckResult struct {
 	NodeVersion  string
 	NodeType     string
 	IsCustomCore bool
+	CoreSource   string
 }
 
 func (c *Client) CheckHealth(node *database.Node) (NodeHealthCheckResult, error) {
@@ -199,6 +200,7 @@ func (c *Client) CheckHealth(node *database.Node) (NodeHealthCheckResult, error)
 			NodeVersion              string  `json:"nodeVersion"`
 			NodeType                 string  `json:"nodeType"`
 			IsCustomCore             bool    `json:"isCustomCore"`
+			CoreSource               string  `json:"coreSource"`
 		} `json:"response"`
 	}
 	_ = json.NewDecoder(resp.Body).Decode(&res)
@@ -232,6 +234,7 @@ func (c *Client) CheckHealth(node *database.Node) (NodeHealthCheckResult, error)
 		NodeVersion:  res.Response.NodeVersion,
 		NodeType:     nodeType,
 		IsCustomCore: isCustom,
+		CoreSource:   res.Response.CoreSource,
 	}, nil
 }
 
@@ -475,6 +478,8 @@ func (c *Client) CheckUpdates(node *database.Node, repo string) (map[string]inte
 	return res.Response, nil
 }
 
+var errNodeLocalCore = errors.New("Xray core is managed locally")
+
 func (c *Client) ApplyUpdate(node *database.Node, payload map[string]interface{}) (map[string]interface{}, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -492,6 +497,9 @@ func (c *Client) ApplyUpdate(node *database.Node, payload map[string]interface{}
 			Error string `json:"error"`
 		}
 		if json.NewDecoder(io.LimitReader(resp.Body, 64<<10)).Decode(&failure) == nil && failure.Error != "" {
+			if resp.StatusCode == http.StatusConflict && failure.Error == errNodeLocalCore.Error() {
+				return nil, errNodeLocalCore
+			}
 			return nil, fmt.Errorf("node returned status %d: %s", resp.StatusCode, failure.Error)
 		}
 		return nil, fmt.Errorf("node returned status %d", resp.StatusCode)

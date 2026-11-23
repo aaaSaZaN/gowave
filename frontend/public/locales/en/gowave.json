@@ -951,7 +951,9 @@
       "disable-node": "Disable node",
       "config-profile-or-inbounds-is-missing": "Config profile or inbounds is missing",
       "xray-core-version": "Xray Core version",
-      "gowave-node-version": "Node version, Gowave Node"
+      "gowave-node-version": "Node version, Gowave Node",
+      "local-core": "Xray Core is managed on the node",
+      "local-core-override": "The node uses CUSTOM_CORE_URL from its .env file. To update Xray Core, run this command on the node."
     }
   },
   "config-profiles": {
