@@ -22,8 +22,9 @@ import (
 )
 
 type Client struct {
-	httpClient *http.Client
-	rsaPrivKey *rsa.PrivateKey
+	httpClient         *http.Client
+	geocheckHTTPClient *http.Client
+	rsaPrivKey         *rsa.PrivateKey
 }
 
 func NewNodeClient(caCertPEM, clientCertPEM, clientKeyPEM, jwtPrivKeyPEM, jwtPubKeyPEM []byte) (*Client, error) {
@@ -91,6 +92,9 @@ func NewNodeClient(caCertPEM, clientCertPEM, clientKeyPEM, jwtPrivKeyPEM, jwtPub
 		TLSClientConfig:       tlsConfig,
 		ResponseHeaderTimeout: 15 * time.Second,
 	}
+	geocheckTransport := transport.Clone()
+	// A cold node can spend 30s fetching GeoCheck and 45s running it.
+	geocheckTransport.ResponseHeaderTimeout = 80 * time.Second
 
 	var rsaKey *rsa.PrivateKey
 	if len(jwtPrivKeyPEM) > 0 {
@@ -110,6 +114,10 @@ func NewNodeClient(caCertPEM, clientCertPEM, clientKeyPEM, jwtPrivKeyPEM, jwtPub
 		httpClient: &http.Client{
 			Transport: transport,
 			Timeout:   30 * time.Second,
+		},
+		geocheckHTTPClient: &http.Client{
+			Transport: geocheckTransport,
+			Timeout:   85 * time.Second,
 		},
 		rsaPrivKey: rsaKey,
 	}, nil
@@ -157,6 +165,9 @@ func (c *Client) doRequest(ctx context.Context, method, url string, body interfa
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
+	if req.URL.Path == GeocheckPath && c.geocheckHTTPClient != nil {
+		return c.geocheckHTTPClient.Do(req)
+	}
 	return c.httpClient.Do(req)
 }
 

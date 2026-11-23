@@ -174,7 +174,7 @@ func (s *StubHandler) geocheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	revision := uint64(time.Now().UnixNano())
-	if err := jobs.Enqueue(s.db, "geocheck", id, id, revision, nodes.Command{Path: "/node/stats/get-geocheck", Body: body}); err != nil {
+	if err := jobs.Enqueue(s.db, "geocheck", id, id, revision, nodes.Command{Path: nodes.GeocheckPath, Body: body}); err != nil {
 		http.Error(w, "queue unavailable", 503)
 		return
 	}
@@ -188,8 +188,21 @@ func (s *StubHandler) geocheckResult(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var result interface{}
-	if job.Result != "" {
+	if job.State == "failed" {
+		result = map[string]interface{}{
+			"success": false, "nodeUuid": job.Target, "image": nil, "rawReport": nil, "message": job.LastError,
+		}
+	} else if job.State == "completed" && job.Result != "" {
 		json.Unmarshal([]byte(job.Result), &result)
+		// Completed jobs persisted by older panels predate the required message field.
+		if report, ok := result.(map[string]interface{}); ok {
+			if _, exists := report["message"]; !exists {
+				report["message"] = nil
+			}
+			if raw, ok := report["rawReport"].(map[string]interface{}); ok {
+				delete(raw, "image")
+			}
+		}
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{"response": map[string]interface{}{"isCompleted": job.State == "completed", "isFailed": job.State == "failed", "result": result}})
