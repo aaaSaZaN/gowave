@@ -94,11 +94,16 @@
         mutation.mutate({ id: user.id, action })
     }
 
-    function copy(text: string): void {
+    async function copy(text: string): Promise<boolean> {
         error = ''
-        void navigator.clipboard.writeText(text).then(() => {
+        try {
+            await navigator.clipboard.writeText(text)
             status = t('common.message.copied')
-        }, report)
+            return true
+        } catch (cause) {
+            report(cause)
+            return false
+        }
     }
 </script>
 
@@ -204,7 +209,7 @@
                         />
                         <ActionIcon
                             icon="TbFlame"
-                            label={t('constants.tb-reports')}
+                            label={t('get-user-torrent-blocker-reports.feature.blocker-reports')}
                             tone="indigo"
                             size={34}
                             iconSize={22}
@@ -212,7 +217,9 @@
                         />
                         <ActionIcon
                             icon="TbTimeline"
-                            label={t('common.field.subscription-request-history')}
+                            label={t(
+                                'get-user-subscription-request-history.feature.request-history'
+                            )}
                             tone="indigo"
                             size={34}
                             iconSize={22}
@@ -465,19 +472,21 @@
             {/if}
             {#if detail}
                 <Overlay
-                    drawer
+                    drawer={detail !== 'history'}
+                    width={detail === 'access' ? 800 : detail === 'history' ? 1000 : 620}
                     title={t(
                         detail === 'info'
                             ? 'detailed-user-info-drawer.widget.detailed-user-info'
                             : detail === 'history'
                               ? 'common.field.subscription-request-history'
-                              : 'view-user-modal.widget.accessible-nodes'
+                              : 'user-accessible-nodes.modal.widget.user-accessible-nodes'
                     )}
                     icon={detail === 'history'
                         ? 'TbTimeline'
                         : detail === 'access'
-                          ? 'TbServerCog'
-                          : 'TbInfoCircle'}
+                          ? 'TbServer'
+                          : 'PiUserDuotone'}
+                    tone={detail === 'info' ? 'blue' : 'teal'}
                     close={() => (detail = undefined)}
                 >
                     {#if detail === 'info'}

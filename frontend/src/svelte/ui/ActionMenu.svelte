@@ -13,6 +13,7 @@
         text = false,
         hover = true,
         subtle = true,
+        tone,
         alignEnd = true,
         preferAbove = false,
         width = 200,
@@ -24,6 +25,7 @@
         iconSize?: number
         text?: boolean
         subtle?: boolean
+        tone?: string
         hover?: boolean
         alignEnd?: boolean
         preferAbove?: boolean
@@ -103,7 +105,7 @@
             {label}
             {size}
             {iconSize}
-            {...open ? { tone: 'cyan' } : {}}
+            {...tone ? { tone } : open ? { tone: 'cyan' } : {}}
             {subtle}
             aria-haspopup="menu"
             aria-expanded={open}

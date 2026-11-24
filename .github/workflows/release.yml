@@ -4,6 +4,17 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      source-branch:
+        required: true
+        type: string
+      source-sha:
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -12,60 +23,42 @@ jobs:
   ci:
     name: CI
     uses: ./.github/workflows/ci.yml
+    with:
+      source-sha: ${{ inputs.source-sha || '' }}
+
+  build:
+    name: Build release assets
+    needs: ci
+    uses: ./.github/workflows/build.yml
+    with:
+      version: ${{ inputs.version || github.ref_name }}
+      source-sha: ${{ inputs.source-sha || github.sha }}
 
   release:
-    name: Build and Release
-    needs: ci
+    name: Publish GitHub Release
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: Checkout code
+      - name: Checkout release candidate commit
+        if: inputs.source-branch != ''
         uses: actions/checkout@v7
-
-      - name: Set up Go
-        uses: actions/setup-go@v7
         with:
-          go-version-file: backend/go.mod
-          cache-dependency-path: backend/go.sum
+          ref: ${{ inputs.source-sha }}
+          path: release-source
 
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Download release assets
+        uses: actions/download-artifact@v8
         with:
-          bun-version-file: frontend/package.json
+          name: release-assets
 
-      - name: Build Frontend
-        working-directory: ./frontend
-        env:
-          TELEGRAM_CHAT_URL: ${{ vars.TELEGRAM_CHAT_URL }}
-        run: |
-          bun install --frozen-lockfile
-          bun run editor:download
-          bun run build
-          bun run editor:compress
-          tar -czf ../gowave-frontend.tar.gz -C dist .
-
-      - name: Build Backend Binaries
-        working-directory: ./backend
-        run: |
-          VERSION="${GITHUB_REF_NAME}"
-          LDFLAGS="-s -w -X 'gowave/internal/system.AppVersion=${VERSION}' -X 'gowave/internal/system.CommitSha=${GITHUB_SHA}'"
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="$LDFLAGS" -o ../gowave-linux-amd64 ./cmd/server
-          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="$LDFLAGS" -o ../gowave-linux-arm64 ./cmd/server
-
-      - name: Verify embedded version
-        run: |
-          embedded="$(./gowave-linux-amd64 --version)"
-          if [ "$embedded" != "${GITHUB_REF_NAME}" ]; then
-            echo "Binary reports '${embedded}', expected '${GITHUB_REF_NAME}'; check the -X package path" >&2
-            exit 1
-          fi
-
-      - name: Checksums
-        run: sha256sum gowave-frontend.tar.gz gowave-linux-amd64 gowave-linux-arm64 > SHA256SUMS
+      - name: Verify checksums
+        run: sha256sum -c SHA256SUMS
 
       - name: Create GitHub Release
+        if: inputs.source-branch == ''
         uses: softprops/action-gh-release@v3
         with:
           # v1.2.0-beta.1 becomes a pre-release, which releases/latest (and the updater) ignores
@@ -77,9 +70,27 @@ jobs:
             SHA256SUMS
           generate_release_notes: true
 
+      - name: Publish release candidate
+        if: inputs.source-branch != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+          SOURCE_BRANCH: ${{ inputs.source-branch }}
+          SOURCE_SHA: ${{ inputs.source-sha }}
+        run: |
+          # A non-forced push rejects a conflicting tag and allows a retry at the same SHA.
+          git -C release-source push origin "$SOURCE_SHA:refs/tags/$VERSION"
+
+          printf 'Source branch\n\n    %s\n\nSource commit [%s](%s/%s/commit/%s)\n' \
+            "$SOURCE_BRANCH" "$SOURCE_SHA" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$SOURCE_SHA" > notes.md
+          gh release create "$VERSION" --repo "$GITHUB_REPOSITORY" \
+            --verify-tag --target "$SOURCE_SHA" --prerelease --latest=false --title "$VERSION" \
+            --generate-notes --notes-file notes.md \
+            gowave-frontend.tar.gz gowave-linux-amd64 gowave-linux-arm64 SHA256SUMS
+
   docker:
     name: Publish Docker image
-    needs: ci
+    needs: release
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -88,6 +99,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.source-sha || '' }}
+          persist-credentials: false
 
       - name: Image name
         run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/gowave" >> "$GITHUB_ENV"
@@ -100,7 +114,9 @@ jobs:
           # latest=auto skips pre-release versions such as v1.2.0-beta.1.
           # The dev channel has its own tags (dev, dev-<sha>) from dev.yml.
           tags: |
-            type=semver,pattern={{version}}
+            type=semver,pattern={{version}},value=${{ inputs.version || github.ref_name }}
+          labels: |
+            org.opencontainers.image.revision=${{ inputs.source-sha || github.sha }}
 
       - uses: docker/setup-qemu-action@v4
 
@@ -119,8 +135,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             TELEGRAM_CHAT_URL=${{ vars.TELEGRAM_CHAT_URL }}
-            VERSION=${{ github.ref_name }}
-            COMMIT_SHA=${{ github.sha }}
+            VERSION=${{ inputs.version || github.ref_name }}
+            COMMIT_SHA=${{ inputs.source-sha || github.sha }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

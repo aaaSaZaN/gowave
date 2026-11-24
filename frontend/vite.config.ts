@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => {
         define: {
             __TELEGRAM_CHAT_URL__: JSON.stringify(telegramChatUrl.href),
             __DOMAIN_BACKEND__: JSON.stringify(env['DOMAIN_BACKEND']?.trim() || ''),
-            __NODE_ENV__: JSON.stringify(process.env['NODE_ENV']).trim(),
+            __NODE_ENV__: JSON.stringify(process.env['NODE_ENV'] ?? mode),
             __DOMAIN_OVERRIDE__: JSON.stringify(env['DOMAIN_OVERRIDE'] || '0').trim(),
             // Busts the browser cache of unhashed files such as locales on each build.
             __BUILD_ID__: JSON.stringify(Date.now().toString(36))
@@ -67,6 +67,11 @@ export default defineConfig(({ mode }) => {
         resolve: {
             tsconfigPaths: true,
             alias: [
+                // The pinned contract ships declarations in build/backend and browser JS in build/frontend.
+                {
+                    find: '@remnawave/backend-contract/build/backend',
+                    replacement: '@remnawave/backend-contract/build/frontend'
+                },
                 {
                     find: '@shared',
                     replacement: fileURLToPath(new URL('./src/shared', import.meta.url))

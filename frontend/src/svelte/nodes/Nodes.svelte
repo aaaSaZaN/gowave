@@ -20,9 +20,10 @@
     import { nodePluginsQuery } from '../plugins/queries'
     import { queryClient } from '../query-client'
     import RouteLoading from '../RouteLoading.svelte'
-    import { navigate, p } from '../router'
+    import { p } from '../router'
     import type { SummaryMetric } from '../system-stats'
     import ActionIcon from '../ui/ActionIcon.svelte'
+    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import EmptyState from '../ui/EmptyState.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
     import EntityTagBar from '../ui/EntityTagBar.svelte'
@@ -287,6 +288,20 @@
         edit = { mode, ids: selected }
         dialog.showModal()
     }
+    function openNode(uuid: string, event?: MouseEvent): void {
+        if (event) {
+            if (
+                event.button !== 0 ||
+                event.metaKey ||
+                event.ctrlKey ||
+                event.shiftKey ||
+                event.altKey
+            )
+                return
+            event.preventDefault()
+        }
+        detailsNode = uuid
+    }
 </script>
 
 <svelte:head><title>{t('constants.nodes')} | Gowave</title></svelte:head>
@@ -314,7 +329,7 @@
                 description: [node.address, node.provider?.name, node.uuid]
                     .filter(Boolean)
                     .join(' | '),
-                select: () => (detailsNode = node.uuid)
+                select: () => openNode(node.uuid)
             }))}
         />
         <ActionIcon
@@ -465,6 +480,7 @@
                                 plugin={node.activePluginUuid
                                     ? pluginNames.get(node.activePluginUuid)
                                     : undefined}
+                                onopen={(event) => openNode(node.uuid, event)}
                                 reorder={canReorder && !update.isPending ? reorder : undefined}
                             >
                                 {#snippet selection()}
@@ -542,6 +558,7 @@
         />
     {/if}
     <dialog
+        oncancel={cancelDialog}
         bind:this={dialog}
         onclose={() => (edit = undefined)}
         aria-labelledby="nodes-edit-heading"
@@ -554,7 +571,7 @@
                         : t('common.action.bulk-edit')}
                     · {edit.ids.length}
                 </h2>
-                <button type="button" onclick={() => dialog.close()}>
+                <button type="button" onclick={() => dismissDialog(dialog)}>
                     {t('common.action.close')}
                 </button>
             </div>
@@ -563,7 +580,7 @@
                 profileOnly={edit.mode === 'profile'}
                 onsaved={() => {
                     notice = t('common.message.operation-completed')
-                    dialog.close()
+                    dismissDialog(dialog)
                 }}
             />
         {/if}
@@ -573,7 +590,7 @@
             close={() => (creating = false)}
             openNode={(uuid) => {
                 creating = false
-                void navigate('/dashboard/open/node/:id', { params: { id: uuid } })
+                openNode(uuid)
             }}
         />
     {/if}
@@ -592,7 +609,11 @@
 {/snippet}
 
 {#snippet nodeLink(node: Node)}
-    <a href={p('/dashboard/open/node/:id', { params: { id: node.uuid } })}>{node.name}</a>
+    <a
+        href={p('/dashboard/open/node/:id', { params: { id: node.uuid } })}
+        onclick={(event) => openNode(node.uuid, event)}
+        >{node.name}</a
+    >
 {/snippet}
 
 {#snippet nodeActions(node: Node)}

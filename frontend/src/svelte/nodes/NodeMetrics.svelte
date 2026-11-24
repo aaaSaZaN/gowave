@@ -39,7 +39,7 @@
 
 <svelte:head><title>{t('constants.nodes-metrics')} | Gowave</title></svelte:head>
 <main class="metrics-page">
-    <PageHeader title="Metrics Overview" icon="PiSpeedometer" />
+    <PageHeader title={t('node-metrics.title')} icon="PiSpeedometer" />
     {#if metrics.isPending}
         <RouteLoading height="80vh" label={t('common.message.loading')} />
     {/if}
@@ -50,30 +50,30 @@
         {#if !nodes.length}
             <div class="empty">
                 <span><Icon name="PiProhibitDuotone" size={32} /></span>
-                <p>No nodes metrics available</p>
+                <p>{t('node-metrics.empty')}</p>
             </div>
         {:else}
             <div class="summary">
                 <MetricCard
-                    label="Total Nodes"
+                    label={t('node-metrics.total')}
                     value={summary.total}
                     icon="TbServer"
                     color="indigo"
                 />
                 <MetricCard
-                    label="Active Nodes"
+                    label={t('node-metrics.active')}
                     value={summary.active}
                     icon="PiPulseDuotone"
                     color="teal"
                 />
                 <MetricCard
-                    label="Users Online"
+                    label={t('node-metrics.online')}
                     value={summary.online}
                     icon="PiUsersDuotone"
                     color="blue"
                 />
                 <MetricCard
-                    label="Total Inbounds"
+                    label={t('node-metrics.inbounds')}
                     value={summary.inbounds}
                     icon="PiGlobeSimple"
                     color="violet"
@@ -88,7 +88,7 @@
                     >
                         <button
                             type="button"
-                            aria-label="Additional Information"
+                            aria-label={t('node-metrics.info')}
                             aria-describedby={tooltipId}
                             onclick={() => {
                                 infoDismissed = false
@@ -108,22 +108,21 @@
                             <Icon name="PiInfo" size={19} />
                         </button>
                         <div role="tooltip" id={tooltipId}>
-                            <strong><Icon name="PiInfo" size={12} /> Additional Information</strong>
+                            <strong
+                                ><Icon name="PiInfo" size={12} /> {t('node-metrics.info')}</strong
+                            >
                             <ul>
-                                <li>Updates every 30 seconds from /metrics endpoint</li>
-                                <li>Not all data is visualized on this dashboard</li>
+                                <li>{t('node-metrics.interval')}</li>
+                                <li>{t('node-metrics.partial')}</li>
                                 <li>
-                                    Inbound/Outbound traffic is the sum of all traffic from Panel or
-                                    Node startup
+                                    {t('node-metrics.since-start')}
                                 </li>
                             </ul>
                         </div>
                     </div>
-                    Metrics from Prometheus
+                    {t('node-metrics.source')}
                 </div>
-                <span class="metrics-live"
-                    ><i aria-hidden="true"></i>Live updates from /metrics endpoint</span
-                >
+                <span class="metrics-live"><i aria-hidden="true"></i>{t('node-metrics.live')}</span>
             </div>
             <div
                 class="nodes"

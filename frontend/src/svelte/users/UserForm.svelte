@@ -16,6 +16,7 @@
     import type { IconName } from '../ui/icons'
     import Overlay from '../ui/Overlay.svelte'
     import SelectField from '../ui/SelectField.svelte'
+    import ExpirationPicker from './ExpirationPicker.svelte'
     import { isoDateTime, localDateTime, numberField, textField } from './form-values'
     import {
         trafficStrategies,
@@ -56,6 +57,8 @@
     let trafficUnit = $state(initialUnit)
     let trafficStrategy = $state(original?.trafficLimitStrategy ?? 'NO_RESET')
     let expireAt = $state(initialDate)
+    let expirationOpen = $state(false)
+    let tag = $state(original?.tag ?? '')
     let squadSearch = $state('')
     let editingSquad = $state<string>()
     let noDeviceLimit = $state(original?.hwidDeviceLimit === 0)
@@ -317,32 +320,25 @@
                                 >
                             </span>
                         </div>
-                        {@render inputField(
-                            t('common.field.tag'),
-                            'Create or select a tag',
-                            'TbTag',
-                            tagInput,
-                            false,
-                            'tag-field'
-                        )}
-                        {#snippet tagInput(controlId: string)}
-                            <input
-                                id={controlId}
-                                list="user-form-tags"
-                                name="tag"
-                                oninput={() => touched.add('tag')}
-                                value={original?.tag ?? ''}
-                                placeholder="EXAMPLE_TAG_1"
-                            >
-                            <span class="trailing" aria-hidden="true">
-                                <Icon name="TbChevronDown" size={16} />
-                            </span>
-                        {/snippet}
-                        <datalist id="user-form-tags">
-                            {#each tags.data?.tags ?? [] as tag (tag)}
-                                <option value={tag}></option>
-                            {/each}
-                        </datalist>
+                        <SelectField
+                            name="tag"
+                            label={t('common.field.tag')}
+                            description={t('create-user-modal.widget.create-or-select-tag')}
+                            leading="PiTagDuotone"
+                            placeholder="EXAMPLE_TAG_1"
+                            autocomplete="create"
+                            pattern={'[A-Z0-9_]{1,16}'}
+                            preferAbove
+                            options={(tags.data?.tags ?? []).map((value) => ({
+                                value,
+                                label: value
+                            }))}
+                            value={tag}
+                            onchoose={(value) => {
+                                tag = value
+                                touched.add('tag')
+                            }}
+                        />
                         <label class="form-field description-field">
                             <span>{t('common.field.description')}</span>
                             <small>{t('create-user-modal.widget.user-description')}</small>
@@ -442,17 +438,17 @@
                             expiration
                         )}
                         {#snippet expiration(controlId: string)}
-                            <span class="date">
+                            <input type="hidden" name="expireAt" value={expireAt}>
+                            <button
+                                class="mantine-UnstyledButton-root date"
+                                type="button"
+                                id={controlId}
+                                aria-haspopup="dialog"
+                                aria-expanded={expirationOpen}
+                                onclick={() => (expirationOpen = true)}
+                            >
                                 {dateText}
-                                <input
-                                    id={controlId}
-                                    type="datetime-local"
-                                    name="expireAt"
-                                    bind:value={expireAt}
-                                    required
-                                    onclick={(event) => event.currentTarget.showPicker?.()}
-                                >
-                            </span>
+                            </button>
                         {/snippet}
                         <fieldset class="squads">
                             <legend>{t('common.field.internal-squads')}</legend>
@@ -557,6 +553,16 @@
             </Button>
         </div>
     </form>
+    {#if expirationOpen}
+        <ExpirationPicker
+            value={expireAt}
+            close={() => (expirationOpen = false)}
+            onchoose={(value) => {
+                expireAt = value
+                expirationOpen = false
+            }}
+        />
+    {/if}
     {@render overlays?.()}
     {#if editingSquad}
         <SquadInbounds uuid={editingSquad} close={() => (editingSquad = undefined)} />
@@ -601,7 +607,6 @@
         font-weight: 400;
         line-height: var(--mantine-line-height-xs);
     }
-    .tag-field small,
     .description-field small {
         line-height: 1.2;
     }
@@ -626,9 +631,6 @@
         display: grid;
         min-width: 0;
         margin-block-start: 2px;
-    }
-    .tag-field .input-wrap {
-        margin-block-start: 3px;
     }
     .device-limit .input-wrap {
         margin-block-start: 0;
@@ -667,8 +669,7 @@
         }
     }
 
-    .form-field :is(input, .date),
-    .input-wrap input {
+    .input-wrap :is(input:not([type="hidden"]), .date) {
         min-width: 0;
         width: 100%;
         min-height: 36px;
@@ -677,27 +678,12 @@
         border-radius: var(--mantine-radius-md);
         background: var(--mantine-color-dark-6);
         padding-block: 0;
+        padding-inline-start: 34px;
     }
     .form-field input::placeholder,
     .squads input::placeholder {
         color: var(--mantine-color-placeholder);
         opacity: 1;
-    }
-    .input-wrap :is(input, .date) {
-        padding-inline-start: 34px;
-    }
-    .input-wrap input[name="tag"] {
-        padding-inline-end: 34px;
-    }
-    .trailing {
-        position: absolute;
-        inset-block: 0;
-        inset-inline-end: 0;
-        display: grid;
-        width: 34px;
-        place-items: center;
-        color: var(--mantine-color-dimmed);
-        pointer-events: none;
     }
     .date {
         position: relative;
@@ -705,14 +691,8 @@
         align-items: center;
         font-weight: 400;
     }
-    .date input {
-        position: absolute;
-        inset: 0;
-        opacity: 0;
-        cursor: pointer;
-    }
-    .date:focus-within {
-        outline: 2px solid var(--mantine-color-cyan-4);
+    .date:focus-visible {
+        border-color: var(--mantine-primary-color-filled);
     }
     .traffic-limit {
         display: grid;
@@ -751,32 +731,6 @@
         margin-block: var(--mantine-spacing-xs);
         font-weight: 400;
         line-height: 20px;
-    }
-    .checkbox input[type="checkbox"] {
-        appearance: none;
-        display: grid;
-        width: 20px;
-        height: 20px;
-        min-height: 0;
-        margin: 0;
-        padding: 0;
-        place-content: center;
-        border: 1px solid var(--mantine-color-default-border);
-        border-radius: var(--mantine-radius-sm);
-        background: var(--mantine-color-default);
-        cursor: pointer;
-    }
-    .checkbox input[type="checkbox"]:checked {
-        border-color: var(--mantine-color-cyan-8);
-        background: var(--mantine-color-cyan-8);
-    }
-    .checkbox input[type="checkbox"]:checked::after {
-        width: 10px;
-        height: 6px;
-        transform: translateY(-1px) rotate(-45deg);
-        border-bottom: 2px solid white;
-        border-left: 2px solid white;
-        content: "";
     }
     .squad-list {
         max-height: 200px;

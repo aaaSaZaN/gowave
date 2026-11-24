@@ -1,16 +1,19 @@
 <script lang="ts">
     import { createQuery } from '@tanstack/svelte-query'
-    import { onMount } from 'svelte'
     import { locale } from '../i18n.svelte'
+    import ActionIcon from '../ui/ActionIcon.svelte'
+    import Button from '../ui/Button.svelte'
+    import EmptyState from '../ui/EmptyState.svelte'
+    import FormCard from '../ui/FormCard.svelte'
+    import JsonTree from '../ui/JsonTree.svelte'
+    import Overlay from '../ui/Overlay.svelte'
     import { connectionKeyLabel } from './delivery'
     import { connectionKeysQuery, rawSubscriptionQuery } from './queries'
     import SubscriptionQr from './SubscriptionQr.svelte'
 
     let { userId, shortUuid, close }: { userId: number; shortUuid: string; close: () => void } =
         $props()
-    const title = $props.id()
     let t = $derived(locale.t)
-    let dialog: HTMLDialogElement
     let showRaw = $state(false)
     let qr = $state<{ key: string; label: string }>()
     let error = $state('')
@@ -18,13 +21,10 @@
     const keys = createQuery(() => connectionKeysQuery(userId))
     const raw = createQuery(() => ({ ...rawSubscriptionQuery(shortUuid), enabled: showRaw }))
     let groups = $derived([
-        { label: 'Active', links: keys.data?.enabledKeys ?? [] },
-        { label: 'Hidden', links: keys.data?.hiddenKeys ?? [] },
-        { label: 'Disabled', links: keys.data?.disabledKeys ?? [] }
-    ])
-    let json = $derived(showRaw && raw.data ? JSON.stringify(raw.data, null, 4) : '')
-
-    onMount(() => dialog.showModal())
+        { label: 'Active', tone: 'teal', icon: 'TbWifi', links: keys.data?.enabledKeys ?? [] },
+        { label: 'Hidden', tone: 'gray', icon: 'TbEyeOff', links: keys.data?.hiddenKeys ?? [] },
+        { label: 'Disabled', tone: 'red', icon: 'TbWifiOff', links: keys.data?.disabledKeys ?? [] }
+    ] as const)
 
     function copy(value: string): void {
         error = ''
@@ -37,120 +37,152 @@
     }
 </script>
 
-<dialog class="connection-keys" bind:this={dialog} aria-labelledby={title} onclose={close}>
-    <div class="header">
-        <h2 id={title}>{t('get-user-subscription-links.feature.connection-keys')}</h2>
-        <button type="button" onclick={() => dialog.close()}>{t('common.action.close')}</button>
+<Overlay
+    drawer
+    width={440}
+    title={t('get-user-subscription-links.feature.connection-keys')}
+    icon="PiLinkBreak"
+    tone="teal"
+    {close}
+>
+    <div class="content">
+        <Button block variant="soft" color="teal" icon="TbJson" onclick={() => (showRaw = true)}
+            >Raw Subscription</Button
+        >
+        {#if error}
+            <p role="alert">{error}</p>
+        {/if}
+        {#if notice}
+            <p role="status">{notice}</p>
+        {/if}
+        {#if keys.isPending}
+            <p role="status">{t('common.message.loading')}</p>
+        {:else if keys.isError}
+            <p role="alert">{keys.error.message}</p>
+            <Button variant="default" onclick={() => void keys.refetch()}
+                >{t('common.action.try-again')}</Button
+            >
+        {:else if groups.every(({ links }) => links.length === 0)}
+            <EmptyState icon="PiEmpty" label={t('common.message.no-data-available')} />
+        {:else}
+            {#each groups as group (group.label)}
+                {#if group.links.length}
+                    <FormCard title={group.label} icon={group.icon} tone={group.tone}>
+                        {#snippet actions()}
+                            <span class="count">{group.links.length}</span>
+                        {/snippet}
+                        {#each group.links as key}
+                            {@const label = connectionKeyLabel(key, t('base-host-form.host'))}
+                            <div class="key">
+                                <span>{label}</span>
+                                <div class="control">
+                                    <input aria-label={label} type="text" readonly value={key}>
+                                    <ActionIcon
+                                        class="left"
+                                        icon="PiCopy"
+                                        label={t('common.action.copy')}
+                                        size={30}
+                                        iconSize={16}
+                                        subtle
+                                        onclick={() => copy(key)}
+                                    />
+                                    <ActionIcon
+                                        class="right"
+                                        icon="TbQrcode"
+                                        label={t('view-user-modal.widget.qr-code')}
+                                        size={30}
+                                        iconSize={16}
+                                        subtle
+                                        onclick={() => (qr = { key, label })}
+                                    />
+                                </div>
+                            </div>
+                        {/each}
+                    </FormCard>
+                {/if}
+            {/each}
+        {/if}
     </div>
-    <div class="button-row">
-        <button type="button" aria-pressed={!showRaw} onclick={() => (showRaw = false)}>
-            {t('get-user-subscription-links.feature.connection-keys')}
-        </button>
-        <button type="button" aria-pressed={showRaw} onclick={() => (showRaw = true)}>
-            Raw Subscription
-        </button>
-    </div>
-    {#if error}
-        <p role="alert">{error}</p>
-    {/if}
-    {#if notice}
-        <p role="status">{notice}</p>
-    {/if}
-    {#if showRaw}
+</Overlay>
+
+{#if showRaw}
+    <Overlay
+        title="Raw Subscription"
+        icon="TbJson"
+        tone="teal"
+        width={760}
+        close={() => (showRaw = false)}
+    >
         {#if raw.isPending}
             <p role="status">{t('common.message.loading')}</p>
         {:else if raw.isError}
             <p role="alert">{raw.error.message}</p>
-            <button type="button" onclick={() => void raw.refetch()}>
-                {t('common.action.try-again')}
-            </button>
+            <Button variant="default" onclick={() => void raw.refetch()}
+                >{t('common.action.try-again')}</Button
+            >
         {:else}
-            <button class="copy-json" type="button" onclick={() => copy(json)}>
-                {t('common.action.copy')}
-            </button>
-            <pre>{json}</pre>
+            <div class="content">
+                <Button
+                    variant="default"
+                    icon="PiCopy"
+                    onclick={() => copy(JSON.stringify(raw.data, null, 4))}
+                    >{t('common.action.copy')}</Button
+                >
+                {#if error}
+                    <p role="alert">{error}</p>
+                {/if}
+                {#if notice}
+                    <p role="status">{notice}</p>
+                {/if}
+                <JsonTree value={raw.data} indent={4} />
+            </div>
         {/if}
-    {:else if keys.isPending}
-        <p role="status">{t('common.message.loading')}</p>
-    {:else if keys.isError}
-        <p role="alert">{keys.error.message}</p>
-        <button type="button" onclick={() => void keys.refetch()}>
-            {t('common.action.try-again')}
-        </button>
-    {:else if groups.every(({ links }) => links.length === 0)}
-        <p>{t('common.message.no-data-available')}</p>
-    {:else}
-        {#each groups as group (group.label)}
-            {#if group.links.length}
-                <section aria-label={group.label}>
-                    <h3>{group.label} ({group.links.length.toLocaleString(locale.language)})</h3>
-                    {#each group.links as key}
-                        {@const label = connectionKeyLabel(key, t('base-host-form.host'))}
-                        <div class="key">
-                            <label>{label}<input type="text" readonly value={key}></label>
-                            <div class="button-row">
-                                <button type="button" onclick={() => copy(key)}>
-                                    {t('common.action.copy')}
-                                </button>
-                                <button type="button" onclick={() => (qr = { key, label })}>
-                                    {t('view-user-modal.widget.qr-code')}
-                                </button>
-                            </div>
-                        </div>
-                    {/each}
-                </section>
-            {/if}
-        {/each}
-    {/if}
-    {#if qr}
-        <SubscriptionQr
-            value={qr.key}
-            label={qr.label}
-            filename="connection-key.png"
-            close={() => (qr = undefined)}
-        />
-    {/if}
-</dialog>
+    </Overlay>
+{/if}
+
+{#if qr}
+    <SubscriptionQr
+        value={qr.key}
+        label={qr.label}
+        filename="connection-key.png"
+        close={() => (qr = undefined)}
+    />
+{/if}
 
 <style>
-    .connection-keys {
-        width: min(50rem, calc(100vw - 2rem));
-    }
-    .header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-        margin-block-end: 0.75rem;
-    }
-    h2 {
-        margin: 0;
-    }
-    h3,
-    .key,
-    .copy-json {
-        margin-block: 0.75rem;
+    .content {
+        display: grid;
+        gap: var(--mantine-spacing-md);
     }
     .key {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: end;
-        gap: 0.5rem;
-    }
-    label {
         display: grid;
-        flex: 1 1 15rem;
         min-width: 0;
-        gap: 0.25rem;
-        overflow-wrap: anywhere;
+        gap: 4px;
+        font-size: var(--mantine-font-size-sm);
     }
-    input {
-        min-width: 0;
+    .control {
+        position: relative;
+        display: grid;
     }
-    pre {
-        max-width: 100%;
-        overflow: auto;
-        white-space: pre-wrap;
-        overflow-wrap: anywhere;
+    .control input {
+        width: 100%;
+        padding-inline: 36px;
+        font-family: var(--mantine-font-family-monospace);
+    }
+    .control :global(.action-icon) {
+        position: absolute;
+        inset-block-start: 3px;
+    }
+    .control :global(.left) {
+        inset-inline-start: 3px;
+    }
+    .control :global(.right) {
+        inset-inline-end: 3px;
+    }
+    .count {
+        padding-inline: 8px;
+        border-radius: var(--mantine-radius-xl);
+        background: var(--mantine-color-default-hover);
+        font-size: var(--mantine-font-size-xs);
     }
 </style>

@@ -20,6 +20,7 @@
         height,
         mobile,
         plugin,
+        onopen,
         reorder,
         selection,
         actions
@@ -29,6 +30,7 @@
         height: number
         mobile: boolean
         plugin: string | undefined
+        onopen: (event: MouseEvent) => void
         reorder?: ((source: string, target: string) => void) | undefined
         selection: Snippet
         actions: Snippet
@@ -59,6 +61,13 @@
                   ? '245, 158, 11'
                   : '239, 68, 68'
     )
+    let health = $derived.by(() => {
+        if (node.isDisabled) return { icon: 'PiProhibitDuotone', color: 'gray-6' } as const
+        if (rejected) return { icon: 'PiWarningCircle', color: 'orange-5' } as const
+        if (online) return { icon: 'PiPulseDuotone', color: 'teal-6' } as const
+        if (node.isConnecting) return { icon: 'PiCloudArrowUpDuotone', color: 'yellow-3' } as const
+        return { icon: 'PiWarningCircle', color: 'red-3' } as const
+    })
     let dangling = $derived(
         !node.configProfile.activeConfigProfileUuid || !node.configProfile.activeInbounds.length
     )
@@ -116,13 +125,13 @@
     }
 </script>
 
-{#snippet meter(value: number, tone: string, label: string)}
+{#snippet meter(value: number, fill: string, label: string)}
     <div
         class="meter"
         role="progressbar"
         aria-label={label}
         aria-valuenow={value}
-        style:--fill={`var(--mantine-color-${tone}-6)`}
+        style:--fill={fill}
     >
         <span style:width={`${value}%`}></span>
     </div>
@@ -148,7 +157,13 @@
             <strong>{prettifyBytesUtil(node.trafficUsedBytes ?? 0) || '0 B'}</strong>
             <span>{limit ? prettifyBytesUtil(limit) : '∞'}</span>
         </div>
-        {@render meter(percentage, trafficTone, locale.t('use-nodes-table-widget.traffic-used'))}
+        {@render meter(
+            percentage,
+            node.isTrafficTrackingActive
+                ? `var(--mantine-color-${trafficTone}-6)`
+                : 'var(--mantine-color-teal-filled)',
+            locale.t('use-nodes-table-widget.traffic-used')
+        )}
     </div>
 {/snippet}
 
@@ -181,26 +196,19 @@
         <div class="node-main">
             <div class="identity">
                 {#if dangling}
-                    <span class="health dangling-health" title="DANGLING">
-                        <Icon name="TbAlertCircle" size={18} />
+                    <span class="dangling-health" title="DANGLING">
+                        <Icon name="TbAlertCircle" size={14} />DANGLING
                     </span>
                 {:else}
                     <span
                         class="health"
-                        class:online
-                        class:disabled={node.isDisabled}
                         role="img"
                         title={status}
                         aria-label={status}
-                        ><Icon
-                            name={node.isDisabled
-                                ? 'PiProhibitDuotone'
-                                : online
-                                  ? 'PiPulseDuotone'
-                                  : 'TbAlertCircle'}
-                            size={18}
-                        /></span
+                        style:--health-ink={`var(--mantine-color-${health.color})`}
                     >
+                        <Icon name={health.icon} size={18} />
+                    </span>
                     <span
                         class="users"
                         class:with-users={node.usersOnline > 0}
@@ -209,7 +217,10 @@
                         <Icon name="PiUsersDuotone" size={14} />{node.usersOnline}
                     </span>
                 {/if}
-                <a href={p('/dashboard/open/node/:id', { params: { id: node.uuid } })}>
+                <a
+                    href={p('/dashboard/open/node/:id', { params: { id: node.uuid } })}
+                    onclick={onopen}
+                >
                     {#if country}
                         <span class="flag">{country}</span>
                     {/if}
@@ -253,7 +264,11 @@
         <div class="vitals">
             <div class="memory" title={memory === undefined ? undefined : `${memory}%`}>
                 <Icon name="PiMemoryDuotone" size={mobile ? 12 : 14} />
-                {@render meter(Math.min(100, Math.max(0, memory ?? 0)), memoryTone, 'RAM')}
+                {@render meter(
+                    Math.min(100, Math.max(0, memory ?? 0)),
+                    `var(--mantine-color-${memoryTone}-6)`,
+                    'RAM'
+                )}
                 <span>{memory === undefined ? '—' : `${memory}%`}</span>
             </div>
             {#if !mobile}
@@ -325,7 +340,7 @@
         );
     }
     article:hover {
-        border-color: color-mix(in srgb, rgb(var(--node-tone)) 65%, var(--gw-border));
+        border-color: light-dark(var(--mantine-color-blue-3), var(--mantine-color-blue-5));
     }
     .dragging article {
         opacity: 0.45;
@@ -383,23 +398,22 @@
         width: 26px;
         height: 26px;
         place-items: center;
-        border: 1px solid color-mix(in srgb, rgb(var(--node-tone)) 52%, transparent);
+        border: 1px solid var(--health-ink);
         border-radius: var(--mantine-radius-md);
-        background: color-mix(in srgb, rgb(var(--node-tone)) 12%, transparent);
-        color: rgb(var(--node-tone));
+        color: var(--health-ink);
     }
-    .health.online {
-        color: var(--mantine-color-teal-4);
-        border-color: color-mix(in srgb, var(--mantine-color-teal-4) 48%, transparent);
-        background: color-mix(in srgb, var(--mantine-color-teal-6) 14%, transparent);
-    }
-    .health.disabled {
-        color: var(--mantine-color-gray-5);
-    }
-    .health.dangling-health {
-        color: var(--mantine-color-red-4);
-        border-color: color-mix(in srgb, var(--mantine-color-red-5) 50%, transparent);
+    .dangling-health {
+        display: inline-flex;
+        flex: none;
+        align-items: center;
+        gap: 4px;
+        height: 26px;
+        padding-inline: 10px;
+        border-radius: var(--mantine-radius-md);
         background: var(--mantine-color-red-light);
+        color: var(--mantine-color-red-light-color);
+        font-size: var(--mantine-font-size-xs);
+        font-weight: 700;
     }
     .users,
     .provider,
@@ -432,12 +446,11 @@
     .users {
         min-width: 7ch;
         padding-inline: 8px;
-        border: 1px solid var(--mantine-color-gray-6);
-        color: var(--mantine-color-gray-light-color);
+        border: 1px solid currentColor;
+        color: light-dark(var(--mantine-color-gray-8), var(--mantine-color-gray-3));
     }
     .users.with-users {
-        border-color: var(--mantine-color-teal-6);
-        color: var(--mantine-color-teal-light-color);
+        color: light-dark(var(--mantine-color-teal-8), var(--mantine-color-teal-4));
     }
     .provider {
         max-width: 20ch;
@@ -485,7 +498,7 @@
     .meter {
         min-width: 0;
         position: relative;
-        height: 6px;
+        height: 5px;
         border-radius: var(--mantine-radius-sm);
         overflow: hidden;
         background: var(--mantine-color-dark-4);
@@ -507,7 +520,7 @@
     }
     .vitals {
         gap: var(--mantine-spacing-md);
-        margin-block-start: var(--mantine-spacing-xs);
+        margin-block-start: 8px;
     }
     .memory {
         max-width: 200px;

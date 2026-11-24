@@ -48,9 +48,11 @@
                 <strong>{active.name}</strong
                 ><span class="count"><Icon name="TbTag" size={12} />{selected.length}</span>
                 <ActionIcon
+                    class="profile-edit"
                     icon="TbEdit"
                     label={t('common.action.edit')}
                     size={34}
+                    iconSize={18}
                     onclick={() => (open = true)}
                 />
             {:else}
@@ -130,6 +132,12 @@
         border: 1px solid var(--mantine-color-default-border);
         border-radius: 6px;
         padding: 6px;
+    }
+    .line :global(.profile-edit) {
+        color: var(--mantine-color-bright);
+    }
+    .logo.active {
+        border-color: color-mix(in srgb, var(--mantine-color-cyan-6) 30%, transparent);
     }
     .logo.active,
     .count {

@@ -3,7 +3,6 @@ package subscription
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -22,7 +21,6 @@ import (
 type hostPreviewRequest struct {
 	HostUUID         string                          `json:"hostUuid"`
 	Host             *configprofiles.CreateHostInput `json:"host"`
-	Protocol         *string                         `json:"protocol"`
 	UserAgent        string                          `json:"userAgent"`
 	RequestHeaders   []previewHeader                 `json:"requestHeaders"`
 	PreviewAsEnabled bool                            `json:"previewAsEnabled"`
@@ -52,19 +50,6 @@ func (h *Handler) PreviewHost(w http.ResponseWriter, r *http.Request) {
 	if err := httpx.Decode(r, 1<<20, &input); err != nil || (input.Host == nil) == (input.HostUUID == "") {
 		httpx.Error(w, r, http.StatusBadRequest, "GW400", "Provide either a saved host UUID or a draft host")
 		return
-	}
-
-	// Older dashboards send a protocol and a draft without an inbound.
-	if input.Host != nil && input.Protocol != nil {
-		host := input.Host.BuildHost()
-		if host.ConfigProfileInboundUUID == nil {
-			userAgent := input.UserAgent
-			if userAgent == "" {
-				userAgent = r.UserAgent()
-			}
-			httpx.Response(w, legacyHostPreview(host, *input.Protocol, userAgent))
-			return
-		}
 	}
 
 	const shortUUID = "preview"
@@ -223,88 +208,4 @@ func (h *Handler) serveHostPreview(w http.ResponseWriter, r *http.Request, ctx *
 		Headers: h.profileHeaders(user, settings, settings.Hwid.Enabled && !ctx.DisableHwidCheck),
 		Body:    body, ContentType: contentType,
 	})
-}
-
-type legacyHostPreviewResponse struct {
-	ClientType     string            `json:"clientType"`
-	ContentType    string            `json:"contentType"`
-	Headers        map[string]string `json:"headers"`
-	PreviewContent string            `json:"previewContent"`
-}
-
-func legacyHostPreview(h *database.Host, protocol, userAgent string) legacyHostPreviewResponse {
-	if h.Fingerprint == "" {
-		h.Fingerprint = "chrome"
-	}
-
-	proto := strings.ToLower(protocol)
-	if proto == "" {
-		proto = "vless"
-	}
-
-	ua := strings.ToLower(userAgent)
-	clientType := "Base64 / Standard"
-	contentType := "text/plain; charset=utf-8"
-
-	sampleUUID := "11111111-2222-3333-4444-555555555555"
-
-	var content string
-
-	if strings.Contains(ua, "clash") {
-		clientType = "Clash / Mihomo"
-		contentType = "text/yaml; charset=utf-8"
-		content = fmt.Sprintf(`proxies:
-  - name: "%s"
-    type: %s
-    server: %s
-    port: %d
-    uuid: %s
-    network: ws
-    tls: true
-    servername: %s
-    client-fingerprint: %s
-`, h.Remark, proto, h.Address, h.Port, sampleUUID, h.Sni, h.Fingerprint)
-	} else if strings.Contains(ua, "sing-box") || strings.Contains(ua, "singbox") {
-		clientType = "Sing-Box"
-		contentType = "application/json; charset=utf-8"
-		content = fmt.Sprintf(`{
-  "outbounds": [
-    {
-      "type": "%s",
-      "tag": "%s",
-      "server": "%s",
-      "server_port": %d,
-      "uuid": "%s",
-      "tls": {
-        "enabled": true,
-        "server_name": "%s",
-        "utls": {
-          "enabled": true,
-          "fingerprint": "%s"
-        }
-      }
-    }
-  ]
-}`, proto, h.Remark, h.Address, h.Port, sampleUUID, h.Sni, h.Fingerprint)
-	} else {
-		security := "tls"
-		if h.SecurityLayer != "" && h.SecurityLayer != "DEFAULT" {
-			security = strings.ToLower(h.SecurityLayer)
-		}
-		content = fmt.Sprintf("%s://%s@%s:%d?security=%s&sni=%s&fp=%s#%s",
-			proto, sampleUUID, h.Address, h.Port, security, h.Sni, h.Fingerprint, h.Remark)
-	}
-
-	headers := map[string]string{
-		"profile-web-page-url":  "https://panel.domain.com/sub/preview",
-		"subscription-userinfo": "upload=0; download=104857600; total=107374182400; expire=1790000000",
-		"Content-Type":          contentType,
-	}
-
-	return legacyHostPreviewResponse{
-		ClientType:     clientType,
-		ContentType:    contentType,
-		Headers:        headers,
-		PreviewContent: content,
-	}
 }

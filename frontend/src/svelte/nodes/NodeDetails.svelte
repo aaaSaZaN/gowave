@@ -13,12 +13,11 @@
         getXrayUptimeUtil
     } from '@shared/utils/time-utils'
     import { createMutation, createQuery } from '@tanstack/svelte-query'
-    import { profilesQuery } from '../config-profiles/queries'
-    import { hostsQuery } from '../hosts/queries'
+    import { onDestroy } from 'svelte'
     import { locale } from '../i18n.svelte'
     import Metadata, { nodeMetadataQuery } from '../Metadata.svelte'
     import { queryClient } from '../query-client'
-    import { navigate, p, route } from '../router'
+    import { navigate, route } from '../router'
     import ActiveSessions from '../sessions/ActiveSessions.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import ActionMenu from '../ui/ActionMenu.svelte'
@@ -32,6 +31,7 @@
     import { flag } from './analytics'
     import NodeEditor from './NodeEditor.svelte'
     import NodeGeocheck from './NodeGeocheck.svelte'
+    import NodeHosts from './NodeHosts.svelte'
     import NodeLogs from './NodeLogs.svelte'
     import NodeUsersUsage from './NodeUsersUsage.svelte'
     import NodeVersions from './NodeVersions.svelte'
@@ -49,45 +49,31 @@
     let hostMode = $state<'linked' | 'inbounds'>()
     let notice = $state('')
     let clipboardError = $state('')
+    let copiedMessage = $state('')
+    let copyTimeout: ReturnType<typeof setTimeout> | undefined
+    onDestroy(() => clearTimeout(copyTimeout))
     const record = createQuery(() => ({ ...nodeQuery(id), refetchInterval: 5_000 }))
     const metadata = createQuery(() => ({ ...nodeMetadataQuery(id), enabled: !!record.data }))
+    const minGeocheckVersion = '3.3.0'
     let canGeocheck = $derived.by(() => {
         const versions = record.data?.versions
         const version = semver.coerce(versions?.node)
-        return isGoNodeVersion(versions) || (version !== null && semver.gte(version, '3.3.0'))
+        return (
+            isGoNodeVersion(versions) ||
+            (version !== null && semver.gte(version, minGeocheckVersion))
+        )
     })
     const trafficSummary = createQuery(() => trafficSummaryQuery)
     let lifetime = $derived(
         trafficSummary.data?.nodes.find((item) => item.uuid === id)?.lifetimeTrafficBytes
     )
-    const profiles = createQuery(() => profilesQuery)
-    const hosts = createQuery(() => ({ ...hostsQuery, enabled: !!hostMode }))
-    let activeProfile = $derived(
-        profiles.data?.configProfiles.find(
-            ({ uuid }) => uuid === record.data?.configProfile.activeConfigProfileUuid
-        )
-    )
-    let related = $derived.by(() => {
-        const enabledInbounds = new Set(
-            record.data?.configProfile.activeInbounds.map(({ uuid }) => uuid)
-        )
-        return (
-            hosts.data?.filter((host) =>
-                hostMode === 'linked'
-                    ? host.nodes.includes(id)
-                    : Boolean(
-                          host.inbound.configProfileInboundUuid &&
-                              enabledInbounds.has(host.inbound.configProfileInboundUuid)
-                      )
-            ) ?? []
-        )
-    })
     const update = createMutation(() => ({
         mutationFn: (action: NodeAction) => runNodeAction(id, action),
         onSuccess: async (_data, action) => {
             if (action === 'delete') {
                 const key = nodeQuery(id).queryKey
-                await navigate(ROUTES.DASHBOARD.MANAGEMENT.NODES)
+                if (onclose) onclose()
+                else await navigate(ROUTES.DASHBOARD.MANAGEMENT.NODES)
                 queryClient.removeQueries({ queryKey: key })
             }
             await queryClient.invalidateQueries({ queryKey: nodesKey })
@@ -111,10 +97,13 @@
         update.mutate(action)
     }
 
-    function copy(text: string): void {
+    function copy(text: string, oncopied?: () => void): void {
         clipboardError = ''
         void navigator.clipboard.writeText(text).then(
-            () => (notice = t('common.message.copied')),
+            () => {
+                notice = t('common.message.copied')
+                oncopied?.()
+            },
             (error: unknown) =>
                 (clipboardError = error instanceof Error ? error.message : String(error))
         )
@@ -149,16 +138,6 @@
                 iconSize={16}
                 onclick={() => copy(buildOpenEntityUrl(OPEN_ENTITY.NODE, id))}
             />
-            {#if canGeocheck}
-                <ActionIcon
-                    icon="PiNetwork"
-                    label={t('node-geocheck.title')}
-                    subtle
-                    size={26}
-                    iconSize={16}
-                    onclick={() => (geoNode = id)}
-                />
-            {/if}
         {/if}
     {/snippet}
     {#if record.isPending}
@@ -168,7 +147,6 @@
         <Button onclick={() => void record.refetch()}>{t('common.action.try-again')}</Button>
     {:else if record.data}
         {@const node = record.data}
-        {@const online = node.isConnected && !!node.xrayUptime && !node.isDisabled}
         {@const missing =
             !node.configProfile.activeConfigProfileUuid ||
             !node.configProfile.activeInbounds.length}
@@ -195,18 +173,50 @@
                             <div class="error-message">
                                 <p role="alert" class="feedback">{node.lastStatusMessage}</p>
                                 <ActionIcon
-                                    icon="TbCopy"
+                                    icon={copiedMessage === node.lastStatusMessage
+                                        ? 'PiCheck'
+                                        : 'PiCopy'}
                                     label={t('common.action.copy')}
-                                    size={28}
-                                    onclick={() => copy(node.lastStatusMessage ?? '')}
+                                    size={26}
+                                    iconSize={14}
+                                    subtle
+                                    class="error-copy"
+                                    data-copied={copiedMessage === node.lastStatusMessage}
+                                    onclick={() => {
+                                        const message = node.lastStatusMessage ?? ''
+                                        copy(message, () => {
+                                            copiedMessage = message
+                                            clearTimeout(copyTimeout)
+                                            copyTimeout = setTimeout(
+                                                () => (copiedMessage = ''),
+                                                2000
+                                            )
+                                        })
+                                    }}
                                 />
                             </div>
                         </FormCard>
                     {/if}
                     <FormCard
                         title={t('node-details-card.widget.node-details')}
-                        tone={missing ? 'red' : node.isDisabled ? 'gray' : online ? 'teal' : 'red'}
-                        icon={missing ? 'TbAlertCircle' : online ? 'TbWifi' : 'PiWifiSlash'}
+                        tone={missing
+                            ? 'red'
+                            : node.isDisabled
+                              ? 'gray'
+                              : node.isConnected
+                                ? 'teal'
+                                : node.isConnecting
+                                  ? 'yellow'
+                                  : 'red'}
+                        icon={missing
+                            ? 'PiWarningCircle'
+                            : node.isDisabled
+                              ? 'TbWifiOff'
+                              : node.isConnected
+                                ? 'TbWifi'
+                                : node.isConnecting
+                                  ? 'PiCloudArrowUpDuotone'
+                                  : 'PiWarningCircle'}
                     >
                         {#snippet actions()}
                             <div class="connection-status">
@@ -219,11 +229,13 @@
                                 <ActionIcon
                                     icon="TbPower"
                                     tone={node.isDisabled || missing ? 'teal' : 'red'}
-                                    class={missing ? 'missing-config' : ''}
+                                    class={missing ? 'missing-config' : 'power-action'}
                                     label={t(
-                                        node.isDisabled
-                                            ? 'node-details-card.widget.enable-node'
-                                            : 'node-details-card.widget.disable-node'
+                                        missing
+                                            ? 'node-details-card.widget.config-profile-or-inbounds-is-missing'
+                                            : node.isDisabled
+                                              ? 'node-details-card.widget.enable-node'
+                                              : 'node-details-card.widget.disable-node'
                                     )}
                                     size={28}
                                     iconSize={16}
@@ -248,7 +260,7 @@
                                     tone="cyan"
                                     size={34}
                                     iconSize={22}
-                                    label="Logs"
+                                    label="Логи ноды / Xray"
                                     onclick={() => (showLogs = true)}
                                 />
                             </div>
@@ -257,7 +269,7 @@
                                     icon="TbServerCog"
                                     tone="cyan"
                                     size={34}
-                                    iconSize={20}
+                                    iconSize={22}
                                     label={t('get-node-linked-hosts.feature.linked-hosts')}
                                     onclick={() => (hostMode = 'linked')}
                                 />
@@ -265,7 +277,7 @@
                                     icon="TbSitemap"
                                     tone="teal"
                                     size={34}
-                                    iconSize={20}
+                                    iconSize={22}
                                     label={t('common.field.inbounds-hosts')}
                                     onclick={() => (hostMode = 'inbounds')}
                                 />
@@ -275,7 +287,7 @@
                                     icon="TbChartArcs"
                                     tone="indigo"
                                     size={34}
-                                    iconSize={20}
+                                    iconSize={22}
                                     label={t('common.field.usage-stats')}
                                     onclick={() => (usageNode = node.uuid)}
                                 />
@@ -283,9 +295,22 @@
                                     icon="TbRadar"
                                     tone="indigo"
                                     size={34}
-                                    iconSize={20}
+                                    iconSize={22}
                                     label={t('common.field.active-sessions')}
                                     onclick={() => (sessionNode = node.uuid)}
+                                />
+                                <ActionIcon
+                                    icon="TbMapSearch"
+                                    tone="indigo"
+                                    size={34}
+                                    iconSize={22}
+                                    label={canGeocheck
+                                        ? t('node-geocheck.title')
+                                        : t('node-geocheck.requires-node-version', {
+                                              version: minGeocheckVersion
+                                          })}
+                                    disabled={!canGeocheck}
+                                    onclick={() => (geoNode = node.uuid)}
                                 />
                             </div>
                         </div>
@@ -391,7 +416,9 @@
                                         disabled={!isGoNodeVersion(node.versions)}
                                         title={t('node-details-card.widget.gowave-node-version')}
                                         aria-label={isGoNodeVersion(node.versions)
-                                            ? `Выбрать версию Gowave Node. Установлена ${node.versions.node}`
+                                            ? t('node-details-card.widget.select-node-version', {
+                                                  version: node.versions.node
+                                              })
                                             : t('node-details-card.widget.gowave-node-version')}
                                         onclick={() =>
                                             (versionDialog = { id: node.uuid, component: 'node' })}
@@ -629,51 +656,16 @@
             />
         {/if}
         {#if hostMode}
-            <Overlay
-                title={t(
-                    hostMode === 'linked'
-                        ? 'get-node-linked-hosts.feature.linked-hosts'
-                        : 'common.field.inbounds-hosts'
-                )}
-                icon={hostMode === 'linked' ? 'TbServerCog' : 'TbSitemap'}
-                width={680}
-                close={() => (hostMode = undefined)}
-            >
-                {#if activeProfile}
-                    <a
-                        href={p(ROUTES.DASHBOARD.MANAGEMENT.CONFIG_PROFILE_BY_UUID, {
-                            params: { uuid: activeProfile.uuid }
-                        })}
-                        >{activeProfile.name}</a
-                    >
-                {/if}
-                {#if node.configProfile.activeInbounds.length}
-                    <p>{node.configProfile.activeInbounds.map(({ tag }) => tag).join(', ')}</p>
-                {/if}
-                {#if hosts.isPending}
-                    <p role="status">{t('common.message.loading')}</p>
-                {:else if hosts.error}
-                    <p role="alert">{hosts.error.message}</p>
-                {:else if !related.length}
-                    <p>{t('common.message.nothing-found')}</p>
-                {:else}
-                    <ul>
-                        {#each related as host (host.uuid)}
-                            <li>
-                                <a
-                                    href={p('/dashboard/open/host/:id', {
-                                        params: { id: host.uuid }
-                                    })}
-                                    >{host.remark}</a
-                                >
-                            </li>
-                        {/each}
-                    </ul>
-                {/if}
-            </Overlay>
+            <NodeHosts {node} mode={hostMode} close={() => (hostMode = undefined)} />
         {/if}
         {#if showLogs}
-            <Overlay title="Logs" icon="TbTerminal2" width={900} close={() => (showLogs = false)}>
+            <Overlay
+                title="Логи ноды и Xray"
+                subtitle={node.name}
+                icon="TbTerminal2"
+                width={1150}
+                close={() => (showLogs = false)}
+            >
                 <NodeLogs uuid={id} />
             </Overlay>
         {/if}
@@ -714,8 +706,8 @@
         padding-inline-start: 10px;
     }
     .traffic-card {
-        padding-block: var(--mantine-spacing-md);
-        border-block: 1px solid rgba(var(--gw-fg-rgb), 0.06);
+        padding-block-start: var(--mantine-spacing-md);
+        border-block-start: 1px solid rgba(var(--gw-fg-rgb), 0.06);
         color: var(--mantine-color-dimmed);
         font-size: var(--mantine-font-size-xs);
     }
@@ -751,6 +743,8 @@
     }
     .details-metrics {
         display: grid;
+        padding-block-start: var(--mantine-spacing-md);
+        border-block-start: 1px solid rgba(var(--gw-fg-rgb), 0.06);
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: var(--mantine-spacing-xs);
     }
@@ -922,6 +916,15 @@
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: var(--mantine-spacing-sm);
+    }
+    .error-message :global(.error-copy) {
+        color: var(--mantine-color-dimmed);
+    }
+    .error-message :global(.error-copy[data-copied="true"]) {
+        color: var(--mantine-color-teal-4);
+    }
+    .connection-status :global(.power-action:not(:disabled)) {
+        box-shadow: 0 0 10px color-mix(in srgb, var(--action-edge) 25%, transparent);
     }
     .error-message {
         position: relative;

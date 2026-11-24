@@ -5,6 +5,7 @@
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
     import Calendar from '../ui/Calendar.svelte'
+    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import PageHeader from '../ui/PageHeader.svelte'
 
     type Range = { start: string; end: string }
@@ -52,7 +53,7 @@
 
     function applyRange(start: string, end: string): void {
         apply(start <= end ? { start, end } : { start: end, end: start })
-        dialog?.close()
+        dismissDialog(dialog)
     }
 
     function selectDate(date: string): void {
@@ -115,6 +116,7 @@
 
 {#if selecting}
     <dialog
+        oncancel={cancelDialog}
         bind:this={dialog}
         class="range-dialog"
         closedby="any"

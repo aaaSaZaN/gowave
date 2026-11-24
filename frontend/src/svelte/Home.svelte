@@ -64,7 +64,7 @@
                         )
                     },
                     {
-                        label: 'Heap Used',
+                        label: t('pm2-metrics.heap-used'),
                         icon: 'PiTreeStructureDuotone',
                         color: 'green',
                         value: prettifyBytesUtil(
@@ -73,7 +73,7 @@
                         )
                     },
                     {
-                        label: 'Goroutines',
+                        label: t('pm2-metrics.goroutines'),
                         icon: 'PiGearSixDuotone',
                         color: 'blue',
                         value: runtime.reduce(
@@ -207,7 +207,7 @@
                         value: prettifyBytesUtil(memory.used) ?? 0
                     },
                     {
-                        label: 'Total RAM',
+                        label: t('use-nodes-table-widget.total-ram'),
                         icon: 'PiMemoryFill',
                         color: 'cyan',
                         value: prettifyBytesUtil(memory.total) ?? 0

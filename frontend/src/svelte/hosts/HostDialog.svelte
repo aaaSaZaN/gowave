@@ -8,6 +8,7 @@
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
     import Overlay from '../ui/Overlay.svelte'
+    import HostConfirmation from './HostConfirmation.svelte'
     import HostEditor from './HostEditor.svelte'
     import { hostQuery, hostsKey } from './queries'
 
@@ -15,6 +16,7 @@
     const t = $derived(locale.t)
     const record = createQuery(() => ({ ...hostQuery(uuid ?? ''), enabled: Boolean(uuid) }))
     let editor: ReturnType<typeof HostEditor> | undefined = $state()
+    let confirmation = $state<'clone' | 'delete'>()
     let copied = $state(false)
     let copyError = $state('')
     let host = $derived(record.data)
@@ -33,10 +35,6 @@
             close()
         }
     }))
-
-    function apply(action: 'clone' | 'delete'): void {
-        if (window.confirm(t('common.message.confirm-action-description'))) mutation.mutate(action)
-    }
 
     function copyLink(): void {
         if (!uuid) return
@@ -97,7 +95,7 @@
                             disabled={mutation.isPending ||
                                 !host.inbound.configProfileInboundUuid ||
                                 !host.inbound.configProfileUuid}
-                            onclick={() => apply('clone')}
+                            onclick={() => (confirmation = 'clone')}
                         />
                         <ActionIcon
                             icon="PiTrashDuotone"
@@ -105,7 +103,7 @@
                             size={44}
                             label={t('common.action.delete')}
                             disabled={mutation.isPending}
-                            onclick={() => apply('delete')}
+                            onclick={() => (confirmation = 'delete')}
                         />
                     </div>
                 {/if}
@@ -116,6 +114,23 @@
         <p role="alert">{mutation.error?.message || copyError}</p>
     {/if}
 </Overlay>
+
+{#if confirmation}
+    {@const action = confirmation}
+    {@const label = t(action === 'delete' ? 'common.action.delete' : 'common.action.clone')}
+    <HostConfirmation
+        title={label}
+        {label}
+        icon={action === 'delete' ? 'PiTrashDuotone' : 'TbCopy'}
+        tone={action === 'delete' ? 'red' : 'cyan'}
+        description={t('common.message.confirm-action-description')}
+        close={() => (confirmation = undefined)}
+        confirm={() => {
+            confirmation = undefined
+            mutation.mutate(action)
+        }}
+    />
+{/if}
 
 <style>
     :global(.host-details .overlay-header) {

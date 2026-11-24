@@ -13,6 +13,7 @@
     import CodeEditor from '../editor/CodeEditor.svelte'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
+    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import { snippetsQuery } from './queries'
 
     type Snippet = GetSnippetsCommand.Response['response']['snippets'][number]
@@ -103,14 +104,12 @@
 <dialog
     bind:this={dialog}
     onclose={close}
-    oncancel={(event) => {
-        if (busy) event.preventDefault()
-    }}
+    oncancel={(event) => cancelDialog(event, busy)}
     aria-labelledby={title}
 >
     <div class="button-row">
         <h2 id={title}>Xray snippets</h2>
-        <button type="button" disabled={busy} onclick={() => dialog.close()}>
+        <button type="button" disabled={busy} onclick={() => dismissDialog(dialog)}>
             {t('common.action.close')}
         </button>
     </div>

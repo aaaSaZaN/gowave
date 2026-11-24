@@ -815,9 +815,9 @@
             {/if}
             <footer class="pagination">
                 <div class="page-size">
-                    <span>Rows per page</span>
+                    <span>{t('common.field.rows-per-page')}</span>
                     <SelectField
-                        label="Rows per page"
+                        label={t('common.field.rows-per-page')}
                         placeholder=""
                         options={(pageSizes.includes(pageSize)
                             ? pageSizes
@@ -834,18 +834,18 @@
                     />
                 </div>
                 <span role="status"
-                    >{total ? pageIndex * pageSize + 1 : 0}-{Math.min(
-                        (pageIndex + 1) * pageSize,
+                    >{t('common.message.table-range', {
+                        first: total ? pageIndex * pageSize + 1 : 0,
+                        last: Math.min((pageIndex + 1) * pageSize, total),
                         total
-                    )}
-                    of {total}</span
+                    })}</span
                 >
                 <div class="pagination-actions">
                     <ActionIcon
                         icon="PiCaretLeft"
                         size={28}
                         iconSize={18}
-                        label="Previous"
+                        label={t('common.action.previous')}
                         disabled={pageIndex === 0 || users.isPlaceholderData}
                         onclick={() => goToPage(pageIndex - 1)}
                     />

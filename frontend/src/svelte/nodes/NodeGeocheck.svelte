@@ -9,11 +9,12 @@
     import { onMount } from 'svelte'
     import { callCommand, submitCommand } from '../commands'
     import { locale } from '../i18n.svelte'
+    import Button from '../ui/Button.svelte'
+    import Overlay from '../ui/Overlay.svelte'
+    import SelectField from '../ui/SelectField.svelte'
 
     let { node, close }: { node: GetNodeCommand.Response['response']; close: () => void } = $props()
-    const title = $props.id()
     let t = $derived(locale.t)
-    let dialog: HTMLDialogElement
     let source = $state<'default' | 'ip' | 'interface'>('default')
     let ip = $state('')
     let networkInterface = $state('')
@@ -42,7 +43,6 @@
     )
 
     onMount(() => {
-        dialog.showModal()
         return () => {
             active = false
         }
@@ -74,55 +74,87 @@
     }
 </script>
 
-<dialog bind:this={dialog} onclose={close} aria-labelledby={title}>
-    <div class="button-row">
-        <h2 id={title}>{t('node-geocheck.title')} · {node.name}</h2>
-        <button type="button" onclick={() => dialog.close()}>{t('common.action.close')}</button>
-    </div>
+<Overlay
+    title={t('node-geocheck.title')}
+    subtitle={node.name}
+    icon="TbMapSearch"
+    tone="teal"
+    width={report ? 1000 : 520}
+    {close}
+>
     {#if !job}
         <form onsubmit={(event) => void start(event)}>
-            <label>
-                Source
-                <select bind:value={source} disabled={starting}>
-                    <option value="default">{t('node-geocheck.source-default')}</option>
-                    <option value="ip">{t('common.field.ip-address')}</option>
-                    <option value="interface">{t('common.field.interface')}</option>
-                </select>
-            </label>
-            {#if source === 'ip'}
-                <label>
+            <div class="sources">
+                <Button
+                    variant={source === 'default' ? 'default' : 'subtle'}
+                    aria-pressed={source === 'default'}
+                    disabled={starting}
+                    onclick={() => (source = 'default')}
+                >
+                    {t('node-geocheck.source-default')}
+                </Button>
+                <Button
+                    variant={source === 'ip' ? 'default' : 'subtle'}
+                    aria-pressed={source === 'ip'}
+                    disabled={starting}
+                    onclick={() => (source = 'ip')}
+                >
                     {t('common.field.ip-address')}
-                    <input bind:value={ip} list={`${title}-ips`} required disabled={starting}>
-                </label>
-                <datalist id={`${title}-ips`}>
-                    {#each node.ips as entry (entry.ip)}
-                        <option value={entry.ip}></option>
-                    {/each}
-                </datalist>
-            {:else if source === 'interface'}
-                <label>
+                </Button>
+                <Button
+                    variant={source === 'interface' ? 'default' : 'subtle'}
+                    aria-pressed={source === 'interface'}
+                    disabled={starting}
+                    onclick={() => (source = 'interface')}
+                >
                     {t('common.field.interface')}
-                    <input
-                        bind:value={networkInterface}
-                        list={`${title}-interfaces`}
-                        required
-                        disabled={starting}
-                    >
+                </Button>
+            </div>
+            {#if source === 'default'}
+                <label>
+                    {t('node-geocheck.source-default')}
+                    <small>{t('node-geocheck.default-description')}</small>
+                    <input placeholder={t('node-geocheck.default-placeholder')} disabled>
                 </label>
-                <datalist id={`${title}-interfaces`}>
-                    {#each node.system?.info.networkInterfaces ?? [] as name (name)}
-                        <option value={name}></option>
-                    {/each}
-                </datalist>
+            {:else if source === 'ip'}
+                <SelectField
+                    label={t('common.field.ip-address')}
+                    description={t('node-geocheck.ip-description')}
+                    leading="TbWorld"
+                    placeholder="1.2.3.4"
+                    autocomplete="suggest"
+                    disabled={starting}
+                    bind:value={ip}
+                    options={Array.from(new Set(node.ips.map(({ ip }) => ip)), (value) => ({
+                        value,
+                        label: value
+                    }))}
+                />
+            {:else}
+                <SelectField
+                    label={t('common.field.interface')}
+                    description={t('node-geocheck.interface-description')}
+                    leading="TbNetwork"
+                    placeholder="eth0"
+                    autocomplete="suggest"
+                    disabled={starting}
+                    bind:value={networkInterface}
+                    options={(node.system?.info.networkInterfaces ?? []).map((value) => ({
+                        value,
+                        label: value
+                    }))}
+                />
             {/if}
-            <button
+            <Button
                 type="submit"
+                color="teal"
+                variant="soft"
+                icon="TbRoute"
                 disabled={starting ||
                     (source === 'ip' && !ip.trim()) ||
                     (source === 'interface' && !networkInterface.trim())}
+                >{t('node-geocheck.run')}</Button
             >
-                {t('node-geocheck.run')}
-            </button>
         </form>
         {#if failure}
             <p role="alert">{failure}</p>
@@ -177,11 +209,19 @@
     {:else}
         <p role="status">{t('node-geocheck.running')}</p>
     {/if}
-</dialog>
+</Overlay>
 
 <style>
-    dialog {
-        width: min(54rem, calc(100vw - 2rem));
+    .sources {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 2px;
+        padding: 2px;
+        border-radius: var(--mantine-radius-md);
+        background: var(--gw-raised-bg);
+    }
+    small {
+        color: var(--mantine-color-dimmed);
     }
     form,
     label {

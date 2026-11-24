@@ -5,6 +5,7 @@
     import { squadsQuery } from '../internal-squads/queries'
     import { flag } from '../nodes/analytics'
     import { p } from '../router'
+    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import { type Profile, profileInboundsQuery } from './queries'
 
     let {
@@ -43,7 +44,7 @@
     }
 </script>
 
-<dialog bind:this={dialog} onclose={close} aria-labelledby={title}>
+<dialog oncancel={cancelDialog} bind:this={dialog} onclose={close} aria-labelledby={title}>
     <div class="button-row">
         <h2 id={title}>
             {mode === 'nodes'
@@ -51,7 +52,9 @@
                 : t('config-profile-inbounds.drawer.widget.inbounds-with-active-squads')}
             · {profile.name}
         </h2>
-        <button type="button" onclick={() => dialog.close()}>{t('common.action.close')}</button>
+        <button type="button" onclick={() => dismissDialog(dialog)}>
+            {t('common.action.close')}
+        </button>
     </div>
     {#if error}
         <p role="alert">{error}</p>

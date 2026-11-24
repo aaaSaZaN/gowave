@@ -4,13 +4,19 @@
 
     let {
         icon,
+        iconSize = 32,
         label,
         description
-    }: { icon: IconName; label: string; description?: string | undefined } = $props()
+    }: {
+        icon: IconName
+        iconSize?: number
+        label: string
+        description?: string | undefined
+    } = $props()
 </script>
 
 <div class="empty">
-    <span class="empty-icon"><Icon name={icon} size={32} /></span>
+    <span class="empty-icon"><Icon name={icon} size={iconSize} /></span>
     <div>
         <h2>{label}</h2>
         {#if description}

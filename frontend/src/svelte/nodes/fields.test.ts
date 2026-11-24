@@ -3,13 +3,14 @@ import { test } from 'node:test'
 import { BulkNodesUpdateCommand } from '@remnawave/backend-contract'
 import { UpdateNodeBodySchema } from '@shared/api/schemas/node.schema'
 
-import { gibibyte, readConfigProfile, readNodePatch } from './fields'
+import { readConfigProfile, readNodePatch } from './fields'
 
 const uuid = 'bfbb53cf-c55e-482c-ae53-a7b33eec4ebc'
 
 test('node traffic updates distinguish zero, false, and omitted inputs', () => {
     const form = new FormData()
-    form.set('trafficLimitBytes', '2.5')
+    const limitBytes = 2.5 * 1024 ** 3
+    form.set('trafficLimitBytes', String(limitBytes))
     form.set('notifyPercent', '0')
     form.set('countryCode', 'US')
     form.set('trafficTrackingStart', 'zero')
@@ -22,7 +23,7 @@ test('node traffic updates distinguish zero, false, and omitted inputs', () => {
     const patch = readNodePatch(form, (field) => included.has(field), 'edit')
     assert.deepEqual(UpdateNodeBodySchema.parse({ uuid, ...patch }), {
         uuid,
-        trafficLimitBytes: 2.5 * gibibyte,
+        trafficLimitBytes: limitBytes,
         notifyPercent: 0,
         isTrafficTrackingActive: false,
         trafficTrackingStart: 'zero'

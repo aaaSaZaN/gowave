@@ -10,6 +10,7 @@
     import { queryClient } from '../query-client'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import { dismissContainingDialog } from '../ui/dialog-motion'
     import FormCard from '../ui/FormCard.svelte'
     import Icon from '../ui/Icon.svelte'
     import type { IconName } from '../ui/icons'
@@ -373,7 +374,9 @@
                 <p role="status">{t('create-node-step-3-status.no-errors-so-far')}</p>
             {/if}
             <div class="button-ends">
-                <Button size="md" icon="TbX" onclick={close}>{t('common.action.close')}</Button>
+                <Button size="md" icon="TbX" onclick={dismissContainingDialog}
+                    >{t('common.action.close')}</Button
+                >
                 <Button
                     size="md"
                     variant="light"

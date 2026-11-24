@@ -1,28 +1,60 @@
 <script lang="ts">
+    import { backOut } from 'svelte/easing'
+    import { MediaQuery } from 'svelte/reactivity'
+    import { fly } from 'svelte/transition'
     import { locale } from '../i18n.svelte'
-    import ActionIcon from './ActionIcon.svelte'
+    import Icon from './Icon.svelte'
     import { notifications } from './notification-state.svelte'
+
+    const reducedMotion = new MediaQuery('(prefers-reduced-motion: reduce)')
+    let hovered = $state(false)
+    let focused = $state(false)
+    $effect(() => notifications.pause(hovered || focused))
+
+    function dismiss(id: number): void {
+        focused = false
+        if (notifications.visible.length === 1) hovered = false
+        notifications.hide(id)
+    }
 </script>
 
-<div class="notifications">
+<div
+    class="notifications"
+    role="presentation"
+    onpointerenter={() => (hovered = true)}
+    onpointerleave={() => (hovered = false)}
+    onfocusin={() => (focused = true)}
+    onfocusout={(event) => {
+        focused =
+            event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)
+    }}
+>
     {#each notifications.visible as notice (notice.id)}
         <div
-            class="notice"
+            class="m_a513464 mantine-Notification-root notice"
             role={notice.color === 'red' ? 'alert' : 'status'}
-            style:--notice-color={`var(--mantine-color-${notice.color}-6)`}
+            style:--notification-radius="var(--mantine-radius-md)"
+            style:--notification-color={`var(--mantine-color-${notice.color}-filled)`}
+            transition:fly={{
+                x: '100%',
+                duration: reducedMotion.current ? 0 : 250,
+                easing: backOut
+            }}
         >
-            <div>
-                <strong>{notice.title}</strong>
-                <p>{notice.message}</p>
+            <div class="m_a49ed24 mantine-Notification-body">
+                <strong class="m_3feedf16 mantine-Notification-title">{notice.title}</strong>
+                <div class="m_3d733a3a mantine-Notification-description" data-with-title>
+                    {notice.message}
+                </div>
             </div>
-            <ActionIcon
-                icon="TbX"
-                label={locale.t('common.action.close')}
-                size={22}
-                iconSize={14}
-                subtle
-                onclick={() => notifications.hide(notice.id)}
-            />
+            <button
+                type="button"
+                class="m_919a4d88 m_86a44da5 mantine-Notification-closeButton mantine-UnstyledButton-root"
+                aria-label={locale.t('common.action.close')}
+                onclick={() => dismiss(notice.id)}
+            >
+                <Icon name="TbX" size={16} />
+            </button>
         </div>
     {/each}
 </div>
@@ -31,41 +63,20 @@
     .notifications {
         position: fixed;
         z-index: 400;
-        inset: var(--mantine-spacing-md) var(--mantine-spacing-md) auto auto;
+        top: var(--mantine-spacing-md);
+        right: var(--mantine-spacing-md);
         width: min(440px, calc(100vw - 2 * var(--mantine-spacing-md)));
         pointer-events: none;
     }
-
     .notice {
-        display: flex;
-        position: relative;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--mantine-spacing-xs);
-        margin-bottom: var(--mantine-spacing-md);
-        border: 1px solid var(--mantine-color-default-border);
-        border-radius: var(--mantine-radius-md);
-        padding: 12px 12px 12px 22px;
+        max-height: 200px;
         overflow-wrap: anywhere;
-        background: var(--mantine-color-body);
-        color: var(--mantine-color-text);
-        box-shadow: var(--mantine-shadow-lg);
-        font-size: var(--mantine-font-size-sm);
         pointer-events: auto;
     }
-
-    .notice::before {
-        position: absolute;
-        inset-block: 8px;
-        inset-inline-start: 4px;
-        width: 6px;
-        border-radius: var(--mantine-radius-sm);
-        background: var(--notice-color);
-        content: "";
+    .notice + .notice {
+        margin-top: var(--mantine-spacing-md);
     }
-
-    .notice p {
-        margin: 0;
-        color: var(--mantine-color-dimmed);
+    strong {
+        display: block;
     }
 </style>

@@ -9,6 +9,7 @@
     import { onMount } from 'svelte'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
+    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import {
         installNodeUpdate,
         LocalCoreUpdateError,
@@ -105,20 +106,17 @@
     bind:this={dialog}
     aria-labelledby={title}
     onclose={close}
-    oncancel={(event) => {
-        if (installing) event.preventDefault()
-    }}
+    oncancel={(event) => cancelDialog(event, installing)}
 >
     <div class="button-row header">
-        <h2 id={title}>Manage versions · {node.name}</h2>
-        <button type="button" disabled={installing} onclick={() => dialog.close()}>
+        <h2 id={title}>{t('node-versions.title')} · {node.name}</h2>
+        <button type="button" disabled={installing} onclick={() => dismissDialog(dialog)}>
             {t('common.action.close')}
         </button>
     </div>
     {#if !coreLocked}
         <p>
-            Installing an update restarts the node service and briefly interrupts active
-            connections.
+            {t('node-versions.restart-warning')}
         </p>
     {/if}
     <div class="button-row">
@@ -137,19 +135,19 @@
         {/each}
     </div>
     <p>
-        Installed: {current || '—'}{releases.data?.architecture
+        {t('node-versions.installed', { version: current || '—' })}{releases.data?.architecture
             ? ` · ${releases.data.os || 'linux'}/${releases.data.architecture}`
             : ''}
     </p>
     {#if coreLocked}
         <p role="status">
             {t('node-details-card.widget.local-core')}.
-            {t('node-details-card.widget.local-core-update')}
+            {t('node-details-card.widget.local-core-override')}
             <code>gowave-node core update</code>
         </p>
     {:else}
         {#if releases.isPending}
-            <p role="status">Loading releases…</p>
+            <p role="status">{t('node-versions.loading')}</p>
         {/if}
         {#if queryError}
             <p role="alert">{queryError}</p>
@@ -164,21 +162,23 @@
         <form onsubmit={(event) => void submit(event)} novalidate>
             <fieldset disabled={installing}>
                 <label
-                    >Release channel
+                    >{t('node-versions.channel')}
                     <select name="releaseChannel" bind:value={form.channel} onchange={changed}>
-                        <option value="stable">Latest release</option>
-                        <option value="prerelease">Latest pre-release</option>
-                        <option value="version">Specific version</option>
+                        <option value="stable">{t('node-versions.stable')}</option>
+                        <option value="prerelease">{t('node-versions.prerelease')}</option>
+                        <option value="version">{t('node-versions.specific')}</option>
                     </select>
                 </label>
                 {#if form.channel === 'version'}
                     <label
-                        >Version
+                        >{t('node-versions.version')}
                         <select name="releaseVersion" bind:value={form.version} onchange={changed}>
-                            <option value="">Select a version</option>
+                            <option value="">{t('node-versions.select')}</option>
                             {#each compatible as item (item.tag_name)}
                                 <option value={item.tag_name}>
-                                    {item.tag_name}{item.prerelease ? ' · Pre-release' : ''}
+                                    {item.tag_name}{item.prerelease
+                                        ? ` · ${t('node-versions.prerelease-label')}`
+                                        : ''}
                                 </option>
                             {/each}
                         </select>
@@ -186,7 +186,7 @@
                 {/if}
                 {#if component === 'core'}
                     <label
-                        >Direct HTTPS download
+                        >{t('node-versions.url')}
                         <input
                             type="url"
                             name="downloadUrl"
@@ -195,17 +195,19 @@
                         >
                     </label>
                     {#if source && !validHttpsDownload(source)}
-                        <p role="alert">Enter a valid HTTPS URL.</p>
+                        <p role="alert">{t('node-versions.invalid-url')}</p>
                     {/if}
                 {/if}
                 <p>
-                    Target:
-                    {source && validHttpsDownload(source)
-                        ? 'Direct download'
-                        : release?.tag_name || '—'}
+                    {t('node-versions.target', {
+                        target:
+                            source && validHttpsDownload(source)
+                                ? t('node-versions.direct')
+                                : release?.tag_name || '—'
+                    })}
                 </p>
                 {#if !source && !queryError && !releases.isPending && compatible.length === 0}
-                    <p>No compatible releases for this node.</p>
+                    <p>{t('node-versions.empty')}</p>
                 {/if}
                 <label class="confirm">
                     <input
@@ -214,10 +216,10 @@
                         bind:checked={confirmed}
                         disabled={!request || accepted}
                     >
-                    Install {components[component]} and restart the node service
+                    {t('node-versions.confirm', { component: components[component] })}
                 </label>
                 <button type="submit" disabled={!confirmed || !request || accepted}>
-                    {installing ? 'Installing…' : 'Install now'}
+                    {installing ? t('node-versions.installing') : t('node-versions.install')}
                 </button>
             </fieldset>
         </form>
@@ -226,7 +228,7 @@
         {/if}
         {#if accepted}
             <p role="status">
-                Update accepted. The node reports the installed version after restarting.
+                {t('node-versions.accepted')}
             </p>
         {/if}
     {/if}

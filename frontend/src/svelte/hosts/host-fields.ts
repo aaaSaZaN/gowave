@@ -1,4 +1,8 @@
-import type { CreateHostCommand } from '@remnawave/backend-contract'
+import {
+    type CreateHostCommand,
+    INTERNAL_SQUADS_MODE,
+    SECURITY_LAYERS
+} from '@remnawave/backend-contract'
 
 export const textOptions = {
     path: 'base-host-form.path',
@@ -88,21 +92,19 @@ export function hostPatch(data: FormData, includes: (key: HostField) => boolean)
     for (const key of Object.keys(switches) as Array<keyof typeof switches>) {
         if (includes(key)) patch[key] = data.has(key)
     }
-    if (includes('securityLayer')) patch.securityLayer = formText(data, 'securityLayer')
+    if (includes('securityLayer'))
+        patch.securityLayer = formText(data, 'securityLayer') || SECURITY_LAYERS.DEFAULT
     if (includes('vlessRouteId')) {
         const value = nullable('vlessRouteId')
         patch.vlessRouteId = value === null ? null : Number(value)
     }
     if (includes('tags')) patch.tags = textList(formText(data, 'tags').toUpperCase(), /[,\s]+/)
-    if (includes('includeInSrrRules')) {
-        patch.includeInSrrRules = textList(formText(data, 'includeInSrrRules'), /[,\n]+/)
-    }
-    for (const key of ['nodes', 'excludeFromSubscriptionTypes'] as const) {
+    for (const key of ['nodes', 'excludeFromSubscriptionTypes', 'includeInSrrRules'] as const) {
         if (includes(key)) patch[key] = readSelected(key)
     }
     if (includes('internalSquads')) {
         patch.internalSquads = {
-            mode: formText(data, 'internalSquads:mode'),
+            mode: formText(data, 'internalSquads:mode') || INTERNAL_SQUADS_MODE.EXCLUDE,
             squads: readSelected('internalSquads:squads')
         }
     }

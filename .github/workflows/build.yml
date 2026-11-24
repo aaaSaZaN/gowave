@@ -1,0 +1,85 @@
+name: Build Release Assets
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      source-sha:
+        required: true
+        type: string
+      channel:
+        default: stable
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and verify release assets
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+      SOURCE_SHA: ${{ inputs.source-sha }}
+      CHANNEL: ${{ inputs.channel }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.source-sha }}
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: frontend/package.json
+
+      - name: Build Frontend
+        working-directory: ./frontend
+        env:
+          TELEGRAM_CHAT_URL: ${{ vars.TELEGRAM_CHAT_URL }}
+        run: |
+          bun install --frozen-lockfile
+          bun run editor:download
+          bun run build
+          bun run editor:compress
+          tar -czf ../gowave-frontend.tar.gz -C dist .
+
+      - name: Build Backend Binaries
+        working-directory: ./backend
+        run: |
+          LDFLAGS="-s -w -X 'gowave/internal/system.AppVersion=${VERSION}' -X 'gowave/internal/system.Channel=${CHANNEL}' -X 'gowave/internal/system.CommitSha=${SOURCE_SHA}'"
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="$LDFLAGS" -o ../gowave-linux-amd64 ./cmd/server
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="$LDFLAGS" -o ../gowave-linux-arm64 ./cmd/server
+
+      - name: Verify embedded version
+        run: |
+          embedded="$(./gowave-linux-amd64 --version)"
+          if [ "$embedded" != "$VERSION" ]; then
+            echo "Binary reports '${embedded}', expected '${VERSION}'; check the -X package path" >&2
+            exit 1
+          fi
+
+      - name: Checksums
+        run: sha256sum gowave-frontend.tar.gz gowave-linux-amd64 gowave-linux-arm64 > SHA256SUMS
+
+      - name: Upload verified release assets
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-assets
+          overwrite: true
+          if-no-files-found: error
+          path: |
+            gowave-frontend.tar.gz
+            gowave-linux-amd64
+            gowave-linux-arm64
+            SHA256SUMS

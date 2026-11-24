@@ -3,6 +3,7 @@
     import { onMount } from 'svelte'
     import { locale } from '../i18n.svelte'
     import { flag } from '../nodes/analytics'
+    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import { squadNodesQuery } from './queries'
 
     let { uuid, name, close }: { uuid: string; name: string; close: () => void } = $props()
@@ -14,10 +15,12 @@
     onMount(() => dialog.showModal())
 </script>
 
-<dialog bind:this={dialog} onclose={close} aria-labelledby={title}>
+<dialog oncancel={cancelDialog} bind:this={dialog} onclose={close} aria-labelledby={title}>
     <div class="button-row">
         <h2 id={title}>{t('view-user-modal.widget.accessible-nodes')} · {name}</h2>
-        <button type="button" onclick={() => dialog.close()}>{t('common.action.close')}</button>
+        <button type="button" onclick={() => dismissDialog(dialog)}>
+            {t('common.action.close')}
+        </button>
     </div>
     {#if nodes.isPending}
         <p role="status">{t('common.message.loading')}</p>

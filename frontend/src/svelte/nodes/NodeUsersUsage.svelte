@@ -3,20 +3,27 @@
     import { prettifyBytesUtil } from '@shared/utils/bytes/pretty-bytes/pretty-bytes.util'
     import { getDefaultDateRange } from '@shared/utils/time-utils/get-default-date-range/get-default-date-range.util'
     import { createQuery } from '@tanstack/svelte-query'
-    import { onMount } from 'svelte'
+    import { onDestroy } from 'svelte'
     import { submitCommand } from '../commands'
     import { locale } from '../i18n.svelte'
     import { navigate } from '../router'
+    import ActionIcon from '../ui/ActionIcon.svelte'
+    import EmptyState from '../ui/EmptyState.svelte'
+    import Icon from '../ui/Icon.svelte'
+    import Overlay from '../ui/Overlay.svelte'
+    import SelectField from '../ui/SelectField.svelte'
     import { nodeUsersUsageQuery } from './queries'
     import UsageFilters from './UsageFilters.svelte'
     import UsageSummary from './UsageSummary.svelte'
 
     let { target, name, close }: { target: string | string[]; name: string; close: () => void } =
         $props()
-    let dialog: HTMLDialogElement
     let t = $derived(locale.t)
     const title = $props.id()
-    const limits = [5, 10, 30, 50, 100, 500, 1000, 2000]
+    const limits = [5, 10, 30, 50, 100, 500, 1000, 2000].map((limit) => ({
+        value: String(limit),
+        label: `Top ${limit}`
+    }))
     const pageSize = 50
     let page = $state(0)
     let filters = $state({ ...getDefaultDateRange(), topUsersLimit: 100 })
@@ -26,11 +33,8 @@
     const stats = createQuery(() => nodeUsersUsageQuery(target, filters))
     let users = $derived(stats.data?.topUsers ?? [])
 
-    onMount(() => {
-        dialog.showModal()
-        return () => {
-            closed = true
-        }
+    onDestroy(() => {
+        closed = true
     })
 
     async function openUser(username: string): Promise<void> {
@@ -50,12 +54,31 @@
     }
 </script>
 
-<dialog class="node-users-usage" bind:this={dialog} onclose={close} aria-labelledby={title}>
-    <div class="header">
-        <h2 id={title}>{t('common.field.usage-stats')} · {name}</h2>
-        <button type="button" onclick={() => dialog.close()}>{t('common.action.close')}</button>
-    </div>
+<Overlay
+    title={t('common.field.usage-stats')}
+    icon="TbChartArcs"
+    tone="teal"
+    width={600}
+    drawer
+    subtitle={name}
+    {close}
+>
+    {#snippet actions()}
+        <ActionIcon
+            icon="TbRefresh"
+            tone="cyan"
+            size={34}
+            iconSize={20}
+            label={t('common.action.refresh')}
+            disabled={stats.isFetching}
+            onclick={() => {
+                page = 0
+                void stats.refetch()
+            }}
+        />
+    {/snippet}
     <UsageFilters
+        hideRefresh
         range={filters}
         busy={stats.isFetching}
         apply={(range) => {
@@ -69,21 +92,22 @@
         }}
     >
         {#snippet control()}
-            <label>
-                {t('torrent-blocker-stats.widget.top-users')}
-                <select
-                    name="topUsersLimit"
-                    value={filters.topUsersLimit}
-                    onchange={(event) => {
-                        page = 0
-                        filters = { ...filters, topUsersLimit: Number(event.currentTarget.value) }
-                    }}
-                >
-                    {#each limits as limit (limit)}
-                        <option value={limit}>{limit}</option>
-                    {/each}
-                </select>
-            </label>
+            <SelectField
+                label={t('torrent-blocker-stats.widget.top-users')}
+                leading="TbUsers"
+                leadingSize={20}
+                size="md"
+                hideLabel
+                placeholder=""
+                searchable={false}
+                clearable={false}
+                options={limits}
+                value={String(filters.topUsersLimit)}
+                onchoose={(value) => {
+                    page = 0
+                    filters = { ...filters, topUsersLimit: Number(value) }
+                }}
+            />
         {/snippet}
     </UsageFilters>
     {#if stats.isPending}
@@ -101,20 +125,23 @@
                 <p role="alert">{resolutionError}</p>
             {/if}
             {#if users.length}
-                <ol start={page * pageSize + 1}>
+                <ol>
                     {#each users.slice(
                         page * pageSize,
                         (page + 1) * pageSize
-                    ) as user (user.username)}
+                    ) as user, index (user.username)}
                         <li>
                             <button
                                 type="button"
+                                class="mantine-UnstyledButton-root rank"
                                 disabled={resolving}
                                 onclick={() => void openUser(user.username)}
                             >
-                                {user.username}
+                                <span class="place">{page * pageSize + index + 1}</span>
+                                <Icon name="PiUserCircle" size={18} />
+                                <span class="username">{user.username}</span>
+                                <strong>{prettifyBytesUtil(user.total) ?? '0 B'}</strong>
                             </button>
-                            <span>{prettifyBytesUtil(user.total) ?? '0 B'}</span>
                         </li>
                     {/each}
                 </ol>
@@ -133,33 +160,45 @@
                     </div>
                 {/if}
             {:else}
-                <p>{t('common.message.no-data-available')}</p>
+                <EmptyState icon="TbChartArcs" label={t('common.message.no-data-available')} />
             {/if}
         </section>
     {/if}
-</dialog>
+</Overlay>
 
 <style>
-    .node-users-usage {
-        width: min(42rem, calc(100vw - 2rem));
+    h3 {
+        font-size: var(--mantine-font-size-md);
     }
-    .header {
+    ol {
+        display: grid;
+        gap: 6px;
+        padding: 0;
+        list-style: none;
+    }
+    .rank {
         display: flex;
+        width: 100%;
         align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        margin-block-end: 0.75rem;
+        gap: var(--mantine-spacing-xs);
+        padding: var(--mantine-spacing-xs);
+        border: 1px solid var(--gw-border);
+        border-radius: var(--mantine-radius-md);
+        background: var(--gw-raised-bg);
+        font-size: var(--mantine-font-size-sm);
     }
-    h2 {
-        margin: 0;
+    .rank:hover {
+        background: var(--mantine-color-default-hover);
     }
-    li {
-        margin-block: 0.35rem;
+    .username {
+        flex: 1;
+        min-width: 0;
         overflow-wrap: anywhere;
     }
-    li span {
-        margin-inline-start: 0.75rem;
+    .place {
+        color: var(--mantine-color-dimmed);
+    }
+    strong {
         white-space: nowrap;
     }
 </style>

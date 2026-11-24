@@ -4,6 +4,7 @@
         BulkDisableHostsCommand,
         BulkEnableHostsCommand,
         CloneHostCommand,
+        INTERNAL_SQUADS_MODE,
         ReorderHostsCommand,
         SUBSCRIPTION_TEMPLATE_TYPE
     } from '@remnawave/backend-contract'
@@ -20,14 +21,19 @@
     import RouteLoading from '../RouteLoading.svelte'
     import { p } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
+    import Button from '../ui/Button.svelte'
     import EmptyState from '../ui/EmptyState.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
     import EntityTagBar from '../ui/EntityTagBar.svelte'
     import HelpDrawer from '../ui/HelpDrawer.svelte'
     import Icon from '../ui/Icon.svelte'
     import type { IconName } from '../ui/icons'
+    import JsonTree from '../ui/JsonTree.svelte'
+    import Overlay from '../ui/Overlay.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
+    import SelectField from '../ui/SelectField.svelte'
     import { type EntityViewMode, readHostView, writeHostView } from '../view-preferences'
+    import HostConfirmation from './HostConfirmation.svelte'
     import HostDialog from './HostDialog.svelte'
     import HostEditor from './HostEditor.svelte'
     import { type Host, hostsKey, hostsQuery } from './queries'
@@ -65,8 +71,8 @@
         title: string
         icon: IconName
     }>
-    let hostParameter = $state<{ title: string; value: unknown }>()
-    let paramsDialog: HTMLDialogElement
+    let hostParameter = $state.raw<{ title: string; icon: IconName; value: unknown }>()
+    let confirmation = $state.raw<{ action: 'clone' | 'delete'; items: Host[]; skipped: number }>()
     let helpOpen = $state(false)
     let searchOpen = $state(false)
     let editing = $state<string | null>(null)
@@ -83,7 +89,6 @@
     let sort = $state<{ column: Column; descending: boolean }>()
     let notice = $state('')
     let bulkIds = $state.raw<string[] | undefined>()
-    let bulkDialog: HTMLDialogElement
     let scrollArea = $state<HTMLDivElement>()
     let height = $state(0)
     let scrollTop = $state(0)
@@ -176,12 +181,6 @@
         scrollToStart()
     }
 
-    function inspect(title: string, value: unknown): void {
-        if (!value) return
-        hostParameter = { title, value }
-        paramsDialog.showModal()
-    }
-
     function stateLabel(host: Host): string {
         switch (stateOf(host)) {
             case 'disabled':
@@ -262,19 +261,19 @@
             return
         }
         if (action === 'clone' || action === 'delete') {
-            const label = t(actionLabels[action])
-            if (
-                !window.confirm(
-                    `${label} (${targets.length})? ${t('common.message.confirm-action-description')}`
-                )
-            )
-                return
+            confirmation = { action, items: targets, skipped: items.length - targets.length }
+            return
         }
-        if (targets.length < items.length)
-            notice = t('multi-select-hosts.feature.dangling-hosts-skipped', {
-                count: items.length - targets.length
-            })
         update.mutate({ action, items: targets })
+    }
+
+    function confirmAction(): void {
+        if (!confirmation || update.isPending) return
+        const { action, items, skipped } = confirmation
+        confirmation = undefined
+        if (skipped)
+            notice = t('multi-select-hosts.feature.dangling-hosts-skipped', { count: skipped })
+        update.mutate({ action, items })
     }
 
     function saveOrder(next: string[]): void {
@@ -322,11 +321,10 @@
 
     function openBulkEdit(): void {
         bulkIds = selected.map(({ uuid }) => uuid)
-        bulkDialog.showModal()
     }
 
     function closeBulkEdit(): void {
-        bulkDialog.close()
+        bulkIds = undefined
         selection.clear()
     }
 </script>
@@ -395,23 +393,28 @@
                 bind:value={search}
                 oninput={scrollToStart}
             >
-            <select
-                aria-label={t('common.field.status')}
-                bind:value={status}
-                onchange={scrollToStart}
-            >
-                <option value="">{t('common.field.status')}</option>
-                <option value="enabled">{t('use-hosts-table-widget.enabled')}</option>
-                <option value="disabled">{t('use-hosts-table-widget.disabled')}</option>
-                <option value="hidden">{t('use-hosts-table-widget.hidden')}</option>
-            </select>
-            <button
-                type="button"
+            <SelectField
+                label={t('common.field.status')}
+                placeholder={t('common.field.status')}
+                hideLabel
+                searchable={false}
+                value={status}
+                options={[
+                    { value: 'enabled', label: t('use-hosts-table-widget.enabled') },
+                    { value: 'disabled', label: t('use-hosts-table-widget.disabled') },
+                    { value: 'hidden', label: t('use-hosts-table-widget.hidden') }
+                ]}
+                onchoose={(value) => {
+                    status = value
+                    scrollToStart()
+                }}
+            />
+            <Button
                 disabled={!ordered.length || selected.length === ordered.length}
                 onclick={selectAll}
             >
                 {t('common.action.select-all')}
-            </button>
+            </Button>
         </div>
     {/if}
 
@@ -423,39 +426,41 @@
         <EntityTagBar items={ordered} active={tag} select={tagsChanged} />
         {#if selected.length}
             <div class="button-row toolbar">
-                <button type="button" onclick={() => selection.clear()}>
+                <Button variant="subtle" onclick={() => selection.clear()}>
                     {t('common.action.clear-selection')}
-                </button>
+                </Button>
                 <span>{t('common.message.selected', { count: selected.length })}</span>
-                <button type="button" disabled={update.isPending} onclick={openBulkEdit}>
+                <Button
+                    variant="soft"
+                    color="teal"
+                    disabled={update.isPending}
+                    onclick={openBulkEdit}
+                >
                     {t('common.action.bulk-edit')}
-                </button>
+                </Button>
                 {#each Object.entries(actionLabels) as [action, label] (action)}
-                    <button
-                        type="button"
+                    <Button
+                        variant="soft"
+                        color={action === 'delete' ? 'red' : 'cyan'}
                         disabled={update.isPending}
                         onclick={() => apply(action as Action, selected)}
                     >
                         {t(label)}
-                    </button>
+                    </Button>
                 {/each}
                 {#if reorderable}
-                    <button type="button" disabled={update.isPending} onclick={() => move('top')}>
+                    <Button disabled={update.isPending} onclick={() => move('top')}>
                         Move to top
-                    </button>
-                    <button type="button" disabled={update.isPending} onclick={() => move('up')}>
+                    </Button>
+                    <Button disabled={update.isPending} onclick={() => move('up')}>
                         Move up
-                    </button>
-                    <button type="button" disabled={update.isPending} onclick={() => move('down')}>
+                    </Button>
+                    <Button disabled={update.isPending} onclick={() => move('down')}>
                         Move down
-                    </button>
-                    <button
-                        type="button"
-                        disabled={update.isPending}
-                        onclick={() => move('bottom')}
-                    >
+                    </Button>
+                    <Button disabled={update.isPending} onclick={() => move('bottom')}>
                         Move to bottom
-                    </button>
+                    </Button>
                 {/if}
             </div>
         {/if}
@@ -529,15 +534,28 @@
                                         </button>
                                         <div class="host-parameters">
                                             {#if host.internalSquads.squads.length}
-                                                <ActionIcon
-                                                    icon="TbCirclesRelation"
-                                                    label={t(
-                                                        'base-host-form.allowed-internal-squads'
+                                                {@const allowOnly =
+                                                    host.internalSquads.mode ===
+                                                    INTERNAL_SQUADS_MODE.ALLOW_ONLY}
+                                                <span
+                                                    class="squad-badge"
+                                                    title={t(
+                                                        allowOnly
+                                                            ? 'base-host-form.allowed-internal-squads'
+                                                            : 'base-host-form.excluded-internal-squads'
                                                     )}
-                                                    tone="teal"
-                                                    size={28}
-                                                    iconSize={16}
-                                                />
+                                                    class:allow-only={allowOnly}
+                                                    role="img"
+                                                    aria-label={t(
+                                                        allowOnly
+                                                            ? 'base-host-form.allowed-internal-squads'
+                                                            : 'base-host-form.excluded-internal-squads'
+                                                    )}
+                                                    ><Icon
+                                                        name="TbCirclesRelation"
+                                                        size={16}
+                                                    /></span
+                                                >
                                             {/if}
                                             <ActionIcon
                                                 icon="XrayLogo"
@@ -545,20 +563,17 @@
                                                 tone={host.xrayJsonTemplateUuid ? 'teal' : 'gray'}
                                                 size={28}
                                                 iconSize={16}
-                                                onclick={() => {
-                                                    if (host.xrayJsonTemplateUuid) {
-                                                        window.open(
-                                                            p('/dashboard/templates/:type/:uuid', {
-                                                                params: {
-                                                                    type: SUBSCRIPTION_TEMPLATE_TYPE.XRAY_JSON,
-                                                                    uuid: host.xrayJsonTemplateUuid
-                                                                }
-                                                            }),
-                                                            '_blank',
-                                                            'noopener'
-                                                        )
-                                                    }
-                                                }}
+                                                disabled={!host.xrayJsonTemplateUuid}
+                                                href={host.xrayJsonTemplateUuid
+                                                    ? p('/dashboard/templates/:type/:uuid', {
+                                                          params: {
+                                                              type: SUBSCRIPTION_TEMPLATE_TYPE.XRAY_JSON,
+                                                              uuid: host.xrayJsonTemplateUuid
+                                                          }
+                                                      })
+                                                    : undefined}
+                                                target="_blank"
+                                                rel="noopener"
                                             />
                                             {#each hostParameters as param (param.field)}
                                                 <ActionIcon
@@ -567,8 +582,13 @@
                                                     tone={host[param.field] ? 'teal' : 'gray'}
                                                     size={28}
                                                     iconSize={16}
+                                                    disabled={host[param.field] == null}
                                                     onclick={() =>
-                                                        inspect(param.title, host[param.field])}
+                                                        (hostParameter = {
+                                                            title: param.title,
+                                                            icon: param.icon,
+                                                            value: host[param.field]
+                                                        })}
                                                 />
                                             {/each}
                                         </div>
@@ -677,36 +697,43 @@
     {#if helpOpen}
         <HelpDrawer screen="PAGE_HOSTS" close={() => (helpOpen = false)} />
     {/if}
-    <dialog
-        bind:this={paramsDialog}
-        aria-labelledby="host-param-heading"
-        onclose={() => (hostParameter = undefined)}
-    >
-        <div class="button-row dialog-header">
-            <h2 id="host-param-heading">{hostParameter?.title}</h2>
-            <button type="button" onclick={() => paramsDialog.close()}>
-                {t('common.action.close')}
-            </button>
-        </div>
-        {#if hostParameter}
-            <pre>{JSON.stringify(hostParameter.value, null, 2)}</pre>
-        {/if}
-    </dialog>
-    <dialog
-        bind:this={bulkDialog}
-        onclose={() => (bulkIds = undefined)}
-        aria-labelledby="host-bulk-heading"
-    >
-        {#if bulkIds}
-            <div class="button-row dialog-header">
-                <h2 id="host-bulk-heading">{t('common.action.bulk-edit')} · {bulkIds.length}</h2>
-                <button type="button" onclick={() => bulkDialog.close()}>
-                    {t('common.action.close')}
-                </button>
-            </div>
+    {#if hostParameter}
+        <Overlay
+            title={hostParameter.title}
+            icon={hostParameter.icon}
+            tone="teal"
+            width={620}
+            close={() => (hostParameter = undefined)}
+        >
+            <JsonTree value={hostParameter.value} />
+        </Overlay>
+    {/if}
+    {#if bulkIds}
+        <Overlay
+            drawer
+            largePadding
+            width={700}
+            title={`${t('common.action.bulk-edit')} · ${bulkIds.length}`}
+            icon="PiListChecks"
+            tone="teal"
+            close={() => (bulkIds = undefined)}
+        >
             <HostEditor host={undefined} {bulkIds} onsaved={closeBulkEdit} />
-        {/if}
-    </dialog>
+        </Overlay>
+    {/if}
+    {#if confirmation}
+        {@const { action, items } = confirmation}
+        {@const label = t(actionLabels[action])}
+        <HostConfirmation
+            title={`${label} · ${items.length}`}
+            {label}
+            icon={action === 'delete' ? 'PiTrashDuotone' : 'TbCopy'}
+            tone={action === 'delete' ? 'red' : 'cyan'}
+            description={t('common.message.confirm-action-description')}
+            close={() => (confirmation = undefined)}
+            confirm={confirmAction}
+        />
+    {/if}
     {#if editing !== null}
         <HostDialog uuid={editing || undefined} close={() => (editing = null)} />
     {/if}
@@ -743,19 +770,31 @@
 {#snippet itemActions(host: Host)}
     <div class="button-row actions">
         {@render grip(host)}
-        <button
-            type="button"
+        <Button
+            size="compact-sm"
             disabled={update.isPending}
             onclick={() => apply(host.isDisabled ? 'enable' : 'disable', [host])}
         >
             {t(actionLabels[host.isDisabled ? 'enable' : 'disable'])}
-        </button>
-        <button type="button" disabled={update.isPending} onclick={() => apply('clone', [host])}>
+        </Button>
+        <Button
+            size="compact-sm"
+            disabled={update.isPending ||
+                !host.inbound.configProfileUuid ||
+                !host.inbound.configProfileInboundUuid}
+            onclick={() => apply('clone', [host])}
+        >
             {t('common.action.clone')}
-        </button>
-        <button type="button" disabled={update.isPending} onclick={() => apply('delete', [host])}>
+        </Button>
+        <Button
+            size="compact-sm"
+            variant="soft"
+            color="red"
+            disabled={update.isPending}
+            onclick={() => apply('delete', [host])}
+        >
             {t('common.action.delete')}
-        </button>
+        </Button>
     </div>
 {/snippet}
 
@@ -823,31 +862,7 @@
         gap: var(--mantine-spacing-xs);
     }
     input[type="checkbox"] {
-        appearance: none;
-        display: grid;
-        place-items: center;
-        width: 24px;
-        height: 24px;
-        min-height: 24px;
-        min-width: 24px;
-        margin: 0;
-        padding: 0;
-        border: 1px solid var(--mantine-color-default-border);
-        border-radius: var(--mantine-radius-sm);
-        background: var(--mantine-color-default);
-        cursor: pointer;
-    }
-    input[type="checkbox"]:checked {
-        background: var(--mantine-primary-color-filled);
-    }
-    input[type="checkbox"]:checked::after {
-        width: 8px;
-        height: 5px;
-        border-width: 0 0 2px 2px;
-        border-style: solid;
-        border-color: #fff;
-        transform: translateY(-1px) rotate(-45deg);
-        content: "";
+        --gw-checkbox-size: 24px;
     }
     .grip {
         display: grid;
@@ -895,6 +910,21 @@
         font:
             var(--mantine-font-size-sm) / var(--mantine-line-height-sm)
             var(--mantine-font-family-monospace);
+    }
+    .squad-badge {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border: 1px solid var(--mantine-color-yellow-outline);
+        border-radius: var(--mantine-radius-md);
+        color: var(--mantine-color-yellow-light-color);
+        background: var(--mantine-color-yellow-light);
+    }
+    .squad-badge.allow-only {
+        border-color: var(--mantine-color-teal-outline);
+        color: var(--mantine-color-teal-light-color);
+        background: var(--mantine-color-teal-light);
     }
     .host-status {
         display: grid;
@@ -962,14 +992,6 @@
     }
     button[draggable="true"] {
         cursor: grab;
-    }
-    dialog {
-        width: min(calc(100% - 2rem), 58rem);
-    }
-    .dialog-header {
-        justify-content: space-between;
-        align-items: center;
-        margin-block-end: 1rem;
     }
     @media (max-width: 47.99em) {
         .scroll.cards {

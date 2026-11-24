@@ -9,26 +9,32 @@
         tone,
         children,
         description,
+        headingSize,
         actions,
         class: className
     }: {
         title: string
         icon: IconName
         tone: string
-        children: Snippet
+        children?: Snippet
         description?: string | undefined
+        headingSize?: 'lg' | 'xl'
         actions?: Snippet
         class?: string
     } = $props()
 </script>
 
 <section class={['form-card', className]}>
-    <header>
+    <header
+        class:has-content={!!children}
+        class:large={headingSize === 'lg'}
+        class:extra-large={headingSize === 'xl'}
+    >
         <span
             style:--card-color={`var(--mantine-color-${tone}-4)`}
             style:--card-tint={`var(--mantine-color-${tone}-6)`}
             style:--card-shade={`var(--mantine-color-${tone}-7)`}
-            ><Icon name={icon} size={20} /></span
+            ><Icon name={icon} size={headingSize === 'xl' ? 24 : 20} /></span
         >
         <div class="heading">
             <h3>{title}</h3>
@@ -38,7 +44,9 @@
         </div>
         {@render actions?.()}
     </header>
-    <div class="card-body">{@render children()}</div>
+    {#if children}
+        <div class="card-body">{@render children()}</div>
+    {/if}
 </section>
 
 <style>
@@ -54,6 +62,9 @@
         display: flex;
         align-items: center;
         gap: var(--mantine-spacing-sm);
+    }
+
+    header.has-content {
         padding-block-end: var(--mantine-spacing-md);
         margin-block-end: var(--mantine-spacing-md);
         border-block-end: 1px solid rgba(var(--gw-fg-rgb), 0.06);
@@ -81,6 +92,24 @@
         font-size: var(--mantine-h5-font-size);
         line-height: var(--mantine-h5-line-height);
         font-weight: var(--mantine-h5-font-weight);
+    }
+
+    .large h3 {
+        font-size: var(--mantine-font-size-lg);
+    }
+
+    .extra-large h3 {
+        font-size: var(--mantine-font-size-xl);
+        line-height: var(--mantine-line-height);
+    }
+
+    header.extra-large {
+        gap: var(--mantine-spacing-md);
+    }
+
+    .extra-large span {
+        width: 44px;
+        height: 44px;
     }
 
     .heading {

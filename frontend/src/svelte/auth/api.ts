@@ -6,7 +6,7 @@ import {
     OAuth2CallbackCommand,
     RegisterCommand,
     VerifyPasskeyAuthenticationCommand
-} from '@remnawave/backend-contract'
+} from '@remnawave/backend-contract/build/backend/commands/auth'
 import {
     type PublicKeyCredentialRequestOptionsJSON,
     startAuthentication

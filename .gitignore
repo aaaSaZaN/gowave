@@ -8,6 +8,7 @@ node_modules/
 dist/
 *.log
 *.tsbuildinfo
+/frontend/.svelte-check/
 .cache/
 /.dev/
 .turbo

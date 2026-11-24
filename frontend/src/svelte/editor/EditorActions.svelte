@@ -13,6 +13,7 @@
         oncopy,
         onerror,
         onload,
+        ongenerate,
         saving,
         saveDisabled = false,
         saveTone = 'teal',
@@ -25,6 +26,7 @@
         oncopy: () => void
         onerror: (error: unknown) => void
         onload: () => void
+        ongenerate?: () => void
         saving: boolean
         saveDisabled?: boolean
         saveTone?: string
@@ -153,6 +155,12 @@
                 {t('config-editor-actions.feature.paste-from-clipboard')}
             </button>
             <hr>
+            {#if ongenerate}
+                <button type="button" role="menuitem" tabindex="-1" onclick={ongenerate}>
+                    <Icon name="TbTools" size={14} />
+                    {t('config-editor-actions.feature.generate-keypair')}
+                </button>
+            {/if}
             <button
                 type="button"
                 role="menuitem"

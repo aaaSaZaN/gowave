@@ -51,8 +51,51 @@ a {
     font-weight: 600;
 }
 
-:where(.dashboard-content, dialog) :where(input[type="checkbox"], input[type="radio"]) {
+:where(input[type="radio"]) {
     accent-color: var(--mantine-primary-color-filled);
+}
+
+:where(input[type="checkbox"]:not([role="switch"])) {
+    appearance: none;
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: var(--gw-checkbox-size, 20px);
+    height: var(--gw-checkbox-size, 20px);
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--mantine-color-default-border);
+    border-radius: var(--mantine-radius-sm);
+    background-color: var(--mantine-color-default);
+    color: var(--mantine-color-bright);
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+:where(input[type="checkbox"]:not([role="switch"])):is(:checked, :indeterminate) {
+    border-color: light-dark(var(--mantine-color-cyan-7), var(--mantine-color-cyan-4));
+    background-color: transparent;
+}
+
+:where(input[type="checkbox"]:not([role="switch"])):is(:checked, :indeterminate)::after {
+    width: 65%;
+    aspect-ratio: 1;
+    background: currentColor;
+    mask:
+        center / contain no-repeat
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m2 8 4 4 8-8' fill='none' stroke='black' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    content: "";
+}
+
+:where(input[type="checkbox"]:not([role="switch"])):indeterminate::after {
+    height: 2.5px;
+    border-radius: 999px;
+    mask: none;
+}
+
+:where(input[type="checkbox"]:not([role="switch"])):disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 :where(.mantine-UnstyledButton-root) {
@@ -128,6 +171,66 @@ dialog {
 
 dialog::backdrop {
     background: rgb(0 0 0 / 55%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    dialog[open],
+    dialog[open]::backdrop {
+        animation: dialog-fade-in 200ms ease-out;
+    }
+
+    dialog[open][data-closing],
+    dialog[open][data-closing]::backdrop {
+        animation: dialog-fade-out 200ms ease-in both;
+    }
+
+    dialog.panel-overlay.drawer[open] {
+        animation-name: dialog-slide-in;
+    }
+
+    dialog.panel-overlay.drawer[open][data-closing] {
+        animation-name: dialog-slide-out;
+    }
+}
+
+dialog[open][data-closing] {
+    pointer-events: none;
+}
+
+@keyframes dialog-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes dialog-fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes dialog-slide-in {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes dialog-slide-out {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(100%);
+    }
 }
 
 .button-row {

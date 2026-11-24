@@ -1,6 +1,8 @@
 <script lang="ts">
     import { locale } from '../i18n.svelte'
+    import { nextComboboxOption } from '../ui/combobox'
     import Icon from '../ui/Icon.svelte'
+    import TablePopup from '../ui/TablePopup.svelte'
 
     let {
         values = $bindable(),
@@ -14,7 +16,21 @@
         onchange: () => void
     } = $props()
     const choices = $props.id()
+    let anchor = $state<HTMLDivElement>()
     let input: HTMLInputElement
+    let open = $state(false)
+    let active = $state<string>()
+    const options = $derived(
+        [...new Set(suggestions)]
+            .filter((tag) => !values.includes(tag) && tag.includes(draft.trim().toUpperCase()))
+            .map((value) => ({ value }))
+    )
+    const expanded = $derived(open && options.length > 0 && values.length < 10)
+
+    function optionId(value: string): string {
+        return `${choices}-${encodeURIComponent(value)}`
+    }
+
     let draft = $state('')
     const separator = /[,;\s]+/
     let pending = $derived(draft.toUpperCase().split(separator).filter(Boolean))
@@ -25,7 +41,7 @@
             .slice(0, Math.max(0, 10 - values.length))
     ])
 
-    export function clear(): void {
+    function clear(): void {
         draft = ''
         values = []
         onchange()
@@ -34,6 +50,35 @@
     function commit(): void {
         values = submitted
         draft = ''
+        active = undefined
+    }
+
+    function choose(tag: string): void {
+        draft = tag
+        commit()
+        open = false
+        onchange()
+    }
+
+    function keys(event: KeyboardEvent): void {
+        if (event.isComposing) return
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            if (options.length === 0) return
+            event.preventDefault()
+            open = true
+            active = nextComboboxOption(event.key, active, options)
+            if (active)
+                document.getElementById(optionId(active))?.scrollIntoView({ block: 'nearest' })
+        } else if (event.key === 'Enter' && (draft.trim() || active)) {
+            event.preventDefault()
+            if (active) choose(active)
+            else commit()
+        } else if (event.key === 'Escape' && expanded) {
+            event.preventDefault()
+            event.stopPropagation()
+            open = false
+            active = undefined
+        }
     }
 
     function remove(tag: string): void {
@@ -43,7 +88,7 @@
     }
 </script>
 
-<div class="tags-control">
+<div class="tags-control" bind:this={anchor}>
     <input type="hidden" name="tags" value={submitted.join(',')}>
     {#each values as tag (tag)}
         <span class="tag-pill">
@@ -60,30 +105,31 @@
     {/each}
     <input
         bind:this={input}
-        list={choices}
         aria-label={label}
+        role="combobox"
+        aria-expanded={expanded}
+        aria-autocomplete="list"
+        aria-controls={expanded ? choices : undefined}
+        aria-activedescendant={expanded && active ? optionId(active) : undefined}
         autocomplete="off"
         disabled={values.length >= 10}
         placeholder="Enter tags (comma, space, semicolon)"
         value={draft}
+        onfocus={() => (open = true)}
+        onclick={() => (open = true)}
         oninput={(event) => {
             draft = event.currentTarget.value
             if (/[,;\s]$/.test(draft)) commit()
+            open = true
+            active = undefined
             onchange()
         }}
-        onblur={commit}
-        onkeydown={(event) => {
-            if (event.key === 'Enter' && draft.trim()) {
-                event.preventDefault()
-                commit()
-            }
+        onblur={() => {
+            commit()
+            open = false
         }}
+        onkeydown={keys}
     >
-    <datalist id={choices}>
-        {#each suggestions.filter((tag) => !values.includes(tag)) as tag (tag)}
-            <option value={tag}></option>
-        {/each}
-    </datalist>
     {#if values.length || draft}
         <button
             type="button"
@@ -98,6 +144,38 @@
         </button>
     {/if}
 </div>
+
+{#if expanded && anchor}
+    <TablePopup
+        {anchor}
+        id={choices}
+        {label}
+        role="listbox"
+        matchWidth
+        maxHeight={230}
+        keyboardNavigation={false}
+        close={() => {
+            open = false
+            active = undefined
+        }}
+    >
+        {#each options as { value } (value)}
+            <button
+                type="button"
+                id={optionId(value)}
+                role="option"
+                class="option m_92253aa5 m_b2821a6e mantine-UnstyledButton-root"
+                class:keyboard-active={active === value}
+                aria-selected={active === value}
+                tabindex="-1"
+                onmousedown={(event) => event.preventDefault()}
+                onclick={() => choose(value)}
+            >
+                {value}
+            </button>
+        {/each}
+    </TablePopup>
+{/if}
 
 <style>
     .tags-control {
@@ -125,9 +203,6 @@
         outline: none;
         background: transparent;
     }
-    input::-webkit-calendar-picker-indicator {
-        display: none;
-    }
     .tag-pill {
         display: inline-flex;
         align-items: center;
@@ -141,14 +216,21 @@
         font-weight: 700;
         letter-spacing: 0.25px;
     }
-    button {
+    .tags-control button {
         display: grid;
         width: 18px;
         height: 18px;
         place-items: center;
     }
-    button:hover {
+    .tags-control button:hover {
         color: var(--mantine-color-bright);
+    }
+    .option {
+        width: 100%;
+        text-align: start;
+    }
+    .option.keyboard-active {
+        background: var(--mantine-color-default-hover);
     }
     .clear {
         color: var(--mantine-color-dimmed);

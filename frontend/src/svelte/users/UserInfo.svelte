@@ -1,34 +1,75 @@
 <script lang="ts">
     import { prettifyBytesUtil } from '@shared/utils/bytes'
+    import { formatTimeUtil } from '@shared/utils/time-utils'
+    import { onDestroy } from 'svelte'
     import { locale } from '../i18n.svelte'
+    import FormCard from '../ui/FormCard.svelte'
+    import Icon from '../ui/Icon.svelte'
+    import type { IconName } from '../ui/icons'
     import type { User } from './queries'
+    import UserStatusBadge from './UserStatusBadge.svelte'
 
-    let { user, copy }: { user: User; copy: (value: string) => void } = $props()
-    let open = $state(false)
+    let { user, copy }: { user: User; copy: (value: string) => Promise<boolean> } = $props()
     let t = $derived(locale.t)
-    let dates = $derived(
-        new Intl.DateTimeFormat(locale.language, { dateStyle: 'medium', timeStyle: 'short' })
-    )
+    let copied = $state('')
+    let copyTimeout: ReturnType<typeof setTimeout> | undefined
 
-    function date(value: Date | null): string | null {
-        return value ? dates.format(value) : null
+    onDestroy(() => clearTimeout(copyTimeout))
+
+    function date(time: Date | null): string | null {
+        return time
+            ? formatTimeUtil({ time, template: 'TIME_FIRST_DATETIME', language: locale.language })
+            : null
     }
 
-    let sections = $derived([
+    async function copyRow(key: string, value: string): Promise<void> {
+        if (!(await copy(value))) return
+        clearTimeout(copyTimeout)
+        copied = key
+        copyTimeout = setTimeout(() => (copied = ''), 2000)
+    }
+
+    type Row = [string, string | number | null | undefined, monospace?: boolean]
+    let sections = $derived<
+        {
+            title: string
+            icon: IconName
+            tone: string
+            status?: boolean
+            rows: Row[]
+        }[]
+    >([
         {
             title: t('detailed-user-info-drawer.widget.user-information'),
+            icon: 'PiUserDuotone',
+            tone: 'blue',
+            status: true,
             rows: [
-                [t('detailed-user-info-drawer.widget.short-uuid'), user.shortUuid],
+                ['ID', user.id, true],
+                [t('detailed-user-info-drawer.widget.short-uuid'), user.shortUuid, true],
+                [t('common.field.username'), user.username],
                 [t('detailed-user-info-drawer.widget.email'), user.email],
-                [t('detailed-user-info-drawer.widget.telegram-id'), user.telegramId]
+                [t('detailed-user-info-drawer.widget.telegram-id'), user.telegramId],
+                [t('common.field.description'), user.description],
+                [t('common.field.tag'), user.tag]
             ]
         },
         {
             title: t('detailed-user-info-drawer.widget.traffic-information'),
+            icon: 'PiArrowsDownUpDuotone',
+            tone: 'teal',
             rows: [
+                [
+                    t('detailed-user-info-drawer.widget.used-traffic'),
+                    prettifyBytesUtil(user.userTraffic.usedTrafficBytes)
+                ],
                 [
                     t('detailed-user-info-drawer.widget.lifetime-used-traffic'),
                     prettifyBytesUtil(user.userTraffic.lifetimeUsedTrafficBytes)
+                ],
+                [
+                    t('detailed-user-info-drawer.widget.traffic-limit'),
+                    prettifyBytesUtil(user.trafficLimitBytes)
                 ],
                 [
                     t('detailed-user-info-drawer.widget.traffic-limit-strategy'),
@@ -42,27 +83,44 @@
         },
         {
             title: t('detailed-user-info-drawer.widget.subscription-information'),
-            rows: [[t('detailed-user-info-drawer.widget.revoked-at'), date(user.subRevokedAt)]]
+            icon: 'PiCalendarDotDuotone',
+            tone: 'orange',
+            rows: [
+                [t('common.field.subscription-url'), user.subscriptionUrl, true],
+                [t('detailed-user-info-drawer.widget.expires-at'), date(user.expireAt)],
+                [t('detailed-user-info-drawer.widget.revoked-at'), date(user.subRevokedAt)]
+            ]
         },
         {
             title: t('detailed-user-info-drawer.widget.connection-information'),
+            icon: 'PiNetworkDuotone',
+            tone: 'violet',
             rows: [
-                [t('detailed-user-info-drawer.widget.trojan-password'), user.trojanPassword],
-                ['VLESS/Hysteria2 UUID', user.vlessUuid],
-                [t('detailed-user-info-drawer.widget.ss-password'), user.ssPassword],
+                [t('detailed-user-info-drawer.widget.trojan-password'), user.trojanPassword, true],
+                ['Vless/Hysteria2 UUID', user.vlessUuid, true],
+                [t('detailed-user-info-drawer.widget.ss-password'), user.ssPassword, true],
                 [t('common.field.first-connected-at'), date(user.userTraffic.firstConnectedAt)],
                 [
+                    t('detailed-user-info-drawer.widget.last-online'),
+                    date(user.userTraffic.onlineAt)
+                ],
+                [
                     t('detailed-user-info-drawer.widget.last-connected-node'),
-                    user.userTraffic.lastConnectedNodeUuid
+                    user.userTraffic.lastConnectedNodeUuid,
+                    true
                 ]
             ]
         },
         {
             title: t('detailed-user-info-drawer.widget.active-internal-squads'),
-            rows: user.activeInternalSquads.map(({ name, uuid }) => [name, uuid])
+            icon: 'PiTagDuotone',
+            tone: 'green',
+            rows: user.activeInternalSquads.map(({ name, uuid }): Row => [name, uuid, true])
         },
         {
             title: t('detailed-user-info-drawer.widget.timestamps'),
+            icon: 'PiClockDuotone',
+            tone: 'gray',
             rows: [
                 [t('common.field.created-at'), date(user.createdAt)],
                 [t('common.field.updated-at'), date(user.updatedAt)]
@@ -71,73 +129,110 @@
     ])
 </script>
 
-<details bind:open>
-    <summary>{t('detailed-user-info-drawer.widget.detailed-user-info')}</summary>
-    {#if open}
-        <div class="grid">
-            {#each sections as section (section.title)}
-                {#if section.rows.length}
-                    <section>
-                        <h2>{section.title}</h2>
-                        <dl>
-                            {#each section.rows as [label, value]}
-                                <div>
-                                    <dt>{label}</dt>
-                                    <dd>
-                                        {#if value !== null && value !== undefined && value !== ''}
-                                            <button
-                                                type="button"
-                                                title={t('common.action.copy')}
-                                                onclick={() => copy(String(value))}
-                                            >
-                                                {value}
-                                            </button>
-                                        {:else}
-                                            —
-                                        {/if}
-                                    </dd>
-                                </div>
-                            {/each}
-                        </dl>
-                    </section>
-                {/if}
-            {/each}
-        </div>
-    {/if}
-</details>
+<div class="info">
+    {#each sections as section (section.title)}
+        {#if section.rows.length}
+            <FormCard title={section.title} icon={section.icon} tone={section.tone}>
+                {#snippet actions()}
+                    {#if section.status}
+                        <UserStatusBadge status={user.status} />
+                    {/if}
+                {/snippet}
+                <dl>
+                    {#each section.rows as [label, value, monospace], index}
+                        {@const key = `${section.title}:${index}`}
+                        <div>
+                            <dt>{label}</dt>
+                            <dd>
+                                {#if value !== null && value !== undefined && value !== ''}
+                                    <button
+                                        type="button"
+                                        class="mantine-UnstyledButton-root"
+                                        class:monospace
+                                        class:copied={copied === key}
+                                        title={t(
+                                            copied === key
+                                                ? 'common.message.copied'
+                                                : 'common.action.copy'
+                                        )}
+                                        onclick={() => void copyRow(key, String(value))}
+                                    >
+                                        <span>{value}</span>
+                                        <Icon
+                                            name={copied === key ? 'PiCheck' : 'PiCopy'}
+                                            size={14}
+                                        />
+                                    </button>
+                                {:else}
+                                    <span class="empty">—</span>
+                                {/if}
+                            </dd>
+                        </div>
+                    {/each}
+                </dl>
+            </FormCard>
+        {/if}
+    {/each}
+</div>
 
 <style>
-    details {
-        margin-block: 0.75rem;
-        padding: 0.55rem 0.7rem;
-        border: 1px solid var(--gw-border);
-        border-radius: 0.375rem;
-    }
-    summary {
-        cursor: pointer;
-    }
-    .grid {
+    .info {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
-        gap: 0.75rem;
-        margin-block-start: 0.75rem;
+        gap: var(--mantine-spacing-md);
     }
-    section {
+    .info :global(h3) {
+        font-size: var(--mantine-font-size-lg);
+    }
+    dl {
         min-width: 0;
-    }
-    h2 {
-        font-size: 1rem;
         margin: 0;
     }
-    dl div {
-        margin-block: 0.25rem;
+    dl > div + div {
+        margin-block-start: var(--mantine-spacing-sm);
+        padding-block-start: var(--mantine-spacing-sm);
+        border-block-start: 1px solid var(--mantine-color-default-border);
+    }
+    dt {
+        color: var(--mantine-color-dimmed);
+        font-size: var(--mantine-font-size-sm);
     }
     dd {
         margin: 0;
+        margin-block-start: 2px;
+    }
+    .empty {
+        color: var(--mantine-color-dimmed);
     }
     button {
+        display: inline-flex;
+        align-items: center;
         max-width: 100%;
-        overflow-wrap: anywhere;
-        text-align: start;
+        gap: 6px;
+        margin-inline: -6px;
+        padding-inline: 6px;
+        border-radius: var(--mantine-radius-sm);
+        color: inherit;
+    }
+    button > span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    button.monospace > span {
+        font-family: var(--mantine-font-family-monospace);
+    }
+    button :global(svg) {
+        flex: none;
+        opacity: 0;
+    }
+    button:hover,
+    button:focus-visible {
+        background: var(--mantine-color-default-hover);
+    }
+    button.copied {
+        color: var(--mantine-color-teal-6);
+    }
+    button:is(:hover, :focus-visible, .copied) :global(svg) {
+        opacity: 0.7;
     }
 </style>

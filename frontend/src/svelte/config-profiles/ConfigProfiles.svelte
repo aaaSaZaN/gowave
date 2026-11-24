@@ -21,6 +21,7 @@
     import ActionIcon from '../ui/ActionIcon.svelte'
     import ActionMenu from '../ui/ActionMenu.svelte'
     import Button from '../ui/Button.svelte'
+    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import EmptyState from '../ui/EmptyState.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
     import EntityTagBar from '../ui/EntityTagBar.svelte'
@@ -136,7 +137,7 @@
             await queryClient.invalidateQueries({ queryKey: ['configProfiles'] })
             if (tag && tag !== NO_TAG && !ordered.some((profile) => profile.tags.includes(tag)))
                 tag = ''
-            tagsDialog.close()
+            dismissDialog(tagsDialog)
         } catch (error) {
             tagsError =
                 error instanceof ZodError
@@ -170,7 +171,7 @@
         onSuccess: async (profile) => {
             queryClient.setQueryData(profileQuery(profile.uuid).queryKey, profile)
             await queryClient.invalidateQueries({ queryKey: ['configProfiles'] })
-            renameDialog.close()
+            dismissDialog(renameDialog)
         }
     }))
 
@@ -517,9 +518,7 @@
 <dialog
     bind:this={tagsDialog}
     aria-labelledby="profile-tags-title"
-    oncancel={(event) => {
-        if (savingTags) event.preventDefault()
-    }}
+    oncancel={(event) => cancelDialog(event, savingTags)}
 >
     <h2 id="profile-tags-title">{t('common.field.tags')}</h2>
     <form onsubmit={(event) => void saveTags(event)}>
@@ -531,7 +530,7 @@
             <p role="alert">{tagsError}</p>
         {/if}
         <div class="button-row">
-            <button type="button" disabled={savingTags} onclick={() => tagsDialog.close()}>
+            <button type="button" disabled={savingTags} onclick={() => dismissDialog(tagsDialog)}>
                 {t('common.action.cancel')}
             </button>
             <button type="submit" disabled={savingTags}>{t('common.action.save')}</button>
@@ -542,9 +541,7 @@
 <dialog
     bind:this={renameDialog}
     aria-labelledby="profile-rename-title"
-    oncancel={(event) => {
-        if (renameProfile.isPending) event.preventDefault()
-    }}
+    oncancel={(event) => cancelDialog(event, renameProfile.isPending)}
 >
     <h2 id="profile-rename-title">{t('common.action.rename')}</h2>
     <form onsubmit={rename}>
@@ -559,7 +556,7 @@
             <button
                 type="button"
                 disabled={renameProfile.isPending}
-                onclick={() => renameDialog.close()}
+                onclick={() => dismissDialog(renameDialog)}
             >
                 {t('common.action.close')}
             </button>

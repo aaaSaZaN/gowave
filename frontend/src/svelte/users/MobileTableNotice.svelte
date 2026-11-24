@@ -6,6 +6,7 @@
     import { onMount } from 'svelte'
     import { locale } from '../i18n.svelte'
     import Button from '../ui/Button.svelte'
+    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import Icon from '../ui/Icon.svelte'
     import type { IconName } from '../ui/icons'
 
@@ -40,6 +41,7 @@
 </script>
 
 <dialog
+    oncancel={cancelDialog}
     class="mobile-warning notice-dialog"
     aria-labelledby={heading}
     bind:this={dialog}
@@ -75,7 +77,7 @@
             color="orange"
             icon="PiDeviceMobile"
             size="md"
-            onclick={() => dialog.close()}
+            onclick={() => dismissDialog(dialog)}
         >
             {t('mobile-warning-overlay.i-understand-continue-anyway')}
         </Button>

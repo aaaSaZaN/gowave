@@ -14,6 +14,7 @@
     import { callCommand, submitCommand, submitVoidCommand } from '../commands'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
+    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import { passkeys } from './queries'
 
     let { close }: { close: () => void } = $props()
@@ -58,9 +59,7 @@
     bind:this={dialog}
     onclose={close}
     aria-labelledby="passkeys-heading"
-    oncancel={(event) => {
-        if (action.isPending) event.preventDefault()
-    }}
+    oncancel={(event) => cancelDialog(event, action.isPending)}
 >
     <h2 id="passkeys-heading">{t('passkeys-drawer.component.passkeys')}</h2>
     {#if keys.isPending}
@@ -162,7 +161,7 @@
         >
             {t('common.action.refresh')}
         </button>
-        <button type="button" disabled={action.isPending} onclick={() => dialog.close()}>
+        <button type="button" disabled={action.isPending} onclick={() => dismissDialog(dialog)}>
             {t('common.action.close')}
         </button>
     </div>

@@ -19,11 +19,13 @@
     import CodeEditor from '../editor/CodeEditor.svelte'
     import EditorActions from '../editor/EditorActions.svelte'
     import EditorFrame from '../editor/EditorFrame.svelte'
+    import KeypairGenerator from '../editor/KeypairGenerator.svelte'
     import TemplatePicker from '../editor/TemplatePicker.svelte'
     import UnsavedChanges from '../editor/UnsavedChanges.svelte'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
     import Button from '../ui/Button.svelte'
+    import { dismissContainingDialog } from '../ui/dialog-motion'
     import Icon from '../ui/Icon.svelte'
     import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
@@ -53,6 +55,7 @@
     let confirmSave = $state(false)
     const configValid = $derived(validator.status === 'ready' && validation === null)
     let importOpen = $state(false)
+    let keypairOpen = $state(false)
     let computedOpen = $state(false)
     let t = $derived(locale.t)
 
@@ -72,7 +75,7 @@
                 queryKey: computedProfileQuery(updated.uuid).queryKey
             })
         },
-        onError: report
+        onError: (error) => report(error, 'Update Config Profile')
     }))
 
     onMount(() => {
@@ -133,9 +136,9 @@
         save.mutate(config)
     }
 
-    function report(reason: unknown): void {
+    function report(reason: unknown, title = t('common.message.error')): void {
         notifications.show({
-            title: t('common.message.error'),
+            title,
             message: reason instanceof Error ? reason.message : t('common.message.error'),
             color: 'red'
         })
@@ -217,6 +220,7 @@
             oncopy={() => (notice = t('common.message.copied'))}
             onerror={report}
             onload={() => (importOpen = true)}
+            ongenerate={() => (keypairOpen = true)}
             saveDisabled={!dirty && !configValid}
             saveAnyway={configValid ? undefined : () => (confirmSave = true)}
             saveTone={dirty ? 'teal' : 'gray'}
@@ -258,7 +262,7 @@
     >
         <p>{t('config-editor-actions.feature.save-anyway-description')}</p>
         <div class="button-row">
-            <Button onclick={() => (confirmSave = false)}>{t('common.action.cancel')}</Button>
+            <Button onclick={dismissContainingDialog}>{t('common.action.cancel')}</Button>
             <Button
                 color="red"
                 variant="filled"
@@ -274,6 +278,10 @@
 
 {#if computedOpen}
     <ProfilePreview {profile} computed={true} close={() => (computedOpen = false)} />
+{/if}
+
+{#if keypairOpen}
+    <KeypairGenerator close={() => (keypairOpen = false)} />
 {/if}
 
 {#if importOpen}

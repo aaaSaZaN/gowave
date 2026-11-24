@@ -142,7 +142,7 @@
             <tr>
                 <th scope="col" class="selection pinned">
                     <input
-                        class="user-checkbox mantine-Checkbox-input"
+                        class="user-checkbox"
                         type="checkbox"
                         aria-label="Toggle select all"
                         checked={allSelected}
@@ -261,7 +261,7 @@
                 >
                     <td class="selection pinned">
                         <input
-                            class="user-checkbox mantine-Checkbox-input"
+                            class="user-checkbox"
                             type="checkbox"
                             aria-label="Toggle select row"
                             checked={userSelection.has(user.id)}
@@ -566,17 +566,33 @@
         padding: 0;
         border: 0;
     }
+    tr.selected {
+        --selection-overlay: color-mix(
+            in srgb,
+            var(--mantine-primary-color-light),
+            transparent 20%
+        );
+    }
+
+    tr.selected:hover {
+        --selection-overlay: light-dark(
+            color-mix(in srgb, var(--mantine-primary-color-light-hover), black 5%),
+            color-mix(in srgb, var(--mantine-primary-color-light-hover), white 5%)
+        );
+    }
+
     tr.selected td,
     tr.selected .pinned {
-        background: color-mix(in srgb, var(--mantine-color-cyan-4) 12%, var(--mantine-color-body));
+        background: linear-gradient(var(--selection-overlay), var(--selection-overlay))
+            var(--mantine-color-body);
     }
 
     .user-row:last-child td {
         border-block-end: 0;
     }
 
-    tr.user-row:hover td,
-    tr.user-row:hover .pinned {
+    tr.user-row:not(.selected):hover td,
+    tr.user-row:not(.selected):hover .pinned {
         background: var(--mantine-color-default-hover);
     }
 
@@ -585,38 +601,6 @@
     }
 
     .selection .user-checkbox {
-        appearance: none;
-        display: grid;
-        width: 24px;
-        height: 24px;
-        margin: 0;
-        padding: 0;
-        place-content: center;
-        border: 1px solid var(--mantine-color-default-border);
-        border-radius: var(--mantine-radius-xs);
-        background: var(--mantine-color-default);
-        vertical-align: middle;
-    }
-
-    .user-checkbox:checked,
-    .user-checkbox:indeterminate {
-        border-color: var(--mantine-color-cyan-8);
-        background: var(--mantine-color-cyan-8);
-    }
-
-    .user-checkbox:checked::after {
-        width: 10px;
-        height: 6px;
-        transform: translateY(-1px) rotate(-45deg);
-        border-bottom: 2px solid white;
-        border-left: 2px solid white;
-        content: "";
-    }
-
-    .user-checkbox:indeterminate::after {
-        width: 10px;
-        height: 2px;
-        background: white;
-        content: "";
+        --gw-checkbox-size: 24px;
     }
 </style>

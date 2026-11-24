@@ -2,6 +2,7 @@
     import { createQuery } from '@tanstack/svelte-query'
     import { onMount } from 'svelte'
     import { locale } from '../i18n.svelte'
+    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import { downloadProfile } from './download-profile'
     import { computedProfileQuery, type Profile } from './queries'
 
@@ -33,7 +34,7 @@
     }
 </script>
 
-<dialog bind:this={dialog} onclose={close} aria-labelledby={title}>
+<dialog oncancel={cancelDialog} bind:this={dialog} onclose={close} aria-labelledby={title}>
     <div class="button-row">
         <h2 id={title}>
             {computed
@@ -41,7 +42,9 @@
                 : t('config-profiles-grid.widget.xray-config')}
             · {profile.name}
         </h2>
-        <button type="button" onclick={() => dialog.close()}>{t('common.action.close')}</button>
+        <button type="button" onclick={() => dismissDialog(dialog)}>
+            {t('common.action.close')}
+        </button>
     </div>
     {#if computed && query.isPending}
         <p role="status">{t('config-profile-card.widget.loading-computed-config-profile')}</p>

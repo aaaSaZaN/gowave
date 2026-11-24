@@ -11,6 +11,7 @@
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
     import Button from '../ui/Button.svelte'
+    import HostConfirmation from './HostConfirmation.svelte'
     import HostFields from './HostFields.svelte'
     import HostPreview from './HostPreview.svelte'
     import { formText, hostPatch } from './host-fields'
@@ -32,6 +33,7 @@
     const changed = new SvelteSet<string>()
     let form: HTMLFormElement
     let previewTarget = $state<{ saved: Host } | { draft: FormData }>()
+    let confirmation = $state.raw<{ patch: ReturnType<typeof hostPatch>; summary: string }>()
     let notice = $state('')
     let problem = $state('')
     let bulk = $derived(bulkIds !== undefined)
@@ -67,11 +69,7 @@
 
     function changedInput(event: Event): void {
         const target = event.target
-        if (
-            target instanceof HTMLInputElement ||
-            target instanceof HTMLSelectElement ||
-            target instanceof HTMLTextAreaElement
-        ) {
+        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
             const [key] = target.name.split(':')
             if (key && key !== 'apply') fieldChanged(key)
         }
@@ -79,7 +77,7 @@
 
     function submit(event: SubmitEvent): void {
         event.preventDefault()
-        if (save.isPending) return
+        if (save.isPending || confirmation) return
         const data = new FormData(form)
         if (!host && (!bulk || data.has('apply:inbound')) && !formText(data, 'inbound')) {
             problem = t('common.message.no-inbound-selected')
@@ -99,13 +97,11 @@
                 return
             }
             if (bulkIds) {
-                const description = t('edit-many-hosts-drawer.confirm-description', {
-                    count: bulkIds.length
-                })
                 const summary = fields
                     .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
                     .join('\n')
-                if (!window.confirm(`${description}\n\n${summary}`)) return
+                confirmation = { patch, summary }
+                return
             }
             save.mutate(patch)
         } catch (error) {
@@ -142,6 +138,23 @@
 
 {#if previewTarget}
     <HostPreview target={previewTarget} close={() => (previewTarget = undefined)} />
+{/if}
+
+{#if confirmation && bulkIds}
+    {@const { patch, summary } = confirmation}
+    <HostConfirmation
+        title={t('edit-many-hosts-drawer.confirm-title')}
+        label={t('common.action.save')}
+        icon="PiFloppyDiskDuotone"
+        tone="teal"
+        description={t('edit-many-hosts-drawer.confirm-description', { count: bulkIds.length })}
+        {summary}
+        close={() => (confirmation = undefined)}
+        confirm={() => {
+            confirmation = undefined
+            save.mutate(patch)
+        }}
+    />
 {/if}
 
 <style>

@@ -14,6 +14,9 @@
         leadingSize = 16,
         emptyText,
         disabled,
+        autocomplete,
+        pattern,
+        preferAbove = false,
         placeholder,
         options,
         leading,
@@ -32,6 +35,9 @@
         leadingSize?: number
         emptyText?: string
         disabled?: boolean
+        autocomplete?: 'suggest' | 'create'
+        pattern?: string
+        preferAbove?: boolean
         placeholder: string
         options: readonly {
             value: string
@@ -54,15 +60,29 @@
     let open = $state(false)
     let search = $state<string>()
     let active = $state<string>()
-    const unavailable = $derived(disabled ?? !options.length)
+    const unavailable = $derived(disabled ?? (!autocomplete && !options.length))
     const selected = $derived(options.find((option) => option.value === value))
-    const filtered = $derived(
-        options.filter((option) =>
-            option.label
-                .toLocaleLowerCase(locale.language)
-                .includes((search ?? '').toLocaleLowerCase(locale.language))
-        )
-    )
+    const canClear = $derived(clearable && (selected || (autocomplete && value) || alwaysShowClear))
+    const doubleActions = $derived(autocomplete === 'suggest' && !!canClear)
+    const filtered = $derived.by(() => {
+        const text = search?.trim() ?? ''
+        const matches =
+            !text || (autocomplete && options.some((option) => option.value === text))
+                ? options
+                : options.filter((option) =>
+                      option.label
+                          .toLocaleLowerCase(locale.language)
+                          .includes(text.toLocaleLowerCase(locale.language))
+                  )
+        return autocomplete === 'create' && text && !matches.some((item) => item.value === text)
+            ? [...matches, { value: text, label: `+ ${text}` }]
+            : matches
+    })
+
+    function updateValue(next: string): void {
+        if (onchoose) onchoose(next)
+        else value = next
+    }
 
     function highlight(next: string | undefined): void {
         active = next
@@ -81,13 +101,11 @@
         if (open) return
         search = undefined
         open = true
-        highlight(selected?.value)
+        active = undefined
     }
 
     function choose(next: string): void {
-        const selection = next === value && clearable ? '' : next
-        if (onchoose) onchoose(selection)
-        else value = selection
+        updateValue(next === value && clearable && !autocomplete ? '' : next)
         open = false
         search = undefined
         anchor?.focus({ preventScroll: true })
@@ -97,11 +115,22 @@
         if (event.isComposing) return
         if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
             event.preventDefault()
-            if (open) highlight(nextComboboxOption(event.key, active, filtered))
+            if (!open) show()
+            highlight(nextComboboxOption(event.key, active ?? selected?.value, filtered))
+        } else if (
+            !searchable &&
+            (event.key === ' ' || (event.key === 'Enter' && active === undefined))
+        ) {
+            event.preventDefault()
+            if (open) open = false
             else show()
         } else if (event.key === 'Enter' && open && active !== undefined) {
             event.preventDefault()
-            choose(active)
+            const activeOption = options.some((option) => option.value === active)
+            if (!pattern || activeOption || anchor?.reportValidity()) choose(active)
+        } else if (event.key === 'Enter' && open && autocomplete) {
+            event.preventDefault()
+            if (anchor?.reportValidity()) choose(value)
         } else if (event.key === 'Escape' && open) {
             event.preventDefault()
             event.stopPropagation()
@@ -125,6 +154,7 @@
     <div
         class="m_6c018570 select-input"
         class:medium={size === 'md'}
+        class:double-actions={doubleActions}
         data-variant="default"
         data-with-left-section={selected?.flag || selected?.avatar || leading ? true : undefined}
         data-with-right-section
@@ -149,7 +179,14 @@
             disabled={unavailable}
             readonly={!searchable}
             {placeholder}
-            value={(open && search !== undefined ? search : selected?.label) ?? ''}
+            {pattern}
+            autocomplete="off"
+            value={(open && search !== undefined
+                ? search
+                : (selected?.label ?? (autocomplete ? value : ''))) ?? ''}
+            onfocus={() => {
+                if (autocomplete === 'create') show()
+            }}
             onclick={() => {
                 if (open && !searchable) open = false
                 else show()
@@ -157,6 +194,7 @@
             oninput={(event) => {
                 show()
                 search = event.currentTarget.value
+                if (autocomplete) updateValue(search)
                 active = undefined
             }}
             onblur={() => (open = false)}
@@ -173,21 +211,42 @@
                 {/if}
             </span>
         {/if}
-        {#if clearable && (selected || alwaysShowClear)}
+        {#if canClear}
             <button
                 type="button"
                 class="m_82577fc2 clear mantine-UnstyledButton-root"
                 data-position="right"
                 aria-label={locale.t('common.action.clear')}
-                disabled={!selected}
-                onclick={() => choose(value)}
+                disabled={!selected && (!autocomplete || !value)}
+                onmousedown={(event) => event.preventDefault()}
+                onclick={() => choose(autocomplete ? '' : value)}
             >
                 <Icon name="TbX" size={14} />
             </button>
         {/if}
-        {#if alwaysShowClear || !(clearable && selected)}
+        {#if autocomplete === 'suggest'}
+            <button
+                type="button"
+                class="m_82577fc2 mantine-UnstyledButton-root suggestion-toggle"
+                disabled={unavailable}
+                data-position="right"
+                aria-label={locale.t('common.action.open')}
+                aria-expanded={open}
+                onmousedown={(event) => event.preventDefault()}
+                onclick={() => {
+                    anchor?.focus({ preventScroll: true })
+                    if (open) open = false
+                    else show()
+                }}
+            >
+                <Icon name="TbChevronDown" size={14} />
+            </button>
+        {:else if alwaysShowClear || !canClear}
             <span class="m_82577fc2 arrow" data-position="right" aria-hidden="true"
-                ><Icon name="TbSelector" size={14} /></span
+                ><Icon
+                    name={autocomplete === 'create' ? 'TbChevronDown' : 'TbSelector'}
+                    size={14}
+                /></span
             >
         {/if}
     </div>
@@ -198,7 +257,8 @@
             {label}
             role="listbox"
             matchWidth
-            maxHeight={230}
+            maxHeight={autocomplete === 'create' ? 200 : 230}
+            {preferAbove}
             keyboardNavigation={false}
             close={() => (open = false)}
         >
@@ -208,14 +268,14 @@
                     id={optionId(item.value)}
                     role="option"
                     tabindex="-1"
-                    data-combobox-selected={item.value === active ? '' : undefined}
+                    class:keyboard-active={item.value === active}
                     onmousedown={(event) => event.preventDefault()}
                     aria-selected={item.value === value}
                     class="m_92253aa5 m_b2821a6e option mantine-UnstyledButton-root"
                     onclick={() => choose(item.value)}
                 >
-                    {#if item.value === value}
-                        <Icon name="TbCheck" size={14} />
+                    {#if item.value === value && !autocomplete}
+                        <span class="selected-check"><Icon name="TbCheck" size={14} /></span>
                     {/if}
                     {#if item.flag}
                         <span aria-hidden="true">{item.flag}</span>
@@ -289,11 +349,30 @@
     .clear {
         width: 35px;
     }
+    .double-actions {
+        --input-right-section-width: 58px;
+    }
+    .double-actions .clear {
+        inset-inline-end: 26px;
+        width: 28px;
+    }
+    .suggestion-toggle {
+        width: 30px;
+        pointer-events: auto;
+    }
     .option {
         display: flex;
         align-items: center;
         gap: var(--mantine-spacing-sm);
         width: 100%;
+    }
+    .option.keyboard-active {
+        background: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-7));
+    }
+    .selected-check {
+        display: inline-flex;
+        color: var(--mantine-color-dimmed);
+        opacity: 0.7;
     }
     .avatar {
         position: relative;

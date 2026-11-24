@@ -5,6 +5,7 @@
     import { submitVoidCommand } from '../commands'
     import { locale } from '../i18n.svelte'
     import type { Node } from '../nodes/queries'
+    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import { type ExecutorAction, executorCommand } from './config'
 
     let { nodes, close }: { nodes: Node[]; close: () => void } = $props()
@@ -27,7 +28,7 @@
     const run = createMutation(() => ({
         mutationFn: (data: PluginExecutorCommand.RequestBody) =>
             submitVoidCommand(PluginExecutorCommand, data),
-        onSuccess: () => dialog.close()
+        onSuccess: () => dismissDialog(dialog)
     }))
 
     onMount(() => dialog.showModal())
@@ -64,9 +65,7 @@
     bind:this={dialog}
     aria-labelledby="plugin-executor-title"
     onclose={close}
-    oncancel={(event) => {
-        if (run.isPending) event.preventDefault()
-    }}
+    oncancel={(event) => cancelDialog(event, run.isPending)}
 >
     <form onsubmit={submit}>
         <h2 id="plugin-executor-title">Plugin executor</h2>
@@ -138,7 +137,7 @@
             <button type="submit" disabled={!selected.length || run.isPending}>
                 {t('node-plugin-executor.content.execute')}
             </button>
-            <button type="button" disabled={run.isPending} onclick={() => dialog.close()}>
+            <button type="button" disabled={run.isPending} onclick={() => dismissDialog(dialog)}>
                 {t('common.action.cancel')}
             </button>
         </div>

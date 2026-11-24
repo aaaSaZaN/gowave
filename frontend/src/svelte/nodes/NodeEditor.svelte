@@ -4,13 +4,24 @@
         BulkNodesUpdateCommand,
         CreateNodeCommand,
         NODE_IP_STATUSES,
+        NodeIpSchema,
         UpdateNodeCommand
     } from '@remnawave/backend-contract'
     import {
         TRAFFIC_TRACKING_START,
+        type TTrafficTrackingStart,
         UpdateNodeBodySchema,
         UpdateNodeResponseSchema
     } from '@shared/api/schemas/node.schema'
+    import {
+        bestFitIecUnitUtil,
+        bytesToUnitUtil,
+        IEC_UNITS,
+        prettifyBytesUtil,
+        type TIecUnit,
+        unitToBytesUtil
+    } from '@shared/utils/bytes'
+    import { getNodeTrafficPeriodStartUtil } from '@shared/utils/time-utils'
     import { createMutation, createQuery } from '@tanstack/svelte-query'
     import { type Snippet, untrack } from 'svelte'
     import { SvelteSet } from 'svelte/reactivity'
@@ -25,14 +36,9 @@
     import SelectField from '../ui/SelectField.svelte'
     import Switch from '../ui/Switch.svelte'
     import { COUNTRIES } from './countries'
-    import {
-        gibibyte,
-        type NodeField,
-        type NodePatch,
-        readConfigProfile,
-        readNodePatch
-    } from './fields'
+    import { type NodeField, type NodePatch, readConfigProfile, readNodePatch } from './fields'
     import NodeInstall from './NodeInstall.svelte'
+    import NodeIpRow from './NodeIpRow.svelte'
     import NodeProviderField from './NodeProviderField.svelte'
     import ProfileFields from './ProfileFields.svelte'
     import {
@@ -80,8 +86,19 @@
             : COUNTRIES
     )
     let ips = $state(untrack(() => initial?.ips.map((ip, index) => ({ ...ip, key: index })) ?? []))
+    const maxIps = 64
+    const ipDragType = 'application/x-gowave-node-ip'
     let nextIp = untrack(() => initial?.ips.length ?? 0)
+    let focusIp = $state<number>()
+    let showIpErrors = $state(false)
     let tracking = $state(untrack(() => initial?.isTrafficTrackingActive ?? false))
+    let unit = $state(untrack(() => bestFitIecUnitUtil(initial?.trafficLimitBytes)))
+    let limitBytes = $state(untrack(() => initial?.trafficLimitBytes ?? undefined))
+    let limitDisplay = $state(untrack(() => bytesToUnitUtil(limitBytes, unit)))
+    let resetDay = $state<number | undefined>(untrack(() => initial?.trafficResetDay ?? undefined))
+    let notifyPercent = $state<number | undefined>(
+        untrack(() => initial?.notifyPercent ?? undefined)
+    )
     let notice = $state('')
     let problem = $state('')
 
@@ -115,6 +132,10 @@
                     providerUuid = result.providerUuid ?? ''
                     activePluginUuid = result.activePluginUuid ?? ''
                     profileVersion += 1
+                    trackingStartOverride = undefined
+                    limitBytes = result.trafficLimitBytes ?? undefined
+                    limitDisplay = bytesToUnitUtil(limitBytes, unit)
+                    showIpErrors = false
                 }
             }
             await queryClient.invalidateQueries({ queryKey: nodesKey })
@@ -124,13 +145,18 @@
         }
     }))
 
-    let trackingStartOverride = $state<string>()
-    let trackingStart = $derived(
-        trackingStartOverride ??
-            initial?.trafficTrackingStart ??
-            (initial?.isTrafficTrackingActive ? 'keep' : 'period')
+    let trackingStartOverride = $state<TTrafficTrackingStart>()
+    let savedTrackingStart = $derived(
+        initial?.trafficTrackingStart ?? (initial?.isTrafficTrackingActive ? 'keep' : 'period')
     )
-
+    let trackingStart = $derived(trackingStartOverride ?? savedTrackingStart)
+    let periodStart = $derived(
+        getNodeTrafficPeriodStartUtil(resetDay ?? 1).toLocaleDateString(locale.language, {
+            day: 'numeric',
+            month: 'long'
+        })
+    )
+    let accumulated = $derived(prettifyBytesUtil(node?.trafficUsedBytes ?? 0) || '0 B')
     function markProfile(dirty: boolean): void {
         if (dirty) changed.add('configProfile')
         else changed.delete('configProfile')
@@ -170,16 +196,20 @@
                               return (
                                   mode === 'edit' &&
                                   tracking &&
-                                  (changed.has(key) || !initial?.isTrafficTrackingActive)
+                                  (trackingStart !== savedTrackingStart ||
+                                      !initial?.isTrafficTrackingActive)
                               )
                           return mode === 'create' || changed.has(key)
                       },
                       mode
                   )
             if (!profileOnly && mode !== 'bulk' && (mode === 'create' || changed.has('ips'))) {
-                patch.ips = ips
-                    .filter(({ ip }) => ip.trim())
-                    .map(({ ip, status }) => ({ ip: ip.trim(), status }))
+                const addresses = ips.map(({ ip, status }) => ({ ip: ip.trim(), status }))
+                if (addresses.some(({ ip }) => !NodeIpSchema.shape.ip.safeParse(ip).success)) {
+                    showIpErrors = true
+                    return
+                }
+                patch.ips = addresses
             }
             if (!Object.keys(patch).length) {
                 problem = 'Select the fields to update'
@@ -199,8 +229,27 @@
     }
 
     function addIp(): void {
+        if (ips.length >= maxIps) return
         ips.push({ key: nextIp, ip: '', status: NODE_IP_STATUSES.UNKNOWN })
+        focusIp = nextIp
         nextIp += 1
+        changed.add('ips')
+    }
+
+    function moveIp(key: number, target: number): void {
+        const index = ips.findIndex((item) => item.key === key)
+        const item = ips[index]
+        if (!item || index === target || target < 0 || target >= ips.length) return
+        ips.splice(index, 1)
+        ips.splice(target, 0, item)
+        changed.add('ips')
+    }
+
+    function setTrafficLimit(event: Event & { currentTarget: HTMLInputElement }): void {
+        limitBytes = unitToBytesUtil(event.currentTarget.value, unit)
+        changed.add('trafficLimitBytes')
+        notice = ''
+        problem = ''
     }
 
     function setApplied(key: NodeField, apply: boolean): void {
@@ -412,11 +461,13 @@
                     {#snippet actions()}
                         <ActionIcon
                             icon="TbPlus"
-                            label={t('node-ips.add-ip')}
+                            label={ips.length >= maxIps
+                                ? t('node-ips.max-ips-reached', { max: maxIps })
+                                : t('node-ips.add-ip')}
                             tone="cyan"
                             size={34}
                             iconSize={18}
-                            disabled={ips.length >= 64}
+                            disabled={ips.length >= maxIps}
                             onclick={addIp}
                         />
                     {/snippet}
@@ -426,31 +477,43 @@
                             {t('node-ips.no-ips-yet')}
                         </div>
                     {/if}
-                    {#each ips as item, index (item.key)}
-                        <div class="ip">
-                            <label
-                                >{t('common.field.ip-address')}
-                                <input bind:value={item.ip} name="ips"></label
-                            >
-                            <label
-                                >{t('common.field.status')}
-                                <select bind:value={item.status} name="ips">
-                                    {#each Object.values(NODE_IP_STATUSES) as status (status)}
-                                        <option value={status}>{status}</option>
-                                    {/each}
-                                </select>
-                            </label>
-                            <button
-                                type="button"
-                                onclick={() => {
-                                    ips.splice(index, 1)
-                                    changed.add('ips')
-                                }}
-                            >
-                                {t('common.action.remove')}
-                            </button>
-                        </div>
-                    {/each}
+                    {#if ips.length}
+                        <ul class="ip-list">
+                            {#each ips as item, index (item.key)}
+                                <NodeIpRow
+                                    bind:ip={item.ip}
+                                    status={item.status}
+                                    focus={focusIp === item.key}
+                                    showError={showIpErrors}
+                                    reorderable={ips.length > 1}
+                                    onstatus={(status) => {
+                                        item.status = status
+                                        changed.add('ips')
+                                    }}
+                                    onremove={() => {
+                                        ips.splice(index, 1)
+                                        changed.add('ips')
+                                    }}
+                                    ondragstart={(event) => {
+                                        if (!event.dataTransfer) return
+                                        event.dataTransfer.effectAllowed = 'move'
+                                        event.dataTransfer.setData(ipDragType, String(item.key))
+                                    }}
+                                    ondragover={(event) => {
+                                        if (event.dataTransfer?.types.includes(ipDragType))
+                                            event.preventDefault()
+                                    }}
+                                    ondrop={(event) => {
+                                        const source = event.dataTransfer?.getData(ipDragType)
+                                        if (!source) return
+                                        event.preventDefault()
+                                        moveIp(Number(source), index)
+                                    }}
+                                    onmove={(offset) => moveIp(item.key, index + offset)}
+                                />
+                            {/each}
+                        </ul>
+                    {/if}
                 </FormCard>
                 <FormCard
                     class="billing"
@@ -464,66 +527,141 @@
                         providerField
                     )}
                     <div class="tracking">
-                        <span
-                            ><Icon name="PiChartBarDuotone" size={20} />
-                            {t('base-node-form.traffic-tracking')}</span
-                        >
-                        <Switch
-                            name="isTrafficTrackingActive"
-                            label={t('base-node-form.traffic-tracking')}
-                            bind:checked={tracking}
-                        />
-                    </div>
-                    {#if tracking}
-                        {@render numeric(
-                            'trafficLimitBytes',
-                            'Traffic limit (GiB)',
-                            initial?.trafficLimitBytes != null
-                                ? initial.trafficLimitBytes / gibibyte
-                                : undefined,
-                            undefined,
-                            'any'
-                        )}
-                        {@render numeric(
-                            'notifyPercent',
-                            'Notify at (%)',
-                            initial?.notifyPercent ?? undefined,
-                            100
-                        )}
-                        {@render numeric(
-                            'trafficResetDay',
-                            'Monthly reset day',
-                            initial?.trafficResetDay ?? undefined,
-                            31,
-                            1,
-                            1
-                        )}
-                        {#if node}
-                            <SelectField
-                                name="trafficTrackingStart"
-                                label={t('base-node-form.tracking-start.label')}
-                                placeholder={t('base-node-form.tracking-start.label')}
-                                value={trackingStart}
-                                options={TRAFFIC_TRACKING_START.map((strategy) => ({
-                                    value: strategy,
-                                    label: t(`base-node-form.tracking-start.${strategy}`)
-                                }))}
-                                searchable={false}
-                                clearable={false}
-                                onchoose={(value) => {
-                                    trackingStartOverride = value
-                                    changed.add('trafficTrackingStart')
-                                }}
+                        <div class="tracking-header">
+                            <span
+                                ><Icon name="TbChartLine" size={18} />
+                                {t('base-node-form.traffic-tracking')}</span
+                            >
+                            <Switch
+                                name="isTrafficTrackingActive"
+                                label={t('base-node-form.traffic-tracking')}
+                                bind:checked={tracking}
+                                tone="cyan"
+                                roundedSquare
                             />
-                        {/if}
-                    {/if}
+                        </div>
+                        <div class="tracking-collapse" class:expanded={tracking} inert={!tracking}>
+                            <fieldset class="tracking-contents" disabled={!tracking}>
+                                <div class="tracking-body">
+                                    <div class="tracking-limit">
+                                        <label>
+                                            {t('base-node-form.limit')}
+                                            <span class="node-input">
+                                                <Icon name="TbChartLine" size={16} />
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="any"
+                                                    bind:value={limitDisplay}
+                                                    oninput={setTrafficLimit}
+                                                >
+                                            </span>
+                                            <input
+                                                type="hidden"
+                                                name="trafficLimitBytes"
+                                                value={limitBytes ?? ''}
+                                            >
+                                        </label>
+                                        <SelectField
+                                            label="Unit"
+                                            hideLabel
+                                            placeholder=""
+                                            searchable={false}
+                                            clearable={false}
+                                            options={IEC_UNITS.map((value) => ({
+                                                value,
+                                                label: value
+                                            }))}
+                                            value={unit}
+                                            onchoose={(value) => {
+                                                unit = value as TIecUnit
+                                                limitDisplay = bytesToUnitUtil(limitBytes, unit)
+                                            }}
+                                        />
+                                    </div>
+                                    <div class="tracking-settings">
+                                        <label>
+                                            {t('base-node-form.reset-day')}
+                                            <span class="node-input">
+                                                <Icon name="TbClock" size={16} />
+                                                <input
+                                                    name="trafficResetDay"
+                                                    type="number"
+                                                    min="1"
+                                                    max="31"
+                                                    placeholder={t('base-node-form.e-g-1-31')}
+                                                    bind:value={resetDay}
+                                                >
+                                            </span>
+                                        </label>
+                                        <label>
+                                            {t('base-node-form.notify-percent')}
+                                            <span class="node-input">
+                                                <Icon name="TbBell" size={16} />
+                                                <input
+                                                    name="notifyPercent"
+                                                    type="number"
+                                                    min="0"
+                                                    max="100"
+                                                    placeholder={t('base-node-form.e-g-50')}
+                                                    bind:value={notifyPercent}
+                                                >
+                                            </span>
+                                        </label>
+                                    </div>
+                                    {#if node}
+                                        <fieldset class="tracking-start">
+                                            <legend>
+                                                {t('base-node-form.tracking-start.label')}
+                                            </legend>
+                                            {#each TRAFFIC_TRACKING_START as strategy (strategy)}
+                                                {@const description =
+                                                    strategy === 'period'
+                                                        ? t(
+                                                              'base-node-form.tracking-start.period-description',
+                                                              { date: periodStart }
+                                                          )
+                                                        : strategy === 'keep'
+                                                          ? t(
+                                                                'base-node-form.tracking-start.keep-description',
+                                                                { value: accumulated }
+                                                            )
+                                                          : t(
+                                                                'base-node-form.tracking-start.zero-description'
+                                                            )}
+                                                <label>
+                                                    <input
+                                                        type="radio"
+                                                        name="trafficTrackingStart"
+                                                        value={strategy}
+                                                        checked={strategy === trackingStart}
+                                                        onchange={() =>
+                                                            (trackingStartOverride = strategy)}
+                                                    >
+                                                    <span>
+                                                        {t(
+                                                            `base-node-form.tracking-start.${strategy}`
+                                                        )}
+                                                        <small>{description}</small>
+                                                    </span>
+                                                </label>
+                                            {/each}
+                                        </fieldset>
+                                    {/if}
+                                </div>
+                            </fieldset>
+                        </div>
+                    </div>
                     {@render input('tags', t('common.field.tags'), initial?.tags.join(', ') ?? '')}
-                    {@render input(
-                        'note',
-                        t('node-tracking-and-billing.card.note'),
-                        initial?.note ?? '',
-                        255
-                    )}
+                    <label class="note">
+                        {t('node-tracking-and-billing.card.note')}
+                        <textarea
+                            name="note"
+                            maxlength="255"
+                            rows="1"
+                            value={initial?.note ?? ''}
+                        ></textarea>
+                    </label>
                 </FormCard>
             </div>
         {/if}
@@ -686,7 +824,7 @@
         color: var(--mantine-color-dimmed);
         pointer-events: none;
     }
-    .node-input :is(input, select) {
+    .node-input input {
         padding-inline-start: 36px;
     }
     .secret-key {
@@ -742,27 +880,122 @@
         min-width: 0;
     }
     .check,
-    .tracking,
-    .tracking > span,
-    .ip {
+    .tracking-header,
+    .tracking-header > span {
         display: flex;
         align-items: center;
-        gap: var(--mantine-spacing-sm);
+        gap: var(--mantine-spacing-xs);
     }
     .tracking {
-        padding: var(--mantine-spacing-md);
+        overflow: hidden;
         border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
         border-radius: var(--mantine-radius-md);
-        background: var(--gw-raised-bg);
-    }
-    .tracking {
-        justify-content: space-between;
-        padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+        background: rgba(var(--gw-fg-rgb), 0.02);
         font-size: var(--mantine-font-size-sm);
+    }
+    .tracking-header {
+        justify-content: space-between;
+        padding: 9px 11px;
         font-weight: 500;
     }
-    .tracking > span :global(svg) {
-        color: var(--mantine-color-indigo-4);
+    .tracking-header > span :global(svg) {
+        color: var(--mantine-color-indigo-6);
+    }
+    .tracking-collapse {
+        display: grid;
+        grid-template-rows: 0fr;
+    }
+    .tracking-collapse.expanded {
+        grid-template-rows: 1fr;
+    }
+    .tracking-contents {
+        min-width: 0;
+        min-height: 0;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        overflow: hidden;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+        .tracking-collapse {
+            transition: grid-template-rows 200ms ease;
+        }
+    }
+    .tracking-body {
+        display: grid;
+        gap: var(--mantine-spacing-sm);
+        padding: 12px 11px;
+        border-block-start: 1px solid rgba(var(--gw-fg-rgb), 0.08);
+    }
+    .tracking-limit,
+    .tracking-settings {
+        display: grid;
+        align-items: end;
+        gap: var(--mantine-spacing-md);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .tracking-limit {
+        grid-template-columns: minmax(0, 1fr) 92px;
+        gap: var(--mantine-spacing-xs);
+    }
+    .tracking-limit input,
+    .tracking-settings input {
+        height: 36px;
+        min-width: 0;
+        font-size: var(--mantine-font-size-sm);
+    }
+    .tracking input[type="number"] {
+        appearance: textfield;
+    }
+    .tracking input[type="number"]::-webkit-inner-spin-button,
+    .tracking input[type="number"]::-webkit-outer-spin-button {
+        appearance: none;
+    }
+    .tracking-start {
+        display: grid;
+        min-width: 0;
+        gap: var(--mantine-spacing-xs);
+        margin: 0;
+        padding: 0;
+        border: 0;
+    }
+    .tracking-start legend {
+        padding: 0;
+        margin-block-end: var(--mantine-spacing-xs);
+        font-weight: 500;
+    }
+    .tracking-start label {
+        display: flex;
+        align-items: start;
+        gap: var(--mantine-spacing-sm);
+        font-size: var(--mantine-font-size-xs);
+        font-weight: 400;
+        cursor: pointer;
+    }
+    .tracking-start input {
+        width: 16px;
+        height: 16px;
+        flex: none;
+        margin: 0;
+        appearance: none;
+        border: 1px solid var(--mantine-color-default-border);
+        border-radius: 50%;
+        background: light-dark(white, var(--mantine-color-dark-6));
+        cursor: inherit;
+    }
+    .tracking-start input:checked {
+        border-color: var(--mantine-primary-color-filled);
+        background: radial-gradient(circle, white 0 3px, var(--mantine-primary-color-filled) 3.5px);
+    }
+    .tracking-start small {
+        display: block;
+        margin-block-start: 4px;
+        color: var(--mantine-color-dimmed);
+        font-size: 10px;
+    }
+    .note textarea {
+        min-height: 36px;
+        resize: vertical;
     }
     .empty-ips {
         padding: var(--mantine-spacing-xs) 0;
@@ -784,9 +1017,15 @@
         background: transparent;
         color: var(--mantine-color-gray-4);
     }
-    .ip {
-        flex-wrap: wrap;
-        align-items: end;
+    .ip-list {
+        display: grid;
+        gap: var(--mantine-spacing-xs);
+        max-height: 128px;
+        margin: 0;
+        padding: 0 4px;
+        overflow: auto;
+        list-style: none;
+        scrollbar-width: thin;
     }
     .footer {
         display: flex;

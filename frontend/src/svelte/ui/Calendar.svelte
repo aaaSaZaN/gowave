@@ -18,7 +18,7 @@
         value: string
         min?: string | undefined
         max?: string | undefined
-        layout?: 'compact' | 'billing' | 'range'
+        layout?: 'compact' | 'billing' | 'range' | 'datetime'
         end?: string
         pending?: string
         shortcuts?: Snippet<[choose: (day: Dayjs) => void]>
@@ -44,6 +44,7 @@
     const months = $derived(Array.from({ length: 12 }, (_, index) => localized.month(index)))
     const years = $derived(Array.from({ length: 10 }, (_, index) => localized.year(decade + index)))
     const range = $derived(layout === 'range')
+    const datetime = $derived(layout === 'datetime')
     const anchor = $derived(pending || value)
     const edge = $derived(pending ? hovered || pending : end || value)
     const reversed = $derived(edge < anchor)
@@ -103,13 +104,19 @@
     }
 </script>
 
-<div class="calendar" class:billing={layout === 'billing'} class:range bind:this={calendar}>
+<div
+    class="calendar"
+    class:billing={layout === 'billing'}
+    class:range
+    class:datetime
+    bind:this={calendar}
+>
     {#if shortcuts}
         <div class="shortcuts">{@render shortcuts(select)}</div>
     {/if}
     <div class="period-picker">
         <div class="calendar-header">
-            {#each range ? [-1, 1, 0] : [-1, 0, 1] as direction (direction)}
+            {#each range || datetime ? [-1, 1, 0] : [-1, 0, 1] as direction (direction)}
                 {#if direction === 0}
                     <button
                         class="mantine-UnstyledButton-root period-label"
@@ -306,6 +313,39 @@
     @media (max-width: 360px) {
         .billing .shortcuts :global(button) {
             white-space: normal;
+        }
+    }
+    .calendar.datetime {
+        grid-template-columns: minmax(105px, 121px) minmax(0, 1fr);
+        gap: 7px;
+    }
+    .datetime .shortcuts :global(button) {
+        min-height: 36px;
+        padding-inline: 11px;
+        border-radius: var(--mantine-radius-md);
+    }
+    .datetime .shortcuts :global(button:hover) {
+        background: var(--mantine-color-default-hover);
+    }
+    .datetime .calendar-header {
+        grid-template-columns: repeat(2, minmax(24px, 36px)) minmax(0, 1fr);
+        gap: 1px;
+    }
+    .datetime .period-label {
+        justify-content: start;
+        padding-inline: 6px;
+        text-transform: capitalize;
+    }
+    .datetime .day {
+        font-size: var(--mantine-font-size-xs);
+    }
+    @media (max-width: 360px) {
+        .calendar.datetime {
+            grid-template-columns: minmax(0, 1fr);
+        }
+        .datetime .shortcuts {
+            flex-flow: row wrap;
+            border-inline-end: 0;
         }
     }
     .calendar.range {

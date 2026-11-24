@@ -8,6 +8,7 @@
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
     import Button from './Button.svelte'
+    import { dismissContainingDialog } from './dialog-motion'
     import Overlay from './Overlay.svelte'
 
     let {
@@ -93,7 +94,7 @@
             <Button
                 color="gray"
                 variant={kind === 'internal' ? 'soft' : 'subtle'}
-                onclick={close}
+                onclick={dismissContainingDialog}
                 disabled={create.isPending}
                 >{t('common.action.cancel')}</Button
             >

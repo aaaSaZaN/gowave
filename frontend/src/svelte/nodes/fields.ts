@@ -5,7 +5,6 @@ export type NodeField =
     | Exclude<keyof UpdateNodeCommand.RequestBody, 'uuid'>
     | 'trafficTrackingStart'
 export type NodePatch = Partial<Record<NodeField, unknown>>
-export const gibibyte = 1024 ** 3
 
 export const associationFields = ['providerUuid', 'activePluginUuid', 'tags', 'note'] as const
 export const multiplierFields = ['consumptionMultiplier', 'nodeConsumptionMultiplier'] as const
@@ -38,9 +37,7 @@ export function readNodePatch(
     for (const key of numberFields) {
         if (!contains(key)) continue
         const raw = fieldText(form, key)
-        if (raw)
-            patch[key] =
-                key === 'trafficLimitBytes' ? Math.round(Number(raw) * gibibyte) : Number(raw)
+        if (raw) patch[key] = Number(raw)
     }
     for (const key of ['name', 'address', 'countryCode'] as const) {
         if (contains(key)) patch[key] = fieldText(form, key)

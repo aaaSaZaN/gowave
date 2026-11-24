@@ -3,6 +3,7 @@
     import { locale } from '../i18n.svelte'
     import ActionIcon from './ActionIcon.svelte'
     import BrandIcon from './BrandIcon.svelte'
+    import { cancelDialog, dismissDialog } from './dialog-motion'
     import Icon from './Icon.svelte'
     import type { IconName } from './icons'
 
@@ -13,6 +14,7 @@
         tone = 'cyan',
         width = 620,
         drawer = false,
+        hideHeader = false,
         fullscreenOnMobile = true,
         class: className,
         largePadding = false,
@@ -22,7 +24,6 @@
         wrapActions = false,
         children,
         preventClose = false,
-        animateExit = false,
         close
     }: {
         title: string
@@ -33,6 +34,7 @@
         fullscreenOnMobile?: boolean
         class?: string
         drawer?: boolean
+        hideHeader?: boolean
         largePadding?: boolean
         subtitle?: string | undefined
         actions?: Snippet | undefined
@@ -40,12 +42,10 @@
         wrapActions?: boolean
         children: Snippet
         preventClose?: boolean
-        animateExit?: boolean
         close: () => void
     } = $props()
     const id = $props.id()
     let dialog: HTMLDialogElement
-    let exiting = $state(false)
 
     let backdropPointer: number | undefined
 
@@ -61,12 +61,7 @@
     }
 
     function dismiss(): void {
-        if (preventClose || exiting) return
-        if (!animateExit || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-            dialog.close()
-            return
-        }
-        exiting = true
+        if (!preventClose) dismissDialog(dialog)
     }
 
     $effect(() => {
@@ -80,15 +75,10 @@
 <dialog
     bind:this={dialog}
     tabindex="-1"
-    aria-labelledby={id}
+    aria-label={hideHeader ? title : undefined}
+    aria-labelledby={hideHeader ? undefined : id}
     onclose={close}
-    oncancel={(event) => {
-        event.preventDefault()
-        dismiss()
-    }}
-    onanimationend={(event) => {
-        if (exiting && event.target === dialog) dialog.close()
-    }}
+    oncancel={(event) => cancelDialog(event, preventClose)}
     onpointerdown={(event) => {
         backdropPointer = event.button === 0 && isBackdrop(event) ? event.pointerId : undefined
     }}
@@ -101,59 +91,60 @@
     class={['panel-overlay', className]}
     class:mobile-fullscreen={fullscreenOnMobile}
     class:drawer
-    class:exiting
     class:modal={!drawer}
     class:large-padding={largePadding}
     style:--drawer-width={`${width}px`}
 >
     <div class="drawer-content">
-        <header class="overlay-header">
-            <div
-                class="overlay-heading"
-                class:with-inline-actions={inlineActions}
-                class:wrap-actions={wrapActions}
-            >
-                <span
-                    class="drawer-icon"
-                    style:--drawer-ink={`var(--mantine-color-${tone}-4)`}
-                    style:--drawer-tint={`var(--mantine-color-${tone}-6)`}
+        {#if !hideHeader}
+            <header class="overlay-header">
+                <div
+                    class="overlay-heading"
+                    class:with-inline-actions={inlineActions}
+                    class:wrap-actions={wrapActions}
                 >
-                    {#if icon === 'Logo'}
-                        <BrandIcon size={20} />
-                    {:else}
-                        <Icon name={icon} size={20} />
-                    {/if}
-                </span>
-                <div class="overlay-title">
-                    {#if titlePrefix}
-                        <h2 {id}>
-                            <span class="title-prefix" aria-hidden="true">{titlePrefix}</span>
-                            {title}
-                        </h2>
-                    {:else}
-                        <h2 {id}>{title}</h2>
-                    {/if}
-                    {#if subtitle}
-                        <div class="subtitle">{subtitle}</div>
+                    <span
+                        class="drawer-icon"
+                        style:--drawer-ink={`var(--mantine-color-${tone}-4)`}
+                        style:--drawer-tint={`var(--mantine-color-${tone}-6)`}
+                    >
+                        {#if icon === 'Logo'}
+                            <BrandIcon size={20} />
+                        {:else}
+                            <Icon name={icon} size={20} />
+                        {/if}
+                    </span>
+                    <div class="overlay-title">
+                        {#if titlePrefix}
+                            <h2 {id}>
+                                <span class="title-prefix" aria-hidden="true">{titlePrefix}</span>
+                                {title}
+                            </h2>
+                        {:else}
+                            <h2 {id}>{title}</h2>
+                        {/if}
+                        {#if subtitle}
+                            <div class="subtitle">{subtitle}</div>
+                        {/if}
+                    </div>
+                    {#if inlineActions && actions}
+                        <div class="inline-actions">{@render actions()}</div>
                     {/if}
                 </div>
-                {#if inlineActions && actions}
-                    <div class="inline-actions">{@render actions()}</div>
+                {#if !inlineActions && actions}
+                    {@render actions()}
                 {/if}
-            </div>
-            {#if !inlineActions && actions}
-                {@render actions()}
-            {/if}
-            <ActionIcon
-                icon="TbX"
-                label={locale.t('common.action.close')}
-                subtle
-                size={34}
-                iconSize={24}
-                disabled={preventClose}
-                onclick={dismiss}
-            />
-        </header>
+                <ActionIcon
+                    icon="TbX"
+                    label={locale.t('common.action.close')}
+                    subtle
+                    size={34}
+                    iconSize={24}
+                    disabled={preventClose}
+                    onclick={dismiss}
+                />
+            </header>
+        {/if}
         <div class="drawer-body">{@render children()}</div>
     </div>
 </dialog>
@@ -184,21 +175,12 @@
         border-start-end-radius: 0;
         border-end-end-radius: 0;
     }
-    .drawer[open] {
-        animation: slide 200ms ease-out;
-    }
     .modal {
         inset: 0;
         border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
         margin: auto;
         width: min(calc(100% - 32px), var(--drawer-width));
         max-height: 90dvh;
-    }
-    .modal[open] {
-        animation: appear 200ms ease-out;
-    }
-    .modal.exiting[open] {
-        animation: disappear 200ms ease-in;
     }
     .panel-overlay::backdrop {
         background: rgb(0 0 0 / 60%);
@@ -263,30 +245,6 @@
     .large-padding.drawer .drawer-body {
         padding: var(--mantine-spacing-sm);
     }
-    @keyframes slide {
-        from {
-            transform: translateX(100%);
-        }
-        to {
-            transform: translateX(0);
-        }
-    }
-    @keyframes appear {
-        from {
-            opacity: 0;
-            transform: scale(0.98);
-        }
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
-    @keyframes disappear {
-        to {
-            opacity: 0;
-            transform: scale(0.98);
-        }
-    }
     @media (max-width: 48em) {
         .overlay-heading.with-inline-actions.wrap-actions {
             flex-wrap: wrap;
@@ -307,11 +265,6 @@
             height: 100dvh;
             max-height: none;
             border-radius: 0;
-        }
-    }
-    @media (prefers-reduced-motion: reduce) {
-        .panel-overlay[open] {
-            animation: none;
         }
     }
 </style>

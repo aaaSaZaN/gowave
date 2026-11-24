@@ -309,7 +309,6 @@
     tone="teal"
     width={mode.kind === 'date' ? 407 : 440}
     class="billing-dialog"
-    animateExit
     preventClose={busy}
     {close}
 >

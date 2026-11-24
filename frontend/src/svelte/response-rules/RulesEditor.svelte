@@ -31,6 +31,7 @@
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
     import Button from '../ui/Button.svelte'
+    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import Icon from '../ui/Icon.svelte'
 
     let {
@@ -68,7 +69,7 @@
             saved = JSON.stringify(updated.responseRules, null, 2)
             draft = saved
             queryClient.setQueryData(['subscriptionSettings', 'getSubscriptionSettings'], updated)
-            notice = 'Response rules saved'
+            notice = t('response-rules-editor-actions.feature.saved')
         },
         onError: (reason) => {
             if (reason instanceof ZodError) {
@@ -218,6 +219,7 @@
 </EditorFrame>
 
 <dialog
+    oncancel={cancelDialog}
     class="rules-warning"
     bind:this={warning}
     tabindex="-1"
@@ -259,13 +261,14 @@
             icon="TbCheck"
             iconSize={18}
             size="md"
-            onclick={() => warning.close()}
+            onclick={() => dismissDialog(warning)}
             >{t('common.action.continue')}</Button
         >
     </div>
 </dialog>
 
 <dialog
+    oncancel={cancelDialog}
     bind:this={debuggerDialog}
     onclose={() => {
         curlCommand = ''
@@ -281,7 +284,7 @@
         <textarea readonly rows="9" value={curlCommand} dir="ltr"></textarea>
     </label>
     <div class="button-row">
-        <button type="button" onclick={() => debuggerDialog.close()}>
+        <button type="button" onclick={() => dismissDialog(debuggerDialog)}>
             {t('common.action.close')}
         </button>
         <button type="button" onclick={() => copy(curlCommand)}>

@@ -17,13 +17,13 @@
 <script lang="ts">
     import { GetUserMetadataCommand } from '@remnawave/backend-contract'
     import { createQuery } from '@tanstack/svelte-query'
-    import { onMount } from 'svelte'
     import { locale } from './i18n.svelte'
+    import Button from './ui/Button.svelte'
+    import JsonTree from './ui/JsonTree.svelte'
+    import Overlay from './ui/Overlay.svelte'
 
     type Target = { kind: 'node'; uuid: string } | { kind: 'user'; userId: number }
     let { target, close }: { target: Target; close: () => void } = $props()
-    let dialog: HTMLDialogElement
-    const title = $props.id()
     let t = $derived(locale.t)
     const metadata = createQuery(() => {
         const current = target
@@ -38,36 +38,38 @@
             }
         }
     })
-    onMount(() => dialog.showModal())
 </script>
 
-<dialog bind:this={dialog} onclose={close} aria-labelledby={title}>
-    <div class="button-row">
-        <h2 id={title}>Metadata</h2>
-        <button type="button" onclick={() => dialog.close()}>{t('common.action.close')}</button>
-    </div>
+<Overlay
+    title="Metadata"
+    icon="TbJson"
+    tone="teal"
+    class="metadata-modal"
+    fullscreenOnMobile={false}
+    {close}
+>
     {#if metadata.isPending}
         <p role="status">{t('common.message.loading')}</p>
     {:else if metadata.error}
         <p role="alert">{metadata.error.message}</p>
-        <button
-            type="button"
-            disabled={metadata.isFetching}
-            onclick={() => void metadata.refetch()}
-        >
+        <Button disabled={metadata.isFetching} onclick={() => void metadata.refetch()}>
             {t('common.action.try-again')}
-        </button>
+        </Button>
     {:else}
-        <pre>{JSON.stringify(metadata.data.metadata, null, 4)}</pre>
+        <div class="metadata-content">
+            <JsonTree value={metadata.data.metadata} indent={4} expandEmptyRoot />
+        </div>
     {/if}
-</dialog>
+</Overlay>
 
 <style>
-    dialog {
-        width: min(48rem, calc(100vw - 2rem));
+    :global(.panel-overlay.metadata-modal.modal) {
+        width: fit-content;
+        min-width: min(276px, calc(100% - 32px));
+        max-width: min(640px, calc(100% - 32px));
     }
-    pre {
+    .metadata-content {
         overflow: auto;
-        max-height: 55dvh;
+        max-height: 65dvh;
     }
 </style>

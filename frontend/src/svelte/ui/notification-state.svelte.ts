@@ -6,25 +6,48 @@ type Notice = {
 
 type VisibleNotice = Notice & { id: number }
 
+const limit = 5
+const autoClose = 4000
 let nextId = 0
+let paused = false
 const timers = new Map<number, ReturnType<typeof setTimeout>>()
-let visible = $state<VisibleNotice[]>([])
+let pending = $state<VisibleNotice[]>([])
+const visible = $derived(pending.slice(0, limit))
+
+function cancelTimer(id: number): void {
+    clearTimeout(timers.get(id))
+    timers.delete(id)
+}
+
+function scheduleTimers(): void {
+    if (paused) return
+    for (const { id } of visible) {
+        if (!timers.has(id))
+            timers.set(
+                id,
+                setTimeout(() => notifications.hide(id), autoClose)
+            )
+    }
+}
 
 export const notifications = {
     get visible() {
         return visible
     },
     show(notice: Notice): void {
-        const id = ++nextId
-        visible = [...visible.slice(-4), { ...notice, id }]
-        timers.set(
-            id,
-            setTimeout(() => notifications.hide(id), 4000)
-        )
+        pending = [...pending, { ...notice, id: ++nextId }]
+        scheduleTimers()
     },
     hide(id: number): void {
-        clearTimeout(timers.get(id))
-        timers.delete(id)
-        visible = visible.filter((item) => item.id !== id)
+        cancelTimer(id)
+        pending = pending.filter((item) => item.id !== id)
+        scheduleTimers()
+    },
+    pause(value: boolean): void {
+        if (value === paused) return
+        paused = value
+        if (paused) {
+            for (const id of timers.keys()) cancelTimer(id)
+        } else scheduleTimers()
     }
 }

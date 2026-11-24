@@ -562,7 +562,7 @@
                     {/each}
                     {#if history.hasNextPage}
                         <button type="button" disabled={history.isFetching} onclick={loadMore}>
-                            {t('common.action.load-more', { defaultValue: 'Load more' })}
+                            {t('common.action.load-more')}
                         </button>
                     {/if}
                 </div>

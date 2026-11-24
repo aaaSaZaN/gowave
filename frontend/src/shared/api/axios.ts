@@ -1,7 +1,7 @@
 import {
     REMNAWAVE_CLIENT_TYPE_BROWSER,
     REMNAWAVE_CLIENT_TYPE_HEADER
-} from '@remnawave/backend-contract'
+} from '@remnawave/backend-contract/build/backend/constants/headers'
 import consola from '@shared/lib/logger'
 import axios from 'axios'
 

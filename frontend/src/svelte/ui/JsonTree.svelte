@@ -1,7 +1,15 @@
 <script lang="ts">
     import Icon from './Icon.svelte'
 
-    let { value, indent = 2 }: { value: unknown; indent?: number } = $props()
+    let {
+        value,
+        indent = 2,
+        expandEmptyRoot = false
+    }: {
+        value: unknown
+        indent?: number
+        expandEmptyRoot?: boolean
+    } = $props()
 </script>
 
 {#snippet jsonEntry(value: unknown, key: string | undefined, depth: number)}
@@ -10,7 +18,7 @@
         {@const isArray = Array.isArray(value)}
         {@const opening = isArray ? '[' : '{'}
         {@const closing = isArray ? ']' : '}'}
-        {#if entries.length}
+        {#if entries.length || (expandEmptyRoot && depth === 0)}
             <details open={depth < 3}>
                 <summary>
                     <span class="branch-arrow"><Icon name="PiCaretRight" size={14} /></span>

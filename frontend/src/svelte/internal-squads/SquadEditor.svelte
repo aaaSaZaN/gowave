@@ -9,6 +9,7 @@
     import { profilesQuery } from '../config-profiles/queries'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
+    import { dismissContainingDialog } from '../ui/dialog-motion'
     import Overlay from '../ui/Overlay.svelte'
     import type { Squad } from './queries'
 
@@ -100,7 +101,7 @@
             <p role="alert">{mutation.error.message}</p>
         {/if}
         <div class="button-row">
-            <button type="button" onclick={close}>
+            <button type="button" onclick={dismissContainingDialog}>
                 {t('common.action.cancel')}
             </button>
             <button

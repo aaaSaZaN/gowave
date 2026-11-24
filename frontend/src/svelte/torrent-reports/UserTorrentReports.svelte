@@ -1,13 +1,15 @@
 <script lang="ts">
     import { createQuery } from '@tanstack/svelte-query'
-    import { onMount } from 'svelte'
     import { locale } from '../i18n.svelte'
     import { p } from '../router'
+    import ActionIcon from '../ui/ActionIcon.svelte'
+    import EmptyState from '../ui/EmptyState.svelte'
+    import FormCard from '../ui/FormCard.svelte'
+    import Overlay from '../ui/Overlay.svelte'
     import { ipDetailsUrl, reportsForUser } from './queries'
 
     let { userId, close }: { userId: number; close: () => void } = $props()
     let t = $derived(locale.t)
-    let dialog: HTMLDialogElement
     let copyStatus = $state('')
     let copyError = $state('')
     let page = $state(0)
@@ -17,8 +19,6 @@
     let dates = $derived(
         new Intl.DateTimeFormat(locale.language, { dateStyle: 'medium', timeStyle: 'short' })
     )
-
-    onMount(() => dialog.showModal())
 
     $effect(() => {
         if (reports.data && page >= pages) page = pages - 1
@@ -34,8 +34,7 @@
     }
 </script>
 
-<dialog bind:this={dialog} onclose={close} aria-labelledby="user-torrent-reports">
-    <h2 id="user-torrent-reports">{t('constants.tb-reports')}</h2>
+<Overlay title={t('constants.tb-reports')} icon="TbFlame" tone="red" width={500} drawer {close}>
     {#if reports.isPending}
         <p role="status">{t('common.message.loading')}</p>
     {/if}
@@ -49,113 +48,128 @@
         <p role="alert">{copyError}</p>
     {/if}
     {#if reports.data}
-        <p>
-            {t('user-torrent-blocker-reports.drawer.widget.total-reports')}:
-            {reports.data.total.toLocaleString(locale.language)}
-        </p>
-        <ul>
-            {#each reports.data.records as record (record.id)}
-                {@const xray = record.report.xrayReport}
-                {@const action = record.report.actionReport}
-                {@const processedAt = dates.format(new Date(action.processedAt))}
-                {@const willUnblockAt = dates.format(new Date(action.willUnblockAt))}
-                <li>
-                    <h3>
-                        <a
-                            href={p('/dashboard/open/node/:id', {
-                                params: { id: record.node.uuid }
-                            })}
-                            >{record.node.name}</a
-                        >
-                    </h3>
-                    <dl>
-                        <dt>Inbound tag</dt>
-                        <dd>{xray.inboundTag || '—'}</dd>
-                        <dt>{t('common.field.ip-address')}</dt>
-                        <dd>
-                            <button
-                                type="button"
-                                class="copy-value"
-                                title={t('common.action.copy')}
-                                onclick={() => copy(action.ip)}
-                            >
-                                {action.ip}
-                            </button>
-                            <a href={ipDetailsUrl(action.ip)} target="_blank" rel="noreferrer"
-                                >IP info</a
-                            >
-                        </dd>
-                        <dt>{t('user-torrent-blocker-report-item.processed-at')}</dt>
-                        <dd>
-                            <button
-                                type="button"
-                                class="copy-value"
-                                title={t('common.action.copy')}
-                                onclick={() => copy(processedAt)}
-                            >
-                                {processedAt}
-                            </button>
-                        </dd>
-                        <dt>{t('user-torrent-blocker-report-item.unblocked-at')}</dt>
-                        <dd>
-                            <button
-                                type="button"
-                                class="copy-value"
-                                title={t('common.action.copy')}
-                                onclick={() => copy(willUnblockAt)}
-                            >
-                                {willUnblockAt}
-                            </button>
-                        </dd>
-                    </dl>
-                    <details>
-                        <summary>Raw report</summary>
-                        <pre>{JSON.stringify(record.report, null, 2)}</pre>
-                    </details>
-                </li>
+        <div class="report-content">
+            <FormCard
+                title={reports.data.total.toLocaleString(locale.language)}
+                description={t('user-torrent-blocker-reports.drawer.widget.total-reports')}
+                icon="TbFlame"
+                tone="indigo"
+                headingSize="xl"
+            >
+                {#snippet actions()}
+                    <ActionIcon
+                        icon="TbRefresh"
+                        tone="indigo"
+                        size={34}
+                        iconSize={20}
+                        label={t('common.action.refresh')}
+                        disabled={reports.isFetching}
+                        onclick={() => void reports.refetch()}
+                    />
+                {/snippet}
+            </FormCard>
+            {#if reports.data.records.length}
+                <ul>
+                    {#each reports.data.records as record (record.id)}
+                        {@const xray = record.report.xrayReport}
+                        {@const action = record.report.actionReport}
+                        {@const processedAt = dates.format(new Date(action.processedAt))}
+                        {@const willUnblockAt = dates.format(new Date(action.willUnblockAt))}
+                        <li>
+                            <h3>
+                                <a
+                                    href={p('/dashboard/open/node/:id', {
+                                        params: { id: record.node.uuid }
+                                    })}
+                                    >{record.node.name}</a
+                                >
+                            </h3>
+                            <dl>
+                                <dt>Inbound tag</dt>
+                                <dd>{xray.inboundTag || '—'}</dd>
+                                <dt>{t('common.field.ip-address')}</dt>
+                                <dd>
+                                    <button
+                                        type="button"
+                                        class="copy-value"
+                                        title={t('common.action.copy')}
+                                        onclick={() => copy(action.ip)}
+                                    >
+                                        {action.ip}
+                                    </button>
+                                    <a
+                                        href={ipDetailsUrl(action.ip)}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        >IP info</a
+                                    >
+                                </dd>
+                                <dt>{t('user-torrent-blocker-report-item.processed-at')}</dt>
+                                <dd>
+                                    <button
+                                        type="button"
+                                        class="copy-value"
+                                        title={t('common.action.copy')}
+                                        onclick={() => copy(processedAt)}
+                                    >
+                                        {processedAt}
+                                    </button>
+                                </dd>
+                                <dt>{t('user-torrent-blocker-report-item.unblocked-at')}</dt>
+                                <dd>
+                                    <button
+                                        type="button"
+                                        class="copy-value"
+                                        title={t('common.action.copy')}
+                                        onclick={() => copy(willUnblockAt)}
+                                    >
+                                        {willUnblockAt}
+                                    </button>
+                                </dd>
+                            </dl>
+                            <details>
+                                <summary>Raw report</summary>
+                                <pre>{JSON.stringify(record.report, null, 2)}</pre>
+                            </details>
+                        </li>
+                    {/each}
+                </ul>
             {:else}
-                <li>{t('common.message.nothing-found')}</li>
-            {/each}
-        </ul>
+                <EmptyState icon="TbFlame" label={t('common.message.nothing-found')} />
+            {/if}
+            {#if pages > 1}
+                <div class="button-row controls">
+                    <ActionIcon
+                        icon="PiCaretLeft"
+                        label="Previous"
+                        disabled={page === 0 || reports.isFetching}
+                        onclick={() => (page -= 1)}
+                    />
+                    <span>{page + 1} / {pages}</span>
+                    <ActionIcon
+                        icon="TbChevronRight"
+                        label={t('common.action.next')}
+                        disabled={page + 1 >= pages || reports.isFetching}
+                        onclick={() => (page += 1)}
+                    />
+                </div>
+            {/if}
+        </div>
     {/if}
-    <div class="button-row controls">
-        <button
-            type="button"
-            disabled={page === 0 || reports.isPending}
-            onclick={() => (page -= 1)}
-        >
-            Previous
-        </button>
-        <span>{page + 1} / {pages}</span>
-        <button
-            type="button"
-            disabled={page + 1 >= pages || reports.isPending}
-            onclick={() => (page += 1)}
-        >
-            Next
-        </button>
-        <button type="button" disabled={reports.isFetching} onclick={() => void reports.refetch()}>
-            {t('common.action.refresh')}
-        </button>
-        <button type="button" onclick={() => dialog.close()}>{t('common.action.close')}</button>
-    </div>
-</dialog>
+</Overlay>
 
 <style>
-    dialog {
-        width: min(95vw, 35rem);
-    }
-    h2 {
-        margin-block: 0;
+    .report-content {
+        display: grid;
+        gap: var(--mantine-spacing-md);
     }
     h3 {
         margin: 0;
         font-size: 1rem;
     }
     ul {
+        margin: 0;
         padding: 0;
-        max-height: 56vh;
-        overflow: auto;
         list-style: none;
     }
     li {

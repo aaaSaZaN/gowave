@@ -4,7 +4,8 @@
     import { fixedVirtualWindow } from '@shared/lib/virtual-layout'
     import { createMutation, createQuery } from '@tanstack/svelte-query'
     import { untrack } from 'svelte'
-    import { SvelteSet } from 'svelte/reactivity'
+    import { MediaQuery, SvelteSet } from 'svelte/reactivity'
+    import { slide } from 'svelte/transition'
     import { submitCommand } from '../commands'
     import ProfileRelations from '../config-profiles/ProfileRelations.svelte'
     import { type Profile, profilesQuery } from '../config-profiles/queries'
@@ -16,6 +17,8 @@
     import JsonTree from '../ui/JsonTree.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import { internalSquadQuery, squadsQuery } from './queries'
+
+    const reducedMotion = new MediaQuery('(prefers-reduced-motion: reduce)')
 
     let { uuid, close }: { uuid: string; close: () => void } = $props()
     const t = $derived(locale.t)
@@ -358,7 +361,10 @@
                                 </div>
                             </div>
                             {#if open}
-                                <div class="profile-inbounds">
+                                <div
+                                    class="profile-inbounds"
+                                    transition:slide={{ duration: reducedMotion.current ? 0 : 200 }}
+                                >
                                     {#each profile.inbounds as inbound (inbound.uuid)}
                                         {@render inboundCard(inbound)}
                                     {/each}
@@ -602,6 +608,11 @@
     .chevron {
         position: relative;
         inset-block-start: 16px;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+        .chevron {
+            transition: transform 200ms ease;
+        }
     }
     .profile-toggle[aria-expanded="true"] .chevron {
         transform: rotate(180deg);

@@ -2,6 +2,7 @@
     import { tick } from 'svelte'
     import { locale } from '../i18n.svelte'
     import ActionIcon from './ActionIcon.svelte'
+    import { cancelDialog } from './dialog-motion'
     import EmptyState from './EmptyState.svelte'
     import Icon from './Icon.svelte'
     import type { IconName } from './icons'
@@ -87,6 +88,7 @@
 
 {#if visible}
     <dialog
+        oncancel={cancelDialog}
         bind:this={dialog}
         onclose={() => (visible = false)}
         aria-label={label}

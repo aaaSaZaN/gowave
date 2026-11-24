@@ -1,11 +1,11 @@
 name: Dev build
 
-# Every push to main that passes CI becomes the dev channel:
+# Eligible pushes to main that pass CI become the dev channel:
 #   - the rolling "dev" pre-release (releases/download/dev/...), recreated on each
 #     build so it stays on top of the Releases page; releases/latest and the
 #     stable updater never see it;
 #   - Docker tags ghcr.io/<owner>/gowave:dev and :dev-<sha>; "latest" is untouched.
-# Stable releases still come only from v* tags (release.yml).
+# Pushed commits with a v* tag go through release.yml.
 on:
   push:
     branches: [main]
@@ -23,26 +23,51 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ci:
-    name: CI
-    uses: ./.github/workflows/ci.yml
-
   meta:
     name: Version
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.v.outputs.version }}
       short: ${{ steps.v.outputs.short }}
+      version-tagged: ${{ steps.tags.outputs.version-tagged }}
     steps:
+      # A push of both main and a tag can also produce a main-branch event.
+      - name: Checkout code
+        if: github.event_name == 'push'
+        uses: actions/checkout@v7
+
+      - name: Check for a version tag on the pushed commit
+        id: tags
+        if: github.event_name == 'push'
+        run: |
+          tags="$(git ls-remote --tags origin 'refs/tags/v*')"
+          tagged="$(awk -v sha="$GITHUB_SHA" '$1 == sha { found = 1 } END { print found ? "true" : "false" }' <<< "$tags")"
+          echo "version-tagged=$tagged" >> "$GITHUB_OUTPUT"
+
       - id: v
         run: |
           short="${GITHUB_SHA::7}"
           echo "short=$short" >> "$GITHUB_OUTPUT"
           echo "version=dev-$short" >> "$GITHUB_OUTPUT"
 
+  ci:
+    name: CI
+    needs: meta
+    if: needs.meta.outputs.version-tagged != 'true'
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    name: Build dev release assets
+    needs: [ci, meta]
+    uses: ./.github/workflows/build.yml
+    with:
+      version: ${{ needs.meta.outputs.version }}
+      source-sha: ${{ github.sha }}
+      channel: dev
+
   release:
     name: Publish dev pre-release
-    needs: [ci, meta]
+    needs: [build, meta]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -52,46 +77,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
-
-      - name: Set up Go
-        uses: actions/setup-go@v7
         with:
-          go-version-file: backend/go.mod
-          cache-dependency-path: backend/go.sum
+          persist-credentials: false
 
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Download release assets
+        uses: actions/download-artifact@v8
         with:
-          bun-version-file: frontend/package.json
+          name: release-assets
 
-      - name: Build Frontend
-        working-directory: ./frontend
-        env:
-          TELEGRAM_CHAT_URL: ${{ vars.TELEGRAM_CHAT_URL }}
-        run: |
-          bun install --frozen-lockfile
-          bun run editor:download
-          bun run build
-          bun run editor:compress
-          tar -czf ../gowave-frontend.tar.gz -C dist .
-
-      - name: Build Backend Binaries
-        working-directory: ./backend
-        run: |
-          LDFLAGS="-s -w -X 'gowave/internal/system.AppVersion=${VERSION}' -X 'gowave/internal/system.Channel=dev' -X 'gowave/internal/system.CommitSha=${GITHUB_SHA}'"
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="$LDFLAGS" -o ../gowave-linux-amd64 ./cmd/server
-          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="$LDFLAGS" -o ../gowave-linux-arm64 ./cmd/server
-
-      - name: Verify embedded version
-        run: |
-          embedded="$(./gowave-linux-amd64 --version)"
-          if [ "$embedded" != "$VERSION" ]; then
-            echo "Binary reports '${embedded}', expected '${VERSION}'; check the -X package path" >&2
-            exit 1
-          fi
-
-      - name: Checksums
-        run: sha256sum gowave-frontend.tar.gz gowave-linux-amd64 gowave-linux-arm64 > SHA256SUMS
+      - name: Verify checksums
+        run: sha256sum -c SHA256SUMS
 
       # The release name carries the build version: the panel compares it with
       # its own version to offer dev updates.

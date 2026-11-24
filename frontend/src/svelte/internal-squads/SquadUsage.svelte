@@ -7,6 +7,7 @@
     import { locale } from '../i18n.svelte'
     import UsageFilters from '../nodes/UsageFilters.svelte'
     import { p } from '../router'
+    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import { squadUsageQuery } from './queries'
 
     let { uuid, name, close }: { uuid: string; name: string; close: () => void } = $props()
@@ -38,10 +39,12 @@
     }
 </script>
 
-<dialog bind:this={dialog} onclose={close} aria-labelledby={title}>
+<dialog oncancel={cancelDialog} bind:this={dialog} onclose={close} aria-labelledby={title}>
     <div class="button-row">
         <h2 id={title}>{t('common.field.usage-stats')} · {name}</h2>
-        <button type="button" onclick={() => dialog.close()}>{t('common.action.close')}</button>
+        <button type="button" onclick={() => dismissDialog(dialog)}>
+            {t('common.action.close')}
+        </button>
     </div>
     <UsageFilters
         range={filters}
@@ -111,7 +114,7 @@
             disabled={usage.isFetching}
             onclick={() => void usage.fetchNextPage()}
         >
-            {t('common.action.load-more', { defaultValue: 'Load more' })}
+            {t('common.action.load-more')}
         </button>
     {/if}
 </dialog>

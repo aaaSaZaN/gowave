@@ -71,7 +71,10 @@
       "select-all": "Select all",
       "try-again": "Try again",
       "update": "Update",
-      "view": "View"
+      "view": "View",
+      "default": "Default",
+      "load-more": "Load more",
+      "previous": "Previous"
     },
     "field": {
       "active-sessions": "Active sessions",
@@ -290,6 +293,8 @@
     "widget": {
       "user-description": "User description",
       "expiry-date": "Expiry date",
+      "expiry-time": "Expiry time",
+      "create-or-select-tag": "Create or select a tag",
       "pick-value": "Pick value",
       "traffic-reset-strategy": "Traffic reset strategy",
       "traffic-reset-strategy-description": "How often the user's traffic usage statistics should be reset",
@@ -681,6 +686,7 @@
   },
   "get-hwid-user-devices": {
     "feature": {
+      "sort-by": "Sort by",
       "unknown": "Unknown",
       "model": "Model",
       "added": "Added",
@@ -716,7 +722,9 @@
   },
   "pm2-metrics": {
     "total-memory": "Total memory",
-    "uptime": "Panel uptime"
+    "uptime": "Panel uptime",
+    "heap-used": "Heap Used",
+    "goroutines": "Goroutines"
   },
   "internal-squads-grid": {
     "widget": {
@@ -972,7 +980,8 @@
       "xray-core-version": "Xray Core version",
       "gowave-node-version": "Node version, Gowave Node",
       "local-core": "Xray Core is managed on the node",
-      "local-core-update": "The node uses CUSTOM_CORE_URL from its .env file. To update Xray Core, run this command on the node."
+      "local-core-override": "The node uses CUSTOM_CORE_URL from its .env file. To update Xray Core, run this command on the node.",
+      "select-node-version": "Select Gowave Node version. Installed {{version}}"
     }
   },
   "config-profiles": {
@@ -1088,7 +1097,8 @@
       "or": ", or",
       "curl-command": "cURL command",
       "copy-curl-command": "Copy cURL command",
-      "debugger": "Debugger"
+      "debugger": "Debugger",
+      "saved": "Response rules saved"
     }
   },
   "copy-node-install-command": {
@@ -1264,7 +1274,16 @@
       "col-expires": "Expires",
       "expired": "Expired",
       "expires-in-days": "Expires in (days)",
-      "one-time-notice": "For security reasons, the token is shown <emphasis>only once</emphasis> right after creation. Make sure to copy and store it somewhere safe — you won't be able to see it again."
+      "one-time-notice": "For security reasons, the token is shown <emphasis>only once</emphasis> right after creation. Make sure to copy and store it somewhere safe — you won't be able to see it again.",
+      "token": "Token",
+      "copy-token": "Copy token",
+      "copy-scopes": "Copy scopes",
+      "paste-scopes": "Paste scopes",
+      "clear-scopes": "Clear scopes",
+      "read-only": "Read-only",
+      "read": "Read",
+      "write": "Write",
+      "invalid-scopes": "Clipboard must contain a JSON array of scope strings."
     }
   },
   "external-squads-hosts": {
@@ -1709,6 +1728,7 @@
   "node-ips": {
     "add-ip": "Add IP",
     "remove-ip": "Remove IP",
+    "reorder-ip": "Reorder IP",
     "invalid-ip": "Not a valid IPv4 or IPv6 address",
     "ip-is-required": "IP address is required",
     "max-ips-reached": "Maximum {{max}} IP addresses",
@@ -1805,5 +1825,54 @@
     "config-checking": "Checking the config on nodes: {{nodes}}",
     "config-not-applied": "New config not applied",
     "config-not-applied-description": "Xray rejected the config, so the node keeps serving the previous one. Fix the config profile and save it again."
+  },
+  "oauth-callback": {
+    "incomplete": "The sign-in response is incomplete. Please sign in again.",
+    "denied": "The provider declined the sign-in request.",
+    "pending": "Authenticating…",
+    "verifying": "Verifying credentials…"
+  },
+  "node-versions": {
+    "title": "Manage versions",
+    "restart-warning": "Installing an update restarts the node service and briefly interrupts active connections.",
+    "installed": "Installed: {{version}}",
+    "loading": "Loading releases…",
+    "channel": "Release channel",
+    "stable": "Latest release",
+    "prerelease": "Latest pre-release",
+    "specific": "Specific version",
+    "version": "Version",
+    "select": "Select a version",
+    "prerelease-label": "Pre-release",
+    "url": "Direct HTTPS download",
+    "invalid-url": "Enter a valid HTTPS URL.",
+    "target": "Target: {{target}}",
+    "direct": "Direct download",
+    "empty": "No compatible releases for this node.",
+    "confirm": "Install {{component}} and restart the node service",
+    "install": "Install now",
+    "installing": "Installing…",
+    "accepted": "Update accepted. The node reports the installed version after restarting."
+  },
+  "node-logs": {
+    "source": "Log source",
+    "line-count": "Number of lines",
+    "lines": "Lines: {{value}}",
+    "auto-refresh": "Auto-refresh (2.5 s)",
+    "auto-scroll": "Auto-scroll"
+  },
+  "node-metrics": {
+    "title": "Metrics Overview",
+    "empty": "No nodes metrics available",
+    "total": "Total Nodes",
+    "active": "Active Nodes",
+    "online": "Users Online",
+    "inbounds": "Total Inbounds",
+    "info": "Additional Information",
+    "interval": "Updates every 30 seconds from /metrics endpoint",
+    "partial": "Not all data is visualized on this dashboard",
+    "since-start": "Inbound/Outbound traffic is the sum of all traffic from Panel or Node startup",
+    "source": "Metrics from Prometheus",
+    "live": "Live updates from /metrics endpoint"
   }
 }

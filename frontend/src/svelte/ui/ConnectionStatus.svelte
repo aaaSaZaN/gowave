@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { GetRemnawaveHealthCommand, GetStatusCommand } from '@remnawave/backend-contract'
+    import { REST_API } from '@remnawave/backend-contract/build/backend/api/routes'
     import { hasAuthorizationToken, instance } from '@shared/api/axios'
     import { createQuery, onlineManager } from '@tanstack/svelte-query'
     import { isAxiosError } from 'axios'
@@ -49,9 +49,7 @@
         staleTime: 0,
         gcTime: 0,
         queryFn: async ({ signal }) => {
-            const url = hasAuthorizationToken()
-                ? GetRemnawaveHealthCommand.TSQ_url
-                : GetStatusCommand.TSQ_url
+            const url = hasAuthorizationToken() ? REST_API.SYSTEM.HEALTH : REST_API.AUTH.GET_STATUS
             try {
                 await instance.get(url, { signal, timeout: 5_000 })
             } catch (error) {

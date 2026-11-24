@@ -22,7 +22,8 @@
     "preview": "vite preview --host 127.0.0.1 --port 3333 --strictPort",
     "check": "biome check . --error-on-warnings && biome check --config-path=biome.json --vcs-enabled=false ../scripts/mock-db.mjs --error-on-warnings",
     "fix": "biome check --write . && biome check --config-path=biome.json --vcs-enabled=false --write ../scripts/mock-db.mjs",
-    "typecheck": "svelte-check --tsgo --tsconfig tsconfig.json --fail-on-warnings && bun ./node_modules/@typescript/native/bin/tsc --project tsconfig.node.json",
+    "css:types": "bun scripts/css-types.mjs",
+    "typecheck": "bun scripts/css-types.mjs --check && svelte-check --tsgo --tsconfig tsconfig.json --fail-on-warnings && bun ./node_modules/@typescript/native/bin/tsc --project tsconfig.node.json",
     "test": "bun test ./src",
     "test:browser": "bun tests/run-browser.mjs",
     "editor:download": "bun scripts/editor-assets.cjs download",
@@ -30,6 +31,7 @@
     "i18n:types": "bun scripts/translation-resources.mjs && biome format --write @types/resources.ts"
   },
   "dependencies": {
+    "@lottiefiles/dotlottie-web": "0.83.0",
     "@noble/curves": "2.4.0",
     "@noble/hashes": "2.4.0",
     "@noble/post-quantum": "0.7.1",
@@ -60,6 +62,7 @@
     "@sveltejs/vite-plugin-svelte": "7.3.1",
     "@types/node": "26.6.6",
     "@typescript/native": "npm:typescript@7.0.2",
+    "postcss": "8.5.32",
     "svelte-check": "4.7.8",
     "typescript": "6.0.3",
     "vite": "8.3.8",

@@ -10,40 +10,6 @@ import (
 	"gowave/internal/database"
 )
 
-func TestLegacyHostPreviewWithoutInbound(t *testing.T) {
-	e := newProbeEnv(t)
-	for _, tc := range []struct {
-		userAgent, clientType, content string
-	}{
-		{"v2rayN", "Base64 / Standard", "trojan://11111111-2222-3333-4444-555555555555@draft.example.com:443"},
-		{"Clash", "Clash / Mihomo", "type: trojan\n    server: draft.example.com"},
-		{"sing-box", "Sing-Box", `"server": "draft.example.com"`},
-	} {
-		t.Run(tc.userAgent, func(t *testing.T) {
-			status, body := e.do(http.MethodPost, "/api/hosts/preview", map[string]any{
-				"host":     map[string]string{"remark": "Draft host", "address": "draft.example.com"},
-				"protocol": "trojan", "userAgent": tc.userAgent,
-			})
-			var envelope struct {
-				Response struct {
-					ClientType     string `json:"clientType"`
-					PreviewContent string `json:"previewContent"`
-				} `json:"response"`
-			}
-			if err := json.Unmarshal(body, &envelope); status != http.StatusOK || err != nil ||
-				envelope.Response.ClientType != tc.clientType || !strings.Contains(envelope.Response.PreviewContent, tc.content) {
-				t.Fatalf("unexpected legacy preview %d: %s (%v)", status, body, err)
-			}
-		})
-	}
-	status, body := e.do(http.MethodPost, "/api/hosts/preview", map[string]any{
-		"host": map[string]string{"remark": "Draft host", "address": "draft.example.com"},
-	})
-	if status != http.StatusBadRequest {
-		t.Fatalf("rule-aware preview accepted a draft without an inbound: %d %s", status, body)
-	}
-}
-
 func TestHostPreviewUsesSubscriptionRules(t *testing.T) {
 	e := newProbeEnv(t)
 	profile := e.mustCreate("/api/config-profiles", map[string]any{

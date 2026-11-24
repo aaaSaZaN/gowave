@@ -13,6 +13,7 @@
     import { submitCommand } from '../commands'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
+    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import { type ApiToken, apiScopes, apiTokens } from './queries'
 
     let { token, close }: { token: ApiToken | null; close: () => void } = $props()
@@ -75,7 +76,7 @@
                 !Array.isArray(value) ||
                 !value.every((scope): scope is string => typeof scope === 'string')
             ) {
-                throw new Error('Clipboard must contain a JSON array of scope strings.')
+                throw new Error(t('api-tokens-card.widget.invalid-scopes'))
             }
             selected = new Set(expandScopesToKeys(resources, value))
         } catch (reason) {
@@ -116,9 +117,7 @@
     bind:this={dialog}
     onclose={close}
     aria-labelledby="token-heading"
-    oncancel={(event) => {
-        if (busy) event.preventDefault()
-    }}
+    oncancel={(event) => cancelDialog(event, busy)}
 >
     <h2 id="token-heading">{current?.name ?? t('api-tokens-card.widget.create-api-token')}</h2>
     {#if scopes.error || error}
@@ -130,7 +129,9 @@
     {#if current}
         <p>
             UUID <code>{current.uuid}</code>
-            <button type="button" onclick={() => copy(current.uuid)}>Copy UUID</button>
+            <button type="button" onclick={() => copy(current.uuid)}>
+                {t('common.action.copy-uuid')}
+            </button>
         </p>
         <p>
             {t('api-tokens-card.widget.col-created')} {dates.format(new Date(current.createdAt))}
@@ -138,14 +139,17 @@
         </p>
         {#if issued}
             <p>{t('api-tokens-card.widget.one-time-notice').replace(/<\/?emphasis>/g, '')}</p>
-            <label>Token <input name="issuedToken" readonly value={issued.token}></label>
+            <label
+                >{t('api-tokens-card.widget.token')}
+                <input name="issuedToken" readonly value={issued.token}></label
+            >
             <button
                 type="button"
                 onclick={() => {
                     if (issued) copy(issued.token)
                 }}
             >
-                Copy token
+                {t('api-tokens-card.widget.copy-token')}
             </button>
         {/if}
         {#each resources.filter((resource) =>
@@ -169,9 +173,11 @@
         {/each}
         <div class="button-row">
             <button type="button" onclick={() => copy(JSON.stringify(current.scopes, null, 2))}>
-                Copy scopes
+                {t('api-tokens-card.widget.copy-scopes')}
             </button>
-            <button type="button" onclick={() => dialog.close()}>{t('common.action.close')}</button>
+            <button type="button" onclick={() => dismissDialog(dialog)}>
+                {t('common.action.close')}
+            </button>
         </div>
     {:else}
         <form onsubmit={(event) => void create(event)}>
@@ -195,15 +201,21 @@
                     <p role="status">{t('common.message.loading')}</p>
                 {/if}
                 <div class="button-row">
-                    <button type="button" onclick={() => preset('read')}>Read-only</button>
+                    <button type="button" onclick={() => preset('read')}>
+                        {t('api-tokens-card.widget.read-only')}
+                    </button>
                     <button type="button" onclick={() => preset('all')}>
                         {t('api-tokens-card.widget.full-access')}
                     </button>
                     <button type="button" onclick={() => preset('page')}>
                         {t('constants.subscription-page')}
                     </button>
-                    <button type="button" onclick={() => preset('clear')}>Clear scopes</button>
-                    <button type="button" onclick={() => void pasteScopes()}>Paste scopes</button>
+                    <button type="button" onclick={() => preset('clear')}>
+                        {t('api-tokens-card.widget.clear-scopes')}
+                    </button>
+                    <button type="button" onclick={() => void pasteScopes()}>
+                        {t('api-tokens-card.widget.paste-scopes')}
+                    </button>
                 </div>
                 {#each resources as resource (resource.resource)}
                     <details>
@@ -213,8 +225,14 @@
                         </summary>
                         <div class="button-row">
                             {#each [
-                                { keys: getReadKeys(resource), label: 'Read' },
-                                { keys: getWriteKeys(resource), label: 'Write' }
+                                {
+                                    keys: getReadKeys(resource),
+                                    label: t('api-tokens-card.widget.read')
+                                },
+                                {
+                                    keys: getWriteKeys(resource),
+                                    label: t('api-tokens-card.widget.write')
+                                }
                             ] as group (group.label)}
                                 {#if group.keys.length}
                                     <label class="endpoint">
@@ -257,7 +275,7 @@
                     <button type="submit" disabled={!selected.size || name.trim().length < 2}>
                         {t('common.action.create')}
                     </button>
-                    <button type="button" onclick={() => dialog.close()}>
+                    <button type="button" onclick={() => dismissDialog(dialog)}>
                         {t('common.action.cancel')}
                     </button>
                 </div>

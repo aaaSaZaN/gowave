@@ -5,6 +5,7 @@
     import { locale } from '../i18n.svelte'
     import Button from '../ui/Button.svelte'
     import Overlay from '../ui/Overlay.svelte'
+    import { formatPreviewBody } from './format-preview-body'
     import { formText, hostPatch } from './host-fields'
     import type { Host } from './queries'
 
@@ -29,6 +30,7 @@
         ResponseSchema: z.object({
             response: z.object({
                 clientType: z.string(),
+                contentType: z.string(),
                 headers: z.record(z.string(), z.string()),
                 previewContent: z.string(),
                 ruleName: z.string().nullable(),
@@ -106,71 +108,74 @@
             {t('saved' in target ? 'host-preview.saved-host' : 'host-preview.draft-host')}
         </p>
         <div class="preview-columns">
-            <fieldset disabled={pending}>
-                <label>
-                    User-Agent
-                    <input
-                        bind:value={userAgent}
-                        oninput={reset}
-                        placeholder="ClashMeta, singbox, v2rayN/7.0.0"
-                    >
-                </label>
-                <label>
-                    {t('host-preview.request-headers')}
-                    <textarea
-                        rows="4"
-                        bind:value={headers}
-                        oninput={reset}
-                        placeholder={'Accept: application/json\nX-Client: desktop'}
-                    ></textarea>
-                    <small class="description">{t('host-preview.headers-format')}</small>
-                </label>
-                {#if disabled}
-                    <label class="checkbox">
-                        <input type="checkbox" bind:checked={previewAsEnabled} onchange={reset}>
-                        {t('host-preview.as-enabled')}
-                    </label>
-                {/if}
-                <Button type="submit" variant="filled" disabled={pending}>
-                    {t(pending ? 'common.message.loading' : 'host-preview.generate')}
-                </Button>
-            </fieldset>
-            <div class="response">
-                <label>
-                    {t('host-preview.response-headers')}
-                    <textarea rows="7" readonly value={responseHeaders}></textarea>
-                </label>
-                {#if result}
-                    <div role="status">
-                        <div>
-                            {result.status === null
-                                ? t('host-preview.socket-drop')
-                                : t('host-preview.status', { status: result.status })}
-                            {result.clientType ? ` · ${result.clientType}` : ''}
-                        </div>
-                        <div>
-                            {t('host-preview.matched-rule', {
-                                rule: result.ruleName ?? t('common.message.not-set')
-                            })}
-                        </div>
-                    </div>
-                {/if}
-            </div>
+            <label>
+                User-Agent
+                <input
+                    disabled={pending}
+                    bind:value={userAgent}
+                    oninput={reset}
+                    placeholder="ClashMeta, singbox, v2rayN/7.0.0"
+                >
+            </label>
+            <label>
+                {t('host-preview.request-headers')}
+                <textarea
+                    rows="4"
+                    disabled={pending}
+                    bind:value={headers}
+                    oninput={reset}
+                    placeholder={'Accept: application/json\nX-Client: desktop'}
+                ></textarea>
+                <small class="description">{t('host-preview.headers-format')}</small>
+            </label>
         </div>
+        <fieldset class="generate" disabled={pending}>
+            <Button type="submit" variant="filled" disabled={pending}>
+                {t(pending ? 'common.message.loading' : 'host-preview.generate')}
+            </Button>
+            {#if disabled}
+                <label class="checkbox">
+                    <input type="checkbox" bind:checked={previewAsEnabled} onchange={reset}>
+                    {t('host-preview.as-enabled')}
+                </label>
+            {/if}
+        </fieldset>
+
+        {#if result}
+            <div role="status">
+                <div>
+                    {result.status === null
+                        ? t('host-preview.socket-drop')
+                        : t('host-preview.status', { status: result.status })}
+                    {result.clientType ? ` · ${result.clientType}` : ''}
+                </div>
+                <div>
+                    {t('host-preview.matched-rule', {
+                        rule: result.ruleName ?? t('common.message.not-set')
+                    })}
+                </div>
+            </div>
+        {/if}
         {#if problem || copyError}
             <p role="alert">{problem || copyError}</p>
         {/if}
-        {#if result}
+        {#if responseHeaders}
+            <section class="headers">
+                <strong>{t('host-preview.response-headers')}</strong>
+                <pre>{responseHeaders}</pre>
+            </section>
+        {/if}
+        {#if result?.previewContent}
             {@const content = result.previewContent}
-            <label>
-                {t('host-preview.response-body')}
-                <textarea rows="12" readonly value={content}></textarea>
-            </label>
-            <div class="copy">
-                <Button variant="light" disabled={!content} onclick={() => void copy(content)}
-                    >{copied ? t('common.message.copied') : t('common.action.copy')}</Button
-                >
-            </div>
+            <section class="body">
+                <div class="body-heading">
+                    <strong>{t('host-preview.response-body')}</strong>
+                    <Button variant="light" onclick={() => void copy(content)}
+                        >{copied ? t('common.message.copied') : t('common.action.copy')}</Button
+                    >
+                </div>
+                <pre>{formatPreviewBody(content, result.contentType)}</pre>
+            </section>
         {/if}
     </form>
 </Overlay>
@@ -178,7 +183,6 @@
 <style>
     form,
     fieldset,
-    .response,
     label {
         display: grid;
         gap: var(--mantine-spacing-xs);
@@ -210,8 +214,29 @@
     textarea {
         font-family: var(--mantine-font-family-monospace);
     }
-    .copy {
-        justify-self: end;
+    .generate,
+    .body-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: var(--mantine-spacing-sm);
+    }
+    section,
+    .body-heading {
+        min-width: 0;
+    }
+    pre {
+        margin: var(--mantine-spacing-xs) 0 0;
+        padding: var(--mantine-spacing-sm);
+        overflow: auto;
+        max-height: 280px;
+        background: var(--gw-raised-bg);
+        border-radius: var(--mantine-radius-sm);
+        font-family: var(--mantine-font-family-monospace);
+    }
+    .headers pre {
+        max-height: 180px;
     }
     @media (max-width: 36em) {
         .preview-columns {

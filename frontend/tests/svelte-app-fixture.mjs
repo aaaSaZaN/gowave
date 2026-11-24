@@ -23,6 +23,20 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
         throw new Error(message)
     }
 
+    function expectDialogExit(dialog, mode = 'fade') {
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            if (dialog.open) throw new Error('A dialog animated with reduced motion enabled')
+            return
+        }
+        const exiting = dialog.getAnimations().some((animation) => {
+            const finalFrame = animation.effect?.getKeyframes().at(-1)
+            return mode === 'slide'
+                ? finalFrame?.transform?.includes('100%')
+                : Number(finalFrame?.opacity) === 0
+        })
+        if (!dialog.open || !exiting) throw new Error(`The dialog did not animate its ${mode} exit`)
+    }
+
     const select = (selector) => document.querySelector(selector)
     const setValue = (field, value) => {
         field.value = value
@@ -113,11 +127,29 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
         const backdrop = { bubbles: true, pointerId: 1, clientX: 0, clientY: 0 }
         cachedUserDialog.dispatchEvent(new PointerEvent('pointerdown', backdrop))
         cachedUserDialog.dispatchEvent(new PointerEvent('pointerup', backdrop))
+        expectDialogExit(cachedUserDialog)
         cachedUserDialog.dispatchEvent(new PointerEvent('click', backdrop))
         await until(() => !cachedUserDialog.isConnected, 'The user dialog did not close')
 
         firstUserLink.click()
         const firstUserDialog = await waitForUserDialog(42)
+        const hwidLabel = firstUserDialog.querySelector('.hwid-checkbox')
+        const hwidCheckbox = hwidLabel.querySelector('input[type=checkbox]')
+        const hwidLimit = firstUserDialog.querySelector('input[name=hwidDeviceLimit]')
+        hwidLabel.click()
+        await until(
+            () => hwidCheckbox.checked && hwidLimit.disabled,
+            'The HWID checkbox did not disable the numerical limit'
+        )
+        const { width: hwidWidth, height: hwidHeight } = hwidCheckbox.getBoundingClientRect()
+        if (Math.abs(hwidWidth - hwidHeight) > 1 || hwidWidth > 24 || hwidWidth < 16)
+            throw new Error(`The HWID checkbox grew to ${hwidWidth} × ${hwidHeight}`)
+        hwidLabel.click()
+        await until(
+            () => !hwidCheckbox.checked && !hwidLimit.disabled,
+            'The HWID limit did not become editable again'
+        )
+
         const squadChoice = await until(
             () => firstUserDialog.querySelector('.squad input[type=checkbox]'),
             'The internal squad choice did not load'
@@ -159,7 +191,9 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
         const clearEdit = await waitForUserDialog(43)
         setValue(clearEdit.querySelector('[name=trafficLimit]'), '0')
         setValue(clearEdit.querySelector('[name=description]'), '')
-        setValue(clearEdit.querySelector('[name=tag]'), '')
+        const savedTag = clearEdit.querySelector('[name=tag]')
+        findButton('Clear', savedTag.closest('.select-field')).click()
+        await until(() => savedTag.value === '', 'Clearing the tag did not update the form')
         findButton('Save', clearEdit).click()
         await until(() => !clearEdit.isConnected, 'The user field clears did not save')
 
@@ -612,6 +646,35 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
             () => location.pathname.includes('/management/config-profiles/'),
             'Clicking a profile card outside its title did not open it'
         )
+        const configSave = await until(() => {
+            const actions = select('.editor-actions')
+            if (!actions?.querySelector('button')) return undefined
+            const save = findButton('Save', actions)
+            return save && !save.disabled ? save : findButton('Save anyway', actions)
+        }, 'Config editor had no save action')
+        configSave.click()
+        if (configSave.textContent.trim() === 'Save anyway') {
+            const saveAnyway = await until(
+                () => select('dialog[open]'),
+                'Saving an unvalidated config did not ask for confirmation'
+            )
+            findButton('Save', saveAnyway).click()
+        }
+        const configError = await until(
+            () => select('.mantine-Notification-root[role=alert]'),
+            'Config save failure did not show a notification'
+        )
+        if (
+            configError.querySelector('.mantine-Notification-title')?.textContent !==
+                'Update Config Profile' ||
+            !configError
+                .querySelector('.mantine-Notification-description')
+                ?.textContent.includes('FOREIGN KEY constraint failed (787)')
+        )
+            throw new Error('The profile save notification lost its operation or backend message')
+        findButton('Close', configError).click()
+        await until(() => !configError.isConnected, 'The profile save notification did not close')
+
         select('nav a[href$="/management/config-profiles"]').click()
         await until(() => select('.profile-list li'), 'Config profiles did not reopen')
         window.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', ctrlKey: true }))
@@ -854,7 +917,17 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
         )
         findButton('Close', select('dialog.node-creation')).click()
         await until(() => !select('dialog.node-creation'), 'The node creation dialog did not close')
+        const nodeList = select('main.nodes-page')
         nodeLink.click()
+        await until(
+            () => select('dialog.node-details[open]'),
+            'Clicking a node in the list did not open its settings'
+        )
+        if (
+            nodeList !== select('main.nodes-page') ||
+            !location.pathname.endsWith('/management/nodes')
+        )
+            throw new Error('Opening node settings replaced the list behind the dialog')
         const nodeActions = await until(
             () => findButton('More actions', select('.node-details') ?? document),
             'Node actions did not load'
@@ -869,11 +942,9 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
             () => select('.node-details dialog[open]'),
             'GeoCheck dialog did not open'
         )
-        const source = geo.querySelector('select')
-        source.value = 'ip'
-        source.dispatchEvent(new Event('change', { bubbles: true }))
+        findButton('IP address', geo).click()
         const ip = await until(
-            () => geo.querySelector('input[list]'),
+            () => geo.querySelector('input[role=combobox]'),
             'GeoCheck IP field did not appear'
         )
         ip.value = '192.0.2.10'
@@ -893,9 +964,7 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
         )
         findButton('Try again', geo).click()
         await until(() => findButton('Run check', geo), 'GeoCheck did not reset its form')
-        const retrySource = geo.querySelector('select')
-        retrySource.value = 'default'
-        retrySource.dispatchEvent(new Event('change', { bubbles: true }))
+        findButton('Default', geo).click()
         findButton('Run check', geo).click()
         await until(
             () => geo.querySelector('[role=alert]')?.textContent.includes('node disabled'),
@@ -907,7 +976,10 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
         findButton('Metadata').click()
         const metadata = await until(() => {
             const dialog = select('.node-details dialog[open]')
-            return dialog?.querySelector('pre')?.textContent.includes('fixture-location') && dialog
+            return (
+                dialog?.querySelector('.json-report')?.textContent.includes('fixture-location') &&
+                dialog
+            )
         }, 'Node metadata did not load')
         findButton('Close', metadata).click()
         await until(() => !metadata.isConnected, 'Metadata dialog did not close')
@@ -1944,7 +2016,10 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
         )
 
         openPanelRoute('dashboard/management/hosts')
-        const createHost = await until(() => findButton('Create'), 'Hosts did not load')
+        const createHost = await until(
+            () => select('main.hosts-page') && findButton('Create', select('main.hosts-page')),
+            'Hosts did not load'
+        )
         createHost.click()
         const hostEditor = await until(() => select('dialog[open]'), 'Host editor did not open')
         const addOption = findButton('Add', hostEditor)
@@ -1972,6 +2047,59 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
         hostSearch.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
         await until(() => !hostSearch.isConnected, 'Enter did not select the highlighted option')
         if (document.activeElement !== addOption) throw new Error('Focus did not return to Add')
+
+        async function addHostOption(label) {
+            addOption.click()
+            const search = await until(
+                () => hostEditor.querySelector('.option-picker [role=combobox]'),
+                'Host option search did not open'
+            )
+            setValue(search, label)
+            const option = await until(
+                () =>
+                    [...hostEditor.querySelectorAll('.option-picker [role=option]')].find(
+                        (item) => item.textContent.trim() === label
+                    ),
+                `Host option ${label} was not available`
+            )
+            option.click()
+            await until(() => !search.isConnected, `Host option ${label} was not added`)
+        }
+
+        await addHostOption('Mihomo IP version')
+        if (hostEditor.querySelector('select, datalist'))
+            throw new Error('The host form still contains a browser-native picker')
+        const ipValue = hostEditor.querySelector('input[type=hidden][name=mihomoIpVersion]')
+        const ipControl = ipValue.parentElement.querySelector('[role=combobox]')
+        ipControl.focus()
+        ipControl.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }))
+        const ipv6 = await until(
+            () =>
+                [...hostEditor.querySelectorAll('[popover]:popover-open [role=option]')].find(
+                    (item) => item.textContent.trim() === 'ipv6'
+                ),
+            'Mihomo IP version did not open a panel list'
+        )
+        ipv6.click()
+        await until(() => ipValue.value === 'ipv6', 'The chosen IP version did not reach the form')
+        findButton('Clear', ipValue.parentElement).click()
+        await until(() => ipValue.value === '', 'Clearing the IP version did not reach the form')
+
+        await addHostOption('Tags')
+        const tagControl = hostEditor.querySelector('.tags-control [role=combobox]')
+        tagControl.focus()
+        const fixtureTag = await until(
+            () =>
+                [...hostEditor.querySelectorAll('[popover]:popover-open [role=option]')].find(
+                    (item) => item.textContent.trim() === 'FIXTURE'
+                ),
+            'Host tag suggestions did not open a panel list'
+        )
+        fixtureTag.click()
+        await until(
+            () => hostEditor.querySelector('input[type=hidden][name=tags]').value === 'FIXTURE',
+            'Selecting a suggested tag did not update the host form'
+        )
 
         const openPreview = (editor) => {
             findButton('Preview', editor).click()
@@ -2010,8 +2138,7 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
         findButton('Generate preview', draftPreview).click()
         await until(
             () =>
-                draftPreview.querySelector('textarea[rows="12"]')?.value ===
-                'draft.example.test:8443',
+                draftPreview.querySelector('.body pre')?.textContent === 'draft.example.test:8443',
             'Preview did not send the draft host, selected inbound, and custom header'
         )
         findButton('Close', draftPreview).click()
@@ -2020,12 +2147,27 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
             'Closing the preview did not return to the draft'
         )
         findButton('Close', hostEditor).click()
+        expectDialogExit(hostEditor, 'slide')
         await until(() => !hostEditor.isConnected, 'The host editor did not close')
 
         openPanelRoute(`dashboard/open/host/${hostUuid}`)
         const savedHost = await until(
             () => select('.host-details[open] input[name=address]')?.closest('dialog'),
             'Saved host editor did not open'
+        )
+        savedHost.querySelector('[aria-label="Delete"]').click()
+        const deleteConfirmation = await until(
+            () =>
+                [...document.querySelectorAll('dialog[open]')].find(
+                    (dialog) =>
+                        dialog !== savedHost && dialog.querySelector('h2')?.textContent === 'Delete'
+                ),
+            'Deleting a host did not open the panel confirmation'
+        )
+        findButton('Cancel', deleteConfirmation).click()
+        await until(
+            () => !deleteConfirmation.isConnected && savedHost.open,
+            'Cancelling deletion did not return to the host editor'
         )
         setValue(savedHost.querySelector('input[name=address]'), 'unsaved.example.test')
         const savedPreview = await openPreview(savedHost)
@@ -2039,10 +2181,11 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
             return savedPreview.querySelector('[role=status]')
         }, 'Saved host preview did not return a response')
         if (
-            !/HTTP 200\s*·\s*XRAY_BASE64/.test(previewStatus.textContent) ||
+            !/HTTP 200\s*·\s*XRAY_JSON/.test(previewStatus.textContent) ||
             !previewStatus.textContent.includes('Matched rule: Saved host rule') ||
-            !savedPreview.querySelector('textarea[rows="7"]').value.includes('X-Preview: saved') ||
-            savedPreview.querySelector('textarea[rows="12"]')?.value !== 'saved.example.test:443'
+            !savedPreview.querySelector('.headers pre')?.textContent.includes('X-Preview: saved') ||
+            savedPreview.querySelector('.body pre')?.textContent !==
+                '{\n  "address": "saved.example.test:443"\n}'
         ) {
             throw new Error(`Unexpected saved host preview: ${previewStatus.textContent}`)
         }
@@ -2052,10 +2195,40 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
             () => savedPreview.textContent.includes('Connection closed without a response'),
             'Socket drop did not clear the response and show its status'
         )
+        if (savedPreview.querySelector('.headers, .body') || findButton('Copy', savedPreview))
+            throw new Error('Socket drop displayed an empty response section')
         findButton('Close', savedPreview).click()
         await until(() => !savedPreview.isConnected, 'Saved preview did not close')
-        findButton('Close', savedHost).click()
-        await until(() => !savedHost.isConnected, 'Saved host editor did not close')
+        const sni = savedHost.querySelector('input[name=sni]')
+        if (sni?.value !== 'saved-sni.example.test') throw new Error('Missing saved SNI')
+        findButton('Remove', sni.closest('.optional-field')).click()
+        await until(() => !sni.isConnected, 'The SNI reset did not remove its option')
+        findButton('Add', savedHost).click()
+        const sniOption = await until(
+            () =>
+                [...savedHost.querySelectorAll('.option-picker [role=option]')].find(
+                    (option) => option.textContent.trim() === 'SNI'
+                ),
+            'The removed SNI option did not return to Add'
+        )
+        sniOption.click()
+        const emptySni = await until(
+            () => savedHost.querySelector('input[name=sni]'),
+            'SNI could not be added again'
+        )
+        if (emptySni.value) throw new Error('Re-adding SNI restored its removed value')
+        findButton('Remove', emptySni.closest('.optional-field')).click()
+        findButton('Save', savedHost).click()
+        await until(() => !savedHost.isConnected, 'Saving the SNI reset did not close the editor')
+        openPanelRoute(`dashboard/open/host/${hostUuid}`)
+        const reopenedHost = await until(
+            () => select('.host-details[open] input[name=address]')?.closest('dialog'),
+            'The host did not reopen after the reset'
+        )
+        if (reopenedHost.querySelector('input[name=sni]')) throw new Error('SNI was not cleared')
+        reopenedHost.dispatchEvent(new Event('cancel', { cancelable: true }))
+        expectDialogExit(reopenedHost, 'slide')
+        await until(() => !reopenedHost.isConnected, 'The host editor did not close on Escape')
 
         openPanelRoute(`dashboard/open/internal-squad/${squadUuid}`)
         const directSquad = await until(
@@ -2218,14 +2391,20 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
             () => location.pathname === `${scope}auth/login`,
             'The auth index did not redirect'
         )
-        openPanelRoute('oauth2/callback/github')
-        await until(
-            () => select('main h1')?.textContent === 'Authenticating...',
-            'The incomplete OAuth callback did not show the React waiting screen'
-        )
-        if (select('main [role=alert]')) throw new Error('Incomplete callback displayed an error')
-        openPanelRoute('auth/login')
-        await until(() => select('main input[name=username]'), 'Login did not reopen')
+        for (const [query, message] of [
+            ['', 'The sign-in response is incomplete'],
+            ['?error=access_denied&error_description=Sign-in+cancelled', 'Sign-in cancelled']
+        ]) {
+            openPanelRoute(`oauth2/callback/github${query}`)
+            await until(
+                () =>
+                    location.pathname === `${scope}auth/login` &&
+                    [...document.querySelectorAll('[role=alert]')].some((alert) =>
+                        alert.textContent.includes(message)
+                    ),
+                'The failed OAuth callback did not return to login and explain the failure'
+            )
+        }
         openPanelRoute('oauth2/callback/generic?code=00123&state=00042')
         await until(
             () =>
@@ -2416,7 +2595,7 @@ export function startSvelteFixture(output) {
         viewPosition: 0,
         isDisabled: true,
         path: null,
-        sni: null,
+        sni: 'saved-sni.example.test',
         host: null,
         alpn: null,
         fingerprint: null,
@@ -2512,9 +2691,19 @@ export function startSvelteFixture(output) {
             if (pathname.startsWith('/api/')) {
                 if (request.headers.get('Authorization') !== `Bearer ${token}`)
                     return new Response(null, { status: 401 })
+                if (pathname.replace(/\/$/, '') === '/api/hosts' && request.method === 'PATCH') {
+                    const patch = await request.json()
+                    if (
+                        patch.uuid !== hostUuid ||
+                        patch.sni !== null ||
+                        patch.address !== 'unsaved.example.test'
+                    )
+                        return Response.json({ message: 'Invalid host reset' }, { status: 400 })
+                    return result(Object.assign(savedHost, patch))
+                }
                 if (pathname === '/api/hosts/' && request.method === 'GET') return result([])
                 if (pathname === `/api/hosts/${hostUuid}`) return result(savedHost)
-                if (pathname === '/api/hosts/tags') return result({ tags: [] })
+                if (pathname === '/api/hosts/tags') return result({ tags: ['FIXTURE'] })
                 if (pathname === '/api/hosts/preview' && request.method === 'POST') {
                     const {
                         host,
@@ -2552,6 +2741,7 @@ export function startSvelteFixture(output) {
                             return badRequest()
                         return result({
                             clientType: 'MIHOMO',
+                            contentType: 'text/plain',
                             ruleName: 'Draft host rule',
                             status: 200,
                             headers: {},
@@ -2563,6 +2753,7 @@ export function startSvelteFixture(output) {
                     if (mode === 'drop')
                         return result({
                             clientType: 'SOCKET_DROP',
+                            contentType: '',
                             ruleName: 'Socket drop rule',
                             status: null,
                             headers: {},
@@ -2570,11 +2761,14 @@ export function startSvelteFixture(output) {
                         })
                     if (mode !== 'saved') return badRequest()
                     return result({
-                        clientType: 'XRAY_BASE64',
+                        clientType: 'XRAY_JSON',
+                        contentType: 'application/json',
                         ruleName: 'Saved host rule',
                         status: 200,
                         headers: { 'X-Preview': mode },
-                        previewContent: `${savedHost.address}:${savedHost.port}`
+                        previewContent: JSON.stringify({
+                            address: `${savedHost.address}:${savedHost.port}`
+                        })
                     })
                 }
                 if (pathname === '/api/subscription-page-configs/') {
@@ -3076,7 +3270,15 @@ export function startSvelteFixture(output) {
                         return result(profiles.find(({ uuid }) => uuid === inbound.profileUuid))
                     }
                     if (request.method === 'PATCH') {
-                        const { uuid, name } = await request.json()
+                        const { uuid, name, config } = await request.json()
+                        if (config)
+                            return Response.json(
+                                {
+                                    message:
+                                        'constraint failed: FOREIGN KEY constraint failed (787)'
+                                },
+                                { status: 500 }
+                            )
                         const profile = profiles.find((item) => item.uuid === uuid)
                         if (!profile || !name) return new Response(null, { status: 400 })
                         profile.name = name

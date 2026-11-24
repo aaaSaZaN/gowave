@@ -1,9 +1,12 @@
 <script lang="ts">
+    import ColorHash from '@shared/lib/color'
     import { createQuery } from '@tanstack/svelte-query'
     import { onDestroy } from 'svelte'
     import { z } from 'zod'
     import { locale } from '../i18n.svelte'
     import Button from '../ui/Button.svelte'
+    import { dismissContainingDialog } from '../ui/dialog-motion'
+    import Icon from '../ui/Icon.svelte'
     import Overlay from '../ui/Overlay.svelte'
 
     let {
@@ -38,6 +41,8 @@
             return catalogSchema.parse(await response.json()).templates
         }
     }))
+
+    const colors = new ColorHash()
 
     let search = $state('')
     let selected = $state('')
@@ -96,8 +101,8 @@
 
 <Overlay
     title={t('use-download-template.select-template-to-load')}
-    icon="TbFolder"
-    width={500}
+    icon="TbDownload"
+    width={620}
     fullscreenOnMobile={false}
     close={onclose}
 >
@@ -118,12 +123,15 @@
             </p>
             <Button onclick={() => void templates.refetch()}>{t('common.action.try-again')}</Button>
         {:else}
-            <input
-                type="search"
-                aria-label={t('template-selector.search-templates')}
-                placeholder={t('template-selector.search-templates')}
-                bind:value={search}
-            >
+            <label class="search">
+                <Icon name="TbSearch" size={16} />
+                <input
+                    type="search"
+                    aria-label={t('template-selector.search-templates')}
+                    placeholder={t('template-selector.search-templates')}
+                    bind:value={search}
+                >
+            </label>
             <div class="catalog">
                 {#each groups as [author, entries] (author)}
                     <section>
@@ -139,8 +147,16 @@
                                 aria-pressed={selected === template.url}
                                 onclick={() => (selected = template.url)}
                             >
-                                <span>{template.name}</span>
-                                <small>{template.type}</small>
+                                <span class="template-description">
+                                    <span title={template.name}>{template.name}</span>
+                                    <small title={template.author}>by {template.author}</small>
+                                </span>
+                                <span
+                                    class="template-type"
+                                    style:--badge-color={colors.hex(template.type)}
+                                >
+                                    {template.type}
+                                </span>
                             </button>
                         {/each}
                     </section>
@@ -153,7 +169,9 @@
             <p role="alert">{error}</p>
         {/if}
         <div class="actions">
-            <Button variant="subtle" onclick={onclose}>{t('common.action.cancel')}</Button>
+            <Button variant="subtle" onclick={dismissContainingDialog}
+                >{t('common.action.cancel')}</Button
+            >
             <Button
                 type="submit"
                 variant="default"
@@ -167,28 +185,63 @@
 
 <style>
     form,
-    section,
     .catalog {
         display: grid;
-        gap: var(--mantine-spacing-xs);
+        gap: var(--mantine-spacing-md);
     }
     .catalog {
         align-content: start;
-        max-height: min(400px, 48dvh);
+        gap: var(--mantine-spacing-lg);
+        height: min(400px, 60dvh);
+        min-height: 0;
         overflow: auto;
+        scrollbar-color: rgb(255 255 255 / 0.4) transparent;
+        scrollbar-width: thin;
     }
     .add-template {
-        padding: 8px;
-        text-align: center;
-        text-decoration: none;
+        display: grid;
+        min-height: 36px;
+        place-items: center;
+        padding-inline: var(--mantine-spacing-sm);
         border-radius: var(--mantine-radius-md);
         background: var(--mantine-color-cyan-light);
         color: var(--mantine-color-cyan-light-color);
+        font-size: var(--mantine-font-size-sm);
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .add-template:hover {
+        background: var(--mantine-color-cyan-light-hover);
+    }
+    .search {
+        position: relative;
+        display: grid;
+    }
+    .search > :global(svg) {
+        position: absolute;
+        inset-inline-start: 10px;
+        inset-block-start: 10px;
+        color: var(--mantine-color-dimmed);
+        pointer-events: none;
+    }
+    .search input {
+        height: 36px;
+        padding-inline-start: 35px;
+        font-size: var(--mantine-font-size-sm);
+    }
+    .search input::placeholder {
+        color: var(--mantine-color-placeholder);
+    }
+    section {
+        display: grid;
+        gap: var(--mantine-spacing-xs);
+        min-width: 0;
     }
     h3 {
-        margin: 8px 0 0;
-        font-size: var(--mantine-font-size-sm);
+        margin: 0;
         color: var(--mantine-color-dimmed);
+        font-size: var(--mantine-font-size-sm);
+        font-weight: 600;
     }
     .template,
     .actions {
@@ -198,22 +251,54 @@
     }
     .template {
         justify-content: space-between;
-        text-align: start;
+        min-width: 0;
+        padding: var(--mantine-spacing-sm);
+        border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
+        border-radius: var(--mantine-radius-md);
         background: var(--gw-raised-bg);
-        border: 1px solid var(--gw-border);
+        color: var(--mantine-color-text);
+        text-align: start;
+        transition:
+            border-color 200ms ease,
+            box-shadow 200ms ease;
+    }
+    .template:hover {
+        box-shadow: var(--mantine-shadow-sm);
     }
     .template[aria-pressed="true"] {
-        border-color: var(--gw-accent);
+        border-color: var(--mantine-color-blue-5);
     }
-    small {
-        color: var(--mantine-color-cyan-light-color);
-        background: var(--mantine-color-cyan-light);
+    .template-description {
+        display: grid;
+        flex: 1;
+        min-width: 0;
+        font-size: var(--mantine-font-size-sm);
+        font-weight: 500;
+    }
+    .template-description > * {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .template-description small {
+        color: var(--mantine-color-dimmed);
+        font-size: var(--mantine-font-size-xs);
+        font-weight: 400;
+    }
+    .template-type {
+        flex: none;
+        padding-inline: 9px;
         border-radius: 999px;
-        padding: 2px 8px;
+        background: color-mix(in srgb, var(--badge-color) 10%, transparent);
+        color: var(--badge-color);
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 18px;
+        letter-spacing: 0.25px;
     }
     .actions {
         justify-content: end;
         flex-wrap: wrap;
-        margin-top: var(--mantine-spacing-sm);
+        gap: var(--mantine-spacing-md);
     }
 </style>

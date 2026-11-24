@@ -9,7 +9,7 @@
     } from '@remnawave/backend-contract'
     import { createQuery } from '@tanstack/svelte-query'
     import { type Snippet, untrack } from 'svelte'
-    import { SvelteSet } from 'svelte/reactivity'
+    import { SvelteMap, SvelteSet } from 'svelte/reactivity'
     import { type Profile, profilesQuery } from '../config-profiles/queries'
     import { locale } from '../i18n.svelte'
     import { squadsQuery } from '../internal-squads/queries'
@@ -20,6 +20,8 @@
     import Button from '../ui/Button.svelte'
     import { nextComboboxOption } from '../ui/combobox'
     import Icon from '../ui/Icon.svelte'
+    import MultiSelect from '../ui/MultiSelect.svelte'
+    import SelectField from '../ui/SelectField.svelte'
     import Switch from '../ui/Switch.svelte'
     import TablePopup from '../ui/TablePopup.svelte'
     import HostInboundPicker from './HostInboundPicker.svelte'
@@ -46,6 +48,15 @@
     const tags = createQuery(() => hostTagsQuery)
 
     const applied = new SvelteSet<HostField>()
+    const cleared = new SvelteSet<HostField>()
+    const selectValues = new SvelteMap<HostField, string>()
+    let squadMode = $state(untrack(() => host?.internalSquads.mode ?? INTERNAL_SQUADS_MODE.EXCLUDE))
+    let assignedSquads = $state<string[]>(untrack(() => [...(host?.internalSquads.squads ?? [])]))
+    let hostNodes = $state<string[]>(untrack(() => [...(host?.nodes ?? [])]))
+    let excludedSubscriptions = $state<string[]>(
+        untrack(() => [...(host?.excludeFromSubscriptionTypes ?? [])])
+    )
+    let responseRules = $state<string[]>(untrack(() => [...(host?.includeInSrrRules ?? [])]))
     const securityFields = {
         securityLayer: 'base-host-form.security-layer',
         alpn: 'base-host-form.alpn',
@@ -72,10 +83,8 @@
     let inboundOpen = $state(false)
     let optionSearch = $state('')
     let highlightedOption = $state<string>()
-    let tagInput: ReturnType<typeof HostTags> | undefined
     let hostTags = $state(untrack(() => [...(host?.tags ?? [])]))
     let fingerprint = $state(untrack(() => host?.fingerprint ?? ''))
-    let fingerprintInput: HTMLInputElement
     let hostEnabled = $state(untrack(() => host?.isDisabled === false))
     const activeOptions = new SvelteSet<HostField>(
         untrack(() => {
@@ -178,14 +187,34 @@
 
     function apply(key: HostField, enabled: boolean): void {
         if (enabled) applied.add(key)
-        else applied.delete(key)
+        else if (core.has(key)) applied.delete(key)
+        else resetOption(key)
     }
 
-    function resetOption(key: 'tags' | 'fingerprint'): void {
-        if (key === 'tags') tagInput?.clear()
-        else fingerprint = ''
-        activeOptions.delete(key)
-        onfieldchange(key)
+    function optionValue<Key extends HostField & keyof Host>(key: Key): Host[Key] | undefined {
+        return cleared.has(key) ? undefined : host?.[key]
+    }
+
+    function resetOption(key: HostField): void {
+        cleared.add(key)
+        selectValues.delete(key)
+        if (key === 'tags') hostTags = []
+        if (key === 'fingerprint') fingerprint = ''
+        if (key === 'nodes') hostNodes = []
+        if (key === 'excludeFromSubscriptionTypes') excludedSubscriptions = []
+        if (key === 'includeInSrrRules') responseRules = []
+        if (key === 'internalSquads') {
+            squadMode = INTERNAL_SQUADS_MODE.EXCLUDE
+            assignedSquads = []
+        }
+        if (bulk) {
+            applied.delete(key)
+            document.getElementById(`${id}-apply-${key}`)?.focus({ preventScroll: true })
+        } else {
+            activeOptions.delete(key)
+            onfieldchange(key)
+            trigger?.focus({ preventScroll: true })
+        }
     }
 
     function changeInbound(profile: Profile, item: Profile['inbounds'][number]): void {
@@ -202,36 +231,74 @@
         return value === null || value === undefined ? '' : JSON.stringify(value, null, 2)
     }
 
-    function mergeChoices<T extends { uuid: string }>(items: T[], previous: string[]) {
+    function namedOptions(
+        items: readonly { uuid: string; name: string }[],
+        previous: readonly string[]
+    ) {
+        const known = new Map(items.map(({ uuid, name }) => [uuid, name]))
         return [
-            ...items,
+            ...items.map(({ uuid, name }) => ({ value: uuid, label: name })),
             ...previous
-                .filter((id) => !items.some(({ uuid }) => uuid === id))
-                .map((uuid) => ({ uuid, name: uuid }))
+                .filter((value) => !known.has(value))
+                .map((value) => ({ value, label: value }))
         ]
+    }
+
+    function setOption(key: HostField, value: string): void {
+        selectValues.set(key, value)
+        onfieldchange(key)
     }
 </script>
 
-{#snippet entry(key: HostField, label: string, field: Snippet)}
-    {#if bulk}
-        <div class="field">
-            <label class="apply">
-                <input
-                    type="checkbox"
-                    name={`apply:${key}`}
-                    checked={applied.has(key)}
-                    onchange={(event) => apply(key, event.currentTarget.checked)}
-                >
-                {label}
-            </label>
-            {#if applied.has(key)}
-                {@render field()}
+{#snippet entry(key: HostField, label: string, field: Snippet, inline = false)}
+    {#if !bulk && core.has(key)}
+        {@render field()}
+    {:else if bulk || activeOptions.has(key)}
+        {@const expanded = bulk ? applied.has(key) : true}
+        <div class="field optional-field" class:inline={inline}>
+            <div class="option-field-label">
+                {#if bulk}
+                    <label class="apply">
+                        <input
+                            id={`${id}-apply-${key}`}
+                            type="checkbox"
+                            name={`apply:${key}`}
+                            checked={expanded}
+                            onchange={(event) => apply(key, event.currentTarget.checked)}
+                        >
+                        {label}
+                    </label>
+                {:else}
+                    <span>{label}</span>
+                {/if}
+                {#if key === 'tags'}
+                    <span
+                        class="option-help"
+                        title={t(
+                            'host-tags-input.tags-are-not-visible-to-end-users-tag-will-be-sent-with-raw-subscription-only'
+                        )}
+                        ><Icon name="HiQuestionMarkCircle" size={16} /></span
+                    >
+                {/if}
+            </div>
+            {#if expanded}
+                <div class="option-control">{@render field()}</div>
+                {#if !core.has(key)}
+                    <div class="reset-option">
+                        <ActionIcon
+                            icon="TbArrowBackUp"
+                            label={bulk
+                                ? t('base-host-form.leave-field-untouched')
+                                : t('common.action.remove')}
+                            size={30}
+                            iconSize={16}
+                            subtle
+                            onclick={() => resetOption(key)}
+                        />
+                    </div>
+                {/if}
             {/if}
         </div>
-    {:else if core.has(key)}
-        {@render field()}
-    {:else}
-        <div class="optional-field" hidden={!activeOptions.has(key)}>{@render field()}</div>
     {/if}
 {/snippet}
 
@@ -252,7 +319,9 @@
                 {value}
                 maxlength={maxLength}
                 {required}
-                placeholder={!bulk && key === 'address' ? 'example.com' : undefined}
+                placeholder={key === 'sni' || (!bulk && key === 'address')
+                    ? 'example.com'
+                    : undefined}
             >
         {/snippet}
         {#if !bulk && key === 'remark'}
@@ -268,6 +337,8 @@
                     {@render textInput()}
                 </span>
             </div>
+        {:else if !core.has(key)}
+            {@render textInput()}
         {:else}
             <label for={`${id}-${key}`}>
                 <span hidden={bulk}>
@@ -308,19 +379,17 @@
 )}
     {@render entry(key, label, selectControl)}
     {#snippet selectControl()}
-        <label>
-            {#if !bulk}
-                {label}
-            {/if}
-            <select name={key} aria-label={label} {value}>
-                {#if blank}
-                    <option value="">{t('common.message.not-set')}</option>
-                {/if}
-                {#each values as option (option)}
-                    <option value={option}>{option}</option>
-                {/each}
-            </select>
-        </label>
+        <SelectField
+            name={key}
+            {label}
+            hideLabel
+            searchable={false}
+            clearable={blank}
+            placeholder={t('common.message.not-set')}
+            options={values.map((option) => ({ value: option, label: option }))}
+            value={selectValues.get(key) ?? value}
+            onchoose={(next) => setOption(key, next)}
+        />
     {/snippet}
 {/snippet}
 
@@ -551,21 +620,7 @@
         <div class="fields">
             {@render entry('tags', t('common.field.tags'), tagsControl)}
             {#snippet tagsControl()}
-                {#if !bulk}
-                    <div class="option-field-label">
-                        <span>{t('common.field.tags')}</span>
-                        <span
-                            class="option-help"
-                            title={t(
-                                'host-tags-input.tags-are-not-visible-to-end-users-tag-will-be-sent-with-raw-subscription-only'
-                            )}
-                            ><Icon name="HiQuestionMarkCircle" size={16} /></span
-                        >
-                        {@render resetButton('tags')}
-                    </div>
-                {/if}
                 <HostTags
-                    bind:this={tagInput}
                     bind:values={hostTags}
                     label={t('common.field.tags')}
                     suggestions={tags.data?.tags ?? []}
@@ -574,59 +629,47 @@
             {/snippet}
             {@render entry('internalSquads', t('constants.internal-squads'), access)}
             {#snippet access()}
-                <label>
-                    {t('base-host-form.access-mode')}
-                    <select
-                        name="internalSquads:mode"
-                        value={host?.internalSquads.mode ?? INTERNAL_SQUADS_MODE.EXCLUDE}
-                    >
-                        <option value={INTERNAL_SQUADS_MODE.EXCLUDE}>
-                            {t('base-host-form.internal-squads-mode-exclude')}
-                        </option>
-                        <option value={INTERNAL_SQUADS_MODE.ALLOW_ONLY}>
-                            {t('base-host-form.internal-squads-mode-allow-only')}
-                        </option>
-                    </select>
-                </label>
-                <label>
-                    {t('constants.internal-squads')}
-                    <select
-                        name="internalSquads:squads"
-                        multiple
-                        value={host?.internalSquads.squads ?? []}
-                    >
-                        {#each mergeChoices(
-                            squads.data?.internalSquads ?? [],
-                            host?.internalSquads.squads ?? []
-                        ) as squad (squad.uuid)}
-                            <option value={squad.uuid}>{squad.name}</option>
-                        {/each}
-                    </select>
-                </label>
+                <fieldset class="squad-mode" aria-label={t('base-host-form.access-mode')}>
+                    {#each Object.values(INTERNAL_SQUADS_MODE) as mode (mode)}
+                        <label>
+                            <input
+                                type="radio"
+                                name="internalSquads:mode"
+                                value={mode}
+                                checked={squadMode === mode}
+                                onchange={() => (squadMode = mode)}
+                            >
+                            <span class="choice"
+                                >{t(
+                                    mode === INTERNAL_SQUADS_MODE.EXCLUDE
+                                        ? 'base-host-form.internal-squads-mode-exclude'
+                                        : 'base-host-form.internal-squads-mode-allow-only'
+                                )}</span
+                            >
+                        </label>
+                    {/each}
+                </fieldset>
+                <MultiSelect
+                    name="internalSquads:squads"
+                    label={t('constants.internal-squads')}
+                    options={namedOptions(squads.data?.internalSquads ?? [], assignedSquads)}
+                    bind:values={assignedSquads}
+                    onchange={() => onfieldchange('internalSquads')}
+                />
                 {#if squads.error}
                     <p role="alert">{squads.error.message}</p>
                 {/if}
             {/snippet}
             {@render entry('nodes', t('constants.nodes'), assignedNodes)}
             {#snippet assignedNodes()}
-                <label>
-                    {#if !bulk}
-                        {t('constants.nodes')}
-                    {/if}
-                    <select
-                        name="nodes"
-                        aria-label={t('constants.nodes')}
-                        multiple
-                        value={host?.nodes ?? []}
-                    >
-                        {#each mergeChoices(
-                            nodes.data ?? [],
-                            host?.nodes ?? []
-                        ) as node (node.uuid)}
-                            <option value={node.uuid}>{node.name}</option>
-                        {/each}
-                    </select>
-                </label>
+                <MultiSelect
+                    name="nodes"
+                    label={t('constants.nodes')}
+                    hideLabel
+                    options={namedOptions(nodes.data ?? [], hostNodes)}
+                    bind:values={hostNodes}
+                    onchange={() => onfieldchange('nodes')}
+                />
                 {#if nodes.error}
                     <p role="alert">{nodes.error.message}</p>
                 {/if}
@@ -637,26 +680,21 @@
                 template
             )}
             {#snippet template()}
-                <label>
-                    {#if !bulk}
-                        {t('base-host-form.xray-json-template')}
-                    {/if}
-                    <select
-                        name="xrayJsonTemplateUuid"
-                        aria-label={t('base-host-form.xray-json-template')}
-                        value={host?.xrayJsonTemplateUuid ?? ''}
-                    >
-                        <option value="">{t('common.message.not-set')}</option>
-                        {#each mergeChoices(
-                            templates.data?.templates.filter(
-                                (item) => item.templateType === SUBSCRIPTION_TEMPLATE_TYPE.XRAY_JSON
-                            ) ?? [],
-                            host?.xrayJsonTemplateUuid ? [host.xrayJsonTemplateUuid] : []
-                        ) as item (item.uuid)}
-                            <option value={item.uuid}>{item.name}</option>
-                        {/each}
-                    </select>
-                </label>
+                {@const savedTemplate = optionValue('xrayJsonTemplateUuid')}
+                <SelectField
+                    name="xrayJsonTemplateUuid"
+                    label={t('base-host-form.xray-json-template')}
+                    hideLabel
+                    placeholder={t('common.message.not-set')}
+                    options={namedOptions(
+                        templates.data?.templates.filter(
+                            (item) => item.templateType === SUBSCRIPTION_TEMPLATE_TYPE.XRAY_JSON
+                        ) ?? [],
+                        savedTemplate ? [savedTemplate] : []
+                    )}
+                    value={selectValues.get('xrayJsonTemplateUuid') ?? savedTemplate ?? ''}
+                    onchoose={(value) => setOption('xrayJsonTemplateUuid', value)}
+                />
                 {#if templates.error}
                     <p role="alert">{templates.error.message}</p>
                 {/if}
@@ -667,38 +705,47 @@
                 excludedTypes
             )}
             {#snippet excludedTypes()}
-                <label>
-                    {#if !bulk}
-                        {t('base-host-form.exclude-from-subscription-type')}
-                    {/if}
-                    <select
-                        name="excludeFromSubscriptionTypes"
-                        aria-label={t('base-host-form.exclude-from-subscription-type')}
-                        multiple
-                        value={host?.excludeFromSubscriptionTypes ?? []}
-                    >
+                <fieldset
+                    class="subscription-types"
+                    aria-label={t('base-host-form.exclude-from-subscription-type')}
+                >
+                    <div class="type-options">
                         {#each Object.values(SUBSCRIPTION_TEMPLATE_TYPE) as type (type)}
-                            <option value={type}>{type}</option>
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    name="excludeFromSubscriptionTypes"
+                                    value={type}
+                                    checked={excludedSubscriptions.includes(type)}
+                                    onchange={(event) => {
+                                        excludedSubscriptions = event.currentTarget.checked
+                                            ? [...excludedSubscriptions, type]
+                                            : excludedSubscriptions.filter((item) => item !== type)
+                                    }}
+                                >
+                                <span class="choice">{type}</span>
+                            </label>
                         {/each}
-                    </select>
-                </label>
+                    </div>
+                </fieldset>
             {/snippet}
             {@render entry('includeInSrrRules', t('constants.response-rules'), rules)}
             {#snippet rules()}
-                <label>
-                    {#if !bulk}
-                        {t('constants.response-rules')}
-                    {/if}
-                    <textarea
-                        name="includeInSrrRules"
-                        aria-label={t('constants.response-rules')}
-                        placeholder={t('base-host-form.response-rules-placeholder')}
-                        value={host?.includeInSrrRules.join('\n') ?? ''}
-                    ></textarea>
-                </label>
-                {#if settings.data?.responseRules?.rules.length}
-                    <p>{settings.data.responseRules.rules.map(({ name }) => name).join(', ')}</p>
-                {/if}
+                <MultiSelect
+                    name="includeInSrrRules"
+                    label={t('constants.response-rules')}
+                    hideLabel
+                    create
+                    placeholder={t('base-host-form.response-rules-placeholder')}
+                    options={[
+                        ...new Set(settings.data?.responseRules?.rules.map(({ name }) => name))
+                    ].map((value) => ({
+                        value,
+                        label: value
+                    }))}
+                    bind:values={responseRules}
+                    onchange={() => onfieldchange('includeInSrrRules')}
+                />
             {/snippet}
         </div>
     </div>
@@ -710,14 +757,14 @@
                 'securityLayer',
                 t('base-host-form.security-layer'),
                 Object.values(SECURITY_LAYERS),
-                host?.securityLayer ?? SECURITY_LAYERS.DEFAULT,
+                optionValue('securityLayer') ?? SECURITY_LAYERS.DEFAULT,
                 false
             )}
             {@render selectOption(
                 'alpn',
                 t('base-host-form.alpn'),
                 Object.values(ALPN),
-                host?.alpn ?? ''
+                optionValue('alpn') ?? ''
             )}
             {#each Object.entries(textOptions) as [key, label] (key)}
                 {#if key === 'fingerprint'}
@@ -726,88 +773,46 @@
                     {@render scalar(
                         key as keyof typeof textOptions,
                         t(label),
-                        host?.[key as keyof typeof textOptions] ?? '',
+                        optionValue(key as keyof typeof textOptions) ?? '',
                         key === 'serverDescription' ? 30 : undefined
                     )}
                 {/if}
             {/each}
             {#snippet fingerprintControl()}
-                {#if !bulk}
-                    <div class="option-field-label">
-                        <label for={`${id}-fingerprint`}>{t('base-host-form.fingerprint')}</label>
-                        {@render resetButton('fingerprint')}
-                    </div>
-                {/if}
-                <div class="autocomplete">
-                    <input
-                        bind:this={fingerprintInput}
-                        id={`${id}-fingerprint`}
-                        name="fingerprint"
-                        aria-label={t('base-host-form.fingerprint')}
-                        bind:value={fingerprint}
-                        list={`${id}-fingerprints`}
-                        placeholder="chrome"
-                        autocomplete="off"
-                    >
-                    <div class="input-actions">
-                        {#if fingerprint}
-                            <ActionIcon
-                                icon="TbX"
-                                label={t('common.action.clear')}
-                                size={20}
-                                iconSize={14}
-                                subtle
-                                onclick={() => {
-                                    fingerprint = ''
-                                    onfieldchange('fingerprint')
-                                    fingerprintInput.focus()
-                                }}
-                            />
-                        {/if}
-                        <ActionIcon
-                            icon="TbChevronDown"
-                            label={t('common.action.open')}
-                            size={20}
-                            iconSize={12}
-                            subtle
-                            onclick={() => {
-                                fingerprintInput.focus()
-                                fingerprintInput.showPicker?.()
-                            }}
-                        />
-                    </div>
-                </div>
-                <datalist id={`${id}-fingerprints`}>
-                    {#each FINGERPRINTS as option (option)}
-                        <option value={option}></option>
-                    {/each}
-                </datalist>
+                <SelectField
+                    name="fingerprint"
+                    label={t('base-host-form.fingerprint')}
+                    hideLabel
+                    placeholder="chrome"
+                    autocomplete="suggest"
+                    options={FINGERPRINTS.map((value) => ({ value, label: value }))}
+                    value={fingerprint}
+                    onchoose={(value) => {
+                        fingerprint = value
+                        onfieldchange('fingerprint')
+                    }}
+                />
             {/snippet}
             {#each Object.entries(switches).slice(1) as [key, label] (key)}
                 {@render hostSwitch(key as keyof typeof switches, t(label))}
             {/each}
             {@render entry('vlessRouteId', t('base-host-form.vless-route-id'), routeId)}
             {#snippet routeId()}
-                <label>
-                    {#if !bulk}
-                        {t('base-host-form.vless-route-id')}
-                    {/if}
-                    <input
-                        name="vlessRouteId"
-                        aria-label={t('base-host-form.vless-route-id')}
-                        type="number"
-                        min="0"
-                        max="65535"
-                        step="1"
-                        value={host?.vlessRouteId ?? ''}
-                    >
-                </label>
+                <input
+                    name="vlessRouteId"
+                    aria-label={t('base-host-form.vless-route-id')}
+                    type="number"
+                    min="0"
+                    max="65535"
+                    step="1"
+                    value={optionValue('vlessRouteId') ?? ''}
+                >
             {/snippet}
             {@render selectOption(
                 'mihomoIpVersion',
                 t('base-host-form.mihomo-ip-version'),
                 Object.values(MIHOMO_IP_VERSION),
-                host?.mihomoIpVersion ?? ''
+                optionValue('mihomoIpVersion') ?? ''
             )}
         </div>
     </div>
@@ -817,12 +822,12 @@
         <div class="fields">
             {#each Object.entries(jsonOptions) as [field, label] (field)}
                 {@const key = field as keyof typeof jsonOptions}
-                {@render entry(key, t(label), jsonControl)}
+                {@render entry(key, t(label), jsonControl, true)}
                 {#snippet jsonControl()}
                     <HostJsonInput
                         field={key}
                         label={t(label)}
-                        value={jsonText(host?.[key])}
+                        value={jsonText(optionValue(key))}
                         rawInbound={knownInbound?.rawInbound}
                         onchange={() => onfieldchange(key)}
                     />
@@ -832,30 +837,17 @@
     </div>
 </section>
 
-{#snippet resetButton(key: 'tags' | 'fingerprint')}
-    <span class="reset-option"
-        ><ActionIcon
-            icon="TbArrowBackUp"
-            label={t('common.action.reset')}
-            size={24}
-            iconSize={16}
-            subtle
-            onclick={() => resetOption(key)}
-        /></span
-    >
-{/snippet}
-
 {#snippet hostSwitch(key: keyof typeof switches, label: string)}
-    {@render entry(key, label, switchControl)}
+    {@render entry(key, label, switchControl, !core.has(key))}
     {#snippet switchControl()}
-        <label class="switch">
-            <input
-                type="checkbox"
-                name={key}
-                checked={host?.[key] ?? (!bulk && key === 'isDisabled')}
-            >
-            {bulk ? t('common.action.enable') : label}
-        </label>
+        {#if core.has(key)}
+            <label class="switch">
+                <input type="checkbox" name={key} checked={host?.[key] ?? !bulk}>
+                {bulk ? t('common.action.enable') : label}
+            </label>
+        {:else}
+            <Switch name={key} {label} checked={optionValue(key) ?? false} />
+        {/if}
     {/snippet}
 {/snippet}
 
@@ -976,7 +968,7 @@
     .address-input input {
         padding-inline-end: 36px;
     }
-    :is(label, .remark-field) :is(input:not([type="checkbox"]), select) {
+    :is(label, .remark-field) input:not([type="checkbox"], [type="radio"]) {
         min-height: 36px;
         height: 36px;
         border-radius: var(--mantine-radius-md);
@@ -986,8 +978,62 @@
     .essential-fields input::placeholder {
         color: var(--mantine-color-placeholder);
     }
-    label select[multiple] {
-        height: auto;
+    .squad-mode,
+    .subscription-types {
+        min-width: 0;
+        margin: 0;
+        border: 0;
+    }
+    .subscription-types {
+        padding: 0;
+    }
+    .squad-mode,
+    .type-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    .squad-mode {
+        width: fit-content;
+        padding: 4px;
+        border-radius: var(--mantine-radius-md);
+        background: var(--mantine-color-default);
+    }
+    .squad-mode label,
+    .type-options label {
+        position: relative;
+    }
+    :is(.squad-mode, .type-options) input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+    }
+    .choice {
+        padding: 4px var(--mantine-spacing-sm);
+        border-radius: var(--mantine-radius-md);
+        color: var(--mantine-color-dimmed);
+        cursor: pointer;
+    }
+    .type-options .choice {
+        border: 1px solid var(--mantine-color-default-border);
+    }
+    :is(.squad-mode, .type-options) input:focus-visible + .choice {
+        outline: 2px solid var(--mantine-color-cyan-6);
+    }
+    .squad-mode input:checked + .choice {
+        background: var(--mantine-color-body);
+        color: var(--mantine-color-text);
+    }
+    .type-options input:checked + .choice {
+        border-color: var(--mantine-color-cyan-6);
+        background: var(--mantine-color-cyan-light);
+        color: var(--mantine-color-cyan-light-color);
+    }
+    .subscription-types {
+        display: grid;
+        gap: 5px;
+        font-size: var(--mantine-font-size-sm);
     }
     .inbound-select {
         display: flex;
@@ -1051,9 +1097,6 @@
         min-width: 0;
     }
     .option-group[hidden],
-    .optional-field[hidden] {
-        display: none;
-    }
     .option-label {
         display: flex;
         align-items: center;
@@ -1114,44 +1157,45 @@
         color: var(--mantine-color-dimmed);
         font-size: var(--mantine-font-size-xs);
     }
+    .optional-field {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        column-gap: var(--mantine-spacing-xs);
+    }
     .option-field-label {
         display: flex;
         align-items: center;
-        min-height: 28px;
         gap: 4px;
+        min-height: 30px;
+        min-width: 0;
         font-size: var(--mantine-font-size-sm);
-        font-weight: 600;
-    }
-    .option-field-label label {
-        font-weight: inherit;
+        font-weight: var(--mantine-font-weight-medium);
     }
     .option-help {
         display: grid;
         color: var(--mantine-color-gray-light-color);
     }
+    .option-control {
+        display: grid;
+        gap: var(--mantine-spacing-xs);
+        grid-column: 1 / -1;
+        grid-row: 2;
+        min-width: 0;
+    }
     .reset-option {
-        margin-inline-start: auto;
+        grid-column: 2;
+        grid-row: 1;
     }
-    .autocomplete {
-        position: relative;
+    .optional-field.inline {
+        grid-template-columns: minmax(0, 1fr) auto auto;
     }
-    .autocomplete input {
-        width: 100%;
-        padding-inline-end: 52px;
-        min-height: 36px;
-        height: 36px;
-        font-size: var(--mantine-font-size-sm);
-        background: var(--mantine-color-dark-6);
+    .inline .option-control {
+        grid-column: 2;
+        grid-row: 1;
     }
-    .autocomplete input::-webkit-calendar-picker-indicator {
-        display: none;
-    }
-    .input-actions {
-        position: absolute;
-        inset-inline-end: 7px;
-        inset-block: 0;
-        display: flex;
-        align-items: center;
+    .inline .reset-option {
+        grid-column: 3;
     }
     .empty-options {
         display: grid;

@@ -6,6 +6,7 @@
     import { onMount } from 'svelte'
     import { locale } from '../i18n.svelte'
     import Button from '../ui/Button.svelte'
+    import { dismissDialog } from '../ui/dialog-motion'
     import Icon from '../ui/Icon.svelte'
 
     let dialog: HTMLDialogElement
@@ -28,7 +29,7 @@
         } catch {
             // The dialog can be dismissed for this visit.
         }
-        dialog.close()
+        dismissDialog(dialog)
     }
 
     function parts(value: string) {

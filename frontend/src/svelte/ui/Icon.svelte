@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type IconName, icons } from './icons'
+    import { getIcon, type IconName } from './icons'
 
     let {
         name,
@@ -14,18 +14,30 @@
     } = $props()
 
     const dimensions = $derived(typeof size === 'number' ? String(size) : size)
-    const icon = $derived(icons[name])
+    const icon = $derived(getIcon(name))
 </script>
 
-<svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="currentColor"
-    {...icon.attrs}
-    width={dimensions}
-    height={dimensions}
-    {color}
-    class={className}
-    aria-hidden="true"
->
-    {@html icon.content}
-</svg>
+{#snippet glyph(icon: Awaited<ReturnType<typeof getIcon>>)}
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="currentColor"
+        {...icon.attrs}
+        width={dimensions}
+        height={dimensions}
+        {color}
+        class={className}
+        aria-hidden="true"
+    >
+        {@html icon.content}
+    </svg>
+{/snippet}
+
+{#if icon instanceof Promise}
+    {#await icon}
+        <svg width={dimensions} height={dimensions} class={className} aria-hidden="true"></svg>
+    {:then ready}
+        {@render glyph(ready)}
+    {/await}
+{:else}
+    {@render glyph(icon)}
+{/if}
