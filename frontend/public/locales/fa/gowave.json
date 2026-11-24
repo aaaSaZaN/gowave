@@ -112,7 +112,8 @@
       "usage-stats": "Usage stats",
       "user-agent": "عامل کاربر",
       "user-status": "وضعیت کاربر",
-      "username": "نام کاربر"
+      "username": "نام کاربر",
+      "rows-per-page": "تعداد سطرها در هر صفحه"
     },
     "message": {
       "click-to-see-all": "برای دیدن همه کلیک کنید",
@@ -140,7 +141,9 @@
       "search-profiles-or-inbounds": "جستجوی پروفایل یا اینباند...",
       "selected": "Selected: {{count}}",
       "success": "با موفقیت انجام شد",
-      "warning": "هشدار"
+      "warning": "هشدار",
+      "no-records-to-display": "موردی برای نمایش نمی باشد.",
+      "table-range": "{{first}}-{{last}} از {{total}}"
     }
   },
   "bandwidth-metrics": {
@@ -938,7 +941,9 @@
       "disable-node": "غیرفعالسازی نود",
       "config-profile-or-inbounds-is-missing": "پروفایل پیکربندی یا اینباند وجود ندارد",
       "xray-core-version": "نسخه هسته Xray",
-      "gowave-node-version": "نسخه نود، Gowave Node"
+      "gowave-node-version": "نسخه نود، Gowave Node",
+      "local-core": "هسته Xray روی نود مدیریت می‌شود",
+      "local-core-update": "نود از CUSTOM_CORE_URL در فایل .env استفاده می‌کند. برای به‌روزرسانی هسته Xray، این فرمان را روی نود اجرا کنید."
     }
   },
   "config-profiles": {

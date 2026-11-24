@@ -18,6 +18,8 @@ type Command struct {
 	Body interface{} `json:"body"`
 }
 
+const GeocheckPath = "/node/stats/get-geocheck"
+
 // Call is restricted to the node's pinned control API and retains mutual TLS
 // and signed node authentication from Client.doRequest.
 func (c *Client) Call(ctx context.Context, node *database.Node, path string, body interface{}) (map[string]interface{}, error) {
@@ -36,7 +38,12 @@ func (c *Client) Call(ctx context.Context, node *database.Node, path string, bod
 	var result struct {
 		Response map[string]interface{} `json:"response"`
 	}
-	if err := json.NewDecoder(io.LimitReader(response.Body, 8<<20)).Decode(&result); err != nil {
+	bodyLimit := int64(8 << 20)
+	if path == GeocheckPath {
+		// The node allows 32 MiB of CLI output, plus the HTTP JSON envelope.
+		bodyLimit = 33 << 20
+	}
+	if err := json.NewDecoder(io.LimitReader(response.Body, bodyLimit)).Decode(&result); err != nil {
 		return nil, err
 	}
 	if result.Response == nil {
@@ -53,6 +60,9 @@ func (s *Service) ApplyCommandJob(ctx context.Context, job *database.Job) error 
 	var node database.Node
 	if err := s.db.Where("uuid=?", job.Target).First(&node).Error; err != nil {
 		return err
+	}
+	if node.IsDisabled && job.Kind == "geocheck" {
+		return jobs.Permanent(fmt.Errorf("node disabled"))
 	}
 	if node.IsDisabled {
 		return fmt.Errorf("node disabled")
@@ -90,7 +100,11 @@ func (s *Service) ApplyCommandJob(ctx context.Context, job *database.Job) error 
 		return err
 	}
 	if job.Kind == "geocheck" {
-		result = map[string]interface{}{"success": true, "nodeUuid": node.UUID, "image": result["image"], "rawReport": result}
+		image := result["image"]
+		delete(result, "image")
+		result = map[string]interface{}{
+			"success": true, "nodeUuid": node.UUID, "image": image, "rawReport": result, "message": nil,
+		}
 	}
 	data, err := json.Marshal(result)
 	if err != nil {

@@ -1,5 +1,3 @@
-import { loader } from '@monaco-editor/react'
-import { runAsync } from '@shared/lib/run-async'
 import * as monaco from 'monaco-editor/editor'
 import editorWorker from 'monaco-editor/editor/editor.worker?worker'
 import 'monaco-editor/features/register.all'
@@ -10,6 +8,7 @@ import {
 import jsonWorker from 'monaco-editor/languages/features/json/json.worker?worker'
 
 export { jsonDefaults } from 'monaco-editor/languages/features/json/register'
+export { monaco }
 
 import {
     MONACO_LIGHT_THEME_NAME,
@@ -78,8 +77,6 @@ monaco.languages.setMonarchTokensProvider('yaml', {
     }
 })
 
-loader.config({ monaco })
-
 monaco.editor.defineTheme(MONACO_THEME_NAME, {
     ...monacoTheme,
     base: 'vs-dark'
@@ -90,8 +87,4 @@ monaco.editor.defineTheme(MONACO_LIGHT_THEME_NAME, {
     base: 'vs'
 })
 
-runAsync(
-    loader.init().then(() => {
-        monaco.editor.createModel('{}', 'json').dispose()
-    })
-)
+monaco.editor.createModel('{}', 'json').dispose()

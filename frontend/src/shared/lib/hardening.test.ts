@@ -1,19 +1,9 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { reconcileListKeys } from '../hooks/use-list-keys'
 import { parseJsonField } from '../utils/misc/parse-json-field'
 import { parseFormErrors } from './form-errors'
 import { requireValue } from './invariant'
-import { optionalProp } from './optional-prop'
 import { swapItems } from './swap-items'
-
-void test('optional React props omit undefined and retain meaningful falsy values', () => {
-    assert.deepEqual(optionalProp('value', undefined), {})
-    assert.deepEqual(optionalProp('value', null), { value: null })
-    assert.deepEqual(optionalProp('value', false), { value: false })
-    assert.deepEqual(optionalProp('value', 0), { value: 0 })
-    assert.deepEqual(optionalProp('value', ''), { value: '' })
-})
 
 void test('reordering preserves input and ignores missing array positions', () => {
     const first = { uuid: 'first' }
@@ -25,23 +15,6 @@ void test('reordering preserves input and ignores missing array positions', () =
         assert.deepEqual(swapItems(items, 0, index), items)
     }
     assert.deepEqual(swapItems([], 0, 1), [])
-})
-
-void test('editor row identity follows moves, immutable edits, insertions and deletions', () => {
-    const a = { name: 'a' }
-    const b = { name: 'b' }
-    const initial = { items: [a, b], keys: [0, 1], nextKey: 2 }
-    const moved = reconcileListKeys(initial, [b, a])
-    assert.deepEqual(moved.keys, [1, 0])
-    const edited = reconcileListKeys(moved, [b, { name: 'edited' }])
-    assert.deepEqual(edited.keys, [1, 0])
-    const inserted = reconcileListKeys(edited, [{ name: 'new' }, ...edited.items])
-    assert.deepEqual(inserted.keys, [2, 1, 0])
-    const deleted = reconcileListKeys(inserted, inserted.items.slice(1))
-    assert.deepEqual(deleted.keys, [1, 0])
-    const duplicate = reconcileListKeys(initial, [a, a])
-    assert.equal(new Set(duplicate.keys).size, 2)
-    assert.deepEqual(reconcileListKeys(initial, []).keys, [])
 })
 
 void test('required values preserve falsy data and reject missing values', () => {

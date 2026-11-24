@@ -7,6 +7,7 @@ FROM --platform=$BUILDPLATFORM docker.io/oven/bun:${BUN_VERSION}-alpine AS front
 
 WORKDIR /src/frontend
 COPY frontend/package.json frontend/bun.lock ./
+COPY frontend/patches/ ./patches/
 RUN bun install --frozen-lockfile
 
 COPY frontend/ ./

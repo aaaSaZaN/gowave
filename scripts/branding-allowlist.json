@@ -216,30 +216,25 @@
       "count": 1,
       "sha256": "cea6f510bd5862422ba0aed529c0922f1ac98343a64c90e5c2c16dc060ed53b7"
     },
-    "frontend/src/shared/_modals/nodes/node-geocheck-modal/geocheck-result.widget.tsx": {
-      "reason": "Existing external editor/template/help/geolocation resource dependency or upstream author identifier.",
-      "count": 1,
-      "sha256": "d2a863dd97905749451725e7d7609d3c973187dd6567ad2adb82be5041ddfd2a"
-    },
-    "frontend/src/shared/_modals/universal/help-drawer/help-drawer.shared.tsx": {
-      "reason": "Existing external editor/template/help/geolocation resource dependency or upstream author identifier.",
-      "count": 1,
-      "sha256": "40ebb1754e95c87954dbe92ad2fb3b0b7216ef36432cd1803fd6b2cf5cff1b46"
-    },
-    "frontend/src/shared/constants/templates/template-list-links.tsx": {
+    "frontend/src/shared/constants/templates/template-list-links.ts": {
       "reason": "Existing external editor/template/help/geolocation resource dependency or upstream author identifier.",
       "count": 5,
       "sha256": "462ef43599523c1deb5e42321887edae946645116f1d12774ebeadea2f719143"
     },
-    "frontend/src/shared/ui/load-templates/template-selector.tsx": {
+    "frontend/src/shared/utils/monaco/template-schemas.ts": {
+      "reason": "Legacy protocol or stored data identifier required for compatibility.",
+      "count": 2,
+      "sha256": "4d3d6c2e148d9dc92399e8914018abe65c52423d83bba0bd25e997a74211794b"
+    },
+    "frontend/src/svelte/editor/TemplatePicker.svelte": {
       "reason": "Existing external editor/template/help/geolocation resource dependency or upstream author identifier.",
       "count": 2,
       "sha256": "903e98f9becc86a24e9ba797ef47b384cb99a8c3814c9eacd6c8252a030ae4f3"
     },
-    "frontend/src/widgets/dashboard/templates/subscription-template-editor/utils/setup-template-monaco.tsx": {
-      "reason": "Legacy protocol or stored data identifier required for compatibility.",
-      "count": 2,
-      "sha256": "4d3d6c2e148d9dc92399e8914018abe65c52423d83bba0bd25e997a74211794b"
+    "frontend/src/svelte/ui/HelpDrawer.svelte": {
+      "reason": "Existing external editor/template/help/geolocation resource dependency or upstream author identifier.",
+      "count": 1,
+      "sha256": "9280324c79c3f5146930f04ea50e6e2ac2c5be275304e796633eac74cfac9544"
     },
     "frontend/vite.config.ts": {
       "reason": "Legacy protocol or stored data identifier required for compatibility.",

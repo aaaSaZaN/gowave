@@ -4,7 +4,7 @@ import type { i18n, TFunction } from 'i18next'
 export function getExpirationTextUtil(
     expireAt: Date | null | string,
     t: TFunction,
-    i18nProps: i18n
+    i18nProps: Pick<i18n, 'language'>
 ): string {
     if (!expireAt) {
         return t('get-expiration-text.util.unknown')

@@ -95,10 +95,8 @@ type CreateHostInput struct {
 	} `json:"internalSquads"`
 }
 
-func (s *Service) CreateHostFromInput(input CreateHostInput) (*database.Host, error) {
-	var count int64
-	s.db.Model(&database.Host{}).Count(&count)
-
+// BuildHost builds a host from the create form without storing it.
+func (input CreateHostInput) BuildHost() *database.Host {
 	profileUUID := input.Inbound.ConfigProfileUUID
 	if profileUUID == "" && input.ConfigProfileUUID != nil {
 		profileUUID = *input.ConfigProfileUUID
@@ -202,10 +200,7 @@ func (s *Service) CreateHostFromInput(input CreateHostInput) (*database.Host, er
 		squadsStr = string(sb)
 	}
 
-	now := time.Now().UTC()
-	h := &database.Host{
-		UUID:                         uuid.NewString(),
-		ViewPosition:                 int(count) + 1,
+	return &database.Host{
 		Remark:                       input.Remark,
 		Address:                      strings.TrimSpace(input.Address),
 		Port:                         port,
@@ -240,9 +235,17 @@ func (s *Service) CreateHostFromInput(input CreateHostInput) (*database.Host, er
 		OverrideSniFromAddress:       overrideSni,
 		ConfigProfileUUID:            profileUUIDValue,
 		ConfigProfileInboundUUID:     inboundUUIDValue,
-		CreatedAt:                    now,
-		UpdatedAt:                    now,
 	}
+}
+
+func (s *Service) CreateHostFromInput(input CreateHostInput) (*database.Host, error) {
+	var count int64
+	s.db.Model(&database.Host{}).Count(&count)
+	h := input.BuildHost()
+	h.UUID = uuid.NewString()
+	h.ViewPosition = int(count) + 1
+	h.CreatedAt = time.Now().UTC()
+	h.UpdatedAt = h.CreatedAt
 
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(h).Error; err != nil {
@@ -645,121 +648,4 @@ func (s *Service) GetAllInbounds() ([]database.ConfigProfileInbound, error) {
 
 func (s *Service) SetProfileTags(uuidParam string, tags []string) error {
 	return s.db.Model(&database.ConfigProfile{}).Where("uuid = ?", uuidParam).Update("tags", database.StringArray(tags)).Error
-}
-
-type PreviewRequest struct {
-	HostUUID  string         `json:"hostUuid,omitempty"`
-	Host      *CreateHostDTO `json:"host,omitempty"`
-	UserAgent string         `json:"userAgent"`
-	Protocol  string         `json:"protocol"`
-}
-
-type PreviewResponse struct {
-	ClientType     string            `json:"clientType"`
-	ContentType    string            `json:"contentType"`
-	Headers        map[string]string `json:"headers"`
-	PreviewContent string            `json:"previewContent"`
-}
-
-func (s *Service) GenerateHostPreview(req PreviewRequest) (*PreviewResponse, error) {
-	var h CreateHostDTO
-	if req.Host != nil {
-		h = *req.Host
-	} else if req.HostUUID != "" {
-		existing, err := s.GetHostByUUID(req.HostUUID)
-		if err != nil {
-			return nil, err
-		}
-		h = CreateHostDTO{
-			Remark:        existing.Remark,
-			Address:       existing.Address,
-			Port:          existing.Port,
-			Path:          existing.Path,
-			Sni:           existing.Sni,
-			Host:          existing.Host,
-			Alpn:          existing.Alpn,
-			Fingerprint:   existing.Fingerprint,
-			SecurityLayer: existing.SecurityLayer,
-		}
-	} else {
-		return nil, fmt.Errorf("host details or hostUuid must be provided")
-	}
-
-	if h.Port == 0 {
-		h.Port = 443
-	}
-	if h.Fingerprint == "" {
-		h.Fingerprint = "chrome"
-	}
-
-	proto := strings.ToLower(req.Protocol)
-	if proto == "" {
-		proto = "vless"
-	}
-
-	ua := strings.ToLower(req.UserAgent)
-	clientType := "Base64 / Standard"
-	contentType := "text/plain; charset=utf-8"
-
-	sampleUUID := "11111111-2222-3333-4444-555555555555"
-
-	var content string
-
-	if strings.Contains(ua, "clash") {
-		clientType = "Clash / Mihomo"
-		contentType = "text/yaml; charset=utf-8"
-		content = fmt.Sprintf(`proxies:
-  - name: "%s"
-    type: %s
-    server: %s
-    port: %d
-    uuid: %s
-    network: ws
-    tls: true
-    servername: %s
-    client-fingerprint: %s
-`, h.Remark, proto, h.Address, h.Port, sampleUUID, h.Sni, h.Fingerprint)
-	} else if strings.Contains(ua, "sing-box") || strings.Contains(ua, "singbox") {
-		clientType = "Sing-Box"
-		contentType = "application/json; charset=utf-8"
-		content = fmt.Sprintf(`{
-  "outbounds": [
-    {
-      "type": "%s",
-      "tag": "%s",
-      "server": "%s",
-      "server_port": %d,
-      "uuid": "%s",
-      "tls": {
-        "enabled": true,
-        "server_name": "%s",
-        "utls": {
-          "enabled": true,
-          "fingerprint": "%s"
-        }
-      }
-    }
-  ]
-}`, proto, h.Remark, h.Address, h.Port, sampleUUID, h.Sni, h.Fingerprint)
-	} else {
-		security := "tls"
-		if h.SecurityLayer != "" && h.SecurityLayer != "DEFAULT" {
-			security = strings.ToLower(h.SecurityLayer)
-		}
-		content = fmt.Sprintf("%s://%s@%s:%d?security=%s&sni=%s&fp=%s#%s",
-			proto, sampleUUID, h.Address, h.Port, security, h.Sni, h.Fingerprint, h.Remark)
-	}
-
-	headers := map[string]string{
-		"profile-web-page-url":  "https://panel.domain.com/sub/preview",
-		"subscription-userinfo": "upload=0; download=104857600; total=107374182400; expire=1790000000",
-		"Content-Type":          contentType,
-	}
-
-	return &PreviewResponse{
-		ClientType:     clientType,
-		ContentType:    contentType,
-		Headers:        headers,
-		PreviewContent: content,
-	}, nil
 }

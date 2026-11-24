@@ -2,6 +2,7 @@ package nodes
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -848,6 +849,10 @@ func (h *Handler) ApplyNodeUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := client.ApplyUpdate(node, body)
+	if errors.Is(err, errNodeLocalCore) {
+		httpx.Error(w, r, http.StatusConflict, "GW_NODE_LOCAL_CORE", "Xray core is managed locally by CUSTOM_CORE_URL")
+		return
+	}
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{"message": err.Error()})

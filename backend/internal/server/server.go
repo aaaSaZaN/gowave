@@ -691,7 +691,7 @@ func NewApp(cfg *config.Config, db *gorm.DB) *App {
 		protected.Get("/api/hosts/{uuid}", cpHandler.GetHost)
 		protected.Patch("/api/hosts", cpHandler.UpdateHost)
 		protected.Delete("/api/hosts/{uuid}", cpHandler.DeleteHost)
-		protected.Post("/api/hosts/preview", cpHandler.Preview)
+		protected.Post("/api/hosts/preview", subHandler.PreviewHost)
 		protected.Post("/api/hosts/actions/clone", cpHandler.CloneHost)
 		protected.Post("/api/hosts/actions/reorder", cpHandler.ReorderHosts)
 		protected.Post("/api/hosts/bulk/delete", cpHandler.BulkDeleteHosts)

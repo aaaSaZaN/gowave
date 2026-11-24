@@ -1,10 +1,11 @@
-import type { DataTableSortStatus } from '@kastov/mantine-datatable'
-
 import get from '@shared/lib/object-path'
 
-type SortStatus<T> = Pick<DataTableSortStatus<T>, 'columnAccessor' | 'direction'>
+interface SortStatus {
+    columnAccessor: string
+    direction: 'asc' | 'desc'
+}
 
-export function sortRecords<T>(records: T[], sortStatus: SortStatus<T>): T[] {
+export function sortRecords<T>(records: T[], sortStatus: SortStatus): T[] {
     const isDesc = sortStatus.direction === 'desc'
 
     return [...records].sort((a, b) => {

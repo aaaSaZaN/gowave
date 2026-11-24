@@ -112,7 +112,8 @@
       "usage-stats": "Usage stats",
       "user-agent": "User agent",
       "user-status": "User status",
-      "username": "Username"
+      "username": "Username",
+      "rows-per-page": "Rows per page"
     },
     "message": {
       "click-to-see-all": "Click to see all",
@@ -140,8 +141,26 @@
       "search-profiles-or-inbounds": "Search profiles or inbounds...",
       "selected": "Selected: {{count}}",
       "success": "Success",
-      "warning": "Warning"
+      "warning": "Warning",
+      "no-records-to-display": "No records to display",
+      "table-range": "{{first}}-{{last}} of {{total}}"
     }
+  },
+  "host-preview": {
+    "open": "Preview",
+    "title": "Host subscription preview",
+    "saved-host": "Uses the saved host settings and a sample subscriber with access to this host.",
+    "draft-host": "Uses the current form settings and a sample subscriber with access to this host.",
+    "request-headers": "Request headers",
+    "headers-format": "One header per line, in Name: value format.",
+    "invalid-header": "Enter each request header as Name: value.",
+    "response-headers": "Response headers",
+    "as-enabled": "Preview as if the host is enabled",
+    "generate": "Generate preview",
+    "socket-drop": "Connection closed without a response",
+    "status": "HTTP {{status}}",
+    "matched-rule": "Matched rule: {{rule}}",
+    "response-body": "Response body"
   },
   "bandwidth-metrics": {
     "current-year": "Current year",
@@ -951,7 +970,9 @@
       "disable-node": "Disable node",
       "config-profile-or-inbounds-is-missing": "Config profile or inbounds is missing",
       "xray-core-version": "Xray Core version",
-      "gowave-node-version": "Node version, Gowave Node"
+      "gowave-node-version": "Node version, Gowave Node",
+      "local-core": "Xray Core is managed on the node",
+      "local-core-update": "The node uses CUSTOM_CORE_URL from its .env file. To update Xray Core, run this command on the node."
     }
   },
   "config-profiles": {

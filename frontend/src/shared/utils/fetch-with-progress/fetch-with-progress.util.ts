@@ -3,7 +3,7 @@ import axios from 'axios'
 
 export const fetchWithProgress = async (url: string, onProgress?: (progress: number) => void) => {
     try {
-        const response = await axios.get(url, {
+        const response = await axios.get<ArrayBuffer>(url, {
             onDownloadProgress: (progressEvent) => {
                 if (progressEvent.total) {
                     // Precompressed responses report the encoded size as the total while

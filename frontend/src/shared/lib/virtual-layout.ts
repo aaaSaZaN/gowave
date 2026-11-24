@@ -16,6 +16,22 @@ export interface VirtualLayoutOptions {
     scrollMargin?: number
 }
 
+export function fixedVirtualWindow(
+    count: number,
+    rowHeight: number,
+    offset: number,
+    height: number,
+    overscan = 4
+) {
+    if (count <= 0 || rowHeight <= 0 || height <= 0) return { from: 0, to: 0 }
+    const first = Math.min(count - 1, Math.floor(Math.max(0, offset) / rowHeight))
+    const end = Math.max(first + 1, Math.ceil((Math.max(0, offset) + height) / rowHeight))
+    return {
+        from: Math.max(0, first - overscan),
+        to: Math.min(count, end + overscan)
+    }
+}
+
 export function virtualLayout(
     options: VirtualLayoutOptions,
     viewport: { offset: number; height: number },

@@ -50,7 +50,7 @@ test('base64 matches RFC vectors, binary data and large UTF-8 templates', () => 
     assert.equal(decodeBase64(encodeURLSafe(new TextEncoder().encode('🌍'))), '🌍')
 })
 
-test('base64 rejects malformed vault data and mixed alphabets', () => {
+test('base64 rejects malformed input and mixed alphabets', () => {
     for (const value of ['Zg', 'Zg=', 'Zg===', '=Zg=', 'Z g==', 'Zg==\n', '!!!!', 'a===']) {
         assert.throws(() => decode(value), /base64|character/i)
     }

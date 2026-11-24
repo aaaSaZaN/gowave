@@ -1,0 +1,141 @@
+:root {
+    --gw-background: var(--mantine-color-body);
+    --gw-surface: var(--gw-card-bg);
+    --gw-border: var(--mantine-color-default-border);
+    --gw-text: var(--mantine-color-text);
+    --gw-accent: var(--mantine-color-cyan-4);
+    --gw-error: var(--mantine-color-error);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    color: var(--gw-text);
+    background: var(--gw-background);
+}
+
+a {
+    color: var(--gw-accent);
+}
+
+:where(.dashboard-content, dialog)
+    :where(
+        input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"]),
+        select,
+        textarea
+    ):where(:not([class*="mantine-"])) {
+    min-height: 36px;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--mantine-color-default-border);
+    border-radius: var(--mantine-radius-md);
+    background: light-dark(white, var(--mantine-color-dark-6));
+    color: var(--mantine-color-text);
+    font: inherit;
+    font-size: var(--mantine-font-size-sm);
+}
+
+:where(.dashboard-content, dialog) :where(button:not([class*="mantine-"])) {
+    min-height: 36px;
+    padding: 0 var(--mantine-spacing-md);
+    border: 1px solid transparent;
+    border-radius: var(--mantine-radius-md);
+    background: var(--mantine-color-cyan-light);
+    color: var(--mantine-color-cyan-light-color);
+    font: inherit;
+    font-size: var(--mantine-font-size-sm);
+    font-weight: 600;
+}
+
+:where(.dashboard-content, dialog) :where(input[type="checkbox"], input[type="radio"]) {
+    accent-color: var(--mantine-primary-color-filled);
+}
+
+:where(.mantine-UnstyledButton-root) {
+    appearance: none;
+    border: 0;
+    padding: 0;
+    color: inherit;
+    background: transparent;
+    text-align: start;
+    touch-action: manipulation;
+}
+
+textarea {
+    resize: vertical;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:disabled:not([class*="mantine-"]) {
+    opacity: 0.65;
+    cursor: progress;
+}
+
+:focus-visible {
+    outline: 2px solid var(--mantine-color-cyan-4);
+    outline-offset: 2px;
+}
+
+[role="alert"] {
+    color: var(--gw-error);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: Unbounded, Montserrat, system-ui, sans-serif;
+    text-decoration: none;
+}
+
+.brand img {
+    object-fit: contain;
+}
+
+.dashboard-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--gw-border);
+    background: var(--gw-surface);
+}
+
+.dashboard-content {
+    max-width: 88rem;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+dialog {
+    width: min(calc(100% - 2rem), 32rem);
+    max-height: calc(100dvh - 2rem);
+    padding: 1.25rem;
+    border: 1px solid var(--gw-border);
+    border-radius: 0.5rem;
+    background: var(--gw-surface);
+    color: var(--gw-text);
+}
+
+dialog::backdrop {
+    background: rgb(0 0 0 / 55%);
+}
+
+.button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+html:has(dialog:modal) {
+    overflow: hidden;
+}

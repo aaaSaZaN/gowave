@@ -112,7 +112,8 @@
       "usage-stats": "流量使用统计",
       "user-agent": "User Agent",
       "user-status": "用户状态",
-      "username": "用户名"
+      "username": "用户名",
+      "rows-per-page": "每页行数"
     },
     "message": {
       "click-to-see-all": "点击查看全部",
@@ -140,7 +141,9 @@
       "search-profiles-or-inbounds": "搜索配置文件或入站配置……",
       "selected": "已选 {{count}} 项",
       "success": "成功",
-      "warning": "警告"
+      "warning": "警告",
+      "no-records-to-display": "没有记录可显示",
+      "table-range": "{{first}}-{{last}}，共 {{total}} 条"
     }
   },
   "bandwidth-metrics": {
@@ -938,7 +941,9 @@
       "disable-node": "禁用节点",
       "config-profile-or-inbounds-is-missing": "缺少配置文件或者入站配置",
       "xray-core-version": "Xray 核心版本",
-      "gowave-node-version": "节点版本，Gowave Node"
+      "gowave-node-version": "节点版本，Gowave Node",
+      "local-core": "Xray 核心由节点管理",
+      "local-core-update": "节点使用 .env 文件中的 CUSTOM_CORE_URL。要更新 Xray 核心，请在节点上运行以下命令。"
     }
   },
   "config-profiles": {

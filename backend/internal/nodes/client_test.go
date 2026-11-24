@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"io"
 	"math/big"
 	"net"
 	"net/http"
@@ -82,5 +83,27 @@ func TestNodeRequestsIdentifyGowave(t *testing.T) {
 				t.Fatalf("status = %d, want 204", response.StatusCode)
 			}
 		})
+	}
+}
+
+func TestGeocheckUsesDedicatedClientAndLargerBodyLimit(t *testing.T) {
+	report := strings.Repeat("x", 8<<20)
+	body := `{"response":{"report":"` + report + `"}}`
+	transport := func(expectedPath string) *http.Client {
+		return &http.Client{Transport: nodeRoundTrip(func(r *http.Request) (*http.Response, error) {
+			if r.URL.Path != expectedPath {
+				t.Fatalf("client for %s received %s", expectedPath, r.URL.Path)
+			}
+			return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(body))}, nil
+		})}
+	}
+	const otherPath = "/node/test"
+	client := &Client{httpClient: transport(otherPath), geocheckHTTPClient: transport(GeocheckPath)}
+	node := &database.Node{Address: "example.com"}
+	if result, err := client.Call(t.Context(), node, GeocheckPath, nil); err != nil || result["report"] != report {
+		t.Fatalf("could not read GeoCheck report: %v", err)
+	}
+	if _, err := client.Call(t.Context(), node, otherPath, nil); err == nil {
+		t.Fatal("ordinary node call accepted a GeoCheck-sized response")
 	}
 }

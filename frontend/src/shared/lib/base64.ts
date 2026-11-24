@@ -1,5 +1,5 @@
 export function encode(bytes: Uint8Array): string {
-    // Chunking avoids the argument limit for large templates and vault backups.
+    // Chunking avoids the argument limit for large templates.
     let binary = ''
     for (let offset = 0; offset < bytes.length; offset += 8192) {
         binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192))

@@ -2,7 +2,14 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import { isCustomXrayVersion, isGoNodeVersion } from '../utils/misc/node-versions'
-import { virtualLayout } from './virtual-layout'
+import { fixedVirtualWindow, virtualLayout } from './virtual-layout'
+
+test('fixed-height rows render only the visible window even on very large pages', () => {
+    assert.deepEqual(fixedVirtualWindow(10_000, 40, 0, 400), { from: 0, to: 14 })
+    assert.deepEqual(fixedVirtualWindow(10_000, 40, 204_025, 400), { from: 5096, to: 5115 })
+    assert.deepEqual(fixedVirtualWindow(4, 40, 204_025, 400), { from: 0, to: 4 })
+    assert.deepEqual(fixedVirtualWindow(10, 40, 0, 0), { from: 0, to: 0 })
+})
 
 test('virtual rows cover the viewport with bounded overscan', () => {
     const options = { count: 1000, estimateSize: () => 40, overscan: 2 }
