@@ -374,18 +374,25 @@ async function testSavedHostPreview() {
 
     const originalAdapter = requireValue(instance.defaults.adapter, 'default Axios adapter')
     let request: unknown
+    let withJson = false
     instance.defaults.adapter = (config) => {
         assert(config.url === '/api/hosts/preview', 'preview requests the host preview endpoint')
         request = JSON.parse(String(config.data))
+        const contentType = withJson
+            ? 'application/json; charset=utf-8'
+            : 'text/yaml; charset=utf-8'
         return Promise.resolve({
             config,
             data: {
                 response: {
-                    clientType: 'MIHOMO',
-                    ruleName: 'Mihomo Clients',
+                    clientType: withJson ? 'XRAY_JSON' : 'MIHOMO',
+                    contentType,
+                    ruleName: withJson ? 'Xray JSON Clients' : 'Mihomo Clients',
                     status: 200,
-                    headers: { 'Content-Type': 'text/yaml; charset=utf-8' },
-                    previewContent: 'server: saved.example.com'
+                    headers: { 'Content-Type': contentType },
+                    previewContent: withJson
+                        ? '[{"server":"saved.example.com","number":9223372036854775807}]'
+                        : 'server: saved.example.com'
                 }
             },
             headers: {},
@@ -414,9 +421,16 @@ async function testSavedHostPreview() {
         await wait(300)
         button('host-preview.open').click()
         await wait(300)
-        button('host-preview.generate').click()
+        const generate = button('host-preview.generate')
+        const preview = requireValue(generate.closest('[role="dialog"]'), 'host preview dialog')
+        assert(
+            preview.querySelectorAll('input:not([type="checkbox"]), textarea').length === 2,
+            'preview opens with two text fields'
+        )
+        assert(!preview.querySelector('pre'), 'preview only shows output after generating')
+        generate.click()
         await wait()
-        const fields = [...document.querySelectorAll('textarea')].map((field) => field.value)
+        const blocks = [...preview.querySelectorAll('pre')].map((block) => block.textContent)
         assert(
             JSON.stringify(request) ===
                 JSON.stringify({
@@ -428,10 +442,22 @@ async function testSavedHostPreview() {
             'saved host preview sends its UUID and the requested client settings'
         )
         assert(
-            fields.includes('Content-Type: text/yaml; charset=utf-8'),
+            blocks.includes('Content-Type: text/yaml; charset=utf-8'),
             'preview shows response headers'
         )
-        assert(fields.includes('server: saved.example.com'), 'preview shows the response body')
+        assert(blocks.includes('server: saved.example.com'), 'preview shows the response body')
+
+        withJson = true
+        generate.click()
+        await wait()
+        assert(
+            [...preview.querySelectorAll('pre')].some(
+                (block) =>
+                    block.textContent ===
+                    '[\n  {\n    "server": "saved.example.com",\n    "number": 9223372036854775807\n  }\n]'
+            ),
+            'preview indents JSON without changing numeric values'
+        )
     } finally {
         flushSync(() => root.render(null))
         instance.defaults.adapter = originalAdapter

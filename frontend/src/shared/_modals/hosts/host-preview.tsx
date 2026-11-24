@@ -3,7 +3,9 @@ import {
     Alert,
     Button,
     Checkbox,
+    Code,
     CopyButton,
+    Divider,
     Group,
     Modal,
     SimpleGrid,
@@ -18,6 +20,7 @@ import { instance } from '@shared/api/axios'
 import { runAsync } from '@shared/lib/run-async'
 import { useMutation } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
+import { applyEdits, format, type ParseError, parseTree } from 'jsonc-parser'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PiEye } from 'react-icons/pi'
@@ -26,6 +29,7 @@ type HostPreviewTarget = { hostUuid: string } | { host: CreateHostCommand.Reques
 
 interface HostPreviewResult {
     clientType: string
+    contentType: string
     headers: Record<string, string>
     previewContent: string
     ruleName: string | null
@@ -35,6 +39,16 @@ interface HostPreviewResult {
 interface HostPreviewProps {
     target: HostPreviewTarget
     isDisabled?: boolean
+}
+
+function formatPreviewBody(body: string, contentType: string): string {
+    if (!/^application\/(?:[\w.-]+\+)?json(?:\s*;|$)/i.test(contentType)) return body
+
+    const errors: ParseError[] = []
+    const tree = parseTree(body, errors, { disallowComments: true })
+    if (!tree || errors.length > 0) return body
+
+    return applyEdits(body, format(body, undefined, { insertSpaces: true, tabSize: 2 }))
 }
 
 const HostPreviewModal = NiceModal.create(({ target, isDisabled }: HostPreviewProps) => {
@@ -68,7 +82,11 @@ const HostPreviewModal = NiceModal.create(({ target, isDisabled }: HostPreviewPr
                 '/api/hosts/preview',
                 { ...target, userAgent, requestHeaders, previewAsEnabled }
             )
-            return data.response
+            const { previewContent, contentType } = data.response
+            return {
+                ...data.response,
+                formattedContent: formatPreviewBody(previewContent, contentType)
+            }
         }
     })
 
@@ -85,100 +103,99 @@ const HostPreviewModal = NiceModal.create(({ target, isDisabled }: HostPreviewPr
                     )}
                 </Text>
                 <SimpleGrid cols={{ base: 1, sm: 2 }}>
-                    <Stack gap="sm">
-                        <TextInput
-                            label="User-Agent"
-                            placeholder="ClashMeta, singbox, v2rayN/7.0.0"
-                            value={userAgent}
-                            disabled={isPending}
-                            onChange={(event) => {
-                                setUserAgent(event.currentTarget.value)
-                                reset()
-                            }}
-                        />
-                        <Textarea
-                            label={t('host-preview.request-headers')}
-                            description={t('host-preview.headers-format')}
-                            placeholder={'Accept: application/json\nX-Client: desktop'}
-                            value={headers}
-                            rows={4}
-                            disabled={isPending}
-                            onChange={(event) => {
-                                setHeaders(event.currentTarget.value)
-                                reset()
-                            }}
-                        />
-                        {isDisabled && (
-                            <Checkbox
-                                label={t('host-preview.as-enabled')}
-                                checked={previewAsEnabled}
-                                disabled={isPending}
-                                onChange={(event) => {
-                                    setPreviewAsEnabled(event.currentTarget.checked)
-                                    reset()
-                                }}
-                            />
-                        )}
-                        <Button loading={isPending} onClick={() => generate()}>
-                            {t('host-preview.generate')}
-                        </Button>
-                    </Stack>
-                    <Stack gap="sm">
-                        <Textarea
-                            label={t('host-preview.response-headers')}
-                            value={
-                                result
-                                    ? Object.entries(result.headers)
-                                          .map(([name, value]) => `${name}: ${value}`)
-                                          .join('\n')
-                                    : ''
-                            }
-                            readOnly
-                            rows={7}
-                            styles={{ input: { fontFamily: 'monospace' } }}
-                        />
-                        {result && (
-                            <Stack gap={2}>
-                                <Text size="sm">
-                                    {result.status === null
-                                        ? t('host-preview.socket-drop')
-                                        : t('host-preview.status', { status: result.status })}
-                                    {result.clientType && ` · ${result.clientType}`}
-                                </Text>
-                                <Text size="sm">
-                                    {t('host-preview.matched-rule', {
-                                        rule: result.ruleName ?? t('common.message.not-set')
-                                    })}
-                                </Text>
-                            </Stack>
-                        )}
-                    </Stack>
+                    <TextInput
+                        label="User-Agent"
+                        placeholder="ClashMeta, singbox, v2rayN/7.0.0"
+                        value={userAgent}
+                        disabled={isPending}
+                        onChange={(event) => {
+                            setUserAgent(event.currentTarget.value)
+                            reset()
+                        }}
+                    />
+                    <Textarea
+                        label={t('host-preview.request-headers')}
+                        description={t('host-preview.headers-format')}
+                        placeholder="Accept: text/html"
+                        value={headers}
+                        rows={3}
+                        disabled={isPending}
+                        onChange={(event) => {
+                            setHeaders(event.currentTarget.value)
+                            reset()
+                        }}
+                    />
                 </SimpleGrid>
+                <Group justify="space-between">
+                    <Button loading={isPending} onClick={() => generate()}>
+                        {t('host-preview.generate')}
+                    </Button>
+                    {isDisabled && (
+                        <Checkbox
+                            label={t('host-preview.as-enabled')}
+                            checked={previewAsEnabled}
+                            disabled={isPending}
+                            onChange={(event) => {
+                                setPreviewAsEnabled(event.currentTarget.checked)
+                                reset()
+                            }}
+                        />
+                    )}
+                </Group>
                 {errorMessage && <Alert color="red">{errorMessage}</Alert>}
                 {result && (
                     <>
-                        <Textarea
-                            label={t('host-preview.response-body')}
-                            value={result.previewContent}
-                            readOnly
-                            rows={12}
-                            styles={{ input: { fontFamily: 'monospace' } }}
-                        />
-                        <Group justify="flex-end">
-                            <CopyButton value={result.previewContent}>
-                                {({ copied, copy }) => (
-                                    <Button
-                                        variant="light"
-                                        disabled={!result.previewContent}
-                                        onClick={copy}
-                                    >
-                                        {copied
-                                            ? t('common.message.copied')
-                                            : t('common.action.copy')}
-                                    </Button>
-                                )}
-                            </CopyButton>
-                        </Group>
+                        <Divider />
+                        <Stack gap={2}>
+                            <Text size="sm">
+                                {result.status === null
+                                    ? t('host-preview.socket-drop')
+                                    : t('host-preview.status', { status: result.status })}
+                                {result.clientType && ` · ${result.clientType}`}
+                            </Text>
+                            <Text size="sm">
+                                {t('host-preview.matched-rule', {
+                                    rule: result.ruleName ?? t('common.message.not-set')
+                                })}
+                            </Text>
+                        </Stack>
+                        {Object.keys(result.headers).length > 0 && (
+                            <Stack gap="xs">
+                                <Text fw={600} size="sm">
+                                    {t('host-preview.response-headers')}
+                                </Text>
+                                <Code block mah={180} style={{ overflow: 'auto' }}>
+                                    {Object.entries(result.headers)
+                                        .map(([name, value]) => `${name}: ${value}`)
+                                        .join('\n')}
+                                </Code>
+                            </Stack>
+                        )}
+                        {result.previewContent && (
+                            <Stack gap="xs">
+                                <Group justify="space-between">
+                                    <Text fw={600} size="sm">
+                                        {t('host-preview.response-body')}
+                                    </Text>
+                                    <CopyButton value={result.previewContent}>
+                                        {({ copied, copy }) => (
+                                            <Button
+                                                size="compact-xs"
+                                                variant="light"
+                                                onClick={copy}
+                                            >
+                                                {copied
+                                                    ? t('common.message.copied')
+                                                    : t('common.action.copy')}
+                                            </Button>
+                                        )}
+                                    </CopyButton>
+                                </Group>
+                                <Code block mah={280} style={{ overflow: 'auto' }}>
+                                    {result.formattedContent}
+                                </Code>
+                            </Stack>
+                        )}
                     </>
                 )}
             </Stack>
