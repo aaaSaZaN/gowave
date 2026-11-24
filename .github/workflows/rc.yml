@@ -1,0 +1,64 @@
+name: Release Candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Source branch name, for example feature/my-change
+        required: true
+        type: string
+      version:
+        description: Release candidate version, for example v1.4.0-rc.1
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rc-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  source:
+    name: Resolve release candidate source
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+    steps:
+      - name: Validate inputs
+        env:
+          VERSION: ${{ inputs.version }}
+          SOURCE_BRANCH: ${{ inputs.branch }}
+        run: |
+          number='(0|[1-9][0-9]*)'
+          if [[ ! "$VERSION" =~ ^v$number\.$number\.$number-rc\.$number$ ]]; then
+            echo 'Use a release candidate version like v1.4.0-rc.1.' >&2
+            exit 1
+          fi
+          git check-ref-format "refs/heads/$SOURCE_BRANCH"
+
+      # The source branch may predate this workflow. Only its code is checked out.
+      - name: Checkout source branch
+        uses: actions/checkout@v7
+        with:
+          ref: refs/heads/${{ inputs.branch }}
+          persist-credentials: false
+
+      - name: Record source commit
+        id: source
+        run: |
+          sha="$(git rev-parse HEAD)"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+  release:
+    name: Build and publish release candidate
+    needs: source
+    permissions:
+      contents: write
+      packages: write
+    uses: ./.github/workflows/release.yml
+    with:
+      version: ${{ inputs.version }}
+      source-branch: ${{ inputs.branch }}
+      source-sha: ${{ needs.source.outputs.sha }}
