@@ -143,6 +143,22 @@
       "warning": "Warning"
     }
   },
+  "host-preview": {
+    "open": "Preview",
+    "title": "Host subscription preview",
+    "saved-host": "Uses the saved host settings and a sample subscriber with access to this host.",
+    "draft-host": "Uses the current form settings and a sample subscriber with access to this host.",
+    "request-headers": "Request headers",
+    "headers-format": "One header per line, in Name: value format.",
+    "invalid-header": "Enter each request header as Name: value.",
+    "response-headers": "Response headers",
+    "as-enabled": "Preview as if the host is enabled",
+    "generate": "Generate preview",
+    "socket-drop": "Connection closed without a response",
+    "status": "HTTP {{status}}",
+    "matched-rule": "Matched rule: {{rule}}",
+    "response-body": "Response body"
+  },
   "bandwidth-metrics": {
     "current-year": "Current year",
     "from-last-year": "vs last year",

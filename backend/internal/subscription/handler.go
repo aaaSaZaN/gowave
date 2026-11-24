@@ -156,11 +156,19 @@ func (h *Handler) subscriptionInfoWithSquads(user *database.User, squads []strin
 		if err != nil {
 			hosts = nil
 		}
-		resolved := subtpl.ResolveProxyConfig(subtpl.ResolveOptions{
-			Settings: settings.template(), Hosts: hosts, User: tplUser, HostOverrides: overrides, SubPublicDomain: h.subPublicDomain,
-		})
-		links = subtpl.LinkList(resolved, false)
+		links = h.subscriptionLinks(tplUser, settings, hosts, overrides)
 	}
+	return h.browserInfo(tplUser, links), nil
+}
+
+func (h *Handler) subscriptionLinks(user *subtpl.User, settings *subSettings, hosts []*subtpl.Host, overrides *subtpl.HostOverrides) []string {
+	resolved := subtpl.ResolveProxyConfig(subtpl.ResolveOptions{
+		Settings: settings.template(), Hosts: hosts, User: user, HostOverrides: overrides, SubPublicDomain: h.subPublicDomain,
+	})
+	return subtpl.LinkList(resolved, false)
+}
+
+func (h *Handler) browserInfo(tplUser *subtpl.User, links []string) *ojson.Object {
 	return ojson.New(
 		"isFound", true,
 		"user", ojson.New(
@@ -181,7 +189,7 @@ func (h *Handler) subscriptionInfoWithSquads(user *database.User, squads []strin
 		"links", stringsToAny(links),
 		"ssConfLinks", ojson.New(),
 		"subscriptionUrl", "https://"+h.subPublicDomain+"/"+tplUser.ShortUUID,
-	), nil
+	)
 }
 
 func stringsToAny(list []string) []any {

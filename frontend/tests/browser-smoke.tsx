@@ -25,8 +25,10 @@ import {
     useViewPreferencesStore
 } from '../src/entities/dashboard/view-preferences-store'
 import { LoginFormFeature } from '../src/features/auth/login-form'
+import { EditHostDrawer } from '../src/shared/_modals/hosts/edit-host-modal/edit-host.modal'
 import { UpdateNodeModal } from '../src/shared/_modals/nodes/update-node-modal/update-node.modal'
 import { instance } from '../src/shared/api/axios'
+import { QueryKeys } from '../src/shared/api/hooks/keys-factory'
 import { nodesQueryKeys } from '../src/shared/api/hooks/nodes/nodes.query.hooks'
 import { subscriptionSettingsQueryKeys } from '../src/shared/api/hooks/subscription-settings/subscription-settings.query.hooks'
 import { logoutEvents } from '../src/shared/emitters'
@@ -350,8 +352,96 @@ async function testLocallyManagedCore() {
     }
 }
 
+async function testSavedHostPreview() {
+    const client = new QueryClient()
+    const hostUuid = '11111111-1111-4111-8111-111111111111'
+    client.setQueryData(QueryKeys.hosts.getHost({ uuid: hostUuid }).queryKey, {
+        uuid: hostUuid,
+        remark: 'Saved host',
+        address: 'saved.example.com',
+        port: 443,
+        securityLayer: 'DEFAULT',
+        inbound: {},
+        isDisabled: true
+    })
+    client.setQueryData(QueryKeys.hosts.getAllTags.queryKey, { tags: [] })
+    client.setQueryData(QueryKeys.configProfiles.getConfigProfiles.queryKey, { configProfiles: [] })
+    client.setQueryData(QueryKeys.nodes.getAllNodes.queryKey, [])
+    client.setQueryData(QueryKeys.internalSquads.getInternalSquads.queryKey, { internalSquads: [] })
+    client.setQueryData(QueryKeys.subscriptionTemplate.getSubscriptionTemplates.queryKey, {
+        templates: []
+    })
+
+    const originalAdapter = requireValue(instance.defaults.adapter, 'default Axios adapter')
+    let request: unknown
+    instance.defaults.adapter = (config) => {
+        assert(config.url === '/api/hosts/preview', 'preview requests the host preview endpoint')
+        request = JSON.parse(String(config.data))
+        return Promise.resolve({
+            config,
+            data: {
+                response: {
+                    clientType: 'MIHOMO',
+                    ruleName: 'Mihomo Clients',
+                    status: 200,
+                    headers: { 'Content-Type': 'text/yaml; charset=utf-8' },
+                    previewContent: 'server: saved.example.com'
+                }
+            },
+            headers: {},
+            status: 200,
+            statusText: 'OK'
+        })
+    }
+    const button = (key: string) =>
+        requireValue(
+            Array.from(document.querySelectorAll('button')).find(
+                (entry) => entry.textContent === key
+            ),
+            key
+        )
+    try {
+        flushSync(() =>
+            root.render(
+                <MantineProvider>
+                    <QueryClientProvider client={client}>
+                        <NiceModal.Provider />
+                    </QueryClientProvider>
+                </MantineProvider>
+            )
+        )
+        runAsync(NiceModal.show(EditHostDrawer, { hostUuid }))
+        await wait(300)
+        button('host-preview.open').click()
+        await wait(300)
+        button('host-preview.generate').click()
+        await wait()
+        const fields = [...document.querySelectorAll('textarea')].map((field) => field.value)
+        assert(
+            JSON.stringify(request) ===
+                JSON.stringify({
+                    hostUuid,
+                    userAgent: 'ClashMeta',
+                    requestHeaders: [],
+                    previewAsEnabled: false
+                }),
+            'saved host preview sends its UUID and the requested client settings'
+        )
+        assert(
+            fields.includes('Content-Type: text/yaml; charset=utf-8'),
+            'preview shows response headers'
+        )
+        assert(fields.includes('server: saved.example.com'), 'preview shows the response body')
+    } finally {
+        flushSync(() => root.render(null))
+        instance.defaults.adapter = originalAdapter
+        client.clear()
+    }
+}
+
 async function run() {
     await testLocallyManagedCore()
+    await testSavedHostPreview()
     localStorage.setItem(
         'viewPreferencesStore',
         JSON.stringify({

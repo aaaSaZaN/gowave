@@ -790,27 +790,3 @@ func (h *Handler) BulkHostsAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-
-func (h *Handler) Preview(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	var req PreviewRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"message":"Invalid request body"}`, http.StatusBadRequest)
-		return
-	}
-
-	if req.UserAgent == "" {
-		req.UserAgent = r.Header.Get("User-Agent")
-	}
-
-	preview, err := h.service.GenerateHostPreview(req)
-	if err != nil {
-		http.Error(w, `{"message":"`+err.Error()+`"}`, http.StatusBadRequest)
-		return
-	}
-
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": preview,
-	})
-}

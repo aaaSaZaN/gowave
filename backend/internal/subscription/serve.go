@@ -110,8 +110,8 @@ func resolveExtendedClients(userAgent string, extra []string) (bool, error) {
 	return false, nil
 }
 
-// responseRules ports ResponseRulesMiddleware. It writes the response and
-// returns nil when the request ends here.
+// responseRules resolves the matching rule and writes early response headers.
+// It returns nil after writing an error when no rule can be applied.
 func (h *Handler) responseRules(w http.ResponseWriter, r *http.Request) *srrContext {
 	userAgent := truncateHeader(r, "User-Agent")
 	settings, err := h.loadSettings()
@@ -174,17 +174,30 @@ func (h *Handler) responseRules(w http.ResponseWriter, r *http.Request) *srrCont
 			ctx.RespondWithRemarks = mods.RespondWithRemarks
 		}
 	}
-	switch ctx.ResponseType {
+	return ctx
+}
+
+func writeRuleError(w http.ResponseWriter, r *http.Request, responseType string) bool {
+	switch responseType {
 	case "BLOCK":
 		nestError(w, r, http.StatusForbidden, "Forbidden")
-		return nil
 	case "STATUS_CODE_404":
 		nestError(w, r, http.StatusNotFound, "Not Found")
-		return nil
 	case "STATUS_CODE_451":
 		nestError(w, r, http.StatusUnavailableForLegalReasons, "Unavailable For Legal Reasons")
-		return nil
-	case "SOCKET_DROP":
+	default:
+		return false
+	}
+	return true
+}
+
+// GetSubscription serves /api/sub/{shortUuid} and /api/sub/{shortUuid}/{clientType}.
+func (h *Handler) GetSubscription(w http.ResponseWriter, r *http.Request) {
+	ctx := h.responseRules(w, r)
+	if ctx == nil || writeRuleError(w, r, ctx.ResponseType) {
+		return
+	}
+	if ctx.ResponseType == "SOCKET_DROP" {
 		conn, _, err := http.NewResponseController(w).Hijack()
 		if err != nil {
 			panic(http.ErrAbortHandler)
@@ -193,15 +206,6 @@ func (h *Handler) responseRules(w http.ResponseWriter, r *http.Request) *srrCont
 			_ = tcp.SetLinger(0)
 		}
 		_ = conn.Close()
-		return nil
-	}
-	return ctx
-}
-
-// GetSubscription serves /api/sub/{shortUuid} and /api/sub/{shortUuid}/{clientType}.
-func (h *Handler) GetSubscription(w http.ResponseWriter, r *http.Request) {
-	ctx := h.responseRules(w, r)
-	if ctx == nil {
 		return
 	}
 	h.serve(w, r, ctx, chi.URLParam(r, "shortUuid"))
@@ -260,26 +264,8 @@ func (h *Handler) serve(w http.ResponseWriter, r *http.Request, ctx *srrContext,
 	settings, overrides := h.applySquadOverrides(ctx.Settings, user.ExternalSquadUUID)
 	ctx.Settings = settings
 	tplUser := templateUser(user)
-	matchedRuleName := ""
-	if ctx.RuleName != nil {
-		matchedRuleName = *ctx.RuleName
-	}
 
-	render := func(hosts []*subtpl.Host, overrides *subtpl.HostOverrides, fallback *subtpl.FallbackOptions) (string, string) {
-		return subtpl.Render(subtpl.RenderRequest{
-			ResponseType: ctx.ResponseType, IsExtendedClient: ctx.IsExtendedClient,
-			OverrideTemplateName: ctx.OverrideTemplateName, IgnoreHostXrayJSONTemplate: ctx.IgnoreHostXrayJSONTemplate,
-			Resolve: subtpl.ResolveOptions{
-				Settings: settings.template(), Hosts: hosts, User: tplUser, HostOverrides: overrides, Fallback: fallback,
-				MatchedRuleName:    matchedRuleName,
-				ExcludeHostsByTags: ctx.ExcludeHostsByTags, SubPublicDomain: h.subPublicDomain,
-			},
-		}, h.templates)
-	}
-
-	if ctx.RespondWithRemarks != nil {
-		body, contentType := render([]*subtpl.Host{}, nil, &subtpl.FallbackOptions{RespondWithRemarks: ctx.RespondWithRemarks})
-		h.finalize(w, r, ctx, subscriptionResult{Headers: h.profileHeaders(tplUser, settings, false), Body: body, ContentType: contentType})
+	if h.serveRuleRemarks(w, r, ctx, tplUser) {
 		return
 	}
 
@@ -288,38 +274,15 @@ func (h *Handler) serve(w http.ResponseWriter, r *http.Request, ctx *srrContext,
 		result := h.checkHwidDeviceLimit(user, ctx.Hwid, settings.Hwid, ctx.IP)
 		checkup = &result
 		if !result.SubscriptionAllowed {
-			response := subscriptionResult{Headers: h.profileHeaders(tplUser, settings, false), Body: "", ContentType: "text/plain"}
-			if !result.LimitBypassed {
-				response.Headers.Set("x-hwid-active", "true")
-			}
-			if result.MaxDeviceReached && settings.Hwid.MaxDevicesAnnounce != nil && *settings.Hwid.MaxDevicesAnnounce != "" {
-				response.Headers.Set("announce", subtpl.ReplaceTemplate("rwEncodeBase64:"+*settings.Hwid.MaxDevicesAnnounce,
-					subtpl.TemplateValues(tplUser, settings.template(), h.subPublicDomain)))
-			}
-			if (result.MaxDeviceReached || result.HwidNotSupported) && settings.IsShowCustomRemarks {
-				response.Body, response.ContentType = render([]*subtpl.Host{}, nil, &subtpl.FallbackOptions{
-					ShowHwidMaxDeviceRemarks: result.MaxDeviceReached, ShowHwidNotSupportedRemarks: result.HwidNotSupported,
-				})
-			}
-			if result.HwidNotSupported {
-				response.Headers.Set("x-hwid-not-supported", "true")
-			}
-			if result.MaxDeviceReached {
-				response.Headers.Set("x-hwid-max-devices-reached", "true")
-			}
-			response.Headers.Set("x-hwid-limit", "true")
-			h.finalize(w, r, ctx, response)
+			h.serveHwidRejection(w, r, ctx, tplUser, result)
 			return
 		}
 	} else {
 		h.upsertHwidQuietly(user, ctx.Hwid, ctx.IP)
 	}
 
-	if settings.ServeJSONAtBaseSubscription && ctx.ResponseType == "XRAY_BASE64" && !ctx.IgnoreServeJSON &&
-		matchesAny(jsonFallbackPatterns, ctx.UserAgent) {
-		ctx.ResponseType = "XRAY_JSON"
-	}
-	hosts, err := h.hostsForSquads(squads, false, ctx.ResponseType == "XRAY_JSON" || ctx.ResponseType == "MIHOMO")
+	ctx.resolveConfigType()
+	hosts, err := h.hostsForSquads(squads, false, ctx.includeHiddenHosts())
 	if err != nil {
 		notFound(w, r)
 		return
@@ -328,11 +291,73 @@ func (h *Handler) serve(w http.ResponseWriter, r *http.Request, ctx *srrContext,
 	if settings.RandomizeHosts {
 		hosts = subtpl.Shuffle(hosts)
 	}
-	body, contentType := render(hosts, overrides, nil)
+	body, contentType := h.renderConfig(ctx, tplUser, hosts, overrides, nil)
 	h.finalize(w, r, ctx, subscriptionResult{
 		Headers: h.profileHeaders(tplUser, settings, checkup != nil && !checkup.LimitBypassed),
 		Body:    body, ContentType: contentType,
 	})
+}
+
+func (ctx *srrContext) resolveConfigType() {
+	if ctx.Settings.ServeJSONAtBaseSubscription && ctx.ResponseType == "XRAY_BASE64" && !ctx.IgnoreServeJSON &&
+		matchesAny(jsonFallbackPatterns, ctx.UserAgent) {
+		ctx.ResponseType = "XRAY_JSON"
+	}
+}
+
+func (ctx *srrContext) includeHiddenHosts() bool {
+	return ctx.ResponseType == "XRAY_JSON" || ctx.ResponseType == "MIHOMO"
+}
+
+func (h *Handler) renderConfig(ctx *srrContext, tplUser *subtpl.User, hosts []*subtpl.Host, overrides *subtpl.HostOverrides, fallback *subtpl.FallbackOptions) (string, string) {
+	matchedRuleName := ""
+	if ctx.RuleName != nil {
+		matchedRuleName = *ctx.RuleName
+	}
+
+	return subtpl.Render(subtpl.RenderRequest{
+		ResponseType: ctx.ResponseType, IsExtendedClient: ctx.IsExtendedClient,
+		OverrideTemplateName: ctx.OverrideTemplateName, IgnoreHostXrayJSONTemplate: ctx.IgnoreHostXrayJSONTemplate,
+		Resolve: subtpl.ResolveOptions{
+			Settings: ctx.Settings.template(), Hosts: hosts, User: tplUser, HostOverrides: overrides, Fallback: fallback,
+			MatchedRuleName:    matchedRuleName,
+			ExcludeHostsByTags: ctx.ExcludeHostsByTags, SubPublicDomain: h.subPublicDomain,
+		},
+	}, h.templates)
+}
+
+func (h *Handler) serveRuleRemarks(w http.ResponseWriter, r *http.Request, ctx *srrContext, user *subtpl.User) bool {
+	if ctx.RespondWithRemarks == nil {
+		return false
+	}
+	body, contentType := h.renderConfig(ctx, user, nil, nil, &subtpl.FallbackOptions{RespondWithRemarks: ctx.RespondWithRemarks})
+	h.finalize(w, r, ctx, subscriptionResult{Headers: h.profileHeaders(user, ctx.Settings, false), Body: body, ContentType: contentType})
+	return true
+}
+
+func (h *Handler) serveHwidRejection(w http.ResponseWriter, r *http.Request, ctx *srrContext, user *subtpl.User, result hwidCheckup) {
+	settings := ctx.Settings
+	response := subscriptionResult{Headers: h.profileHeaders(user, settings, false), Body: "", ContentType: "text/plain"}
+	if !result.LimitBypassed {
+		response.Headers.Set("x-hwid-active", "true")
+	}
+	if result.MaxDeviceReached && settings.Hwid.MaxDevicesAnnounce != nil && *settings.Hwid.MaxDevicesAnnounce != "" {
+		response.Headers.Set("announce", subtpl.ReplaceTemplate("rwEncodeBase64:"+*settings.Hwid.MaxDevicesAnnounce,
+			subtpl.TemplateValues(user, settings.template(), h.subPublicDomain)))
+	}
+	if (result.MaxDeviceReached || result.HwidNotSupported) && settings.IsShowCustomRemarks {
+		response.Body, response.ContentType = h.renderConfig(ctx, user, nil, nil, &subtpl.FallbackOptions{
+			ShowHwidMaxDeviceRemarks: result.MaxDeviceReached, ShowHwidNotSupportedRemarks: result.HwidNotSupported,
+		})
+	}
+	if result.HwidNotSupported {
+		response.Headers.Set("x-hwid-not-supported", "true")
+	}
+	if result.MaxDeviceReached {
+		response.Headers.Set("x-hwid-max-devices-reached", "true")
+	}
+	response.Headers.Set("x-hwid-limit", "true")
+	h.finalize(w, r, ctx, response)
 }
 
 // finalize ports SubscriptionController.finalizeSubscriptionResponse.
