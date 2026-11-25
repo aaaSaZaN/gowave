@@ -30,6 +30,7 @@
     import FormCard from '../ui/FormCard.svelte'
     import HelpDrawer from '../ui/HelpDrawer.svelte'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import SelectField from '../ui/SelectField.svelte'
     import Switch from '../ui/Switch.svelte'
     import { type ExternalSquad, externalSquadQuery, externalSquadsQuery } from './queries'
@@ -66,7 +67,6 @@
     let { squad, editIdentity }: { squad: ExternalSquad; editIdentity: boolean } = $props()
     let t = $derived(locale.t)
     let section = $state<Section>('templates')
-    let notice = $state('')
     let error = $state('')
     let saveError = $state('')
     let saving = $state(false)
@@ -94,7 +94,6 @@
         if (saving || !(event.currentTarget instanceof HTMLFormElement)) return
         const data = new FormData(event.currentTarget)
         saving = true
-        notice = ''
         saveError = ''
         try {
             if (editIdentity) {
@@ -129,7 +128,11 @@
                     await submitCommand(UpdateExternalSquadCommand, { uuid: squad.uuid, ...patch })
                 )
             }
-            notice = t('common.message.operation-completed')
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
         } catch (cause) {
             saveError = cause instanceof Error ? cause.message : String(cause)
         } finally {
@@ -202,7 +205,6 @@
 
     function open(next: Section): void {
         if (section === next || saving) return
-        notice = ''
         error = ''
         saveError = ''
         useDeviceSettings = squad.hwidSettings !== null
@@ -618,9 +620,6 @@
 
 {#if headersHelp}
     <HelpDrawer screen="PAGE_RESPONSE_HEADERS" close={() => (headersHelp = false)} />
-{/if}
-{#if notice}
-    <p role="status">{notice}</p>
 {/if}
 {#if saveError}
     <p role="alert">{saveError}</p>

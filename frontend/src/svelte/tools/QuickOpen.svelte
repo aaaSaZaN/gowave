@@ -4,6 +4,7 @@
     import { navigate } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
     import { type QuickTarget, targets, validEntityId } from './quick-open'
 
@@ -19,14 +20,18 @@
         'subpage-config': 'PiArrowsInCardinalFill'
     } as const
     let values = $state<Partial<Record<QuickTarget, string>>>({})
-    let notice = $state('')
     let failure = $state('')
 
     function copy(entity: QuickTarget, id: string): void {
-        notice = ''
         failure = ''
-        void navigator.clipboard.writeText(buildOpenEntityUrl(entity, id)).then(
-            () => (notice = t('common.message.copied')),
+        const url = buildOpenEntityUrl(entity, id)
+        void navigator.clipboard.writeText(url).then(
+            () =>
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: url,
+                    color: 'teal'
+                }),
             (error: unknown) => (failure = error instanceof Error ? error.message : String(error))
         )
     }
@@ -93,9 +98,6 @@
             </form>
         {/each}
     </div>
-    {#if notice}
-        <p role="status">{notice}</p>
-    {/if}
     {#if failure}
         <p role="alert">{failure}</p>
     {/if}

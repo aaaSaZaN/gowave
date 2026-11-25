@@ -60,8 +60,9 @@
 
     header {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
-        gap: var(--mantine-spacing-sm);
+        gap: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
     }
 
     header.has-content {
@@ -113,7 +114,7 @@
     }
 
     .heading {
-        flex: 1;
+        flex: 1 1 110px;
         min-width: 0;
     }
 

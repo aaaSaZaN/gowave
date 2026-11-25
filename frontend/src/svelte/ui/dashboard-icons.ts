@@ -3048,5 +3048,53 @@ export const dashboardIcons = {
         },
         content:
             '<path d="M224,200h-8V40a8,8,0,0,0-8-8H152a8,8,0,0,0-8,8V80H96a8,8,0,0,0-8,8v40H48a8,8,0,0,0-8,8v64H32a8,8,0,0,0,0,16H224a8,8,0,0,0,0-16ZM160,48h40V200H160ZM104,96h40V200H104ZM56,144H88v56H56Z"></path>'
+    },
+    TbClockCheck: {
+        attrs: {
+            fill: 'none',
+            stroke: 'currentColor',
+            'stroke-width': '2',
+            viewBox: '0 0 24 24',
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round'
+        },
+        content:
+            '<path d="M20.942 13.021a9 9 0 1 0 -9.407 7.967"></path><path d="M12 7v5l3 3"></path><path d="M15 19l2 2l4 -4"></path>'
+    },
+    TbClockPause: {
+        attrs: {
+            fill: 'none',
+            stroke: 'currentColor',
+            'stroke-width': '2',
+            viewBox: '0 0 24 24',
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round'
+        },
+        content:
+            '<path d="M20.942 13.018a9 9 0 1 0 -7.909 7.922"></path><path d="M12 7v5l2 2"></path><path d="M17 17v5"></path><path d="M21 17v5"></path>'
+    },
+    TbClockExclamation: {
+        attrs: {
+            fill: 'none',
+            stroke: 'currentColor',
+            'stroke-width': '2',
+            viewBox: '0 0 24 24',
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round'
+        },
+        content:
+            '<path d="M20.986 12.502a9 9 0 1 0 -5.973 7.98"></path><path d="M12 7v5l3 3"></path><path d="M19 16v3"></path><path d="M19 22v.01"></path>'
+    },
+    TbHelp: {
+        attrs: {
+            fill: 'none',
+            stroke: 'currentColor',
+            'stroke-width': '2',
+            viewBox: '0 0 24 24',
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round'
+        },
+        content:
+            '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path><path d="M12 17l0 .01"></path><path d="M12 13.5a1.5 1.5 0 0 1 1 -1.5a2.6 2.6 0 1 0 -3 -4"></path>'
     }
 } as const

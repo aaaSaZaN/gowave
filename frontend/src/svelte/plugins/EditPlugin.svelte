@@ -18,6 +18,7 @@
     import ActionIcon from '../ui/ActionIcon.svelte'
     import CopyEntityAction from '../ui/CopyEntityAction.svelte'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
     import { readPluginConfig } from './config'
@@ -36,7 +37,6 @@
     let showCatalog = $state(false)
     let showLists = $state(false)
     let error = $state('')
-    let notice = $state('')
 
     const save = createMutation(() => ({
         mutationFn: (text: string) =>
@@ -47,7 +47,11 @@
         onSuccess: async (updated, text) => {
             queryClient.setQueryData(pluginQuery(updated.uuid).queryKey, updated)
             saved = text
-            notice = t('common.message.operation-completed')
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
             showApply = true
             await queryClient.invalidateQueries({ queryKey: nodePluginsQuery.queryKey })
         }
@@ -55,7 +59,12 @@
 
     const sync = createMutation(() => ({
         mutationFn: () => submitVoidCommand(SyncNodePluginCommand, { uuid: plugin.uuid }),
-        onSuccess: () => (notice = t('common.message.operation-completed'))
+        onSuccess: () =>
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
     }))
 
     $effect(() => {
@@ -65,7 +74,6 @@
     function updateDraft(text: string): void {
         draft = text
         error = ''
-        notice = ''
     }
 
     function report(reason: unknown): void {
@@ -75,7 +83,6 @@
     function submit(): void {
         if (!dirty || !draft.trim() || save.isPending || sync.isPending) return
         error = ''
-        notice = ''
         sync.reset()
         save.mutate(draft)
     }
@@ -90,7 +97,6 @@
     function apply(): void {
         showApply = false
         error = ''
-        notice = ''
         sync.mutate()
     }
 </script>
@@ -140,10 +146,8 @@
         {#snippet status()}
             {#if error || save.error || sync.error}
                 <p class="editor-status" role="alert">
-                    {error || save.error?.message || sync.error?.message}
+                    <code>{error || save.error?.message || sync.error?.message}</code>
                 </p>
-            {:else if notice}
-                <p class="editor-status" role="status">{notice}</p>
             {/if}
         {/snippet}
         {#snippet actions()}
@@ -154,7 +158,12 @@
                 saveTone={dirty ? 'teal' : 'gray'}
                 saveDisabled={!dirty || !draft.trim()}
                 onsave={submit}
-                oncopy={() => (notice = t('common.message.copied'))}
+                oncopy={() =>
+                    notifications.show({
+                        title: t('common.message.copied'),
+                        message: '',
+                        color: 'teal'
+                    })}
                 onerror={report}
                 onload={() => (showCatalog = true)}
             >
@@ -237,7 +246,13 @@
     .editor-status {
         margin: 0;
         padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
-        border-top: 1px solid var(--mantine-color-default-border);
+        border-top: 1px solid rgb(241 65 65);
+        background: rgb(241 65 65 / 10%);
+    }
+    .editor-status code {
+        font-family: var(--mantine-font-family-monospace);
+        font-size: var(--mantine-font-size-xs);
+        color: var(--mantine-color-red-4);
     }
     .apply-option {
         --option-edge: var(--mantine-color-teal-6);

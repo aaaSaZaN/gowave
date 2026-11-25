@@ -6,6 +6,7 @@
     import Button from '../ui/Button.svelte'
     import EmptyState from '../ui/EmptyState.svelte'
     import FormCard from '../ui/FormCard.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import {
         dropUserSessions,
@@ -31,7 +32,6 @@
     let sending = $state(false)
     let error = $state('')
     let actionError = $state('')
-    let notice = $state('')
     let progress = $state<UserSessionProgress>()
     let nodes = $state.raw<UserSessionNode[]>([])
     let users = $state.raw<NodeUser[]>([])
@@ -116,10 +116,13 @@
         if (!window.confirm(`${dropLabel(selection)} — ${detail}`)) return
         sending = true
         actionError = ''
-        notice = ''
         try {
             await dropUserSessions(target.id, selection)
-            notice = t('common.message.event-sent')
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.event-sent'),
+                color: 'teal'
+            })
         } catch (failure) {
             actionError = text(failure)
         } finally {
@@ -128,10 +131,14 @@
     }
 
     function copy(ip: string): void {
-        notice = ''
         actionError = ''
         void navigator.clipboard.writeText(ip).then(
-            () => (notice = t('common.message.copied')),
+            () =>
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: ip,
+                    color: 'teal'
+                }),
             (failure: unknown) => (actionError = text(failure))
         )
     }
@@ -147,9 +154,6 @@
 >
     {#if actionError}
         <p role="alert">{actionError}</p>
-    {/if}
-    {#if notice}
-        <p role="status">{notice}</p>
     {/if}
     {#if loading}
         <SessionScanProgress

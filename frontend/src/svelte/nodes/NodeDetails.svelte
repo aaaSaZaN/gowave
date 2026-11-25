@@ -26,7 +26,9 @@
     import EntityStage from '../ui/EntityStage.svelte'
     import FormCard from '../ui/FormCard.svelte'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
+    import Tooltip from '../ui/Tooltip.svelte'
     import { type NodeAction, nodeActionLabels, runNodeAction } from './actions'
     import { flag } from './analytics'
     import NodeEditor from './NodeEditor.svelte'
@@ -47,8 +49,6 @@
     let usageNode = $state('')
     let versionDialog = $state<{ id: string; component: UpdateComponent }>()
     let hostMode = $state<'linked' | 'inbounds'>()
-    let notice = $state('')
-    let clipboardError = $state('')
     let copiedMessage = $state('')
     let copyTimeout: ReturnType<typeof setTimeout> | undefined
     onDestroy(() => clearTimeout(copyTimeout))
@@ -77,7 +77,11 @@
                 queryClient.removeQueries({ queryKey: key })
             }
             await queryClient.invalidateQueries({ queryKey: nodesKey })
-            notice = t('common.message.operation-completed')
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
         }
     }))
 
@@ -93,19 +97,26 @@
             !window.confirm(t('common.message.confirm-action-description'))
         )
             return
-        notice = ''
         update.mutate(action)
     }
 
     function copy(text: string, oncopied?: () => void): void {
-        clipboardError = ''
         void navigator.clipboard.writeText(text).then(
             () => {
-                notice = t('common.message.copied')
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: text,
+                    color: 'teal'
+                })
                 oncopied?.()
             },
-            (error: unknown) =>
-                (clipboardError = error instanceof Error ? error.message : String(error))
+            (error: unknown) => {
+                notifications.show({
+                    title: t('common.message.error'),
+                    message: error instanceof Error ? error.message : String(error),
+                    color: 'red'
+                })
+            }
         )
     }
 </script>
@@ -378,23 +389,30 @@
                                             ? 'node-details-card.widget.local-core'
                                             : 'node-details-card.widget.xray-core-version'
                                     )}
-                                    <Button
-                                        class="core-version"
-                                        size="md"
-                                        variant="soft"
-                                        color="teal"
-                                        disabled={!isGoNode}
-                                        title={coreLabel}
-                                        aria-label={`${coreLabel} · ${node.versions.xray}`}
-                                        onclick={() =>
-                                            (versionDialog = { id: node.uuid, component: 'core' })}
-                                    >
-                                        <Icon name="XrayLogo" size={16} />
-                                        <span class:version={isGoNode}>{node.versions.xray}</span>
-                                        {#if isGoNode}
-                                            <Icon name="TbChevronRight" size={14} />
-                                        {/if}
-                                    </Button>
+                                    <Tooltip block text={`${coreLabel}: ${node.versions.xray}`}>
+                                        <Button
+                                            class="core-version"
+                                            size="md"
+                                            variant="soft"
+                                            color="teal"
+                                            block
+                                            disabled={!isGoNode}
+                                            aria-label={`${coreLabel} · ${node.versions.xray}`}
+                                            onclick={() =>
+                                                (versionDialog = {
+                                                    id: node.uuid,
+                                                    component: 'core'
+                                                })}
+                                        >
+                                            <Icon name="XrayLogo" size={16} />
+                                            <span class="version-text" class:version={isGoNode}
+                                                >{node.versions.xray}</span
+                                            >
+                                            {#if isGoNode}
+                                                <Icon name="TbChevronRight" size={14} />
+                                            {/if}
+                                        </Button>
+                                    </Tooltip>
                                 {/if}
                                 {#if node.isConnected && node.xrayUptime}
                                     <span
@@ -408,29 +426,44 @@
                                     </span>
                                 {/if}
                                 {#if node.versions}
-                                    <Button
-                                        class="node-version"
-                                        size="md"
-                                        variant="soft"
-                                        color="indigo"
-                                        disabled={!isGoNodeVersion(node.versions)}
-                                        title={t('node-details-card.widget.gowave-node-version')}
-                                        aria-label={isGoNodeVersion(node.versions)
-                                            ? t('node-details-card.widget.select-node-version', {
-                                                  version: node.versions.node
-                                              })
-                                            : t('node-details-card.widget.gowave-node-version')}
-                                        onclick={() =>
-                                            (versionDialog = { id: node.uuid, component: 'node' })}
+                                    {@const isGoNode = isGoNodeVersion(node.versions)}
+                                    {@const nodeVersionLabel = t(
+                                        'node-details-card.widget.gowave-node-version'
+                                    )}
+                                    <Tooltip
+                                        block
+                                        text={`${nodeVersionLabel}: ${node.versions.node}`}
                                     >
-                                        <BrandIcon size={16} />
-                                        <span class:version={isGoNodeVersion(node.versions)}
-                                            >{node.versions.node}</span
+                                        <Button
+                                            class="node-version"
+                                            size="md"
+                                            variant="soft"
+                                            color="indigo"
+                                            block
+                                            disabled={!isGoNode}
+                                            aria-label={isGoNode
+                                                ? t(
+                                                      'node-details-card.widget.select-node-version',
+                                                      {
+                                                          version: node.versions.node
+                                                      }
+                                                  )
+                                                : nodeVersionLabel}
+                                            onclick={() =>
+                                                (versionDialog = {
+                                                    id: node.uuid,
+                                                    component: 'node'
+                                                })}
                                         >
-                                        {#if isGoNodeVersion(node.versions)}
-                                            <Icon name="TbChevronRight" size={14} />
-                                        {/if}
-                                    </Button>
+                                            <BrandIcon size={16} />
+                                            <span class="version-text" class:version={isGoNode}
+                                                >{node.versions.node}</span
+                                            >
+                                            {#if isGoNode}
+                                                <Icon name="TbChevronRight" size={14} />
+                                            {/if}
+                                        </Button>
+                                    </Tooltip>
                                 {/if}
                             </div>
                         {/if}
@@ -452,10 +485,12 @@
                         >
                             {#snippet actions()}
                                 <div class="system-badges">
-                                    <span class="system-platform"
-                                        >{system.info.platform}
-                                        / {system.info.arch}</span
-                                    >
+                                    <Tooltip text={`${system.info.platform} / ${system.info.arch}`}>
+                                        <span class="system-platform"
+                                            >{system.info.platform}
+                                            / {system.info.arch}</span
+                                        >
+                                    </Tooltip>
                                     <span class="system-uptime">
                                         <Icon name="PiClockCountdown" size={14} />
                                         {formatDurationUtil(system.stats.uptime)}
@@ -624,11 +659,8 @@
                 {/snippet}
             </NodeEditor>
         {/key}
-        {#if clipboardError || update.error}
-            <p role="alert">{clipboardError || update.error?.message}</p>
-        {/if}
-        {#if notice}
-            <p role="status">{notice}</p>
+        {#if update.error}
+            <p role="alert">{update.error.message}</p>
         {/if}
         {#if metadataNode === node.uuid}
             <Metadata
@@ -745,13 +777,16 @@
         display: grid;
         padding-block-start: var(--mantine-spacing-md);
         border-block-start: 1px solid rgba(var(--gw-fg-rgb), 0.06);
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 0.72fr) minmax(0, 1fr) minmax(0, 1.28fr);
         gap: var(--mantine-spacing-xs);
     }
     .details-metrics :global(.mantine-Button-root) {
-        height: auto;
-        padding: var(--mantine-spacing-xs);
-        white-space: normal;
+        height: 40px;
+        min-height: 40px;
+        min-width: 0;
+        padding: 6px 10px;
+        overflow: hidden;
+        white-space: nowrap;
         line-height: var(--mantine-line-height-sm);
         font-size: var(--mantine-font-size-sm);
     }
@@ -770,11 +805,23 @@
         border-color: rgba(99, 102, 241, 0.25);
     }
     .details-metrics :global(.mantine-Button-label) {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         justify-content: center;
+        align-items: center;
+        min-width: 0;
+        max-width: 100%;
         height: auto;
-        white-space: normal;
-        gap: var(--mantine-spacing-xs);
+        white-space: nowrap;
+        gap: 6px;
+    }
+    .details-metrics :global(.mantine-Button-label svg) {
+        flex-shrink: 0;
+    }
+    .version-text {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     .core-uptime {
         display: none;
@@ -850,13 +897,27 @@
     }
     .system-badges {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         align-items: center;
+        justify-content: flex-end;
         gap: var(--mantine-spacing-xs);
         min-width: 0;
+        max-width: 100%;
+    }
+    .system-uptime {
+        flex-shrink: 0;
+        white-space: nowrap;
     }
     .system-platform {
-        overflow-wrap: anywhere;
+        max-width: 22ch;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    @media (max-width: 40em) {
+        .system-platform {
+            display: none;
+        }
     }
     .memory-values {
         display: flex;

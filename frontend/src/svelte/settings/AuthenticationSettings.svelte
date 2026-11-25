@@ -6,6 +6,7 @@
     import HelpDrawer, { type HelpScreen } from '../ui/HelpDrawer.svelte'
     import Icon from '../ui/Icon.svelte'
     import type { IconName } from '../ui/icons'
+    import { notifications } from '../ui/notification-state.svelte'
     import Switch from '../ui/Switch.svelte'
     import { oauthField, providers, readAuthentication } from './auth-fields'
     import Passkeys from './Passkeys.svelte'
@@ -34,7 +35,6 @@
         generic: { icon: 'TbKey', background: '#000', help: 'AUTH_METHODS_GENERIC' }
     } as const
     let error = $state('')
-    let saved = $state(false)
     let labels = $derived({
         clientId: t('auth-settings.fields.clientId.label'),
         clientSecret: t('auth-settings.fields.clientSecret.label'),
@@ -52,11 +52,14 @@
     async function submit(event: SubmitEvent): Promise<void> {
         event.preventDefault()
         if (busy || !(event.currentTarget instanceof HTMLFormElement)) return
-        saved = false
         error = ''
         try {
             await save(readAuthentication(new FormData(event.currentTarget)))
-            saved = true
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
         } catch (reason) {
             error = reason instanceof Error ? reason.message : String(reason)
         }
@@ -222,9 +225,6 @@
         </fieldset>
         {#if error}
             <p role="alert">{error}</p>
-        {/if}
-        {#if saved}
-            <p role="status">{t('common.message.operation-completed')}</p>
         {/if}
     </SettingsCard>
 </form>

@@ -88,10 +88,13 @@
     const nodes = createQuery(() => nodesQuery)
     const squads = createQuery(() => externalSquadsQuery)
     let nodeNames = $derived(new Map(nodes.data?.map((node) => [node.uuid, node.name]) ?? []))
+    let nodeCountries = $derived(
+        new Map(nodes.data?.map((node) => [node.uuid, node.countryCode]) ?? [])
+    )
     let squadNames = $derived(
         new Map(squads.data?.externalSquads.map((squad) => [squad.uuid, squad.name]) ?? [])
     )
-    let columns = $derived(userColumns(t, locale.language, nodeNames, squadNames))
+    let columns = $derived(userColumns(t, locale.language, nodeNames, squadNames, nodeCountries))
     let ordered = $derived(orderUserColumns(columns, tableState.columnOrder))
     let shown = $derived(visibleUserColumns(columns, tableState))
     let { pageIndex, pageSize } = $derived(tableState.paginationState)

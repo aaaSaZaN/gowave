@@ -11,6 +11,7 @@
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
     import Button from '../ui/Button.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import HostConfirmation from './HostConfirmation.svelte'
     import HostFields from './HostFields.svelte'
     import HostPreview from './HostPreview.svelte'
@@ -34,7 +35,6 @@
     let form: HTMLFormElement
     let previewTarget = $state<{ saved: Host } | { draft: FormData }>()
     let confirmation = $state.raw<{ patch: ReturnType<typeof hostPatch>; summary: string }>()
-    let notice = $state('')
     let problem = $state('')
     let bulk = $derived(bulkIds !== undefined)
 
@@ -51,7 +51,11 @@
             if (updated) queryClient.setQueryData(hostQuery(updated.uuid).queryKey, updated)
             await queryClient.invalidateQueries({ queryKey: hostsKey })
             changed.clear()
-            notice = t('common.message.operation-completed')
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
             onsaved()
         }
     }))
@@ -63,7 +67,6 @@
 
     function fieldChanged(key: string): void {
         changed.add(key)
-        notice = ''
         problem = ''
     }
 
@@ -85,7 +88,6 @@
             return
         }
         problem = ''
-        notice = ''
         save.reset()
         try {
             const patch = hostPatch(data, (key) =>
@@ -131,9 +133,6 @@
 
 {#if problem || save.error}
     <p role="alert">{problem || save.error?.message}</p>
-{/if}
-{#if notice}
-    <p role="status">{notice}</p>
 {/if}
 
 {#if previewTarget}

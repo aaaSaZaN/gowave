@@ -51,7 +51,6 @@
     )
     let validation = $state<string | null | undefined>(undefined)
     let validationTime = $state('')
-    let notice = $state('')
     let confirmSave = $state(false)
     const configValid = $derived(validator.status === 'ready' && validation === null)
     let importOpen = $state(false)
@@ -68,7 +67,11 @@
         onSuccess: (updated) => {
             saved = JSON.stringify(updated.config ?? {}, null, 2)
             draft = saved
-            notice = 'Config profile saved'
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
             queryClient.setQueryData(profileQuery(updated.uuid).queryKey, updated)
             void queryClient.invalidateQueries({ queryKey: profilesQuery.queryKey })
             void queryClient.invalidateQueries({
@@ -116,7 +119,6 @@
 
     function updateDraft(text: string): void {
         draft = text
-        notice = ''
         validation = undefined
     }
 
@@ -152,12 +154,20 @@
         updateDraft(text)
         await tick()
         await formatDocument()
-        notice = t('use-download-template.template-loaded')
+        notifications.show({
+            title: t('use-download-template.template-loaded'),
+            message: '',
+            color: 'teal'
+        })
     }
 
     function copy(text: string): void {
         void navigator.clipboard.writeText(text).then(() => {
-            notice = t('common.message.copied')
+            notifications.show({
+                title: t('common.message.copied'),
+                message: '',
+                color: 'teal'
+            })
         }, report)
     }
 </script>
@@ -180,14 +190,8 @@
         />
     {/snippet}
     {#snippet status()}
-        <div
-            class="status"
-            class:invalid={!configValid}
-            class:wasm={validator.status !== 'ready' && !notice}
-        >
-            {#if notice}
-                <p role="status">{notice}</p>
-            {:else if validator.status === 'idle' || validator.status === 'loading'}
+        <div class="status" class:invalid={!configValid} class:wasm={validator.status !== 'ready'}>
+            {#if validator.status === 'idle' || validator.status === 'loading'}
                 <p class="loading" role="status">
                     <span class="m_5ae2e3c m_b34414df" aria-hidden="true"></span>
                     <code
@@ -217,7 +221,12 @@
             value={draft}
             saving={save.isPending}
             onsave={saveConfig}
-            oncopy={() => (notice = t('common.message.copied'))}
+            oncopy={() =>
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: '',
+                    color: 'teal'
+                })}
             onerror={report}
             onload={() => (importOpen = true)}
             ongenerate={() => (keypairOpen = true)}

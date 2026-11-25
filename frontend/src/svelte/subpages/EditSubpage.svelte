@@ -18,6 +18,7 @@
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
     import CopyEntityAction from '../ui/CopyEntityAction.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
     import { type ImportMode, mergePageConfig, type PageConfig, readPageConfig } from './config'
@@ -41,7 +42,6 @@
     let importing = $state<PageConfig>()
     let fileInput: HTMLInputElement
     let catalog = $state(false)
-    let notice = $state('')
     let importingFile = $state(false)
     let copied = $state(false)
     let copyTimer: ReturnType<typeof setTimeout> | undefined
@@ -56,7 +56,11 @@
             queryClient.setQueryData(subpageQuery(updated.uuid).queryKey, updated)
             void queryClient.invalidateQueries({ queryKey: subpageConfigsQuery.queryKey })
             saved = JSON.stringify(draft, null, 2)
-            notice = t('subpage-config-visual-editor.widget.configuration-saved-successfully')
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('subpage-config-visual-editor.widget.configuration-saved-successfully'),
+                color: 'teal'
+            })
         }
     }))
 
@@ -77,7 +81,6 @@
         if (save.isPending) return
         save.reset()
         issues = []
-        notice = ''
         try {
             const draft = readPageConfig(jsonMode ? JSON.parse(raw) : $state.snapshot(config))
             config = draft
@@ -121,7 +124,11 @@
             raw = JSON.stringify(config, null, 2) ?? '{}'
             jsonMode = false
             issues = []
-            notice = t('subpage-config-editor-page.component.config-imported-successfully')
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('subpage-config-editor-page.component.config-imported-successfully'),
+                color: 'teal'
+            })
             importing = undefined
         } catch (error) {
             report(error)
@@ -227,9 +234,6 @@
     {/if}
     {#if save.error}
         <p role="alert">{save.error.message}</p>
-    {/if}
-    {#if notice}
-        <p role="status">{notice}</p>
     {/if}
     {#if jsonMode}
         <textarea

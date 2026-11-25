@@ -8,34 +8,37 @@
         getWriteKeys,
         humanizeResource
     } from '@shared/lib/api-token-scopes'
+    import { formatTimeUtil } from '@shared/utils/time-utils'
     import { createQuery } from '@tanstack/svelte-query'
-    import { onMount } from 'svelte'
+    import { SvelteSet } from 'svelte/reactivity'
     import { submitCommand } from '../commands'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
-    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
+    import ActionIcon from '../ui/ActionIcon.svelte'
+    import Button from '../ui/Button.svelte'
+    import CopyableField from '../ui/CopyableField.svelte'
+    import { dismissDialog } from '../ui/dialog-motion'
+    import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
+    import Overlay from '../ui/Overlay.svelte'
     import { type ApiToken, apiScopes, apiTokens } from './queries'
 
     let { token, close }: { token: ApiToken | null; close: () => void } = $props()
     const scopes = createQuery(() => apiScopes)
     let resources = $derived(scopes.data?.resources ?? [])
-    let dialog: HTMLDialogElement
     let selected = $state(new Set<string>())
+    const expanded = new SvelteSet<string>()
     let requestedScopes = $derived(buildScopes(resources, selected))
     let name = $state('')
     let expires = $state<number | undefined>(30)
     let issued = $state.raw<CreateApiTokenCommand.Response['response']>()
     let current = $derived(issued ?? token)
     let granted = $derived(new Set(expandScopesToKeys(resources, current?.scopes ?? [])))
-    let dates = $derived(
-        new Intl.DateTimeFormat(locale.language, { dateStyle: 'medium', timeStyle: 'short' })
-    )
+    let t = $derived(locale.t)
+    let isExpired = $derived(current ? new Date(current.expireAt).getTime() < Date.now() : false)
+    let noticeParts = $derived(t('api-tokens-card.widget.one-time-notice').split(/<\/?emphasis>/g))
     let busy = $state(false)
     let error = $state('')
-    let status = $state('')
-    let t = $derived(locale.t)
-
-    onMount(() => dialog.showModal())
 
     function toggle(keys: string[], checked: boolean): void {
         const next = new Set(selected)
@@ -44,6 +47,11 @@
             else next.delete(key)
         }
         selected = next
+    }
+
+    function toggleResource(resource: string): void {
+        if (expanded.has(resource)) expanded.delete(resource)
+        else expanded.add(resource)
     }
 
     function preset(kind: 'all' | 'read' | 'page' | 'clear'): void {
@@ -68,7 +76,6 @@
     }
 
     async function pasteScopes(): Promise<void> {
-        status = ''
         error = ''
         try {
             const value: unknown = JSON.parse(await navigator.clipboard.readText())
@@ -79,18 +86,35 @@
                 throw new Error(t('api-tokens-card.widget.invalid-scopes'))
             }
             selected = new Set(expandScopesToKeys(resources, value))
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
         } catch (reason) {
             error = reason instanceof Error ? reason.message : String(reason)
         }
     }
 
     function copy(value: string): void {
-        status = ''
         error = ''
         void navigator.clipboard.writeText(value).then(
-            () => (status = t('common.message.copied')),
+            () =>
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: value,
+                    color: 'teal'
+                }),
             (reason: unknown) => (error = reason instanceof Error ? reason.message : String(reason))
         )
+    }
+
+    function requestClose(event: MouseEvent): void {
+        if (busy) return
+        const dialog =
+            event.currentTarget instanceof Element ? event.currentTarget.closest('dialog') : null
+        if (dialog instanceof HTMLDialogElement) dismissDialog(dialog)
+        else close()
     }
 
     async function create(event: SubmitEvent): Promise<void> {
@@ -113,219 +137,624 @@
     }
 </script>
 
-<dialog
-    bind:this={dialog}
-    onclose={close}
-    aria-labelledby="token-heading"
-    oncancel={(event) => cancelDialog(event, busy)}
+<Overlay
+    title={current?.name ?? t('api-tokens-card.widget.create-api-token')}
+    icon="TbCookie"
+    tone="teal"
+    width={800}
+    preventClose={busy}
+    {close}
 >
-    <h2 id="token-heading">{current?.name ?? t('api-tokens-card.widget.create-api-token')}</h2>
-    {#if scopes.error || error}
-        <p role="alert">{error || scopes.error?.message}</p>
-    {/if}
-    {#if status}
-        <p role="status">{status}</p>
-    {/if}
-    {#if current}
-        <p>
-            UUID <code>{current.uuid}</code>
-            <button type="button" onclick={() => copy(current.uuid)}>
-                {t('common.action.copy-uuid')}
-            </button>
-        </p>
-        <p>
-            {t('api-tokens-card.widget.col-created')} {dates.format(new Date(current.createdAt))}
-            · {t('api-tokens-card.widget.col-expires')} {dates.format(new Date(current.expireAt))}
-        </p>
-        {#if issued}
-            <p>{t('api-tokens-card.widget.one-time-notice').replace(/<\/?emphasis>/g, '')}</p>
-            <label
-                >{t('api-tokens-card.widget.token')}
-                <input name="issuedToken" readonly value={issued.token}></label
-            >
-            <button
-                type="button"
-                onclick={() => {
-                    if (issued) copy(issued.token)
-                }}
-            >
-                {t('api-tokens-card.widget.copy-token')}
-            </button>
+    <div class="token-dialog-body">
+        {#if scopes.error || error}
+            <p class="error-banner" role="alert">{error || scopes.error?.message}</p>
         {/if}
-        {#each resources.filter((resource) =>
-            countSelected(resource.endpoints, granted)
-        ) as resource (resource.resource)}
-            <details>
-                <summary>
-                    {humanizeResource(resource.resource)}
-                    · {countSelected(resource.endpoints, granted)}
-                </summary>
-                <ul>
-                    {#each resource.endpoints.filter(({ key }) =>
-                        granted.has(key)
-                    ) as endpoint (endpoint.key)}
-                        <li>
-                            <code>{endpoint.method} {endpoint.path}</code> {endpoint.description}
-                        </li>
-                    {/each}
-                </ul>
-            </details>
-        {/each}
-        <div class="button-row">
-            <button type="button" onclick={() => copy(JSON.stringify(current.scopes, null, 2))}>
-                {t('api-tokens-card.widget.copy-scopes')}
-            </button>
-            <button type="button" onclick={() => dismissDialog(dialog)}>
-                {t('common.action.close')}
-            </button>
-        </div>
-    {:else}
-        <form onsubmit={(event) => void create(event)}>
-            <fieldset disabled={busy}>
-                <label
-                    >{t('api-tokens-card.widget.token-name')}
-                    <input name="tokenName" required minlength="2" maxlength="30" bind:value={name}>
-                </label>
-                <label
-                    >{t('api-tokens-card.widget.expires-in-days')}
-                    <input
-                        name="expiresInDays"
-                        type="number"
-                        required
-                        min="1"
-                        step="1"
-                        bind:value={expires}
-                    >
-                </label>
-                {#if scopes.isPending}
-                    <p role="status">{t('common.message.loading')}</p>
-                {/if}
-                <div class="button-row">
-                    <button type="button" onclick={() => preset('read')}>
-                        {t('api-tokens-card.widget.read-only')}
-                    </button>
-                    <button type="button" onclick={() => preset('all')}>
-                        {t('api-tokens-card.widget.full-access')}
-                    </button>
-                    <button type="button" onclick={() => preset('page')}>
-                        {t('constants.subscription-page')}
-                    </button>
-                    <button type="button" onclick={() => preset('clear')}>
-                        {t('api-tokens-card.widget.clear-scopes')}
-                    </button>
-                    <button type="button" onclick={() => void pasteScopes()}>
-                        {t('api-tokens-card.widget.paste-scopes')}
-                    </button>
+        {#if current}
+            <div class="meta-grid">
+                <div class="meta-cell">
+                    <span class="meta-label">{t('api-tokens-card.widget.col-created')}</span>
+                    <span class="meta-value">
+                        {formatTimeUtil({
+                            time: current.createdAt,
+                            template: 'TIME_FIRST_DATETIME',
+                            language: locale.language
+                        })}
+                    </span>
                 </div>
-                {#each resources as resource (resource.resource)}
-                    <details>
-                        <summary>
-                            {humanizeResource(resource.resource)}
-                            · {countSelected(resource.endpoints, selected)}
-                        </summary>
-                        <div class="button-row">
-                            {#each [
-                                {
-                                    keys: getReadKeys(resource),
-                                    label: t('api-tokens-card.widget.read')
-                                },
-                                {
-                                    keys: getWriteKeys(resource),
-                                    label: t('api-tokens-card.widget.write')
-                                }
-                            ] as group (group.label)}
-                                {#if group.keys.length}
-                                    <label class="endpoint">
-                                        <input
-                                            type="checkbox"
-                                            checked={group.keys.every((key) => selected.has(key))}
-                                            indeterminate={group.keys.some((key) =>
-                                                selected.has(key)
-                                            ) && !group.keys.every((key) => selected.has(key))}
-                                            onchange={(event) =>
-                                                toggle(group.keys, event.currentTarget.checked)}
-                                        >
-                                        {group.label}
-                                    </label>
-                                {/if}
-                            {/each}
+                <div class="meta-cell">
+                    <span class="meta-label">{t('api-tokens-card.widget.col-expires')}</span>
+                    <span class="meta-value" class:expired={isExpired}>
+                        {formatTimeUtil({
+                            time: current.expireAt,
+                            template: 'TIME_FIRST_DATETIME',
+                            language: locale.language
+                        })}
+                    </span>
+                </div>
+                <div class="meta-cell">
+                    <span class="meta-label">UUID</span>
+                    <div class="meta-uuid">
+                        <span class="meta-uuid-text">{current.uuid}</span>
+                        <ActionIcon
+                            icon="TbCopy"
+                            size={24}
+                            iconSize={14}
+                            subtle
+                            label={t('common.action.copy-uuid')}
+                            onclick={() => copy(current.uuid)}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {#if issued}
+                <div class="one-time-notice">
+                    <span class="one-time-icon" aria-hidden="true">
+                        <Icon name="TbAlertTriangle" size={18} />
+                    </span>
+                    <p class="one-time-text">
+                        {#each noticeParts as part, index}
+                            {#if index % 2 === 1}
+                                <span class="one-time-emphasis">{part}</span>
+                            {:else}
+                                {part}
+                            {/if}
+                        {/each}
+                    </p>
+                </div>
+                <CopyableField
+                    label={t('api-tokens-card.widget.token')}
+                    value={issued.token}
+                    leftIcon="TbKey"
+                />
+            {/if}
+
+            <div class="resources-list">
+                {#each resources.filter((resource) =>
+                    countSelected(resource.endpoints, granted)
+                ) as resource (resource.resource)}
+                    {@const open = expanded.has(resource.resource)}
+                    <div class="resource-row">
+                        <div class="resource-header">
+                            <button
+                                type="button"
+                                class="resource-trigger mantine-UnstyledButton-root"
+                                aria-expanded={open}
+                                onclick={() => toggleResource(resource.resource)}
+                            >
+                                <span class="chevron" class:open>
+                                    <Icon name="TbChevronRight" size={14} />
+                                </span>
+                                <span class="resource-name"
+                                    >{humanizeResource(resource.resource)}</span
+                                >
+                                <span class="count-pill">
+                                    {countSelected(resource.endpoints, granted)}
+                                </span>
+                            </button>
                         </div>
-                        <ul>
-                            {#each resource.endpoints as endpoint (endpoint.key)}
-                                <li>
-                                    <label class="endpoint">
-                                        <input
-                                            type="checkbox"
-                                            name={endpoint.key}
-                                            checked={selected.has(endpoint.key)}
-                                            onchange={(event) =>
-                                                toggle([endpoint.key], event.currentTarget.checked)}
-                                        >
-                                        <span
-                                            ><code>{endpoint.method} {endpoint.path}</code>
-                                            {endpoint.description}</span
-                                        >
-                                    </label>
-                                </li>
-                            {/each}
-                        </ul>
-                    </details>
+                        {#if open}
+                            <ul class="endpoint-list">
+                                {#each resource.endpoints.filter(({ key }) =>
+                                    granted.has(key)
+                                ) as endpoint (endpoint.key)}
+                                    <li class="endpoint-row readonly">
+                                        <span class="method-badge">{endpoint.method}</span>
+                                        <code class="endpoint-path">{endpoint.path}</code>
+                                        <span class="endpoint-desc">{endpoint.description}</span>
+                                    </li>
+                                {/each}
+                            </ul>
+                        {/if}
+                    </div>
                 {/each}
-                <div class="button-row">
-                    <button type="submit" disabled={!selected.size || name.trim().length < 2}>
-                        {t('common.action.create')}
-                    </button>
-                    <button type="button" onclick={() => dismissDialog(dialog)}>
-                        {t('common.action.cancel')}
-                    </button>
-                </div>
-            </fieldset>
-        </form>
-    {/if}
-</dialog>
+            </div>
+
+            <div class="footer-actions">
+                <ActionIcon
+                    icon="TbCopy"
+                    size={36}
+                    iconSize={20}
+                    tone="gray"
+                    label={t('api-tokens-card.widget.copy-scopes')}
+                    onclick={() => copy(JSON.stringify(current.scopes, null, 2))}
+                />
+                <Button color="teal" variant="light" size="md" onclick={requestClose}>
+                    {t('common.action.close')}
+                </Button>
+            </div>
+        {:else}
+            <form class="token-form" onsubmit={(event) => void create(event)}>
+                <fieldset disabled={busy}>
+                    <div class="form-row">
+                        <label class="field-label">
+                            <span>{t('api-tokens-card.widget.token-name')}</span>
+                            <input
+                                name="tokenName"
+                                class="m_8fb7ebe7 mantine-Input-input text-input"
+                                required
+                                minlength="2"
+                                maxlength="30"
+                                bind:value={name}
+                            >
+                        </label>
+                        <label class="field-label">
+                            <span>{t('api-tokens-card.widget.expires-in-days')}</span>
+                            <input
+                                name="expiresInDays"
+                                class="m_8fb7ebe7 mantine-Input-input text-input"
+                                type="number"
+                                required
+                                min="1"
+                                step="1"
+                                bind:value={expires}
+                            >
+                        </label>
+                    </div>
+                    {#if scopes.isPending}
+                        <p class="loading-text" role="status">{t('common.message.loading')}</p>
+                    {/if}
+                    <div class="button-row">
+                        <Button variant="default" size="xs" onclick={() => preset('read')}>
+                            {t('api-tokens-card.widget.read-only')}
+                        </Button>
+                        <Button variant="default" size="xs" onclick={() => preset('all')}>
+                            {t('api-tokens-card.widget.full-access')}
+                        </Button>
+                        <Button variant="default" size="xs" onclick={() => preset('page')}>
+                            {t('constants.subscription-page')}
+                        </Button>
+                        <Button variant="default" size="xs" onclick={() => preset('clear')}>
+                            {t('api-tokens-card.widget.clear-scopes')}
+                        </Button>
+                        <Button variant="default" size="xs" onclick={() => void pasteScopes()}>
+                            {t('api-tokens-card.widget.paste-scopes')}
+                        </Button>
+                    </div>
+                    <div class="resources-list">
+                        {#each resources as resource (resource.resource)}
+                            {@const open = expanded.has(resource.resource)}
+                            <div class="resource-row">
+                                <div class="resource-header">
+                                    <button
+                                        type="button"
+                                        class="resource-trigger mantine-UnstyledButton-root"
+                                        aria-expanded={open}
+                                        onclick={() => toggleResource(resource.resource)}
+                                    >
+                                        <span class="chevron" class:open>
+                                            <Icon name="TbChevronRight" size={14} />
+                                        </span>
+                                        <span class="resource-name"
+                                            >{humanizeResource(resource.resource)}</span
+                                        >
+                                        <span class="count-pill">
+                                            {countSelected(resource.endpoints, selected)}
+                                        </span>
+                                    </button>
+                                    <div class="kind-pills">
+                                        {#each [
+                                            {
+                                                keys: getReadKeys(resource),
+                                                label: t('api-tokens-card.widget.read')
+                                            },
+                                            {
+                                                keys: getWriteKeys(resource),
+                                                label: t('api-tokens-card.widget.write')
+                                            }
+                                        ] as group (group.label)}
+                                            {#if group.keys.length}
+                                                {@const allChecked = group.keys.every((key) =>
+                                                    selected.has(key)
+                                                )}
+                                                <label class="kind-pill" class:active={allChecked}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={allChecked}
+                                                        indeterminate={group.keys.some((key) =>
+                                                            selected.has(key)
+                                                        ) && !allChecked}
+                                                        onchange={(event) =>
+                                                            toggle(
+                                                                group.keys,
+                                                                event.currentTarget.checked
+                                                            )}
+                                                    >
+                                                    <span>{group.label}</span>
+                                                </label>
+                                            {/if}
+                                        {/each}
+                                    </div>
+                                </div>
+                                {#if open}
+                                    <ul class="endpoint-list">
+                                        {#each resource.endpoints as endpoint (endpoint.key)}
+                                            <li
+                                                class="endpoint-row"
+                                                class:checked={selected.has(endpoint.key)}
+                                            >
+                                                <label class="endpoint-label">
+                                                    <input
+                                                        type="checkbox"
+                                                        name={endpoint.key}
+                                                        checked={selected.has(endpoint.key)}
+                                                        onchange={(event) =>
+                                                            toggle(
+                                                                [endpoint.key],
+                                                                event.currentTarget.checked
+                                                            )}
+                                                    >
+                                                    <span class="method-badge"
+                                                        >{endpoint.method}</span
+                                                    >
+                                                    <code class="endpoint-path"
+                                                        >{endpoint.path}</code
+                                                    >
+                                                    <span class="endpoint-desc"
+                                                        >{endpoint.description}</span
+                                                    >
+                                                </label>
+                                            </li>
+                                        {/each}
+                                    </ul>
+                                {/if}
+                            </div>
+                        {/each}
+                    </div>
+                    <div class="footer-actions">
+                        <Button variant="default" onclick={requestClose}>
+                            {t('common.action.cancel')}
+                        </Button>
+                        <Button
+                            type="submit"
+                            color="teal"
+                            variant="filled"
+                            disabled={!selected.size || name.trim().length < 2 || busy}
+                            aria-busy={busy || undefined}
+                        >
+                            {t('common.action.create')}
+                        </Button>
+                    </div>
+                </fieldset>
+            </form>
+        {/if}
+    </div>
+</Overlay>
 
 <style>
-    dialog {
-        width: min(48rem, calc(100% - 1rem));
+    .token-dialog-body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--mantine-spacing-md);
     }
-    fieldset {
+
+    .error-banner {
+        margin: 0;
+        padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+        border-radius: var(--mantine-radius-md);
+        background: var(--mantine-color-red-light);
+        color: var(--mantine-color-red-light-color);
+        font-size: var(--mantine-font-size-sm);
+    }
+
+    .meta-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr);
+        border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
+        border-radius: var(--mantine-radius-md);
+        overflow: hidden;
+        background: rgba(var(--gw-fg-rgb), 0.02);
+    }
+
+    @media (max-width: 48em) {
+        .meta-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .meta-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        min-width: 0;
+        padding: 10px 14px;
+        border-right: 1px solid rgba(var(--gw-fg-rgb), 0.06);
+    }
+
+    .meta-cell:last-child {
+        border-right: none;
+    }
+
+    @media (max-width: 48em) {
+        .meta-cell {
+            border-right: none;
+            border-bottom: 1px solid rgba(var(--gw-fg-rgb), 0.06);
+        }
+        .meta-cell:last-child {
+            border-bottom: none;
+        }
+    }
+
+    .meta-label {
+        font-size: 11px;
+        font-family: var(--mantine-font-family-monospace);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--mantine-color-dark-2);
+    }
+
+    .meta-value {
+        font-size: var(--mantine-font-size-sm);
+        color: var(--mantine-color-gray-2);
+    }
+
+    .meta-value.expired {
+        color: var(--mantine-color-red-5);
+    }
+
+    .meta-uuid {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    .meta-uuid-text {
+        font-size: 12.5px;
+        font-family: var(--mantine-font-family-monospace);
+        color: var(--mantine-color-gray-3);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .one-time-notice {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 12px 14px;
+        border-radius: var(--mantine-radius-md);
+        border: 1px solid rgba(245, 159, 11, 0.22);
+        background: linear-gradient(
+            135deg,
+            rgba(245, 159, 11, 0.1) 0%,
+            rgba(245, 159, 11, 0.02) 100%
+        );
+    }
+
+    .one-time-icon {
+        flex: none;
+        margin-top: 1px;
+        color: var(--mantine-color-yellow-5);
+    }
+
+    .one-time-text {
+        margin: 0;
+        font-size: var(--mantine-font-size-sm);
+        line-height: 1.45;
+        color: var(--mantine-color-gray-3);
+    }
+
+    .one-time-emphasis {
+        font-weight: 700;
+        color: var(--mantine-color-yellow-4);
+    }
+
+    .token-form fieldset {
         border: 0;
         padding: 0;
         margin: 0;
         min-width: 0;
         display: grid;
-        gap: 0.75rem;
+        gap: var(--mantine-spacing-md);
     }
-    label {
+
+    .form-row {
         display: grid;
-        gap: 0.3rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--mantine-spacing-sm);
     }
-    ul {
-        list-style: none;
-        padding-inline-start: 0;
+
+    @media (max-width: 36em) {
+        .form-row {
+            grid-template-columns: minmax(0, 1fr);
+        }
     }
-    .endpoint {
+
+    .field-label {
+        display: grid;
+        gap: 4px;
+        font-size: var(--mantine-font-size-sm);
+        font-weight: 500;
+    }
+
+    .text-input {
+        --input-height: var(--input-height-sm);
+        --input-padding: calc(var(--input-height) / 3);
+        --input-padding-inline-start: var(--input-padding);
+        --input-padding-inline-end: var(--input-padding);
+        --input-line-height: calc(var(--input-height) - 2px);
+        --input-radius: var(--mantine-radius-default);
+        --input-fz: var(--mantine-font-size-sm);
+        --input-bd: var(--mantine-color-default-border);
+        --input-bg: var(--mantine-color-default);
+        --input-bd-focus: var(--mantine-primary-color-filled);
+        --input-color: var(--mantine-color-text);
+    }
+
+    .loading-text {
+        margin: 0;
+        color: var(--mantine-color-dimmed);
+        font-size: var(--mantine-font-size-sm);
+    }
+
+    .button-row {
         display: flex;
-        align-items: baseline;
+        flex-wrap: wrap;
+        gap: var(--mantine-spacing-xs);
     }
-    .endpoint input {
+
+    .resources-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .resource-row {
+        border-radius: var(--mantine-radius-md);
+        overflow: hidden;
+        background: rgba(var(--gw-fg-rgb), 0.02);
+        border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
+    }
+
+    .resource-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--mantine-spacing-xs);
+        padding: 7px 9px;
+    }
+
+    .resource-trigger {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        text-align: start;
+    }
+
+    .chevron {
+        display: inline-flex;
+        flex: none;
+        color: var(--mantine-color-dark-2);
+        transition: transform 150ms ease;
+    }
+
+    .chevron.open {
+        transform: rotate(90deg);
+    }
+
+    .resource-name {
+        font-size: var(--mantine-font-size-sm);
+        font-weight: 500;
+        font-family: var(--mantine-font-family-monospace);
+        color: var(--mantine-color-gray-2);
+    }
+
+    .count-pill {
+        padding: 1px 6px;
+        border-radius: var(--mantine-radius-sm);
+        background: var(--mantine-color-gray-light);
+        color: var(--mantine-color-gray-light-color);
+        font-size: var(--mantine-font-size-xs);
+        font-family: var(--mantine-font-family-monospace);
+    }
+
+    .kind-pills {
+        display: flex;
+        align-items: center;
+        gap: 6px;
         flex: none;
     }
-    details {
-        padding: 0.5rem;
-        border: 1px solid var(--gw-border);
-        border-radius: 0.35rem;
-        margin-block: 0.25rem;
-    }
-    summary {
+
+    .kind-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        height: 24px;
+        padding: 0 9px;
+        border-radius: var(--mantine-radius-md);
+        border: 1px solid var(--mantine-color-dark-4);
+        background: rgba(var(--gw-fg-rgb), 0.02);
+        color: var(--mantine-color-dark-1);
+        font-size: 11px;
+        font-weight: 500;
+        font-family: var(--mantine-font-family-monospace);
         cursor: pointer;
     }
-    details .button-row,
-    dialog > .button-row {
-        margin-block-start: 0.75rem;
+
+    .kind-pill input {
+        --gw-checkbox-size: 13px;
     }
-    code,
-    p {
+
+    .kind-pill.active {
+        background: rgba(45, 212, 168, 0.05);
+        border-color: var(--mantine-color-teal-9);
+        color: var(--mantine-color-teal-4);
+    }
+
+    .endpoint-list {
+        list-style: none;
+        margin: 0;
+        padding: 4px;
+        border-top: 1px solid var(--mantine-color-dark-5);
+        display: grid;
+        gap: 2px;
+    }
+
+    .endpoint-row {
+        display: flex;
+        align-items: center;
+        gap: var(--mantine-spacing-xs);
+        padding: 5px 8px;
+        border-radius: var(--mantine-radius-sm);
+        font-size: var(--mantine-font-size-xs);
+    }
+
+    .endpoint-row:not(.readonly):hover {
+        background-color: rgba(var(--gw-fg-rgb), 0.025);
+    }
+
+    .endpoint-row.checked {
+        background-color: var(--mantine-color-cyan-light);
+    }
+
+    .endpoint-label {
+        display: flex;
+        align-items: center;
+        gap: var(--mantine-spacing-xs);
+        width: 100%;
+        cursor: pointer;
+    }
+
+    .endpoint-label input {
+        --gw-checkbox-size: 15px;
+    }
+
+    .method-badge {
+        flex: none;
+        width: 54px;
+        text-align: center;
+        padding: 1px 4px;
+        border-radius: var(--mantine-radius-xs);
+        background: var(--mantine-color-gray-light);
+        color: var(--mantine-color-gray-light-color);
+        font-size: 9.5px;
+        font-weight: 700;
+        font-family: var(--mantine-font-family-monospace);
+        letter-spacing: 0.04em;
+    }
+
+    .endpoint-path {
+        font-size: 12.5px;
+        font-family: var(--mantine-font-family-monospace);
+        color: var(--mantine-color-gray-3);
         overflow-wrap: anywhere;
+    }
+
+    .endpoint-desc {
+        color: var(--mantine-color-dimmed);
+        margin-inline-start: auto;
+        overflow-wrap: anywhere;
+    }
+
+    .footer-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--mantine-spacing-xs);
+        margin-top: var(--mantine-spacing-xs);
     }
 </style>

@@ -8,6 +8,7 @@ type Column = {
     id: string
     label: string
     value: (user: User) => string | number | null
+    flag?: (user: User) => string | undefined
     filter?: 'text' | 'status' | 'tag' | 'node'
     sortable?: boolean
     width?: number
@@ -17,7 +18,8 @@ export function userColumns(
     t: TFunction,
     language: string,
     nodes: ReadonlyMap<string, string>,
-    squads: ReadonlyMap<string, string>
+    squads: ReadonlyMap<string, string>,
+    nodeCountries: ReadonlyMap<string, string> = new Map()
 ): Column[] {
     const dates = new Intl.DateTimeFormat(language, { dateStyle: 'short', timeStyle: 'short' })
     const date = (value: Date | null) => (value ? dates.format(value) : null)
@@ -49,6 +51,7 @@ export function userColumns(
             id: 'nodeName',
             label: t('use-table-columns.last-connected-node'),
             value: (user) => nodes.get(user.userTraffic.lastConnectedNodeUuid ?? '') ?? null,
+            flag: (user) => nodeCountries.get(user.userTraffic.lastConnectedNodeUuid ?? ''),
             filter: 'node',
             width: 180
         },

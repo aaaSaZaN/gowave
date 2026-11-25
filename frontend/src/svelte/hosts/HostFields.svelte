@@ -13,6 +13,7 @@
     import { type Profile, profilesQuery } from '../config-profiles/queries'
     import { locale } from '../i18n.svelte'
     import { squadsQuery } from '../internal-squads/queries'
+    import { flag } from '../nodes/analytics'
     import { nodesQuery } from '../nodes/queries'
     import { subscriptionSettingsQuery, subscriptionTemplatesQuery } from '../subscriptions/queries'
     import TemplateVariables from '../subscriptions/TemplateVariables.svelte'
@@ -24,6 +25,7 @@
     import SelectField from '../ui/SelectField.svelte'
     import Switch from '../ui/Switch.svelte'
     import TablePopup from '../ui/TablePopup.svelte'
+    import Tooltip from '../ui/Tooltip.svelte'
     import HostInboundPicker from './HostInboundPicker.svelte'
     import HostJsonInput from './HostJsonInput.svelte'
     import HostTags from './HostTags.svelte'
@@ -57,27 +59,65 @@
         untrack(() => [...(host?.excludeFromSubscriptionTypes ?? [])])
     )
     let responseRules = $state<string[]>(untrack(() => [...(host?.includeInSrrRules ?? [])]))
-    const securityFields = {
-        securityLayer: 'base-host-form.security-layer',
-        alpn: 'base-host-form.alpn',
-        ...textOptions,
-        ...switches,
-        vlessRouteId: 'base-host-form.vless-route-id',
-        mihomoIpVersion: 'base-host-form.mihomo-ip-version'
-    } as const
     const assignmentFields = {
         tags: 'common.field.tags',
-        internalSquads: 'constants.internal-squads',
         nodes: 'constants.nodes',
-        xrayJsonTemplateUuid: 'base-host-form.xray-json-template',
-        excludeFromSubscriptionTypes: 'base-host-form.exclude-from-subscription-type',
-        includeInSrrRules: 'constants.response-rules'
+        internalSquads: 'constants.internal-squads'
     } as const
+    const securityFields = {
+        sni: textOptions.sni,
+        overrideSniFromAddress: switches.overrideSniFromAddress,
+        keepSniBlank: switches.keepSniBlank,
+        securityLayer: 'base-host-form.security-layer',
+        fingerprint: textOptions.fingerprint
+    } as const
+    const transportFields = {
+        vlessRouteId: 'base-host-form.vless-route-id',
+        host: textOptions.host,
+        path: textOptions.path,
+        alpn: 'base-host-form.alpn'
+    } as const
+    const subscriptionFields = {
+        serverDescription: textOptions.serverDescription,
+        excludeFromSubscriptionTypes: 'base-host-form.exclude-from-subscription-type',
+        includeInSrrRules: 'constants.response-rules',
+        isHidden: switches.isHidden,
+        shuffleHost: switches.shuffleHost
+    } as const
+    const advancedFields = {
+        xrayJsonTemplateUuid: 'base-host-form.xray-json-template',
+        ...jsonOptions
+    } as const
+    const clientFields = {
+        pinnedPeerCertSha256: textOptions.pinnedPeerCertSha256,
+        verifyPeerCertByName: textOptions.verifyPeerCertByName,
+        mihomoX25519: switches.mihomoX25519,
+        mihomoIpVersion: 'base-host-form.mihomo-ip-version'
+    } as const
+    const subscriptionTypeItems = [
+        { value: SUBSCRIPTION_TEMPLATE_TYPE.XRAY_JSON, label: 'Xray JSON', icon: 'XrayLogo' },
+        { value: SUBSCRIPTION_TEMPLATE_TYPE.XRAY_BASE64, label: 'Xray Base64', icon: 'XrayLogo' },
+        { value: SUBSCRIPTION_TEMPLATE_TYPE.MIHOMO, label: 'Mihomo', icon: 'MihomoLogo' },
+        { value: SUBSCRIPTION_TEMPLATE_TYPE.STASH, label: 'Stash', icon: 'StashLogo' },
+        { value: SUBSCRIPTION_TEMPLATE_TYPE.SINGBOX, label: 'Singbox', icon: 'SingboxLogo' },
+        { value: SUBSCRIPTION_TEMPLATE_TYPE.CLASH, label: 'Clash', icon: 'MihomoLogo' }
+    ] as const
+    const optionHelpDocs: Partial<Record<HostField, string>> = {
+        vlessRouteId: 'https://xtls.github.io/config/routing.html',
+        pinnedPeerCertSha256: 'https://xtls.github.io/ru/config/transports/tls.html#tlsobject',
+        verifyPeerCertByName: 'https://xtls.github.io/ru/config/transports/tls.html#tlsobject',
+        mihomoX25519:
+            'https://wiki.metacubex.one/en/config/proxies/tls/#reality-optssupport-x25519mlkem768',
+        mihomoIpVersion: 'https://wiki.metacubex.one/ru/config/proxies/#ip-version'
+    }
     const core = new Set<HostField>(['remark', 'inbound', 'address', 'port', 'isDisabled'])
     const optional = Object.entries({
         ...assignmentFields,
         ...securityFields,
-        ...jsonOptions
+        ...transportFields,
+        ...subscriptionFields,
+        ...advancedFields,
+        ...clientFields
     }).filter(([key]) => !core.has(key as HostField))
     let addOpen = $state(false)
     let inboundOpen = $state(false)
@@ -111,7 +151,14 @@
         Object.keys(fields).some((key) => activeOptions.has(key as HostField))
     const id = $props.id()
     let t = $derived(locale.t)
-    const optionLabels = { ...assignmentFields, ...securityFields, ...jsonOptions }
+    const optionLabels = {
+        ...assignmentFields,
+        ...securityFields,
+        ...transportFields,
+        ...subscriptionFields,
+        ...advancedFields,
+        ...clientFields
+    }
     const groups = [
         ['base-host-form.group-assignment', ['tags', 'nodes', 'internalSquads']],
         [
@@ -244,17 +291,86 @@
         ]
     }
 
+    function nodeSelectOptions(
+        items: readonly {
+            uuid: string
+            name: string
+            countryCode: string
+            provider?: { name: string } | null
+        }[],
+        previous: readonly string[]
+    ) {
+        const known = new Set(items.map(({ uuid }) => uuid))
+        return [
+            ...items.map((node) => {
+                const emoji = flag(node.countryCode)
+                const providerName = node.provider?.name
+                return {
+                    value: node.uuid,
+                    label: `${emoji ? `${emoji} ` : ''}${node.name}${providerName ? ` (${providerName})` : ''}`,
+                    name: node.name,
+                    flag: emoji || undefined,
+                    badge: providerName ?? undefined
+                }
+            }),
+            ...previous
+                .filter((value) => !known.has(value))
+                .map((value) => ({ value, label: value }))
+        ]
+    }
+
+    function helpMessage(key: HostField): string | undefined {
+        switch (key) {
+            case 'tags':
+                return t(
+                    'host-tags-input.tags-are-not-visible-to-end-users-tag-will-be-sent-with-raw-subscription-only'
+                )
+            case 'nodes':
+                return t(
+                    'base-host-form.pick-nodes-which-resolved-from-this-host-only-visual-assignment'
+                )
+            case 'internalSquads':
+                return squadMode === INTERNAL_SQUADS_MODE.ALLOW_ONLY
+                    ? t('base-host-form.allow-this-host-only-for-specific-internal-squads')
+                    : t('base-host-form.exclude-this-host-from-specific-internal-squads')
+            case 'sni':
+                return `${t('base-host-form.sni-description-line-1')}\n\n${t('base-host-form.sni-description-line-2')}`
+            case 'overrideSniFromAddress':
+                return t('base-host-form.override-sni-from-address-description')
+            case 'keepSniBlank':
+                return t('base-host-form.keep-sni-blank-description')
+            case 'vlessRouteId':
+                return t('base-host-form.vless-route-description')
+            case 'includeInSrrRules':
+                return t('base-host-form.response-rules-description')
+            case 'isHidden':
+                return t('base-host-form.hidden-host-description')
+            case 'shuffleHost':
+                return t('base-host-form.shuffled-hosts-hover-card')
+            default:
+                return undefined
+        }
+    }
+
     function setOption(key: HostField, value: string): void {
         selectValues.set(key, value)
         onfieldchange(key)
     }
 </script>
 
-{#snippet entry(key: HostField, label: string, field: Snippet, inline = false)}
+{#snippet entry(
+    key: HostField,
+    label: string,
+    field: Snippet,
+    inline = false,
+    headerControl?: Snippet
+)}
     {#if !bulk && core.has(key)}
         {@render field()}
     {:else if bulk || activeOptions.has(key)}
         {@const expanded = bulk ? applied.has(key) : true}
+        {@const helpText = helpMessage(key)}
+        {@const docsUrl = optionHelpDocs[key]}
         <div class="field optional-field" class:inline={inline}>
             <div class="option-field-label">
                 {#if bulk}
@@ -271,14 +387,49 @@
                 {:else}
                     <span>{label}</span>
                 {/if}
-                {#if key === 'tags'}
-                    <span
-                        class="option-help"
-                        title={t(
-                            'host-tags-input.tags-are-not-visible-to-end-users-tag-will-be-sent-with-raw-subscription-only'
-                        )}
-                        ><Icon name="HiQuestionMarkCircle" size={16} /></span
-                    >
+                {#if key === 'serverDescription' || helpText}
+                    <Tooltip multiline width={280}>
+                        {#snippet tip()}
+                            {#if key === 'serverDescription'}
+                                <div class="help-popover">
+                                    <p>{t('base-host-form.server-description-1')}</p>
+                                    <p>{t('base-host-form.server-description-2')}</p>
+                                    <strong class="help-popover-title"
+                                        >{t('base-host-form.supported-clients')}</strong
+                                    >
+                                    <p>
+                                        Mihomo: FlClash X, Flowvy, prizrak-box, Koala Clash<br>
+                                        Xray: Happ, Incy
+                                    </p>
+                                </div>
+                            {:else}
+                                <span class="help-pre">{helpText}</span>
+                            {/if}
+                        {/snippet}
+                        <button
+                            type="button"
+                            class="mantine-UnstyledButton-root option-help"
+                            aria-label={label}
+                        >
+                            <Icon name="HiQuestionMarkCircle" size={16} />
+                        </button>
+                    </Tooltip>
+                {/if}
+                {#if docsUrl}
+                    <Tooltip text="Docs">
+                        <a
+                            class="option-docs"
+                            href={docsUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={`${label} Docs`}
+                        >
+                            <Icon name="TbExternalLink" size={14} />
+                        </a>
+                    </Tooltip>
+                {/if}
+                {#if headerControl}
+                    <div class="option-header-control">{@render headerControl()}</div>
                 {/if}
             </div>
             {#if expanded}
@@ -627,8 +778,21 @@
                     onchange={() => onfieldchange('tags')}
                 />
             {/snippet}
-            {@render entry('internalSquads', t('constants.internal-squads'), access)}
-            {#snippet access()}
+            {@render entry('nodes', t('constants.nodes'), assignedNodes)}
+            {#snippet assignedNodes()}
+                <MultiSelect
+                    name="nodes"
+                    label={t('constants.nodes')}
+                    hideLabel
+                    options={nodeSelectOptions(nodes.data ?? [], hostNodes)}
+                    bind:values={hostNodes}
+                    onchange={() => onfieldchange('nodes')}
+                />
+                {#if nodes.error}
+                    <p role="alert">{nodes.error.message}</p>
+                {/if}
+            {/snippet}
+            {#snippet squadModeControl()}
                 <fieldset class="squad-mode" aria-label={t('base-host-form.access-mode')}>
                     {#each Object.values(INTERNAL_SQUADS_MODE) as mode (mode)}
                         <label>
@@ -649,6 +813,15 @@
                         </label>
                     {/each}
                 </fieldset>
+            {/snippet}
+            {@render entry(
+                'internalSquads',
+                t('constants.internal-squads'),
+                access,
+                false,
+                squadModeControl
+            )}
+            {#snippet access()}
                 <MultiSelect
                     name="internalSquads:squads"
                     label={t('constants.internal-squads')}
@@ -660,45 +833,79 @@
                     <p role="alert">{squads.error.message}</p>
                 {/if}
             {/snippet}
-            {@render entry('nodes', t('constants.nodes'), assignedNodes)}
-            {#snippet assignedNodes()}
-                <MultiSelect
-                    name="nodes"
-                    label={t('constants.nodes')}
-                    hideLabel
-                    options={namedOptions(nodes.data ?? [], hostNodes)}
-                    bind:values={hostNodes}
-                    onchange={() => onfieldchange('nodes')}
-                />
-                {#if nodes.error}
-                    <p role="alert">{nodes.error.message}</p>
-                {/if}
-            {/snippet}
-            {@render entry(
-                'xrayJsonTemplateUuid',
-                t('base-host-form.xray-json-template'),
-                template
+        </div>
+    </div>
+
+    <div class="option-group" hidden={!bulk && !hasOption(securityFields)}>
+        <div class="option-label">{t('base-host-form.group-security')}</div>
+        <div class="fields">
+            {@render scalar('sni', t('base-host-form.sni'), optionValue('sni') ?? '')}
+            {@render hostSwitch(
+                'overrideSniFromAddress',
+                t('base-host-form.override-sni-from-address')
             )}
-            {#snippet template()}
-                {@const savedTemplate = optionValue('xrayJsonTemplateUuid')}
+            {@render hostSwitch('keepSniBlank', t('base-host-form.keep-sni-blank'))}
+            {@render selectOption(
+                'securityLayer',
+                t('base-host-form.security-layer'),
+                Object.values(SECURITY_LAYERS),
+                optionValue('securityLayer') ?? SECURITY_LAYERS.DEFAULT,
+                false
+            )}
+            {@render entry('fingerprint', t('base-host-form.fingerprint'), fingerprintControl)}
+            {#snippet fingerprintControl()}
                 <SelectField
-                    name="xrayJsonTemplateUuid"
-                    label={t('base-host-form.xray-json-template')}
+                    name="fingerprint"
+                    label={t('base-host-form.fingerprint')}
                     hideLabel
-                    placeholder={t('common.message.not-set')}
-                    options={namedOptions(
-                        templates.data?.templates.filter(
-                            (item) => item.templateType === SUBSCRIPTION_TEMPLATE_TYPE.XRAY_JSON
-                        ) ?? [],
-                        savedTemplate ? [savedTemplate] : []
-                    )}
-                    value={selectValues.get('xrayJsonTemplateUuid') ?? savedTemplate ?? ''}
-                    onchoose={(value) => setOption('xrayJsonTemplateUuid', value)}
+                    placeholder="chrome"
+                    autocomplete="suggest"
+                    options={FINGERPRINTS.map((value) => ({ value, label: value }))}
+                    value={fingerprint}
+                    onchoose={(value) => {
+                        fingerprint = value
+                        onfieldchange('fingerprint')
+                    }}
                 />
-                {#if templates.error}
-                    <p role="alert">{templates.error.message}</p>
-                {/if}
             {/snippet}
+        </div>
+    </div>
+
+    <div class="option-group" hidden={!bulk && !hasOption(transportFields)}>
+        <div class="option-label">{t('base-host-form.group-transport')}</div>
+        <div class="fields">
+            {@render entry('vlessRouteId', t('base-host-form.vless-route-id'), routeId)}
+            {#snippet routeId()}
+                <input
+                    name="vlessRouteId"
+                    aria-label={t('base-host-form.vless-route-id')}
+                    type="number"
+                    min="0"
+                    max="65535"
+                    step="1"
+                    value={optionValue('vlessRouteId') ?? ''}
+                >
+            {/snippet}
+            {@render scalar('host', t('base-host-form.host'), optionValue('host') ?? '')}
+            {@render scalar('path', t('base-host-form.path'), optionValue('path') ?? '')}
+            {@render selectOption(
+                'alpn',
+                t('base-host-form.alpn'),
+                Object.values(ALPN),
+                optionValue('alpn') ?? ''
+            )}
+        </div>
+    </div>
+
+    <div class="option-group" hidden={!bulk && !hasOption(subscriptionFields)}>
+        <div class="option-label">{t('base-host-form.group-subscription')}</div>
+        <div class="fields">
+            {@render scalar(
+                'serverDescription',
+                t('base-host-form.server-description-header'),
+                optionValue('serverDescription') ?? '',
+                30
+            )}
             {@render entry(
                 'excludeFromSubscriptionTypes',
                 t('base-host-form.exclude-from-subscription-type'),
@@ -709,21 +916,35 @@
                     class="subscription-types"
                     aria-label={t('base-host-form.exclude-from-subscription-type')}
                 >
-                    <div class="type-options">
-                        {#each Object.values(SUBSCRIPTION_TEMPLATE_TYPE) as type (type)}
-                            <label>
+                    <div class="chip-grid">
+                        {#each subscriptionTypeItems as item (item.value)}
+                            {@const checked = excludedSubscriptions.includes(item.value)}
+                            <label class="chip-card" class:checked>
                                 <input
                                     type="checkbox"
                                     name="excludeFromSubscriptionTypes"
-                                    value={type}
-                                    checked={excludedSubscriptions.includes(type)}
+                                    value={item.value}
+                                    {checked}
                                     onchange={(event) => {
                                         excludedSubscriptions = event.currentTarget.checked
-                                            ? [...excludedSubscriptions, type]
-                                            : excludedSubscriptions.filter((item) => item !== type)
+                                            ? [...excludedSubscriptions, item.value]
+                                            : excludedSubscriptions.filter(
+                                                  (val) => val !== item.value
+                                              )
+                                        onfieldchange('excludeFromSubscriptionTypes')
                                     }}
                                 >
-                                <span class="choice">{type}</span>
+                                <span class="chip-left">
+                                    <span class="chip-indicator" aria-hidden="true">
+                                        {#if checked}
+                                            <Icon name="TbCheck" size={12} />
+                                        {/if}
+                                    </span>
+                                    <span class="chip-label">{item.label}</span>
+                                </span>
+                                <span class="chip-icon" aria-hidden="true">
+                                    <Icon name={item.icon} size={16} />
+                                </span>
                             </label>
                         {/each}
                     </div>
@@ -747,79 +968,39 @@
                     onchange={() => onfieldchange('includeInSrrRules')}
                 />
             {/snippet}
+            {@render hostSwitch('isHidden', t('base-host-form.hide-host'))}
+            {@render hostSwitch('shuffleHost', t('base-host-form.shuffle-host'))}
         </div>
     </div>
 
-    <div class="option-group" hidden={!bulk && !hasOption(securityFields)}>
-        <div class="option-label">{t('base-host-form.group-security')}</div>
-        <div class="fields">
-            {@render selectOption(
-                'securityLayer',
-                t('base-host-form.security-layer'),
-                Object.values(SECURITY_LAYERS),
-                optionValue('securityLayer') ?? SECURITY_LAYERS.DEFAULT,
-                false
-            )}
-            {@render selectOption(
-                'alpn',
-                t('base-host-form.alpn'),
-                Object.values(ALPN),
-                optionValue('alpn') ?? ''
-            )}
-            {#each Object.entries(textOptions) as [key, label] (key)}
-                {#if key === 'fingerprint'}
-                    {@render entry('fingerprint', t(label), fingerprintControl)}
-                {:else}
-                    {@render scalar(
-                        key as keyof typeof textOptions,
-                        t(label),
-                        optionValue(key as keyof typeof textOptions) ?? '',
-                        key === 'serverDescription' ? 30 : undefined
-                    )}
-                {/if}
-            {/each}
-            {#snippet fingerprintControl()}
-                <SelectField
-                    name="fingerprint"
-                    label={t('base-host-form.fingerprint')}
-                    hideLabel
-                    placeholder="chrome"
-                    autocomplete="suggest"
-                    options={FINGERPRINTS.map((value) => ({ value, label: value }))}
-                    value={fingerprint}
-                    onchoose={(value) => {
-                        fingerprint = value
-                        onfieldchange('fingerprint')
-                    }}
-                />
-            {/snippet}
-            {#each Object.entries(switches).slice(1) as [key, label] (key)}
-                {@render hostSwitch(key as keyof typeof switches, t(label))}
-            {/each}
-            {@render entry('vlessRouteId', t('base-host-form.vless-route-id'), routeId)}
-            {#snippet routeId()}
-                <input
-                    name="vlessRouteId"
-                    aria-label={t('base-host-form.vless-route-id')}
-                    type="number"
-                    min="0"
-                    max="65535"
-                    step="1"
-                    value={optionValue('vlessRouteId') ?? ''}
-                >
-            {/snippet}
-            {@render selectOption(
-                'mihomoIpVersion',
-                t('base-host-form.mihomo-ip-version'),
-                Object.values(MIHOMO_IP_VERSION),
-                optionValue('mihomoIpVersion') ?? ''
-            )}
-        </div>
-    </div>
-
-    <div class="option-group" hidden={!bulk && !hasOption(jsonOptions)}>
+    <div class="option-group" hidden={!bulk && !hasOption(advancedFields)}>
         <div class="option-label">{t('base-host-form.group-advanced')}</div>
         <div class="fields">
+            {@render entry(
+                'xrayJsonTemplateUuid',
+                t('base-host-form.xray-json-template'),
+                template
+            )}
+            {#snippet template()}
+                {@const savedTemplate = optionValue('xrayJsonTemplateUuid')}
+                <SelectField
+                    name="xrayJsonTemplateUuid"
+                    label={t('base-host-form.xray-json-template')}
+                    hideLabel
+                    placeholder={t('base-host-form.select-a-xray-json-template')}
+                    options={namedOptions(
+                        templates.data?.templates.filter(
+                            (item) => item.templateType === SUBSCRIPTION_TEMPLATE_TYPE.XRAY_JSON
+                        ) ?? [],
+                        savedTemplate ? [savedTemplate] : []
+                    )}
+                    value={selectValues.get('xrayJsonTemplateUuid') ?? savedTemplate ?? ''}
+                    onchoose={(value) => setOption('xrayJsonTemplateUuid', value)}
+                />
+                {#if templates.error}
+                    <p role="alert">{templates.error.message}</p>
+                {/if}
+            {/snippet}
             {#each Object.entries(jsonOptions) as [field, label] (field)}
                 {@const key = field as keyof typeof jsonOptions}
                 {@render entry(key, t(label), jsonControl, true)}
@@ -833,6 +1014,29 @@
                     />
                 {/snippet}
             {/each}
+        </div>
+    </div>
+
+    <div class="option-group" hidden={!bulk && !hasOption(clientFields)}>
+        <div class="option-label">{t('base-host-form.group-client')}</div>
+        <div class="fields">
+            {@render scalar(
+                'pinnedPeerCertSha256',
+                t('base-host-form.pinned-peer-cert-sha256'),
+                optionValue('pinnedPeerCertSha256') ?? ''
+            )}
+            {@render scalar(
+                'verifyPeerCertByName',
+                t('base-host-form.verify-peer-cert-by-name'),
+                optionValue('verifyPeerCertByName') ?? ''
+            )}
+            {@render hostSwitch('mihomoX25519', t('base-host-form.enable-x25519mlkem768'))}
+            {@render selectOption(
+                'mihomoIpVersion',
+                t('base-host-form.mihomo-ip-version'),
+                Object.values(MIHOMO_IP_VERSION),
+                optionValue('mihomoIpVersion') ?? ''
+            )}
         </div>
     </div>
 </section>
@@ -978,62 +1182,124 @@
     .essential-fields input::placeholder {
         color: var(--mantine-color-placeholder);
     }
-    .squad-mode,
+    .squad-mode {
+        min-width: 0;
+        margin: 0;
+        border: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        width: fit-content;
+        padding: 3px;
+        border-radius: var(--mantine-radius-md);
+        background: var(--mantine-color-default);
+    }
     .subscription-types {
         min-width: 0;
         margin: 0;
         border: 0;
-    }
-    .subscription-types {
         padding: 0;
-    }
-    .squad-mode,
-    .type-options {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
         gap: 5px;
+        font-size: var(--mantine-font-size-sm);
     }
-    .squad-mode {
-        width: fit-content;
-        padding: 4px;
-        border-radius: var(--mantine-radius-md);
-        background: var(--mantine-color-default);
-    }
-    .squad-mode label,
-    .type-options label {
+    .squad-mode label {
         position: relative;
     }
-    :is(.squad-mode, .type-options) input {
+    :is(.squad-mode, .chip-card) input {
         position: absolute;
         width: 1px;
         height: 1px;
         opacity: 0;
+        pointer-events: none;
     }
     .choice {
-        padding: 4px var(--mantine-spacing-sm);
-        border-radius: var(--mantine-radius-md);
+        padding: 3px var(--mantine-spacing-xs);
+        border-radius: var(--mantine-radius-sm);
         color: var(--mantine-color-dimmed);
+        font-size: var(--mantine-font-size-xs);
+        font-weight: 500;
         cursor: pointer;
     }
-    .type-options .choice {
-        border: 1px solid var(--mantine-color-default-border);
-    }
-    :is(.squad-mode, .type-options) input:focus-visible + .choice {
+    .squad-mode input:focus-visible + .choice {
         outline: 2px solid var(--mantine-color-cyan-6);
     }
     .squad-mode input:checked + .choice {
         background: var(--mantine-color-body);
         color: var(--mantine-color-text);
     }
-    .type-options input:checked + .choice {
-        border-color: var(--mantine-color-cyan-6);
-        background: var(--mantine-color-cyan-light);
-        color: var(--mantine-color-cyan-light-color);
-    }
-    .subscription-types {
+    .chip-grid {
         display: grid;
-        gap: 5px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--mantine-spacing-xs);
+        margin-top: 4px;
+    }
+    @media (max-width: 40em) {
+        .chip-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (max-width: 30em) {
+        .chip-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+    .chip-card {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--mantine-spacing-xs);
+        padding: 8px 12px;
+        border-radius: var(--mantine-radius-md);
+        background: var(--mantine-color-dark-6);
+        border: 1px solid var(--mantine-color-dark-3);
+        cursor: pointer;
+        transition: all 150ms ease;
+    }
+    .chip-card:has(input:focus-visible) {
+        outline: 2px solid var(--mantine-primary-color-filled);
+        outline-offset: 2px;
+    }
+    .chip-card.checked {
+        border-color: var(--mantine-color-red-9);
+    }
+    .chip-left {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--mantine-spacing-xs);
+        min-width: 0;
+    }
+    .chip-indicator {
+        display: inline-grid;
+        place-items: center;
+        flex: none;
+        width: 18px;
+        height: 18px;
+        border-radius: var(--mantine-radius-sm);
+        border: 1px solid var(--mantine-color-default-border);
+        background: var(--mantine-color-default);
+        color: var(--mantine-color-white);
+        transition:
+            background-color 150ms ease,
+            border-color 150ms ease;
+    }
+    .chip-card.checked .chip-indicator {
+        border-color: var(--mantine-color-red-filled);
+        background: var(--mantine-color-red-filled);
+    }
+    .chip-label {
         font-size: var(--mantine-font-size-sm);
+        font-weight: 600;
+        color: var(--mantine-color-bright);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .chip-icon {
+        display: inline-flex;
+        flex: none;
+        color: var(--mantine-color-text);
     }
     .inbound-select {
         display: flex;
@@ -1173,8 +1439,31 @@
         font-weight: var(--mantine-font-weight-medium);
     }
     .option-help {
-        display: grid;
+        display: inline-grid;
         color: var(--mantine-color-gray-light-color);
+        cursor: help;
+    }
+    .option-docs {
+        display: inline-grid;
+        color: var(--mantine-color-dimmed);
+    }
+    .option-docs:hover {
+        color: var(--mantine-color-bright);
+    }
+    .option-header-control {
+        margin-inline-start: auto;
+        flex-shrink: 0;
+    }
+    .help-pre {
+        white-space: pre-line;
+    }
+    .help-popover {
+        display: grid;
+        gap: 6px;
+        font-size: var(--mantine-font-size-xs);
+    }
+    .help-popover-title {
+        color: var(--mantine-color-white);
     }
     .option-control {
         display: grid;
@@ -1186,6 +1475,20 @@
     .reset-option {
         grid-column: 2;
         grid-row: 1;
+        opacity: 0.45;
+        transition: opacity 120ms ease;
+    }
+    .inline .reset-option {
+        grid-column: 3;
+    }
+    .optional-field:hover .reset-option,
+    .optional-field:focus-within .reset-option {
+        opacity: 1;
+    }
+    @media (hover: none) {
+        .reset-option {
+            opacity: 1;
+        }
     }
     .optional-field.inline {
         grid-template-columns: minmax(0, 1fr) auto auto;
@@ -1193,9 +1496,6 @@
     .inline .option-control {
         grid-column: 2;
         grid-row: 1;
-    }
-    .inline .reset-option {
-        grid-column: 3;
     }
     .empty-options {
         display: grid;

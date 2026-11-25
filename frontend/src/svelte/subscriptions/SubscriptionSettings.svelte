@@ -14,6 +14,7 @@
     import Button from '../ui/Button.svelte'
     import HelpDrawer from '../ui/HelpDrawer.svelte'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
     import Switch from '../ui/Switch.svelte'
     import HwidFields from './HwidFields.svelte'
@@ -58,7 +59,6 @@
     type Section = Tab | 'hwid'
 
     let section = $state<Tab>('general')
-    let notice = $state('')
     let headersHelp = $state(false)
     let remarksRevision = $state(0)
     let headersRevision = $state(0)
@@ -84,7 +84,11 @@
             queryClient.setQueryData(subscriptionSettingsQuery.queryKey, updated)
             if (target === 'remarks') remarksRevision += 1
             if (target === 'headers') headersRevision += 1
-            notice = t('common.message.operation-completed')
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
         }
     }))
 
@@ -111,7 +115,6 @@
     function selectSection(next: Tab): void {
         if (section === next) return
         section = next
-        notice = ''
         save.reset()
     }
 
@@ -145,7 +148,6 @@
     function submit(event: SubmitEvent, target: Section): void {
         event.preventDefault()
         if (save.isPending || !(event.currentTarget instanceof HTMLFormElement)) return
-        notice = ''
         save.mutate({ data: new FormData(event.currentTarget), target })
     }
 </script>
@@ -318,9 +320,6 @@
                     {/if}
                 </div>
             {/each}
-            {#if notice}
-                <p role="status">{notice}</p>
-            {/if}
             {#if save.error}
                 <p role="alert">{save.error.message}</p>
             {/if}

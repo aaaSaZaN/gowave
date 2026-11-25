@@ -24,6 +24,7 @@
     import { entityOrder } from '../ui/entity-order'
     import HelpDrawer from '../ui/HelpDrawer.svelte'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
     import RenameDialog from '../ui/RenameDialog.svelte'
     import { usersQueryKey } from '../users/queries'
@@ -37,8 +38,6 @@
     let helpOpen = $state(false)
     let tag = $state('')
     let creating = $state(false)
-    let notice = $state('')
-    let copyError = $state('')
     let ordered = $derived(squads.data?.externalSquads ?? [])
     let visible = $derived(
         ordered.filter(
@@ -137,11 +136,19 @@
     )
 
     function copyUuid(uuid: string): void {
-        notice = ''
-        copyError = ''
         void navigator.clipboard.writeText(uuid).then(
-            () => (notice = uuid),
-            (error: unknown) => (copyError = error instanceof Error ? error.message : String(error))
+            () =>
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: uuid,
+                    color: 'teal'
+                }),
+            (error: unknown) =>
+                notifications.show({
+                    title: t('common.message.error'),
+                    message: error instanceof Error ? error.message : String(error),
+                    color: 'red'
+                })
         )
     }
 </script>
@@ -305,14 +312,8 @@
                 </ul>
             {/if}
         {/if}
-        {#if notice}
-            <p role="status">{notice}</p>
-        {/if}
         {#if update.isError}
             <p role="alert">{update.error.message}</p>
-        {/if}
-        {#if copyError}
-            <p role="alert">{copyError}</p>
         {/if}
     {/if}
     {#if creating}

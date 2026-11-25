@@ -33,6 +33,7 @@
     import Button from '../ui/Button.svelte'
     import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
 
     let {
         settings,
@@ -48,7 +49,6 @@
     let dirty = $derived(draft !== saved)
     let current = $state.raw<editor.IStandaloneCodeEditor | null>(null)
     let importOpen = $state(false)
-    let notice = $state('')
     let error = $state('')
     let curlCommand = $state('')
     let warning: HTMLDialogElement
@@ -69,7 +69,11 @@
             saved = JSON.stringify(updated.responseRules, null, 2)
             draft = saved
             queryClient.setQueryData(['subscriptionSettings', 'getSubscriptionSettings'], updated)
-            notice = t('response-rules-editor-actions.feature.saved')
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('response-rules-editor-actions.feature.saved'),
+                color: 'teal'
+            })
         },
         onError: (reason) => {
             if (reason instanceof ZodError) {
@@ -106,12 +110,10 @@
 
     function changeDraft(value: string): void {
         draft = value
-        notice = ''
         error = ''
     }
 
     function parseDraft(): { value: unknown } | undefined {
-        notice = ''
         error = ''
         try {
             const value: unknown = JSON.parse(draft)
@@ -140,12 +142,20 @@
         changeDraft(text)
         await tick()
         await formatDocument()
-        notice = t('use-download-template.template-loaded')
+        notifications.show({
+            title: t('use-download-template.template-loaded'),
+            message: '',
+            color: 'teal'
+        })
     }
 
     function copy(text: string): void {
         void navigator.clipboard.writeText(text).then(() => {
-            notice = t('common.message.copied')
+            notifications.show({
+                title: t('common.message.copied'),
+                message: '',
+                color: 'teal'
+            })
         }, report)
     }
 
@@ -183,9 +193,7 @@
     />
     {#snippet status()}
         {#if error}
-            <p class="editor-output" role="alert">{error}</p>
-        {:else if notice}
-            <p class="editor-output" role="status">{notice}</p>
+            <p class="editor-output" role="alert"><code>{error}</code></p>
         {/if}
     {/snippet}
     {#snippet actions()}
@@ -196,7 +204,12 @@
             saveDisabled={!dirty}
             saveTone={dirty ? 'teal' : 'gray'}
             onsave={saveRules}
-            oncopy={() => (notice = t('common.message.copied'))}
+            oncopy={() =>
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: '',
+                    color: 'teal'
+                })}
             onload={() => (importOpen = true)}
             onerror={report}
         >
@@ -388,6 +401,13 @@
         margin: 0;
         overflow: auto;
         white-space: pre-wrap;
+        background: rgb(241 65 65 / 10%);
+        border-top: 1px solid rgb(241 65 65);
+    }
+    .editor-output code {
+        font-family: var(--mantine-font-family-monospace);
+        font-size: var(--mantine-font-size-xs);
+        color: var(--mantine-color-red-4);
     }
 
     textarea {

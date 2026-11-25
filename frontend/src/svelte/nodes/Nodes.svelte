@@ -7,13 +7,13 @@
     } from '@remnawave/backend-contract'
     import { NO_TAG } from '@shared/constants/tag-filter'
     import { type Move, moveSelection } from '@shared/lib/move-selection'
-    import { fixedVirtualWindow } from '@shared/lib/virtual-layout'
+    import { fixedVirtualWindow, virtualLayout } from '@shared/lib/virtual-layout'
     import {
         prettifyBytesUtil,
         prettySiRealtimeBytesUtil
     } from '@shared/utils/bytes/pretty-bytes/pretty-bytes.util'
     import { createMutation, createQuery } from '@tanstack/svelte-query'
-    import { MediaQuery, SvelteSet } from 'svelte/reactivity'
+    import { MediaQuery, SvelteMap, SvelteSet } from 'svelte/reactivity'
     import { executeCommand, submitCommand, submitVoidCommand } from '../commands'
     import { profilesQuery } from '../config-profiles/queries'
     import { locale } from '../i18n.svelte'
@@ -28,6 +28,7 @@
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
     import EntityTagBar from '../ui/EntityTagBar.svelte'
     import MetricCard from '../ui/MetricCard.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
     import { type EntityViewMode, readNodeView, writeNodeView } from '../view-preferences'
     import { type NodeAction, nodeActionLabels, runNodeAction } from './actions'
@@ -140,12 +141,36 @@
     let height = $state(0)
     let offset = $state(0)
     const mobile = new MediaQuery('(max-width: 48em)')
+    const cardSizes = new SvelteMap<string, number>()
     let rowHeight = $derived(mode === 'table' ? 50 : mobile.current ? 190 : 90)
     let range = $derived(fixedVirtualWindow(visible.length, rowHeight, offset, height))
+    let cardLayout = $derived(
+        mode === 'cards'
+            ? virtualLayout(
+                  {
+                      count: visible.length,
+                      estimateSize: () => rowHeight,
+                      getItemKey: (index) => visible[index]?.uuid ?? index,
+                      overscan: 4
+                  },
+                  { offset, height },
+                  cardSizes
+              )
+            : undefined
+    )
+    let cardItems = $derived(cardLayout?.virtualItems ?? [])
+    let cardTop = $derived(cardItems[0]?.start ?? 0)
+    let cardBottom = $derived(
+        cardItems.length
+            ? Math.max(
+                  0,
+                  (cardLayout?.totalSize ?? 0) - (cardItems[cardItems.length - 1]?.end ?? 0)
+              )
+            : 0
+    )
     let rows = $derived(visible.slice(range.from, range.to))
     let dialog: HTMLDialogElement
     let edit = $state<{ mode: EditMode; ids: string[] }>()
-    let notice = $state('')
 
     const update = createMutation(() => ({
         mutationFn: async (
@@ -175,7 +200,11 @@
             }
         },
         onSuccess: () => {
-            notice = t('common.message.operation-completed')
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
         },
         onSettled: () => queryClient.invalidateQueries({ queryKey: nodesKey })
     }))
@@ -255,7 +284,6 @@
         const current = ordered.map(({ uuid }) => uuid)
         const next = moveSelection(current, selection, direction)
         if (next.every((uuid, index) => uuid === current[index])) return
-        notice = ''
         update.mutate({ kind: 'order', ids: next })
     }
 
@@ -267,7 +295,6 @@
         if (from < 0 || to < 0) return
         ids.splice(from, 1)
         ids.splice(to, 0, source)
-        notice = ''
         update.mutate({ kind: 'order', ids })
     }
 
@@ -278,7 +305,6 @@
             !window.confirm(t('common.message.confirm-action-description'))
         )
             return
-        notice = ''
         if (uuid) update.mutate({ kind: 'one', uuid, action })
         else if (action !== 'delete' && selected.length)
             update.mutate({ kind: 'bulk', ids: selected, action })
@@ -470,31 +496,35 @@
             >
                 {#if mode === 'cards'}
                     <ul aria-label={t('constants.nodes')}>
-                        <li aria-hidden="true" style:height={`${range.from * rowHeight}px`}></li>
-                        {#each rows as node (node.uuid)}
-                            <NodeCard
-                                {node}
-                                status={nodeState(node)}
-                                height={rowHeight}
-                                mobile={mobile.current}
-                                plugin={node.activePluginUuid
-                                    ? pluginNames.get(node.activePluginUuid)
-                                    : undefined}
-                                onopen={(event) => openNode(node.uuid, event)}
-                                reorder={canReorder && !update.isPending ? reorder : undefined}
-                            >
-                                {#snippet selection()}
-                                    {@render select(node)}
-                                {/snippet}
-                                {#snippet actions()}
-                                    {@render nodeActions(node)}
-                                {/snippet}
-                            </NodeCard>
+                        <li aria-hidden="true" style:height={`${cardTop}px`}></li>
+                        {#each cardItems as item (item.key)}
+                            {@const node = visible[item.index]}
+                            {#if node}
+                                <NodeCard
+                                    {node}
+                                    status={nodeState(node)}
+                                    height={rowHeight}
+                                    mobile={mobile.current}
+                                    plugin={node.activePluginUuid
+                                        ? pluginNames.get(node.activePluginUuid)
+                                        : undefined}
+                                    onmeasure={(measured) => {
+                                        if (cardSizes.get(node.uuid) !== measured)
+                                            cardSizes.set(node.uuid, measured)
+                                    }}
+                                    onopen={(event) => openNode(node.uuid, event)}
+                                    reorder={canReorder && !update.isPending ? reorder : undefined}
+                                >
+                                    {#snippet selection()}
+                                        {@render select(node)}
+                                    {/snippet}
+                                    {#snippet actions()}
+                                        {@render nodeActions(node)}
+                                    {/snippet}
+                                </NodeCard>
+                            {/if}
                         {/each}
-                        <li
-                            aria-hidden="true"
-                            style:height={`${(visible.length - range.to) * rowHeight}px`}
-                        ></li>
+                        <li aria-hidden="true" style:height={`${cardBottom}px`}></li>
                     </ul>
                 {:else}
                     <table aria-label={t('constants.nodes')}>
@@ -544,9 +574,6 @@
             </div>
         {/if}
     {/if}
-    {#if notice}
-        <p role="status">{notice}</p>
-    {/if}
     {#if update.error}
         <p role="alert">{update.error.message}</p>
     {/if}
@@ -579,7 +606,11 @@
                 ids={edit.ids}
                 profileOnly={edit.mode === 'profile'}
                 onsaved={() => {
-                    notice = t('common.message.operation-completed')
+                    notifications.show({
+                        title: t('common.message.success'),
+                        message: t('common.message.operation-completed'),
+                        color: 'teal'
+                    })
                     dismissDialog(dialog)
                 }}
             />

@@ -33,6 +33,7 @@
     import Button from '../ui/Button.svelte'
     import FormCard from '../ui/FormCard.svelte'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import SelectField from '../ui/SelectField.svelte'
     import Switch from '../ui/Switch.svelte'
     import { COUNTRIES } from './countries'
@@ -99,7 +100,6 @@
     let notifyPercent = $state<number | undefined>(
         untrack(() => initial?.notifyPercent ?? undefined)
     )
-    let notice = $state('')
     let problem = $state('')
 
     const save = createMutation(() => ({
@@ -140,7 +140,11 @@
             }
             await queryClient.invalidateQueries({ queryKey: nodesKey })
             changed.clear()
-            notice = t('common.message.operation-completed')
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
             onsaved(result)
         }
     }))
@@ -160,7 +164,6 @@
     function markProfile(dirty: boolean): void {
         if (dirty) changed.add('configProfile')
         else changed.delete('configProfile')
-        notice = ''
         problem = ''
     }
 
@@ -176,7 +179,6 @@
             return
         const key = target.name
         if (key) changed.add(key === 'profile' || key === 'inbounds' ? 'configProfile' : key)
-        notice = ''
         problem = ''
     }
 
@@ -248,7 +250,6 @@
     function setTrafficLimit(event: Event & { currentTarget: HTMLInputElement }): void {
         limitBytes = unitToBytesUtil(event.currentTarget.value, unit)
         changed.add('trafficLimitBytes')
-        notice = ''
         problem = ''
     }
 
@@ -260,7 +261,6 @@
         if (field === 'providerUuid') providerUuid = value
         else activePluginUuid = value
         changed.add(field)
-        notice = ''
         problem = ''
     }
 
@@ -325,7 +325,6 @@
                             (value) => {
         countryCode = value
         changed.add('countryCode')
-        notice = ''
         problem = ''
     }
                         }
@@ -668,9 +667,6 @@
     </fieldset>
     {#if problem || save.error}
         <p role="alert">{problem || save.error?.message}</p>
-    {/if}
-    {#if notice}
-        <p role="status">{notice}</p>
     {/if}
     <div class="footer">
         {@render actions?.()}

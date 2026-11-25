@@ -13,6 +13,7 @@
     import { queryClient } from '../query-client'
     import ApplyToNodes from '../ui/ApplyToNodes.svelte'
     import Button from '../ui/Button.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import { readSharedListConfig } from './config'
     import { sharedListQuery, sharedListsQuery } from './queries'
 
@@ -32,7 +33,6 @@
     )
     let persistedName = $state(untrack(() => existingName))
     let ready = $state(false)
-    let notice = $state('')
     let problem = $state('')
     let choosingApply = $state(false)
 
@@ -55,13 +55,16 @@
             submitVoidCommand(SyncSharedListCommand, { name: listName }),
         onSuccess: close,
         onError: () => {
-            notice = t('common.message.operation-completed')
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
         }
     }))
 
     function submit(sync: boolean): void {
         problem = ''
-        notice = ''
         save.reset()
         apply.reset()
         if (!name.trim()) {
@@ -87,7 +90,6 @@
             onchange={(text) => {
                 draft = text
                 problem = ''
-                notice = ''
             }}
             onready={(instance) => {
                 ready = Boolean(instance)
@@ -95,9 +97,6 @@
             }}
         />
     </div>
-    {#if notice}
-        <p role="status">{notice}</p>
-    {/if}
     {#if problem || save.error || apply.error}
         <p role="alert">{problem || save.error?.message || apply.error?.message}</p>
     {/if}

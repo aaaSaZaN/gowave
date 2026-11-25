@@ -8,6 +8,7 @@
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import { sharedListQuery, sharedListsQuery } from './queries'
     import SharedListEditor from './SharedListEditor.svelte'
@@ -16,8 +17,6 @@
     let path = $state<string[]>([])
     let editing = $state<string | null>()
     let search = $state('')
-    let notice = $state('')
-    let failure = $state('')
     let t = $derived(locale.t)
     const list = createQuery(() => sharedListsQuery)
     const selected = createQuery(() => sharedListQuery(editing ?? ''))
@@ -40,7 +39,11 @@
                 queryClient.removeQueries({ queryKey: sharedListQuery(name).queryKey })
                 await queryClient.invalidateQueries({ queryKey: sharedListsQuery.queryKey })
             }
-            notice = t('common.message.operation-completed')
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
         }
     }))
 
@@ -50,15 +53,23 @@
                 ? t('shared-lists.modal.delete-description')
                 : t('apply-to-nodes.apply-description')
         if (!window.confirm(question)) return
-        notice = ''
         action.mutate({ kind, name })
     }
 
     function copy(name: string): void {
-        failure = ''
         void navigator.clipboard.writeText(`ext:${name}`).then(
-            () => (notice = t('common.message.copied')),
-            (error: unknown) => (failure = error instanceof Error ? error.message : String(error))
+            () =>
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: `ext:${name}`,
+                    color: 'teal'
+                }),
+            (error: unknown) =>
+                notifications.show({
+                    title: t('common.message.error'),
+                    message: error instanceof Error ? error.message : String(error),
+                    color: 'red'
+                })
         )
     }
 </script>
@@ -174,11 +185,8 @@
                 {/each}
             </ul>
         {/if}
-        {#if failure || action.error}
-            <p role="alert">{failure || action.error?.message}</p>
-        {/if}
-        {#if notice}
-            <p role="status">{notice}</p>
+        {#if action.error}
+            <p role="alert">{action.error.message}</p>
         {/if}
     {:else if editing === null}
         <SharedListEditor

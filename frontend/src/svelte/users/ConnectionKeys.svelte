@@ -6,6 +6,7 @@
     import EmptyState from '../ui/EmptyState.svelte'
     import FormCard from '../ui/FormCard.svelte'
     import JsonTree from '../ui/JsonTree.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import { connectionKeyLabel } from './delivery'
     import { connectionKeysQuery, rawSubscriptionQuery } from './queries'
@@ -16,8 +17,6 @@
     let t = $derived(locale.t)
     let showRaw = $state(false)
     let qr = $state<{ key: string; label: string }>()
-    let error = $state('')
-    let notice = $state('')
     const keys = createQuery(() => connectionKeysQuery(userId))
     const raw = createQuery(() => ({ ...rawSubscriptionQuery(shortUuid), enabled: showRaw }))
     let groups = $derived([
@@ -27,12 +26,19 @@
     ] as const)
 
     function copy(value: string): void {
-        error = ''
-        notice = ''
         void navigator.clipboard.writeText(value).then(
-            () => (notice = t('common.message.copied')),
+            () =>
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: value,
+                    color: 'teal'
+                }),
             (reason: unknown) =>
-                (error = reason instanceof Error ? reason.message : t('common.message.error'))
+                notifications.show({
+                    title: t('common.message.error'),
+                    message: reason instanceof Error ? reason.message : t('common.message.error'),
+                    color: 'red'
+                })
         )
     }
 </script>
@@ -49,12 +55,6 @@
         <Button block variant="soft" color="teal" icon="TbJson" onclick={() => (showRaw = true)}
             >Raw Subscription</Button
         >
-        {#if error}
-            <p role="alert">{error}</p>
-        {/if}
-        {#if notice}
-            <p role="status">{notice}</p>
-        {/if}
         {#if keys.isPending}
             <p role="status">{t('common.message.loading')}</p>
         {:else if keys.isError}
@@ -128,12 +128,6 @@
                     onclick={() => copy(JSON.stringify(raw.data, null, 4))}
                     >{t('common.action.copy')}</Button
                 >
-                {#if error}
-                    <p role="alert">{error}</p>
-                {/if}
-                {#if notice}
-                    <p role="status">{notice}</p>
-                {/if}
                 <JsonTree value={raw.data} indent={4} />
             </div>
         {/if}

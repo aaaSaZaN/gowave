@@ -21,6 +21,7 @@
     import { locale } from '../i18n.svelte'
     import Button from '../ui/Button.svelte'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
 
     let { request, dismiss }: { request: PanelUpdateRequest; dismiss: () => void } = $props()
     const started = Date.now()
@@ -73,7 +74,6 @@
                 : undefined
     )
     let copyError = $state('')
-    let copied = $state(false)
 
     onMount(() => {
         const controller = new AbortController()
@@ -118,10 +118,13 @@
 
     async function copy(value: string): Promise<void> {
         copyError = ''
-        copied = false
         try {
             await navigator.clipboard.writeText(value)
-            copied = true
+            notifications.show({
+                title: t('common.message.copied'),
+                message: value,
+                color: 'teal'
+            })
         } catch (failure) {
             copyError = getUpdateErrorMessage(failure, t('common.message.error'))
         }
@@ -159,9 +162,6 @@
     {#if command}
         <pre>{command}</pre>
         <button type="button" onclick={() => void copy(command)}>{t('common.action.copy')}</button>
-    {/if}
-    {#if copied}
-        <p role="status">{t('common.message.copied')}</p>
     {/if}
     {#if copyError}
         <p role="alert">{copyError}</p>

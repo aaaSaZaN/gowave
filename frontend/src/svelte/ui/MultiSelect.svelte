@@ -20,7 +20,13 @@
         placeholder?: string
         hideLabel?: boolean
         create?: boolean
-        options: readonly { value: string; label: string }[]
+        options: readonly {
+            value: string
+            label: string
+            name?: string
+            flag?: string
+            badge?: string
+        }[]
         values: string[]
         onchange: () => void
     } = $props()
@@ -174,7 +180,7 @@
             keyboardNavigation={false}
             {close}
         >
-            {#each filtered as { value, label: caption } (value)}
+            {#each filtered as { value, label: caption, name: itemName, flag: itemFlag, badge } (value)}
                 <button
                     type="button"
                     id={optionId(value)}
@@ -197,7 +203,13 @@
                             {/if}
                         </span>
                     {/if}
-                    {caption}
+                    {#if itemFlag}
+                        <span class="opt-flag" aria-hidden="true">{itemFlag}</span>
+                    {/if}
+                    <span class="opt-label">{itemName ?? caption}</span>
+                    {#if badge}
+                        <span class="opt-badge">{badge}</span>
+                    {/if}
                 </button>
             {:else}
                 <div class="empty">{locale.t('common.message.nothing-found')}</div>
@@ -241,15 +253,42 @@
     .pill {
         display: inline-flex;
         align-items: center;
+        gap: 2px;
         min-height: 20px;
-        padding-inline-end: 9px;
-        border: 1px solid var(--mantine-color-cyan-outline);
+        padding-inline: 2px 8px;
+        border: 1px solid rgba(21, 170, 191, 0.25);
         border-radius: var(--mantine-radius-sm);
         background: var(--mantine-color-cyan-light);
         color: var(--mantine-color-cyan-light-color);
         font-size: var(--mantine-font-size-xs);
-        font-weight: 700;
+        font-weight: 600;
         overflow-wrap: anywhere;
+    }
+    .pill button {
+        color: var(--mantine-color-cyan-4);
+    }
+    .opt-flag {
+        font-size: 1.05em;
+        line-height: 1;
+        flex: 0 0 auto;
+    }
+    .opt-label {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: start;
+    }
+    .opt-badge {
+        flex: 0 0 auto;
+        padding: 1px 6px;
+        border-radius: var(--mantine-radius-sm);
+        background: var(--mantine-color-gray-light);
+        color: var(--mantine-color-gray-light-color);
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
     }
     .pill button,
     .clear,

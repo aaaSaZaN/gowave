@@ -5,13 +5,12 @@
     import ActionIcon from '../ui/ActionIcon.svelte'
     import EmptyState from '../ui/EmptyState.svelte'
     import FormCard from '../ui/FormCard.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import { ipDetailsUrl, reportsForUser } from './queries'
 
     let { userId, close }: { userId: number; close: () => void } = $props()
     let t = $derived(locale.t)
-    let copyStatus = $state('')
-    let copyError = $state('')
     let page = $state(0)
     const size = 25
     const reports = createQuery(() => reportsForUser(userId, page, size))
@@ -25,11 +24,19 @@
     })
 
     function copy(value: string): void {
-        copyError = ''
-        copyStatus = ''
         void navigator.clipboard.writeText(value).then(
-            () => (copyStatus = t('common.message.copied')),
-            (error: unknown) => (copyError = error instanceof Error ? error.message : String(error))
+            () =>
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: value,
+                    color: 'teal'
+                }),
+            (error: unknown) =>
+                notifications.show({
+                    title: t('common.message.error'),
+                    message: error instanceof Error ? error.message : String(error),
+                    color: 'red'
+                })
         )
     }
 </script>
@@ -40,12 +47,6 @@
     {/if}
     {#if reports.error}
         <p role="alert">{reports.error.message}</p>
-    {/if}
-    {#if copyStatus}
-        <p role="status">{copyStatus}</p>
-    {/if}
-    {#if copyError}
-        <p role="alert">{copyError}</p>
     {/if}
     {#if reports.data}
         <div class="report-content">

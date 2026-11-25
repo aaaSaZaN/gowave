@@ -29,6 +29,7 @@
     import Icon from '../ui/Icon.svelte'
     import type { IconName } from '../ui/icons'
     import JsonTree from '../ui/JsonTree.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
     import SelectField from '../ui/SelectField.svelte'
@@ -87,7 +88,6 @@
     let search = $state('')
     let status = $state('')
     let sort = $state<{ column: Column; descending: boolean }>()
-    let notice = $state('')
     let bulkIds = $state.raw<string[] | undefined>()
     let scrollArea = $state<HTMLDivElement>()
     let height = $state(0)
@@ -163,7 +163,11 @@
         onSuccess: (_data, change) => {
             if ('action' in change) {
                 for (const { uuid } of change.items) selection.delete(uuid)
-                if (!notice) notice = t('common.message.operation-completed')
+                notifications.show({
+                    title: t('common.message.success'),
+                    message: t('common.message.operation-completed'),
+                    color: 'teal'
+                })
             }
         },
         onSettled: () => queryClient.invalidateQueries({ queryKey: hostsKey })
@@ -248,7 +252,6 @@
     }
 
     function apply(action: Action, items: Host[]): void {
-        notice = ''
         update.reset()
         const targets =
             action === 'clone'
@@ -257,7 +260,11 @@
                   )
                 : items
         if (targets.length === 0) {
-            notice = t('edit-host-modal.widget.dangling-host-cannot-be-cloned')
+            notifications.show({
+                title: t('common.message.error'),
+                message: t('edit-host-modal.widget.dangling-host-cannot-be-cloned'),
+                color: 'red'
+            })
             return
         }
         if (action === 'clone' || action === 'delete') {
@@ -271,14 +278,18 @@
         if (!confirmation || update.isPending) return
         const { action, items, skipped } = confirmation
         confirmation = undefined
-        if (skipped)
-            notice = t('multi-select-hosts.feature.dangling-hosts-skipped', { count: skipped })
+        if (skipped) {
+            notifications.show({
+                title: t('common.message.warning'),
+                message: t('multi-select-hosts.feature.dangling-hosts-skipped', { count: skipped }),
+                color: 'teal'
+            })
+        }
         update.mutate({ action, items })
     }
 
     function saveOrder(next: string[]): void {
         if (next.every((id, index) => id === ordered[index]?.uuid)) return
-        notice = ''
         update.mutate({ ordered: next })
     }
 
@@ -466,9 +477,6 @@
         {/if}
         {#if update.error}
             <p role="alert">{update.error.message}</p>
-        {/if}
-        {#if notice}
-            <p role="status">{notice}</p>
         {/if}
         {#if !filtered.length}
             <EmptyState icon="TbListCheck" label={t('common.message.nothing-found')} />

@@ -15,6 +15,7 @@
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
     import { templateQuery } from '../subscriptions/queries'
+    import { notifications } from '../ui/notification-state.svelte'
     import {
         type Template,
         type TemplateType,
@@ -36,7 +37,6 @@
     let dirty = $derived(draft !== saved)
     let showCatalog = $state(false)
     let error = $state('')
-    let notice = $state('')
     let language = $derived(templateTypes[type].language)
 
     const save = createMutation(() => ({
@@ -48,7 +48,11 @@
         onSuccess: (updated, text) => {
             queryClient.setQueryData(templateQuery(updated.uuid).queryKey, updated)
             saved = text
-            notice = t('common.message.operation-completed')
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
         }
     }))
 
@@ -65,7 +69,6 @@
     function updateDraft(text: string): void {
         draft = text
         error = ''
-        notice = ''
     }
 
     function report(reason: unknown): void {
@@ -102,9 +105,7 @@
     {/snippet}
     {#snippet status()}
         {#if error || save.error}
-            <p class="editor-status" role="alert">{error || save.error?.message}</p>
-        {:else if notice}
-            <p class="editor-status" role="status">{notice}</p>
+            <p class="editor-status" role="alert"><code>{error || save.error?.message}</code></p>
         {/if}
     {/snippet}
     {#snippet actions()}
@@ -113,7 +114,12 @@
             value={draft}
             saving={save.isPending}
             onsave={submit}
-            oncopy={() => (notice = t('common.message.copied'))}
+            oncopy={() =>
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: '',
+                    color: 'teal'
+                })}
             onerror={report}
             onload={() => (showCatalog = true)}
             saveDisabled={!draft.trim()}
@@ -138,6 +144,12 @@
         margin: 0;
         flex: none;
         padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
-        border-top: 1px solid var(--mantine-color-default-border);
+        border-top: 1px solid rgb(241 65 65);
+        background: rgb(241 65 65 / 10%);
+    }
+    .editor-status code {
+        font-family: var(--mantine-font-family-monospace);
+        font-size: var(--mantine-font-size-xs);
+        color: var(--mantine-color-red-4);
     }
 </style>

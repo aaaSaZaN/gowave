@@ -14,6 +14,7 @@
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
     import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
+    import { notifications } from '../ui/notification-state.svelte'
     import { snippetsQuery } from './queries'
 
     type Snippet = GetSnippetsCommand.Response['response']['snippets'][number]
@@ -27,7 +28,6 @@
     let draft = $state('')
     let busy = $state(false)
     let error = $state('')
-    let notice = $state('')
     let pendingSync = $state('')
 
     onMount(() => dialog.showModal())
@@ -40,17 +40,19 @@
         name = snippet?.name ?? ''
         draft = JSON.stringify(snippet?.snippet ?? [], null, 4)
         error = ''
-        notice = ''
     }
 
     async function run(action: () => Promise<void>): Promise<void> {
         if (busy) return
         error = ''
-        notice = ''
         busy = true
         try {
             await action()
-            notice = t('common.message.operation-completed')
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
         } catch (cause) {
             error = cause instanceof Error ? cause.message : String(cause)
         } finally {
@@ -201,9 +203,6 @@
     {/if}
     {#if error}
         <p role="alert">{error}</p>
-    {/if}
-    {#if notice}
-        <p role="status">{notice}</p>
     {/if}
 </dialog>
 

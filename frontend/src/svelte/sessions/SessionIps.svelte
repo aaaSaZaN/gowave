@@ -1,8 +1,12 @@
 <script lang="ts">
+    import { formatRelativeDateUtil, formatTimeUtil } from '@shared/utils/time-utils'
     import type { Snippet } from 'svelte'
     import { locale } from '../i18n.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
+    import CopyableField from '../ui/CopyableField.svelte'
     import Icon from '../ui/Icon.svelte'
+    import type { IconName } from '../ui/icons'
+    import Tooltip from '../ui/Tooltip.svelte'
     import { type SessionIp, sessionActivity } from './scan'
 
     let {
@@ -13,12 +17,12 @@
         search = '',
         copy
     }: {
-        actions?: Snippet<[SessionIp]>
-        compact?: boolean
+        actions?: Snippet<[SessionIp]> | undefined
+        compact?: boolean | undefined
         ips: SessionIp[]
-        now?: number
-        search?: string
-        copy: (ip: string) => void
+        now?: number | undefined
+        search?: string | undefined
+        copy?: ((ip: string) => void) | undefined
     } = $props()
     let t = $derived(locale.t)
     let limit = $state(20)
@@ -33,12 +37,29 @@
     let date = $derived(
         new Intl.DateTimeFormat(locale.language, { dateStyle: 'medium', timeStyle: 'medium' })
     )
+
+    function activityMeta(activity: ReturnType<typeof sessionActivity> | undefined): {
+        icon: IconName
+        color: string
+    } {
+        switch (activity) {
+            case 'recent':
+                return { icon: 'TbClockCheck', color: 'var(--mantine-color-teal-6)' }
+            case 'idle':
+                return { icon: 'TbClockPause', color: 'var(--mantine-color-yellow-6)' }
+            case 'stale':
+                return { icon: 'TbClockExclamation', color: 'var(--mantine-color-red-6)' }
+            default:
+                return { icon: 'TbClock', color: 'var(--mantine-color-dimmed)' }
+        }
+    }
 </script>
 
 <ul class:compact>
     {#each visible.slice(0, limit) as session}
         {@const lastSeen = new Date(session.lastSeen)}
         {@const activity = now === undefined ? undefined : sessionActivity(lastSeen, now)}
+        {@const meta = activityMeta(activity)}
         <li class:matching={search && session.ip.includes(search)}>
             {#if compact}
                 <ActionIcon
@@ -51,32 +72,52 @@
                     size={36}
                     iconSize={18}
                 />
-                <div class="ip-field">
-                    <time
-                        datetime={lastSeen.toISOString()}
-                        title={date.format(lastSeen)}
-                        class:recent={activity === 'recent'}
-                        class:idle={activity === 'idle'}
-                        class:stale={activity === 'stale'}
+                <div class="ip-copy-wrap">
+                    <CopyableField
+                        size="sm"
+                        value={session.ip}
+                        ariaLabel={session.ip}
+                        oncopy={(ok) => {
+                            if (ok) copy?.(session.ip)
+                        }}
                     >
-                        <span aria-hidden="true"><Icon name="TbClock" size={16} /></span>
-                        <span class="sr-only">{date.format(lastSeen)}</span>
-                    </time>
-                    <button
-                        type="button"
-                        aria-label={`${t('common.action.copy')} ${session.ip}`}
-                        title={t('common.action.copy')}
-                        onclick={() => copy(session.ip)}
-                    >
-                        {session.ip}
-                        <Icon name="TbCopy" size={16} />
-                    </button>
+                        {#snippet left()}
+                            <Tooltip multiline placement="top">
+                                {#snippet tip()}
+                                    <div class="seen-tip">
+                                        <strong
+                                            >{formatRelativeDateUtil(
+                                                lastSeen,
+                                                t,
+                                                locale.language
+                                            )}</strong
+                                        >
+                                        <span class="seen-tip-date"
+                                            >{formatTimeUtil({
+                                                time: lastSeen,
+                                                template: 'TIME_FIRST_DATETIME',
+                                                language: locale.language
+                                            })}</span
+                                        >
+                                    </div>
+                                {/snippet}
+                                <span
+                                    class="seen-clock"
+                                    style:color={meta.color}
+                                    role="img"
+                                    aria-label={date.format(lastSeen)}
+                                >
+                                    <Icon name={meta.icon} size={16} />
+                                </span>
+                            </Tooltip>
+                        {/snippet}
+                    </CopyableField>
                 </div>
             {:else}
                 <button
                     type="button"
                     title={t('common.action.copy')}
-                    onclick={() => copy(session.ip)}
+                    onclick={() => copy?.(session.ip)}
                 >
                     {session.ip}
                 </button>
@@ -143,49 +184,31 @@
         align-items: center;
         flex-wrap: nowrap;
         gap: var(--mantine-spacing-xs);
-        padding: 0.25rem 0;
-        border-block-start-color: rgba(var(--gw-fg-rgb), 0.08);
+        padding: 4px 0;
+        border: 0;
     }
-    .ip-field {
-        display: flex;
-        align-items: center;
+    .ip-copy-wrap {
         flex: 1;
         min-width: 0;
-        border: 1px solid var(--mantine-color-default-border);
-        border-radius: var(--mantine-radius-md);
-        background: var(--mantine-color-default);
     }
-    .ip-field time {
-        display: flex;
-        flex: none;
-        margin: 0;
-        padding-inline-start: 0.6rem;
+    .seen-clock {
+        display: inline-flex;
+        align-items: center;
         cursor: help;
     }
-    .ip-field time span[aria-hidden] {
-        display: flex;
+    .seen-tip {
+        display: grid;
+        gap: 2px;
+        padding: 2px;
+        font-size: var(--mantine-font-size-xs);
     }
-    .ip-field button {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.45rem;
-        flex: 1;
-        min-width: 0;
-        min-height: 34px;
-        padding: 0.25rem 0.6rem;
-        border: 0;
-        color: var(--mantine-color-text);
-        background: transparent;
+    .seen-tip strong {
+        color: var(--mantine-color-white);
+        font-weight: 600;
+    }
+    .seen-tip-date {
+        color: var(--mantine-color-dimmed);
         font-family: var(--mantine-font-family-monospace);
-        text-align: start;
-        cursor: copy;
-    }
-    .ip-field button :global(svg) {
-        flex: none;
-    }
-    .ip-field button:hover {
-        color: var(--mantine-color-bright);
     }
     .matching {
         outline: 1px solid var(--gw-accent);
@@ -194,13 +217,5 @@
         outline-offset: -1px;
         border-radius: var(--mantine-radius-md);
         background: var(--mantine-color-cyan-light);
-    }
-    .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip-path: inset(50%);
-        white-space: nowrap;
     }
 </style>

@@ -2,9 +2,9 @@
     import { createQuery } from '@tanstack/svelte-query'
     import { onDestroy } from 'svelte'
     import { locale } from '../i18n.svelte'
+    import NodeDetails from '../nodes/NodeDetails.svelte'
     import { nodesQuery } from '../nodes/queries'
     import RouteLoading from '../RouteLoading.svelte'
-    import { p } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
     import EmptyState from '../ui/EmptyState.svelte'
@@ -12,6 +12,8 @@
     import Icon from '../ui/Icon.svelte'
     import MetricCard from '../ui/MetricCard.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
+    import Tooltip from '../ui/Tooltip.svelte'
+    import UserDialog from '../users/UserDialog.svelte'
     import { loadNodeSessions } from './queries'
     import SessionGroup from './SessionGroup.svelte'
     import SessionScanProgress from './SessionScanProgress.svelte'
@@ -37,9 +39,9 @@
     let lowestCount = $derived(result?.users.at(-1)?.uniqueIps ?? 0)
     let visible = $derived(matches.slice(page * pageSize, (page + 1) * pageSize))
     let t = $derived(locale.t)
-    let notice = $state('')
+    let selectedUserId = $state<number>()
+    let selectedNodeId = $state('')
     let failure = $state('')
-    let copyFailure = $state('')
     let now = $state(Date.now())
     let format = $derived(new Intl.NumberFormat(locale.language))
 
@@ -60,9 +62,7 @@
         result = undefined
         search = ''
         page = 0
-        notice = ''
         failure = ''
-        copyFailure = ''
     }
 
     async function start(): Promise<void> {
@@ -97,16 +97,6 @@
         const rank = (count - lowestCount) / range
         if (rank >= 0.66) return 'red'
         return rank >= 0.33 ? 'yellow' : 'teal'
-    }
-
-    function copy(ip: string): void {
-        notice = ''
-        copyFailure = ''
-        void navigator.clipboard.writeText(ip).then(
-            () => (notice = t('common.message.copied')),
-            (error: unknown) =>
-                (copyFailure = error instanceof Error ? error.message : String(error))
-        )
     }
 </script>
 
@@ -273,12 +263,6 @@
             </details>
         {/if}
         {#if phase === 'completed'}
-            {#if notice}
-                <p role="status">{notice}</p>
-            {/if}
-            {#if copyFailure}
-                <p role="alert">{copyFailure}</p>
-            {/if}
             {#if !visible.length}
                 <EmptyState
                     icon="TbRadar"
@@ -301,29 +285,37 @@
                                         tone="cyan"
                                         size={34}
                                         iconSize={20}
-                                        href={p('/dashboard/open/user/:id', {
-                                            params: { id: String(user.userId) }
-                                        })}
+                                        onclick={() => (selectedUserId = user.userId)}
                                     />
                                     {user.userId}
                                 </h2>
                                 <div class="counts">
-                                    <span class={['count', tone]} title={uniqueLabel}>
-                                        <Icon name="TbFingerprint" size={16} />
-                                        <span class="sr-only">{uniqueLabel}</span>
-                                        {format.format(user.uniqueIps)}
-                                    </span>
-                                    <span class="count" title={totalLabel}>
-                                        <Icon name="TbSum" size={16} />
-                                        <span class="sr-only">{totalLabel}</span>
-                                        {format.format(user.totalIps)}
-                                    </span>
+                                    <Tooltip text={uniqueLabel}>
+                                        <span class={['count', tone]}>
+                                            <Icon name="TbFingerprint" size={16} />
+                                            <span class="sr-only">{uniqueLabel}</span>
+                                            {format.format(user.uniqueIps)}
+                                        </span>
+                                    </Tooltip>
+                                    <Tooltip text={totalLabel}>
+                                        <span class="count">
+                                            <Icon name="TbSum" size={16} />
+                                            <span class="sr-only">{totalLabel}</span>
+                                            {format.format(user.totalIps)}
+                                        </span>
+                                    </Tooltip>
                                 </div>
                             </header>
                             <div class="groups">
                                 {#each user.nodes as { node, ips } (node.uuid)}
                                     {#if ips.length}
-                                        <SessionGroup {node} {ips} search={term} {copy} {now} />
+                                        <SessionGroup
+                                            {node}
+                                            {ips}
+                                            search={term}
+                                            {now}
+                                            onnode={(uuid) => (selectedNodeId = uuid)}
+                                        />
                                     {/if}
                                 {/each}
                             </div>
@@ -348,6 +340,13 @@
         {/if}
     {/if}
 </main>
+
+{#if selectedUserId !== undefined}
+    <UserDialog id={selectedUserId} close={() => (selectedUserId = undefined)} />
+{/if}
+{#if selectedNodeId}
+    <NodeDetails nodeId={selectedNodeId} onclose={() => (selectedNodeId = '')} />
+{/if}
 
 <style>
     main :global(.requirements h3) {
@@ -451,7 +450,7 @@
         color: var(--mantine-color-bright);
     }
     .groups {
-        max-block-size: 400px;
+        height: 400px;
         overflow: auto;
     }
     .count {

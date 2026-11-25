@@ -11,6 +11,8 @@
     import { p } from '../router'
     import BrandIcon from '../ui/BrandIcon.svelte'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
+    import Tooltip from '../ui/Tooltip.svelte'
     import { flag } from './analytics'
     import { type Node, trafficSummaryQuery } from './queries'
 
@@ -21,6 +23,7 @@
         mobile,
         plugin,
         onopen,
+        onmeasure,
         reorder,
         selection,
         actions
@@ -31,10 +34,27 @@
         mobile: boolean
         plugin: string | undefined
         onopen: (event: MouseEvent) => void
+        onmeasure?: (height: number) => void
         reorder?: ((source: string, target: string) => void) | undefined
         selection: Snippet
         actions: Snippet
     } = $props()
+
+    let itemElement = $state<HTMLLIElement>()
+    $effect(() => {
+        const target = itemElement
+        const report = onmeasure
+        if (!target || !report || typeof ResizeObserver !== 'function') return
+        const observer = new ResizeObserver((entries) => {
+            const entry = entries[0]
+            const next = Math.round(
+                entry?.contentRect.height ?? target.getBoundingClientRect().height
+            )
+            if (next > 0) report(next)
+        })
+        observer.observe(target)
+        return () => observer.disconnect()
+    })
 
     const trafficSummary = createQuery(() => trafficSummaryQuery)
     let lifetime = $derived(
@@ -84,9 +104,8 @@
             : undefined
     )
     let memoryTone = $derived((memory ?? 0) > 90 ? 'red' : (memory ?? 0) > 70 ? 'yellow' : 'teal')
-    let load = $derived(
-        node.system?.stats.loadAvg?.map((value) => value.toFixed(2)).join(' ') ?? '—'
-    )
+    let cpus = $derived(Math.max(1, node.system?.info.cpus ?? 1))
+    let loadAvg = $derived(node.system?.stats.loadAvg)
     let network = $derived(node.system?.stats.interface)
     let rx = $derived(
         network ? prettySiRealtimeBytesUtil(network.rxBytesPerSec, true, true) || '0 B/s' : '—'
@@ -96,9 +115,23 @@
     )
     let country = $derived(flag(node.countryCode))
 
+    function loadColor(value: number): 'red' | 'yellow' | 'dimmed' {
+        const ratio = value / cpus
+        if (ratio > 1) return 'red'
+        if (ratio > 0.7) return 'yellow'
+        return 'dimmed'
+    }
+
     function copyAddress(): void {
         void navigator.clipboard.writeText(node.address).then(
-            () => (copied = true),
+            () => {
+                copied = true
+                notifications.show({
+                    title: locale.t('common.message.copied'),
+                    message: node.address,
+                    color: 'teal'
+                })
+            },
             () => (copied = false)
         )
     }
@@ -147,24 +180,27 @@
 {/snippet}
 
 {#snippet traffic()}
-    <div
-        class="traffic"
-        title={lifetime === undefined
+    <Tooltip
+        block
+        disabled={lifetime === undefined}
+        text={lifetime === undefined
             ? undefined
             : `${locale.t('node-stats.card.lifetime-traffic')}: ${prettifyBytesUtil(lifetime) || '0 B'}`}
     >
-        <div class="traffic-values">
-            <strong>{prettifyBytesUtil(node.trafficUsedBytes ?? 0) || '0 B'}</strong>
-            <span>{limit ? prettifyBytesUtil(limit) : '∞'}</span>
+        <div class="traffic">
+            <div class="traffic-values">
+                <strong>{prettifyBytesUtil(node.trafficUsedBytes ?? 0) || '0 B'}</strong>
+                <span>{limit ? prettifyBytesUtil(limit) : '∞'}</span>
+            </div>
+            {@render meter(
+                percentage,
+                node.isTrafficTrackingActive
+                    ? `var(--mantine-color-${trafficTone}-6)`
+                    : 'var(--mantine-color-teal-filled)',
+                locale.t('use-nodes-table-widget.traffic-used')
+            )}
         </div>
-        {@render meter(
-            percentage,
-            node.isTrafficTrackingActive
-                ? `var(--mantine-color-${trafficTone}-6)`
-                : 'var(--mantine-color-teal-filled)',
-            locale.t('use-nodes-table-widget.traffic-used')
-        )}
-    </div>
+    </Tooltip>
 {/snippet}
 
 {#snippet uptime()}
@@ -185,9 +221,12 @@
 {/snippet}
 
 <li
+    bind:this={itemElement}
+    class="node-item"
     class:mobile
     class:dragging
-    style:height={`${height}px`}
+    style:min-height={`${height}px`}
+    style:--row-height={`${height}px`}
     style:--node-tone={border}
     ondragover={dragover}
     ondrop={drop}
@@ -262,26 +301,73 @@
             {@render uptime()}
         </div>
         <div class="vitals">
-            <div class="memory" title={memory === undefined ? undefined : `${memory}%`}>
-                <Icon name="PiMemoryDuotone" size={mobile ? 12 : 14} />
-                {@render meter(
-                    Math.min(100, Math.max(0, memory ?? 0)),
-                    `var(--mantine-color-${memoryTone}-6)`,
-                    'RAM'
-                )}
-                <span>{memory === undefined ? '—' : `${memory}%`}</span>
-            </div>
+            <Tooltip
+                block={!mobile}
+                disabled={memory === undefined}
+                text={memory === undefined ? undefined : `${memory}%`}
+            >
+                <div class="memory">
+                    <Icon name="PiMemoryDuotone" size={mobile ? 12 : 14} />
+                    {@render meter(
+                        Math.min(100, Math.max(0, memory ?? 0)),
+                        `var(--mantine-color-${memoryTone}-6)`,
+                        'RAM'
+                    )}
+                    <span>{memory === undefined ? '—' : `${memory}%`}</span>
+                </div>
+            </Tooltip>
             {#if !mobile}
-                <span><Icon name="PiCpuDuotone" size={12} />{load}</span>
+                <Tooltip multiline width={250}>
+                    {#snippet tip()}
+                        {#if loadAvg}
+                            <div class="la-tooltip">
+                                <strong
+                                    >{`Load Average (${cpus} ${cpus === 1 ? 'core' : 'cores'})`}</strong
+                                >
+                                <span
+                                    >{`1 min: ${(loadAvg[0] ?? 0).toFixed(2)} (${Math.round(((loadAvg[0] ?? 0) / cpus) * 100)}%)`}</span
+                                >
+                                <span
+                                    >{`5 min: ${(loadAvg[1] ?? 0).toFixed(2)} (${Math.round(((loadAvg[1] ?? 0) / cpus) * 100)}%)`}</span
+                                >
+                                <span
+                                    >{`15 min: ${(loadAvg[2] ?? 0).toFixed(2)} (${Math.round(((loadAvg[2] ?? 0) / cpus) * 100)}%)`}</span
+                                >
+                                <span class="la-legend"
+                                    >0–70% normal · 70–100% high · &gt;100% overloaded</span
+                                >
+                            </div>
+                        {:else}
+                            No data
+                        {/if}
+                    {/snippet}
+                    <span class="la-metric">
+                        <Icon name="PiCpuDuotone" size={12} />
+                        {#if loadAvg}
+                            <span class="la-values">
+                                {#each loadAvg as value, index (index)}
+                                    {#if index > 0}
+                                        {' '}
+                                    {/if}
+                                    <span class={`tone-${loadColor(value)}`}
+                                        >{value.toFixed(2)}</span
+                                    >
+                                {/each}
+                            </span>
+                        {:else}
+                            <span>—</span>
+                        {/if}
+                    </span>
+                </Tooltip>
             {/if}
-            <span
+            <span class="speed"
                 ><Icon
                     name={mobile ? 'PiArrowUpDuotone' : 'PiArrowDownDuotone'}
                     size={mobile ? 10 : 12}
                     color={mobile ? 'var(--mantine-color-cyan-5)' : 'var(--mantine-color-teal-5)'}
                 />{mobile ? tx : rx}</span
             >
-            <span
+            <span class="speed"
                 ><Icon
                     name={mobile ? 'PiArrowDownDuotone' : 'PiArrowUpDuotone'}
                     size={mobile ? 10 : 12}
@@ -325,10 +411,11 @@
 <style>
     li {
         padding: 0 16px 10px;
+        container-type: inline-size;
     }
     article {
         position: relative;
-        height: 100%;
+        min-height: calc(var(--row-height, 90px) - 10px);
         min-width: 0;
         padding: 12px 48px 12px 16px;
         border: 1px solid rgba(var(--node-tone), 0.3);
@@ -349,7 +436,17 @@
         display: grid;
         grid-template-columns: minmax(0, 5.5fr) minmax(0, 2.5fr) minmax(0, 2fr) minmax(0, 2fr);
         align-items: center;
-        gap: var(--mantine-spacing-md);
+        gap: clamp(8px, 1.2vw, 16px);
+    }
+    .traffic-values {
+        gap: 6px;
+        white-space: nowrap;
+    }
+    .traffic-values > * {
+        white-space: nowrap;
+    }
+    .uptime span {
+        white-space: nowrap;
     }
     .identity,
     .identity a,
@@ -519,24 +616,87 @@
         font-weight: 600;
     }
     .vitals {
-        gap: var(--mantine-spacing-md);
+        flex-wrap: wrap;
+        gap: 6px clamp(8px, 1.2vw, 16px);
         margin-block-start: 8px;
+        white-space: nowrap;
     }
     .memory {
+        min-width: 82px;
         max-width: 200px;
-        flex: 1 1 0;
+        flex: 1 1 82px;
         gap: 6px;
     }
+    .memory > span {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
     .memory .meter {
+        min-width: 24px;
         height: 3px;
         flex: 1;
     }
+    .la-metric,
+    .speed {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+    .la-values {
+        white-space: nowrap;
+    }
+    .tone-red {
+        color: var(--mantine-color-red-text);
+    }
+    .tone-yellow {
+        color: var(--mantine-color-yellow-text);
+    }
+    .tone-dimmed {
+        color: var(--mantine-color-dimmed);
+    }
+    .la-tooltip {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        font-size: var(--mantine-font-size-xs);
+        line-height: 1.45;
+    }
+    .la-tooltip strong {
+        font-weight: 600;
+        color: #f0f6fc;
+    }
+    .la-legend {
+        margin-top: 4px;
+        color: var(--mantine-color-dimmed);
+    }
     .versions {
         margin-inline-start: auto;
-        gap: var(--mantine-spacing-md);
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: 100%;
+        gap: clamp(8px, 1vw, 16px);
+    }
+    .versions > span {
+        flex: 0 1 auto;
+        min-width: 0;
     }
     .versions .custom {
         color: var(--mantine-color-blue-4);
+    }
+    @container (max-width: 660px) {
+        .vitals {
+            gap: 6px 10px;
+        }
+        .memory {
+            min-width: 72px;
+            flex: 1 1 72px;
+        }
+        .versions {
+            margin-inline-start: 0;
+            flex-basis: 100%;
+        }
     }
     .handle {
         position: absolute;

@@ -10,6 +10,7 @@
     import { flag } from '../nodes/analytics'
     import EmptyState from '../ui/EmptyState.svelte'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import { usersQueryKey } from './queries'
 
     let { userId, section }: { userId: number; section: 'access' | 'history' } = $props()
@@ -27,7 +28,6 @@
     let sort = $state<Column>('requestAt')
     let ascending = $state(false)
     let search = $state('')
-    let clipboard = $state('')
     let collator = $derived(new Intl.Collator(locale.language, { numeric: true }))
 
     function display(row: Request, column: Column): string {
@@ -50,8 +50,18 @@
 
     function copy(text: string): void {
         void navigator.clipboard.writeText(text).then(
-            () => (clipboard = t('common.message.copied')),
-            () => (clipboard = t('common.message.error'))
+            () =>
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: text,
+                    color: 'teal'
+                }),
+            (error: unknown) =>
+                notifications.show({
+                    title: t('common.message.error'),
+                    message: error instanceof Error ? error.message : t('common.message.error'),
+                    color: 'red'
+                })
         )
     }
 
@@ -156,9 +166,6 @@
         placeholder={t('common.action.search')}
         bind:value={search}
     >
-    {#if clipboard}
-        <p role="status">{clipboard}</p>
-    {/if}
     <div class="requests">
         <table>
             <thead>

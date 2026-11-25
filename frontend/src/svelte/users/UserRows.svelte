@@ -7,6 +7,7 @@
     } from '@shared/utils/time-utils'
     import type { Snippet } from 'svelte'
     import { locale } from '../i18n.svelte'
+    import { flag } from '../nodes/analytics'
     import { p } from '../router'
     import Icon from '../ui/Icon.svelte'
     import type { visibleUserColumns } from './columns'
@@ -321,10 +322,18 @@
                                 >
                             {:else if column.id === 'usedTrafficBytes'}
                                 <UserTrafficCell {user} />
-                            {:else if column.id === 'tag' || column.id === 'nodeName'}
-                                <span class="mono" class:center={column.id === 'tag'}
-                                    >{value ?? '–'}</span
-                                >
+                            {:else if column.id === 'nodeName'}
+                                {@const country = column.flag?.(user)}
+                                <span class="node-cell">
+                                    {#if country}
+                                        <span class="node-flag" aria-hidden="true"
+                                            >{flag(country)}</span
+                                        >
+                                    {/if}
+                                    <span class="mono">{value ?? '–'}</span>
+                                </span>
+                            {:else if column.id === 'tag'}
+                                <span class="mono center">{value ?? '–'}</span>
                             {:else}
                                 {value ?? '—'}
                             {/if}
@@ -550,6 +559,26 @@
         font-family: var(--mantine-font-family-monospace);
         font-size: var(--mantine-font-size-md);
         font-weight: 500;
+    }
+
+    .node-cell {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .node-cell .mono {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .node-flag {
+        font-size: 18px;
+        line-height: 1;
+        flex: 0 0 auto;
     }
 
     .pinned {

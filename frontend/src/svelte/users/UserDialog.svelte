@@ -6,6 +6,9 @@
     import dayjs from 'dayjs'
     import { locale } from '../i18n.svelte'
     import Metadata from '../Metadata.svelte'
+    import { flag } from '../nodes/analytics'
+    import NodeDetails from '../nodes/NodeDetails.svelte'
+    import { nodesQuery } from '../nodes/queries'
     import UsageReport from '../nodes/UsageReport.svelte'
     import { queryClient } from '../query-client'
     import ActiveSessions from '../sessions/ActiveSessions.svelte'
@@ -13,8 +16,11 @@
     import ActionIcon from '../ui/ActionIcon.svelte'
     import ActionMenu from '../ui/ActionMenu.svelte'
     import Button from '../ui/Button.svelte'
+    import CopyableField from '../ui/CopyableField.svelte'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
+    import Tooltip from '../ui/Tooltip.svelte'
     import { changeUserStatus, deleteUser, resetUserTraffic, revokeSubscription } from './actions'
     import ConnectionKeys from './ConnectionKeys.svelte'
     import { type User, userMetadataQuery, userQuery, usersQueryKey } from './queries'
@@ -29,15 +35,20 @@
     let { id, close }: { id: number; close: () => void } = $props()
     const record = createQuery(() => userQuery(String(id)))
     const metadata = createQuery(() => userMetadataQuery(id))
+    const nodes = createQuery(() => nodesQuery)
     let user = $derived(record.data)
+    let lastNode = $derived(
+        user?.userTraffic.lastConnectedNodeUuid
+            ? nodes.data?.find((item) => item.uuid === user.userTraffic.lastConnectedNodeUuid)
+            : undefined
+    )
     let metadataUser = $state<number>()
     let showTorrentReports = $state(false)
     let sessionUser = $state<number>()
     let usageUser = $state<number>()
+    let nodeId = $state('')
     let delivery = $state<{ userId: number; kind: 'qr' | 'keys' | 'devices' }>()
     let detail = $state<'info' | 'access' | 'history'>()
-    let status = $state('')
-    let error = $state('')
     let t = $derived(locale.t)
     const shades = { ACTIVE: 'teal', DISABLED: 'gray', EXPIRED: 'red', LIMITED: 'yellow' } as const
     let expiryDays = $derived(user ? dayjs(user.expireAt).diff(dayjs(), 'day') : 0)
@@ -76,7 +87,11 @@
                 queryClient.removeQueries({ queryKey: userQuery(String(id)).queryKey })
             } else if (updated) {
                 queryClient.setQueryData(userQuery(String(id)).queryKey, updated)
-                status = t('common.message.operation-completed')
+                notifications.show({
+                    title: t('common.message.success'),
+                    message: t('common.message.operation-completed'),
+                    color: 'teal'
+                })
             }
             await queryClient.invalidateQueries({ queryKey: usersQueryKey })
         },
@@ -84,21 +99,26 @@
     }))
 
     function report(reason: unknown): void {
-        error = reason instanceof Error ? reason.message : t('common.message.error')
+        notifications.show({
+            title: t('common.message.error'),
+            message: reason instanceof Error ? reason.message : t('common.message.error'),
+            color: 'red'
+        })
     }
 
     function run(action: Action, label: string): void {
         if (!user || mutation.isPending || !window.confirm(`${label} · ${user.username}?`)) return
-        status = ''
-        error = ''
         mutation.mutate({ id: user.id, action })
     }
 
     async function copy(text: string): Promise<boolean> {
-        error = ''
         try {
             await navigator.clipboard.writeText(text)
-            status = t('common.message.copied')
+            notifications.show({
+                title: t('common.message.copied'),
+                message: text,
+                color: 'teal'
+            })
             return true
         } catch (cause) {
             report(cause)
@@ -264,35 +284,61 @@
                     ></progress>
                 </div>
                 <div class="identity-metrics identity-section">
-                    <div
-                        class="expiry"
-                        class:expired={expiryDays <= 0}
-                        class:ending={expiryDays > 0 && expiryDays <= 7}
-                        title={t('create-user-modal.widget.expiry-date')}
-                    >
-                        <Icon name="TbCalendar" size={18} />
-                        {dayjs(user.expireAt).format('DD.MM.YYYY HH:mm')}
-                    </div>
-                    <div
-                        class="lifetime"
-                        title={t('detailed-user-info-drawer.widget.lifetime-used-traffic')}
-                    >
-                        <Icon name="TbChartArcs" size={18} />
-                        {prettifyBytesUtil(user.userTraffic.lifetimeUsedTrafficBytes) ?? '0 B'}
-                    </div>
-                    {#if user.userTraffic.onlineAt}
+                    <Tooltip block text={t('create-user-modal.widget.expiry-date')}>
                         <div
-                            class="last-online"
-                            title={t('detailed-user-info-drawer.widget.last-online')}
+                            class="expiry"
+                            class:expired={expiryDays <= 0}
+                            class:ending={expiryDays > 0 && expiryDays <= 7}
                         >
-                            <span
-                                style:color={getConnectionStatusColorUtil(
-                                    user.userTraffic.onlineAt
-                                )}
-                                ><Icon name="TbWifi" size={18} /></span
-                            >
-                            {getTimeAgoUtil(user.userTraffic.onlineAt, t, locale.language)}
+                            <Icon name="TbCalendar" size={18} />
+                            <span>{dayjs(user.expireAt).format('DD.MM.YYYY HH:mm')}</span>
                         </div>
+                    </Tooltip>
+                    <Tooltip
+                        block
+                        text={t('detailed-user-info-drawer.widget.lifetime-used-traffic')}
+                    >
+                        <div class="lifetime">
+                            <Icon name="TbChartArcs" size={18} />
+                            <span>
+                                {prettifyBytesUtil(user.userTraffic.lifetimeUsedTrafficBytes) ??
+                                    '0 B'}
+                            </span>
+                        </div>
+                    </Tooltip>
+                    {#if user.userTraffic.onlineAt}
+                        <Tooltip block text={t('detailed-user-info-drawer.widget.last-online')}>
+                            <div class="last-online">
+                                <span
+                                    style:color={getConnectionStatusColorUtil(
+                                        user.userTraffic.onlineAt
+                                    )}
+                                    ><Icon name="TbWifi" size={18} /></span
+                                >
+                                <span>
+                                    {getTimeAgoUtil(user.userTraffic.onlineAt, t, locale.language)}
+                                </span>
+                            </div>
+                        </Tooltip>
+                    {/if}
+                    {#if lastNode}
+                        <Tooltip
+                            block
+                            text={t('detailed-user-info-drawer.widget.last-connected-node')}
+                        >
+                            <button
+                                type="button"
+                                class="mantine-UnstyledButton-root last-node"
+                                onclick={() => (nodeId = lastNode.uuid)}
+                            >
+                                {#if lastNode.countryCode}
+                                    <span class="node-flag" aria-hidden="true">
+                                        {flag(lastNode.countryCode)}
+                                    </span>
+                                {/if}
+                                <span class="node-name">{lastNode.name}</span>
+                            </button>
+                        </Tooltip>
                     {/if}
                 </div>
                 <div class="subscription identity-section">
@@ -317,33 +363,12 @@
                             {t('view-user-modal.widget.subscription-url-description-line-2')}
                         </p>
                     {/if}
-                    <div class="subscription-field">
-                        <span class="subscription-icon"
-                            ><Icon name="PiLinkDuotone" size={16} /></span
-                        >
-                        <input
-                            id={`subscription-url-${user.id}`}
-                            type="text"
-                            readonly
-                            value={user.subscriptionUrl}
-                            onclick={() => user.subscriptionUrl && copy(user.subscriptionUrl)}
-                        >
-                        <ActionIcon
-                            icon="PiCopy"
-                            label={t('common.action.copy')}
-                            subtle
-                            size={28}
-                            iconSize={16}
-                            disabled={!user.subscriptionUrl}
-                            onclick={() => copy(user.subscriptionUrl)}
-                        />
-                    </div>
+                    <CopyableField
+                        id={`subscription-url-${user.id}`}
+                        leftIcon="PiLinkDuotone"
+                        value={user.subscriptionUrl}
+                    />
                 </div>
-                {#if error}
-                    <p role="alert">{error}</p>
-                {:else if status}
-                    <p role="status">{status}</p>
-                {/if}
             </section>
         {/snippet}
         {#snippet actions()}
@@ -496,6 +521,9 @@
                     {/if}
                 </Overlay>
             {/if}
+            {#if nodeId}
+                <NodeDetails {nodeId} onclose={() => (nodeId = '')} />
+            {/if}
         {/snippet}
     </UserForm>
 {:else}
@@ -612,12 +640,15 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: var(--mantine-spacing-xs);
     }
-    .identity-metrics div {
+    .identity-metrics div,
+    .identity-metrics .last-node {
         display: flex;
         align-items: center;
         justify-content: center;
         gap: var(--mantine-spacing-xs);
         min-height: 42px;
+        min-width: 0;
+        width: 100%;
         padding: var(--mantine-spacing-xs);
         border: 1px solid;
         border-radius: var(--mantine-radius-md);
@@ -649,50 +680,43 @@
         border-color: rgb(139 92 246 / 20%);
         background: rgb(139 92 246 / 8%);
         color: var(--mantine-color-violet-4);
+        font-size: var(--mantine-font-size-xs);
+    }
+    .identity-metrics .last-node {
+        border-color: rgb(6 182 212 / 20%);
+        background: rgb(6 182 212 / 8%);
+        color: var(--mantine-color-cyan-5);
+        cursor: pointer;
+    }
+    .identity-metrics .last-node:hover {
+        border-color: rgb(6 182 212 / 40%);
+    }
+    .node-flag {
+        font-size: 18px;
+        line-height: 1;
+        flex: 0 0 auto;
+    }
+    .node-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
     }
     .subscription {
         display: grid;
         gap: 2px;
         font-size: var(--mantine-font-size-sm);
     }
+    .subscription p {
+        margin: 0 0 6px;
+        color: var(--mantine-color-dimmed);
+        font-size: var(--mantine-font-size-xs);
+    }
     .subscription-label {
         display: flex;
         align-items: center;
         gap: 4px;
         font-weight: 500;
-    }
-    .subscription-field {
-        position: relative;
-        display: grid;
-    }
-    .subscription-field::after {
-        position: absolute;
-        inset-block: 1px;
-        inset-inline-end: 10px;
-        width: 80px;
-        background: linear-gradient(90deg, transparent, var(--mantine-color-default) 70%);
-        pointer-events: none;
-        content: "";
-    }
-    .subscription-icon {
-        position: absolute;
-        inset-inline-start: 10px;
-        top: 10px;
-        color: var(--mantine-color-dimmed);
-    }
-    .subscription input {
-        min-width: 0;
-        min-height: 36px;
-        height: 36px;
-        padding-inline: 36px;
-        font-family: var(--mantine-font-family-monospace);
-        cursor: copy;
-    }
-    .subscription-field :global(.action-icon) {
-        position: absolute;
-        inset-inline-end: 4px;
-        inset-block-start: 4px;
-        z-index: 1;
     }
     @media (max-width: 36em) {
         .identity-metrics {

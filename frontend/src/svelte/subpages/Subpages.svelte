@@ -26,6 +26,7 @@
     import EntityTagBar from '../ui/EntityTagBar.svelte'
     import { entityOrder } from '../ui/entity-order'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
     import RenameDialog from '../ui/RenameDialog.svelte'
@@ -45,8 +46,6 @@
     let editing = $state<Edit>()
     let value = $state('')
     let renaming = $state<Entry>()
-    let notice = $state('')
-    let copyError = $state('')
 
     const edit = createMutation(() => ({
         mutationFn: async ({ intent, value }: { intent: Edit; value: string }) => {
@@ -125,11 +124,19 @@
     )
 
     function copy(uuid: string): void {
-        notice = ''
-        copyError = ''
         void navigator.clipboard.writeText(uuid).then(
-            () => (notice = t('common.message.copied')),
-            (error: unknown) => (copyError = error instanceof Error ? error.message : String(error))
+            () =>
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: uuid,
+                    color: 'teal'
+                }),
+            (error: unknown) =>
+                notifications.show({
+                    title: t('common.message.error'),
+                    message: error instanceof Error ? error.message : String(error),
+                    color: 'red'
+                })
         )
     }
 </script>
@@ -250,11 +257,8 @@
                 </ul>
             {/if}
         {/if}
-        {#if action.error || copyError}
-            <p role="alert">{action.error?.message || copyError}</p>
-        {/if}
-        {#if notice}
-            <p role="status">{notice}</p>
+        {#if action.error}
+            <p role="alert">{action.error.message}</p>
         {/if}
     {/if}
     {#if editing}

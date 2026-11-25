@@ -3,6 +3,7 @@
     import { locale } from '../i18n.svelte'
     import Button from '../ui/Button.svelte'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import { qrImage } from './delivery'
 
@@ -59,7 +60,6 @@
     let background = $state('#161B22')
     let pending = $state(false)
     let error = $state('')
-    let copied = $state(false)
     let exporter: typeof import('@shared/utils/copy-screenshot.util') | undefined = $state()
     let preview = $derived.by(() => {
         try {
@@ -83,12 +83,15 @@
     async function exportImage(action: 'copy' | 'download'): Promise<void> {
         if (!image || !exporter || pending) return
         pending = true
-        copied = false
         error = ''
         try {
             if (action === 'copy') {
                 await exporter.copyImageScreenshotToClipboard(image, filename)
-                copied = true
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: label,
+                    color: 'teal'
+                })
             } else {
                 await exporter.downloadImageScreenshot(image, filename)
             }
@@ -122,9 +125,6 @@
             {/if}
             {#if preview.error || error}
                 <p role="alert">{preview.error || error}</p>
-            {/if}
-            {#if copied}
-                <p role="status">{t('common.message.copied')}</p>
             {/if}
             <div class="actions">
                 <Button

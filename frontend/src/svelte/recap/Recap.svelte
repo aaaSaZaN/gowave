@@ -18,6 +18,7 @@
     import { locale } from '../i18n.svelte'
     import BrandIcon from '../ui/BrandIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import Switch from '../ui/Switch.svelte'
     import AccentPicker from './AccentPicker.svelte'
@@ -32,7 +33,6 @@
     let note = $state('')
     let busy = $state(false)
     let error = $state('')
-    let copied = $state(false)
     let exporter: typeof import('@shared/utils/copy-screenshot.util') | undefined = $state()
     let t = $derived(locale.t)
     let integers = $derived(new Intl.NumberFormat(locale.language, { notation: 'compact' }))
@@ -69,7 +69,6 @@
         const filename = `gowave-recap-${new Date().toISOString().slice(0, 10)}.png`
         const element = card
         busy = true
-        copied = false
         error = ''
         try {
             if (action === 'copy') {
@@ -77,7 +76,11 @@
                     await tick()
                     return element
                 }, filename)
-                copied = true
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: filename,
+                    color: 'teal'
+                })
             } else {
                 await tick()
                 await exporter.downloadScreenshot(element, filename)
@@ -315,9 +318,6 @@
                 </div>
             </div>
         </div>
-    {/if}
-    {#if copied}
-        <p role="status">{t('common.message.copied')}</p>
     {/if}
     {#if error}
         <p role="alert">{error}</p>

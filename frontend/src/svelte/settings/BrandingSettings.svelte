@@ -6,6 +6,7 @@
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import { optionalText } from './auth-fields'
     import type { Settings } from './queries'
     import SettingsCard from './SettingsCard.svelte'
@@ -26,14 +27,12 @@
     let preview = $derived(parseColoredTextUtil(title || 'Gowave'))
     let format = $state(false)
     let error = $state('')
-    let saved = $state(false)
 
     async function submit(event: SubmitEvent): Promise<void> {
         event.preventDefault()
         if (busy || !(event.currentTarget instanceof HTMLFormElement)) return
         const form = new FormData(event.currentTarget)
         error = ''
-        saved = false
         try {
             await save({
                 brandingSettings: {
@@ -41,7 +40,11 @@
                     logoUrl: optionalText(form, 'logoUrl')
                 }
             })
-            saved = true
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
         } catch (reason) {
             error = reason instanceof Error ? reason.message : String(reason)
         }
@@ -121,9 +124,6 @@
         </fieldset>
         {#if error}
             <p role="alert">{error}</p>
-        {/if}
-        {#if saved}
-            <p role="status">{t('common.message.operation-completed')}</p>
         {/if}
     </SettingsCard>
 </form>

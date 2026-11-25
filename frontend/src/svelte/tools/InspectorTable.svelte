@@ -6,6 +6,7 @@
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Icon from '../ui/Icon.svelte'
     import type { IconName } from '../ui/icons'
+    import { notifications } from '../ui/notification-state.svelte'
     import SelectField from '../ui/SelectField.svelte'
     import TableTitle from '../ui/TableTitle.svelte'
     import type { Column, InspectorRow } from './columns'
@@ -49,7 +50,6 @@
     let t = $derived(locale.t)
     let prefs = $state<InspectorTableState>(untrack(() => readInspectorState(setup)))
     let error = $state('')
-    let notice = $state('')
     let live = $state(true)
     let selectedUser = $state<InspectorRow['userId']>()
     let panel: HTMLElement
@@ -213,11 +213,14 @@
     }
 
     function copy(value: string): void {
-        notice = ''
         error = ''
         void navigator.clipboard.writeText(value).then(
             () => {
-                notice = t('common.message.copied')
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: value,
+                    color: 'teal'
+                })
             },
             (reason: unknown) => {
                 error = reason instanceof Error ? reason.message : String(reason)
@@ -395,9 +398,6 @@
         {/if}
         {#if query.error || error}
             <p role="alert">{query.error?.message || error}</p>
-        {/if}
-        {#if notice}
-            <p role="status">{notice}</p>
         {/if}
         {#if query.data}
             <div class="scroll">

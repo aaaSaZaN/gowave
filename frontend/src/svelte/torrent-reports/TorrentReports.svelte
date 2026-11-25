@@ -15,6 +15,7 @@
     import JsonTree from '../ui/JsonTree.svelte'
     import Leaderboard from '../ui/Leaderboard.svelte'
     import MetricCard from '../ui/MetricCard.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import { reportRows, reportStats, type TorrentReport } from './queries'
 
@@ -23,7 +24,14 @@
     const nodes = createQuery(() => nodesQuery)
     const truncate = createMutation(() => ({
         mutationFn: () => executeCommand(TruncateTorrentBlockerReportsCommand),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: [torrentStorage.name] })
+        onSuccess: () => {
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
+            return queryClient.invalidateQueries({ queryKey: [torrentStorage.name] })
+        }
     }))
     let raw = $state<TorrentReport>()
 
@@ -108,9 +116,6 @@
         <p role="alert">
             {stats.error?.message || nodes.error?.message || truncate.error?.message}
         </p>
-    {/if}
-    {#if truncate.isSuccess}
-        <p role="status">{t('common.message.operation-completed')}</p>
     {/if}
     <div class="metrics">
         <MetricCard

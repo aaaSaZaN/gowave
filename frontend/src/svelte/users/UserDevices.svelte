@@ -15,6 +15,7 @@
     import EmptyState from '../ui/EmptyState.svelte'
     import FormCard from '../ui/FormCard.svelte'
     import Icon from '../ui/Icon.svelte'
+    import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import TablePopup from '../ui/TablePopup.svelte'
     import { type HwidDevice, userDevicesQuery } from './queries'
@@ -70,8 +71,6 @@
         field?: TextField
     }>()
     let confirmation = $state<{ hwid?: string }>()
-    let notice = $state('')
-    let copyError = $state('')
     let collator = $derived(new Intl.Collator(locale.language, { numeric: true }))
 
     function isTextField(field: SortField): field is TextField {
@@ -144,7 +143,12 @@
             queryClient.setQueryData(query.queryKey, result)
             await queryClient.invalidateQueries({ queryKey: ['hwid'] })
         },
-        onSuccess: () => (notice = t('common.message.operation-completed'))
+        onSuccess: () =>
+            notifications.show({
+                title: t('common.message.success'),
+                message: t('common.message.operation-completed'),
+                color: 'teal'
+            })
     }))
 
     function fieldValue(device: HwidDevice, name: TextField): string {
@@ -155,18 +159,24 @@
 
     function remove(): void {
         if (removal.isPending || !confirmation) return
-        notice = ''
         removal.mutate(confirmation.hwid)
         confirmation = undefined
     }
 
     function copy(value: string): void {
-        copyError = ''
-        notice = ''
         void navigator.clipboard.writeText(value).then(
-            () => (notice = t('common.message.copied')),
+            () =>
+                notifications.show({
+                    title: t('common.message.copied'),
+                    message: value,
+                    color: 'teal'
+                }),
             (failure: unknown) =>
-                (copyError = failure instanceof Error ? failure.message : t('common.message.error'))
+                notifications.show({
+                    title: t('common.message.error'),
+                    message: failure instanceof Error ? failure.message : t('common.message.error'),
+                    color: 'red'
+                })
         )
     }
 </script>
@@ -210,11 +220,8 @@
                 </div>
             {/snippet}
         </FormCard>
-        {#if devices.error || removal.error || copyError}
-            <p role="alert">{devices.error?.message || removal.error?.message || copyError}</p>
-        {/if}
-        {#if notice}
-            <p role="status">{notice}</p>
+        {#if devices.error || removal.error}
+            <p role="alert">{devices.error?.message || removal.error?.message}</p>
         {/if}
         <div class="desktop">
             <div
