@@ -6,6 +6,7 @@
     import type { Options } from 'highcharts'
     import { MediaQuery } from 'svelte/reactivity'
     import { locale } from '../i18n.svelte'
+    import RouteLoading from '../RouteLoading.svelte'
     import Chart from '../ui/Chart.svelte'
     import ChartPlaceholder from '../ui/ChartPlaceholder.svelte'
     import Icon from '../ui/Icon.svelte'
@@ -114,7 +115,7 @@
         <MobileTableNotice />
     {/if}
     {#if stats.isPending}
-        <p role="status">{t('common.message.loading')}</p>
+        <RouteLoading compact />
     {/if}
     {#if stats.error}
         <p role="alert">{stats.error.message}</p>

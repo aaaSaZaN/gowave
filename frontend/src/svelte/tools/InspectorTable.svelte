@@ -3,6 +3,7 @@
     import { createQuery } from '@tanstack/svelte-query'
     import { type Snippet, untrack } from 'svelte'
     import { locale } from '../i18n.svelte'
+    import RouteLoading from '../RouteLoading.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Icon from '../ui/Icon.svelte'
     import type { IconName } from '../ui/icons'
@@ -394,7 +395,7 @@
         {/if}
 
         {#if query.isPending}
-            <p role="status">{t('common.message.loading')}</p>
+            <RouteLoading compact />
         {/if}
         {#if query.error || error}
             <p role="alert">{query.error?.message || error}</p>

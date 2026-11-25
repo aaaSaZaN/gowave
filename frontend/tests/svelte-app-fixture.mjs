@@ -344,9 +344,9 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
                         .some(
                             (animation) =>
                                 animation.id === 'dashboard-page-entry' &&
-                                animation.effect.getTiming().duration === 300
+                                animation.effect.getTiming().duration === 140
                         ),
-                'Changing dashboard pages did not play the React reference fade'
+                'Changing dashboard pages did not play the short entry transition'
             )
         }
         const squadActions = await until(() => findButton('Squad actions'), 'Squads did not load')
@@ -869,9 +869,19 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
         )
 
         select('nav a[href$="/management/nodes"]').click()
+        await until(
+            () => select('main.nodes-page ul a[href*="/open/node/"]'),
+            'Node cards did not render before the scroll container could measure them'
+        )
+        findButton('Table', select('main')).click()
+        await until(
+            () => select('main.nodes-page table a[href*="/open/node/"]'),
+            'Switching to the node table did not render its rows'
+        )
+        findButton('Cards', select('main')).click()
         const nodeLink = await until(
-            () => select('main a[href*="/open/node/"]'),
-            'Node list did not load'
+            () => select('main.nodes-page ul a[href*="/open/node/"]'),
+            'Switching back to cards left the node list empty'
         )
         findButton('Search', select('main')).click()
         const nodeSearch = await until(
@@ -1635,6 +1645,25 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
         )
 
         select('nav.sidebar-navigation a[href$="/management/users"]').click()
+        await until(
+            () => select('.navigation-loading [role=status]'),
+            'A slow route change did not show navigation progress'
+        )
+        await until(
+            () => select('.users-panel .table-loading .loading-state[role=status]'),
+            'The users panel did not show its initial loading state'
+        )
+        await until(
+            () => select('.users-panel .user-row'),
+            'The users table did not replace the initial loading state'
+        )
+        const refreshUsers = findButton('Update', select('.users-panel .table-title'))
+        refreshUsers.click()
+        await until(
+            () => refreshUsers.disabled && refreshUsers.getAttribute('aria-busy') === 'true',
+            'Refreshing users did not show a busy button'
+        )
+        await until(() => !refreshUsers.disabled, 'The refresh button remained busy')
         const bulkEdit = await until(() => findButton('Bulk edit'), 'User bulk edit did not load')
         bulkEdit.click()
         const bulkDialog = await until(
@@ -2373,8 +2402,14 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
                 select('main li')?.closest('section')?.textContent.includes('GeoCheck node'),
             'The scan did not show progress and active nodes'
         )
+        const animationStage = select('main .scan .animation')
+        if (animationStage.querySelector('svg') || !animationStage.querySelector('span')) {
+            throw new Error('The scan displayed the legacy globe while its animation was loading')
+        }
         await until(
             () =>
+                animationStage.querySelector('canvas.ready') &&
+                !animationStage.querySelector('span') &&
                 performance
                     .getEntriesByType('resource')
                     .some(({ name }) =>
@@ -2394,6 +2429,14 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
             !findButton('Copy 192.0.2.11', explorer)
         )
             throw new Error('The session results omitted header actions or IP actions')
+        const resultHeader = explorer.querySelector('article header')
+        const copyWrapper = explorer.querySelector('.ip-copy-wrap .input-wrapper')
+        if (
+            getComputedStyle(resultHeader).borderBlockEndWidth !== '0px' ||
+            getComputedStyle(copyWrapper, '::after').content !== 'none'
+        ) {
+            throw new Error('The session cards still have the dividers or IP field overlay')
+        }
         setValue(searchIp, '192.0.2.12')
         await until(
             () =>
@@ -2694,6 +2737,7 @@ export function startSvelteFixture(output) {
     let geoPolls = 0
     let homeStatsRequests = 0
     let savedUserEdits = 0
+    let userListRequests = 0
     const server = Bun.serve({
         hostname: '127.0.0.1',
         port: 0,
@@ -2928,6 +2972,7 @@ export function startSvelteFixture(output) {
                     })
                 }
                 if (pathname === '/api/users/' && request.method === 'GET') {
+                    if (++userListRequests <= 2) await Bun.sleep(250)
                     return result({ total: users.length, users })
                 }
                 if (pathname.replace(/\/$/, '') === '/api/users' && request.method === 'PATCH') {
@@ -3682,6 +3727,9 @@ export function startSvelteFixture(output) {
             const relative = pathname.slice(panel.length)
             const asset = Bun.file(join(output, relative))
             if (relative.includes('.')) {
+                if (/^assets\/Users-[^/]+\.js$|^lotties\/[^/]+\.lottie$/.test(relative)) {
+                    await Bun.sleep(250)
+                }
                 return (await asset.exists())
                     ? new Response(asset)
                     : new Response(null, { status: 404 })

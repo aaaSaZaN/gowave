@@ -14,6 +14,7 @@
     import { submitCommand } from '../commands'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
+    import RouteLoading from '../RouteLoading.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
     import CopyableField from '../ui/CopyableField.svelte'
@@ -292,7 +293,7 @@
                         </label>
                     </div>
                     {#if scopes.isPending}
-                        <p class="loading-text" role="status">{t('common.message.loading')}</p>
+                        <RouteLoading compact />
                     {/if}
                     <div class="button-row">
                         <Button variant="default" size="xs" onclick={() => preset('read')}>
@@ -580,12 +581,6 @@
         --input-bg: var(--mantine-color-default);
         --input-bd-focus: var(--mantine-primary-color-filled);
         --input-color: var(--mantine-color-text);
-    }
-
-    .loading-text {
-        margin: 0;
-        color: var(--mantine-color-dimmed);
-        font-size: var(--mantine-font-size-sm);
     }
 
     .button-row {

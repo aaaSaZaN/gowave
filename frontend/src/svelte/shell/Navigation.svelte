@@ -74,6 +74,7 @@
             current(item) && desktopStyles['menuItemActive']
         ]}
         href={go(item)}
+        data-preload={item.newTab ? undefined : 'hover'}
         role="menuitem"
         target={item.newTab ? '_blank' : undefined}
         rel={item.newTab ? 'noopener noreferrer' : undefined}
@@ -94,6 +95,7 @@
             nested ? mobileStyles['sectionDropdownItemLink'] : mobileStyles['sectionLink']
         ]}
         href={go(item)}
+        data-preload={item.newTab ? undefined : 'hover'}
         data-active={selected ? 'true' : undefined}
         aria-current={selected ? 'page' : undefined}
         target={item.newTab ? '_blank' : undefined}
@@ -184,6 +186,7 @@
                             selected && desktopStyles['navItemActive']
                         ]}
                         href={go(first.dropdownItems?.[0] ?? first)}
+                        data-preload="hover"
                         aria-haspopup={grouped ? 'menu' : undefined}
                         aria-expanded={grouped ? open === group.id : undefined}
                         data-expanded={open === group.id ? '' : undefined}

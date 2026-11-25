@@ -42,7 +42,7 @@
                 icon="TbRefresh"
                 tone="cyan"
                 label={t('common.action.update')}
-                disabled={query.isFetching}
+                pending={query.isFetching}
                 onclick={() => void query.refetch()}
             />
         </PageHeader>

@@ -15,6 +15,7 @@
     import { squadsQuery } from '../internal-squads/queries'
     import { flag } from '../nodes/analytics'
     import { nodesQuery } from '../nodes/queries'
+    import RouteLoading from '../RouteLoading.svelte'
     import { subscriptionSettingsQuery, subscriptionTemplatesQuery } from '../subscriptions/queries'
     import TemplateVariables from '../subscriptions/TemplateVariables.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
@@ -617,7 +618,7 @@
                 />
             {/if}
             {#if profiles.isPending}
-                <p role="status">{t('common.message.loading')}</p>
+                <RouteLoading compact />
             {/if}
             {#if profiles.error}
                 <p role="alert">{profiles.error.message}</p>

@@ -3,6 +3,7 @@
     import { onMount } from 'svelte'
     import { locale } from '../i18n.svelte'
     import { flag } from '../nodes/analytics'
+    import RouteLoading from '../RouteLoading.svelte'
     import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import { squadNodesQuery } from './queries'
 
@@ -23,7 +24,7 @@
         </button>
     </div>
     {#if nodes.isPending}
-        <p role="status">{t('common.message.loading')}</p>
+        <RouteLoading compact />
     {:else if nodes.error}
         <p role="alert">{nodes.error.message}</p>
         <button type="button" disabled={nodes.isFetching} onclick={() => void nodes.refetch()}>

@@ -130,8 +130,8 @@
             </label>
         </div>
         <fieldset class="generate" disabled={pending}>
-            <Button type="submit" variant="filled" disabled={pending}>
-                {t(pending ? 'common.message.loading' : 'host-preview.generate')}
+            <Button type="submit" variant="filled" {pending}>
+                {t('host-preview.generate')}
             </Button>
             {#if disabled}
                 <label class="checkbox">

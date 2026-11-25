@@ -9,6 +9,7 @@
         color?: string
         size?: 'xs' | 'sm' | 'md' | 'lg' | 'compact-xs' | 'compact-sm'
         block?: boolean
+        pending?: boolean
         icon?: IconName
         iconSize?: number
         start?: Snippet
@@ -20,6 +21,8 @@
         color = 'cyan',
         size = 'sm',
         block = false,
+        pending = false,
+        disabled,
         icon,
         iconSize = 16,
         start,
@@ -64,6 +67,8 @@
 <button
     {...attrs}
     {type}
+    disabled={disabled || pending}
+    aria-busy={pending || attrs['aria-busy']}
     class={[
         'm_77c9d27d mantine-Button-root m_87cf2631 mantine-UnstyledButton-root mantine-active',
         className
@@ -71,6 +76,7 @@
     data-variant={variant}
     data-size={size}
     data-block={block || undefined}
+    data-loading={pending || undefined}
     data-with-left-section={Boolean(icon || start) || undefined}
     {style}
     style:--button-height={`var(--button-height-${size})`}
@@ -102,10 +108,27 @@
         {/if}
         <span class="m_811560b9 mantine-Button-label">{@render children?.()}</span>
     </span>
+    {#if pending}
+        <span class="pending" aria-hidden="true">
+            <span class="loading-spinner" style:--spinner-size={`${iconSize}px`}></span>
+        </span>
+    {/if}
 </button>
 
 <style>
-    button {
-        transition: 0.2s;
+    .pending {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        button {
+            transition:
+                background-color 120ms ease,
+                border-color 120ms ease,
+                color 120ms ease;
+        }
     }
 </style>

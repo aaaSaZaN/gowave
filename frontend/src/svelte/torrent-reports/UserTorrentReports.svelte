@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createQuery } from '@tanstack/svelte-query'
     import { locale } from '../i18n.svelte'
+    import RouteLoading from '../RouteLoading.svelte'
     import { p } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import EmptyState from '../ui/EmptyState.svelte'
@@ -43,7 +44,7 @@
 
 <Overlay title={t('constants.tb-reports')} icon="TbFlame" tone="red" width={500} drawer {close}>
     {#if reports.isPending}
-        <p role="status">{t('common.message.loading')}</p>
+        <RouteLoading compact />
     {/if}
     {#if reports.error}
         <p role="alert">{reports.error.message}</p>
@@ -64,7 +65,7 @@
                         size={34}
                         iconSize={20}
                         label={t('common.action.refresh')}
-                        disabled={reports.isFetching}
+                        pending={reports.isFetching}
                         onclick={() => void reports.refetch()}
                     />
                 {/snippet}

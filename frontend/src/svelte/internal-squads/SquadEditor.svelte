@@ -9,6 +9,7 @@
     import { profilesQuery } from '../config-profiles/queries'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
+    import RouteLoading from '../RouteLoading.svelte'
     import { dismissContainingDialog } from '../ui/dialog-motion'
     import Overlay from '../ui/Overlay.svelte'
     import type { Squad } from './queries'
@@ -82,7 +83,7 @@
         <fieldset>
             <legend>{t('common.field.inbounds')}</legend>
             {#if profiles.isPending}
-                <p role="status">{t('common.message.loading')}</p>
+                <RouteLoading compact />
             {:else if profiles.isError}
                 <p role="alert">{profiles.error.message}</p>
             {:else}

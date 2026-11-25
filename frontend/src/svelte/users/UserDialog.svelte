@@ -11,6 +11,7 @@
     import { nodesQuery } from '../nodes/queries'
     import UsageReport from '../nodes/UsageReport.svelte'
     import { queryClient } from '../query-client'
+    import RouteLoading from '../RouteLoading.svelte'
     import ActiveSessions from '../sessions/ActiveSessions.svelte'
     import UserTorrentReports from '../torrent-reports/UserTorrentReports.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
@@ -537,7 +538,7 @@
             <p role="alert">{record.error.message}</p>
             <Button onclick={() => void record.refetch()}>{t('common.action.try-again')}</Button>
         {:else}
-            <p role="status">{t('common.message.loading')}</p>
+            <RouteLoading compact />
         {/if}
     </Overlay>
 {/if}

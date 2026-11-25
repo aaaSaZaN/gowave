@@ -13,6 +13,7 @@
     import CodeEditor from '../editor/CodeEditor.svelte'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
+    import RouteLoading from '../RouteLoading.svelte'
     import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import { notifications } from '../ui/notification-state.svelte'
     import { snippetsQuery } from './queries'
@@ -152,7 +153,7 @@
             {t('snippets.drawer.widget.create-snippet')}
         </button>
         {#if snippets.isPending}
-            <p role="status">{t('common.message.loading')}</p>
+            <RouteLoading compact />
         {:else if snippets.error}
             <p role="alert">{snippets.error.message}</p>
             <button type="button" onclick={() => void snippets.refetch()}>

@@ -4,6 +4,7 @@
     import { profilesQuery } from '../config-profiles/queries'
     import HostInboundPicker from '../hosts/HostInboundPicker.svelte'
     import { locale } from '../i18n.svelte'
+    import RouteLoading from '../RouteLoading.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
     import Icon from '../ui/Icon.svelte'
@@ -39,7 +40,7 @@
 {#if profiles.error}
     <p role="alert">{profiles.error.message}</p>
 {:else if profiles.isPending}
-    <p role="status">{t('common.message.loading')}</p>
+    <RouteLoading compact />
 {:else}
     <div class="summary">
         <div class="line">

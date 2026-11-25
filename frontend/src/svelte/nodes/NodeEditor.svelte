@@ -676,7 +676,8 @@
             color="teal"
             variant="soft"
             icon="PiFloppyDiskDuotone"
-            disabled={save.isPending || (mode === 'edit' && changed.size === 0)}
+            pending={save.isPending}
+            disabled={mode === 'edit' && changed.size === 0}
         >
             {t('common.action.save')}
         </Button>

@@ -384,7 +384,7 @@
             icon="TbRefresh"
             tone="cyan"
             label={t('common.action.update')}
-            disabled={hosts.isFetching}
+            pending={hosts.isFetching}
             onclick={() => void hosts.refetch()}
         />
         <ActionIcon

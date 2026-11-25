@@ -5,6 +5,7 @@
     import { executeCommand, submitCommand } from '../commands'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
+    import RouteLoading from '../RouteLoading.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
     import Overlay from '../ui/Overlay.svelte'
@@ -78,7 +79,7 @@
         {/if}
     {/snippet}
     {#if uuid && record.isPending}
-        <p role="status">{t('common.message.loading')}</p>
+        <RouteLoading compact />
     {:else if uuid && record.error}
         <p role="alert">{record.error.message}</p>
         <Button onclick={() => void record.refetch()}>{t('common.action.try-again')}</Button>

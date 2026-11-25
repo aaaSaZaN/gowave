@@ -98,8 +98,10 @@
         <div class="m_82577fc2 section" data-position="right">
             <ActionIcon
                 icon={copied ? 'PiCheck' : 'PiCopy'}
-                label={copied ? t('common.message.copied') : t('common.action.copy')}
-                color={copied ? 'teal' : 'gray'}
+                label={copied
+                    ? t('common.message.copied')
+                    : [t('common.action.copy'), ariaLabel ?? label].filter(Boolean).join(' ')}
+                tone={copied ? 'teal' : 'gray'}
                 subtle
                 size={size === 'xs' ? 24 : 28}
                 iconSize={16}
@@ -141,19 +143,6 @@
         --input-fz: var(--mantine-font-size-lg);
     }
 
-    .input-wrapper::after {
-        content: "";
-        position: absolute;
-        top: 1px;
-        right: 10px;
-        bottom: 1px;
-        width: 80px;
-        background: linear-gradient(to right, transparent, var(--mantine-color-default) 70%);
-        pointer-events: none;
-        z-index: 1;
-        border-radius: 0 var(--input-radius) var(--input-radius) 0;
-    }
-
     .section {
         z-index: 2;
         pointer-events: all;
@@ -163,7 +152,7 @@
         cursor: copy;
         padding-inline-end: 34px;
         overflow: hidden;
-        text-overflow: clip;
+        text-overflow: ellipsis;
         white-space: nowrap;
         font-size: var(--input-fz, var(--mantine-font-size-sm));
     }

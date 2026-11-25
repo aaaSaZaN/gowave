@@ -155,7 +155,7 @@
 <svelte:head><title>{t('constants.subscription-settings')} | Gowave</title></svelte:head>
 
 {#snippet saveButton()}
-    <Button type="submit" size="md" variant="soft" color="teal" disabled={save.isPending}
+    <Button type="submit" size="md" variant="soft" color="teal" pending={save.isPending}
         >{t('common.action.save')}</Button
     >
 {/snippet}

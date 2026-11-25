@@ -125,36 +125,6 @@
         gap: var(--mantine-spacing-md);
     }
 
-    @media (prefers-reduced-motion: no-preference) {
-        .page-header {
-            animation: show-card 200ms linear;
-        }
-        .page-title,
-        .page-actions {
-            animation: show-heading 500ms cubic-bezier(0, 0.71, 0.2, 1.01);
-        }
-    }
-
-    @keyframes show-card {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
-    }
-
-    @keyframes show-heading {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
     .page-title {
         flex: 1 1 auto;
         min-width: 0;

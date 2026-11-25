@@ -8,6 +8,7 @@
     import { callCommand } from '../commands'
     import { locale } from '../i18n.svelte'
     import { flag } from '../nodes/analytics'
+    import RouteLoading from '../RouteLoading.svelte'
     import EmptyState from '../ui/EmptyState.svelte'
     import Icon from '../ui/Icon.svelte'
     import { notifications } from '../ui/notification-state.svelte'
@@ -115,7 +116,7 @@
 
 {#if section === 'access'}
     {#if nodes.isPending}
-        <p role="status">{t('common.message.loading')}</p>
+        <RouteLoading compact />
     {:else if nodes.isError}
         <p role="alert">{nodes.error.message}</p>
     {:else if nodes.data.activeNodes.length}
@@ -153,7 +154,7 @@
         <EmptyState icon="TbServer" label={t('common.message.no-data-available')} />
     {/if}
 {:else if history.isPending}
-    <p role="status">{t('common.message.loading')}</p>
+    <RouteLoading compact />
 {:else if history.isError}
     <p role="alert">{history.error.message}</p>
 {:else if !history.data.records.length}

@@ -6,6 +6,7 @@
     import { flag } from '../nodes/analytics'
     import { nodesQuery } from '../nodes/queries'
     import { queryClient } from '../query-client'
+    import RouteLoading from '../RouteLoading.svelte'
     import { p } from '../router'
     import type { Column } from '../tools/columns'
     import InspectorTable from '../tools/InspectorTable.svelte'
@@ -110,7 +111,7 @@
 <svelte:head><title>{t('constants.tb-reports')} | Gowave</title></svelte:head>
 <main>
     {#if stats.isPending}
-        <p role="status">{t('common.message.loading')}</p>
+        <RouteLoading compact />
     {/if}
     {#if stats.error || nodes.error || truncate.error}
         <p role="alert">

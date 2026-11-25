@@ -5,7 +5,6 @@
     import { onMount, type Snippet } from 'svelte'
     import { locale } from '../i18n.svelte'
     import { flag } from '../nodes/analytics'
-    import Icon from '../ui/Icon.svelte'
     import type { ScanProgress } from './scan'
 
     const animations = ['duck-progress', 'globe', 'jail']
@@ -50,7 +49,10 @@
             src: panelUrl(`lotties/${animationName ?? 'globe'}.lottie`),
             renderConfig: { autoResize: true, devicePixelRatio: window.devicePixelRatio || 2 }
         })
-        animation.addEventListener('load', () => (ready = true))
+        animation.addEventListener('render', function firstFrame() {
+            ready = true
+            animation.removeEventListener('render', firstFrame)
+        })
         return () => animation.destroy()
     })
 </script>
@@ -59,7 +61,7 @@
     <div class="animation" aria-hidden="true">
         <canvas bind:this={canvas} class:ready></canvas>
         {#if !ready}
-            <Icon name="TbWorld" size={80} />
+            <span class="loading-spinner" aria-hidden="true"></span>
         {/if}
     </div>
     <div class="description" role="status">
@@ -148,13 +150,15 @@
     .animation {
         position: relative;
         display: grid;
+        width: 96px;
         height: 120px;
+        justify-self: center;
         place-items: center;
         color: var(--mantine-color-blue-5);
     }
     .animation canvas {
         position: absolute;
-        width: 96px;
+        width: 100%;
         height: 115px;
         visibility: hidden;
     }

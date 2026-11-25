@@ -4,6 +4,7 @@
     import { createMutation, createQuery, keepPreviousData } from '@tanstack/svelte-query'
     import { ZodError } from 'zod'
     import { locale } from '../i18n.svelte'
+    import RouteLoading from '../RouteLoading.svelte'
     import { returnToDashboard } from '../router'
     import { session } from '../session.svelte'
     import Button from '../ui/Button.svelte'
@@ -160,7 +161,7 @@
                 </h1>
             </div>
             {#if status.isPending}
-                <p role="status">{t('common.message.loading')}</p>
+                <RouteLoading compact />
             {:else if status.isError}
                 <div class="auth-error">
                     <p role="alert">Server is not responding. Check logs.</p>

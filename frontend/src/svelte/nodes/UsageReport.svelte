@@ -4,6 +4,7 @@
     import { getDefaultDateRange } from '@shared/utils/time-utils/get-default-date-range/get-default-date-range.util'
     import { createQuery } from '@tanstack/svelte-query'
     import { locale } from '../i18n.svelte'
+    import RouteLoading from '../RouteLoading.svelte'
     import { p } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Chart from '../ui/Chart.svelte'
@@ -94,7 +95,7 @@
     </UsageFilters>
 
     {#if stats.isPending}
-        <p role="status">{t('common.message.loading')}</p>
+        <RouteLoading compact />
     {:else if stats.isError}
         <p role="alert">{stats.error.message}</p>
         <button type="button" onclick={() => void stats.refetch()}>
@@ -159,7 +160,7 @@
                 iconSize={20}
                 tone="cyan"
                 label={t('common.action.refresh')}
-                disabled={stats.isFetching}
+                pending={stats.isFetching}
                 onclick={() => void stats.refetch()}
             />
         {/snippet}

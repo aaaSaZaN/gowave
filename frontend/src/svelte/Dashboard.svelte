@@ -3,8 +3,9 @@
     import type { Snippet } from 'svelte'
     import { MediaQuery } from 'svelte/reactivity'
     import { layout } from './layout.svelte'
+    import RouteLoading from './RouteLoading.svelte'
     import Recap from './recap/Recap.svelte'
-    import { route } from './router'
+    import { navigationPending, route } from './router'
     import Brand from './shell/Brand.svelte'
     import HeaderControls from './shell/HeaderControls.svelte'
     import shell from './shell/layout.module.css'
@@ -28,10 +29,10 @@
 
     $effect(() => {
         if (!route.pathname || !page || reducedMotion.current) return
-        const entry = page.animate([{ opacity: 0 }, { opacity: 1 }], {
+        const entry = page.animate([{ opacity: 0.85 }, { opacity: 1 }], {
             id: 'dashboard-page-entry',
-            duration: 300,
-            easing: 'ease-in-out'
+            duration: 140,
+            easing: 'ease-out'
         })
         return () => entry.cancel()
     })
@@ -151,7 +152,10 @@
         <BuildInfo metadata={metadata.data} close={() => (showBuild = false)} />
     {/if}
 
-    <div class="dashboard-content" bind:this={page}>
+    {#if $navigationPending}
+        <div class="navigation-loading"><RouteLoading compact /></div>
+    {/if}
+    <div class="dashboard-content" aria-busy={Boolean($navigationPending)} bind:this={page}>
         {@render children()}
     </div>
 </div>
@@ -172,6 +176,19 @@
 
     .dashboard.sidebar {
         --page-top: calc(var(--header-height) + 10px);
+    }
+
+    .navigation-loading {
+        position: fixed;
+        z-index: 10;
+        inset-block-start: var(--page-top);
+        inset-inline: 0;
+        width: 3rem;
+        margin-inline: auto;
+        border: 1px solid var(--gw-border);
+        border-radius: var(--mantine-radius-md);
+        background: var(--gw-raised-bg);
+        pointer-events: none;
     }
 
     .dashboard.mobile {

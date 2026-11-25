@@ -252,7 +252,7 @@
                 icon="TbRefresh"
                 tone="cyan"
                 label={t('common.action.update')}
-                disabled={profiles.isFetching}
+                pending={profiles.isFetching}
                 onclick={() => void profiles.refetch()}
             />
             <ActionIcon
@@ -506,7 +506,7 @@
                     type="submit"
                     color="teal"
                     variant="light"
-                    disabled={createProfile.isPending}
+                    pending={createProfile.isPending}
                 >
                     {t('common.action.create')}
                 </Button>

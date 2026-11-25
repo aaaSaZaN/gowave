@@ -175,7 +175,7 @@
                     icon="TbRefresh"
                     tone="cyan"
                     label={t('common.action.refresh')}
-                    disabled={list.isFetching}
+                    pending={list.isFetching}
                     onclick={() => void list.refetch()}
                 />
                 <ActionIcon
@@ -328,12 +328,7 @@
                         >
                             {t('common.action.cancel')}
                         </Button>
-                        <Button
-                            type="submit"
-                            color="teal"
-                            variant="light"
-                            disabled={edit.isPending}
-                        >
+                        <Button type="submit" color="teal" variant="light" pending={edit.isPending}>
                             {editing ? t('common.action.save') : t('common.action.create')}
                         </Button>
                     </div>

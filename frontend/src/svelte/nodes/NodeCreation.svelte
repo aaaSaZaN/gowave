@@ -334,7 +334,7 @@
                         color="teal"
                         size="md"
                         icon="TbCheck"
-                        disabled={save.isPending}
+                        pending={save.isPending}
                         >{t('create-node-modal.widget.create-node')}</Button
                     >
                 </div>

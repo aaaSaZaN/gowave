@@ -442,7 +442,6 @@
         justify-content: space-between;
         flex-wrap: wrap;
         padding-block-end: var(--mantine-spacing-xs);
-        border-block-end: 1px solid rgba(var(--gw-fg-rgb), 0.08);
     }
     article h2 {
         margin: 0;

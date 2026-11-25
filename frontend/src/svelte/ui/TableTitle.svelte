@@ -38,7 +38,6 @@
     .table-title {
         justify-content: space-between;
         padding: var(--mantine-spacing-md);
-        border-bottom: 1px solid var(--mantine-color-default-border);
     }
 
     .table-heading h1 {

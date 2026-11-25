@@ -13,6 +13,7 @@
     import DOMPurify from 'dompurify'
     import { marked } from 'marked'
     import { locale } from '../i18n.svelte'
+    import RouteLoading from '../RouteLoading.svelte'
     import Icon from './Icon.svelte'
     import Overlay from './Overlay.svelte'
 
@@ -63,7 +64,7 @@
 
 <Overlay drawer {title} icon="TbQuestionMark" tone="yellow" {close}>
     {#if loading}
-        <p class="status" role="status">{t('common.message.loading')}</p>
+        <div class="status"><RouteLoading compact /></div>
     {:else if error}
         <div class="status" role="alert">
             <Icon name="TbAlertCircle" size={64} />

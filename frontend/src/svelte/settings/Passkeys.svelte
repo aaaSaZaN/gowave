@@ -14,6 +14,7 @@
     import { callCommand, submitCommand, submitVoidCommand } from '../commands'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
+    import RouteLoading from '../RouteLoading.svelte'
     import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import { passkeys } from './queries'
 
@@ -63,7 +64,7 @@
 >
     <h2 id="passkeys-heading">{t('passkeys-drawer.component.passkeys')}</h2>
     {#if keys.isPending}
-        <p role="status">{t('common.message.loading')}</p>
+        <RouteLoading compact />
     {/if}
     {#if keys.error || action.error}
         <p role="alert">{keys.error?.message || action.error?.message}</p>

@@ -4,6 +4,7 @@
     import { onDestroy } from 'svelte'
     import { z } from 'zod'
     import { locale } from '../i18n.svelte'
+    import RouteLoading from '../RouteLoading.svelte'
     import Button from '../ui/Button.svelte'
     import { dismissContainingDialog } from '../ui/dialog-motion'
     import Icon from '../ui/Icon.svelte'
@@ -116,7 +117,7 @@
             {t('template-selector.add-template')}
         </a>
         {#if templates.isPending}
-            <p role="status">{t('common.message.loading')}</p>
+            <RouteLoading compact />
         {:else if templates.isError}
             <p role="alert">
                 {t('use-download-template.failed-to-load-template-please-try-again')}

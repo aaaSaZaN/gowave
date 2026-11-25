@@ -18,6 +18,7 @@
     import { locale } from '../i18n.svelte'
     import { flag } from '../nodes/analytics'
     import { queryClient } from '../query-client'
+    import RouteLoading from '../RouteLoading.svelte'
     import { p } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import EmptyState from '../ui/EmptyState.svelte'
@@ -334,7 +335,7 @@
                             size={30}
                             iconSize={18}
                             label={t('common.action.refresh')}
-                            disabled={nodes.isFetching}
+                            pending={nodes.isFetching}
                             onclick={() => void nodes.refetch()}
                         /><ActionIcon
                             icon="TbPlus"
@@ -348,7 +349,7 @@
                 </div>
             </header>
             {#if nodes.isPending}
-                <p role="status">{t('common.message.loading')}</p>
+                <RouteLoading compact />
             {/if}
             {#if nodes.error}
                 <p role="alert">{nodes.error.message}</p>
@@ -486,7 +487,7 @@
                         size={30}
                         iconSize={18}
                         label={t('common.action.refresh')}
-                        disabled={history.isFetching}
+                        pending={history.isFetching}
                         onclick={() => void history.refetch()}
                     /><ActionIcon
                         icon="TbPlus"
@@ -499,7 +500,7 @@
                 </div>
             </header>
             {#if history.isPending}
-                <p role="status">{t('common.message.loading')}</p>
+                <RouteLoading compact />
             {/if}
             {#if history.error}
                 <p role="alert">{history.error.message}</p>
@@ -582,7 +583,7 @@
                         size={30}
                         iconSize={18}
                         label={t('common.action.refresh')}
-                        disabled={providers.isFetching}
+                        pending={providers.isFetching}
                         onclick={() => void providers.refetch()}
                     /><ActionIcon
                         icon="TbPlus"
@@ -595,7 +596,7 @@
                 </div>
             </header>
             {#if providers.isPending}
-                <p role="status">{t('common.message.loading')}</p>
+                <RouteLoading compact />
             {/if}
             {#if providers.error}
                 <p role="alert">{providers.error.message}</p>

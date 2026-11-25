@@ -18,6 +18,7 @@
     import { GetUserMetadataCommand } from '@remnawave/backend-contract'
     import { createQuery } from '@tanstack/svelte-query'
     import { locale } from './i18n.svelte'
+    import RouteLoading from './RouteLoading.svelte'
     import Button from './ui/Button.svelte'
     import JsonTree from './ui/JsonTree.svelte'
     import Overlay from './ui/Overlay.svelte'
@@ -49,7 +50,7 @@
     {close}
 >
     {#if metadata.isPending}
-        <p role="status">{t('common.message.loading')}</p>
+        <RouteLoading compact />
     {:else if metadata.error}
         <p role="alert">{metadata.error.message}</p>
         <Button disabled={metadata.isFetching} onclick={() => void metadata.refetch()}>

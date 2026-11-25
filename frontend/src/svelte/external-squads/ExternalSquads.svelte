@@ -181,7 +181,7 @@
                 icon="TbRefresh"
                 tone="cyan"
                 label={t('common.action.update')}
-                disabled={squads.isFetching}
+                pending={squads.isFetching}
                 onclick={() => void squads.refetch()}
             />
             <ActionIcon

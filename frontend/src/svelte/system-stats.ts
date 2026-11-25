@@ -28,37 +28,37 @@ export interface SummaryMetric {
 }
 
 export function userMetrics(
-    users: GetStatsCommand.Response['response']['users'],
+    users: GetStatsCommand.Response['response']['users'] | undefined,
     t: TFunction
 ): SummaryMetric[] {
     return [
         {
             label: t('common.field.total'),
-            value: users.totalUsers,
+            value: users?.totalUsers ?? '—',
             icon: 'PiUsersDuotone',
             color: 'blue'
         },
         {
             label: 'Active',
-            value: users.statusCounts.ACTIVE,
+            value: users?.statusCounts.ACTIVE ?? '—',
             icon: 'PiPulseDuotone',
             color: 'teal'
         },
         {
             label: 'Expired',
-            value: users.statusCounts.EXPIRED,
+            value: users?.statusCounts.EXPIRED ?? '—',
             icon: 'PiClockUserDuotone',
             color: 'red'
         },
         {
             label: 'Limited',
-            value: users.statusCounts.LIMITED,
+            value: users?.statusCounts.LIMITED ?? '—',
             icon: 'PiClockCountdownDuotone',
             color: 'orange'
         },
         {
             label: 'Disabled',
-            value: users.statusCounts.DISABLED,
+            value: users?.statusCounts.DISABLED ?? '—',
             icon: 'PiProhibitDuotone',
             color: 'gray'
         }

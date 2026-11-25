@@ -9,6 +9,7 @@
     import { submitCommand } from '../commands'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
+    import RouteLoading from '../RouteLoading.svelte'
     import { ipDetailsUrl } from '../torrent-reports/queries'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
@@ -412,7 +413,7 @@
                 {#if !rows.length}
                     <div class="table-empty">
                         {#if devices.isPending}
-                            <span role="status">{t('common.message.loading')}</span>
+                            <RouteLoading compact />
                         {:else}
                             <span class="empty-icon"><Icon name="TbDatabaseOff" size={24} /></span>
                             No records
@@ -439,7 +440,7 @@
         </div>
         <div class="mobile">
             {#if devices.isPending}
-                <p role="status">{t('common.message.loading')}</p>
+                <RouteLoading compact />
             {:else if !devices.data?.devices.length}
                 <EmptyState icon="TbDevices" label={t('common.message.nothing-found')} />
             {:else}

@@ -6,6 +6,7 @@
     import type resources from '../../../@types/resources'
     import { locale } from '../i18n.svelte'
     import UsageFilters from '../nodes/UsageFilters.svelte'
+    import RouteLoading from '../RouteLoading.svelte'
     import { p } from '../router'
     import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import { squadUsageQuery } from './queries'
@@ -90,7 +91,7 @@
         </ul>
     </details>
     {#if usage.isPending}
-        <p role="status">{t('common.message.loading')}</p>
+        <RouteLoading compact />
     {:else if usage.error}
         <p role="alert">{usage.error.message}</p>
     {/if}

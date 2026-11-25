@@ -3,6 +3,7 @@ import { panelBasePath, panelUrl } from '@shared/lib/panel-path'
 import { isValidUuid } from '@shared/utils/misc/is'
 import { consumeReturnTo, saveReturnTo } from '@shared/utils/return-to.util'
 import { createRouter, type HooksContext, serializeSearch } from 'sv-router'
+import { writable } from 'svelte/store'
 
 import { queryClient } from './query-client'
 import RouteLoading from './RouteLoading.svelte'
@@ -24,9 +25,22 @@ const entityFallback = {
 } as const
 
 const oauthCallback = () => import('./auth/OauthCallback.svelte')
+const navigationTarget = writable('')
+export const navigationPending = { subscribe: navigationTarget.subscribe }
 
 export const { navigate, p, route } = createRouter(
     {
+        hooks: {
+            beforeLoad({ pathname }) {
+                const changingPage =
+                    pathname.replace(/\/$/, '') !== route.pathname.replace(/\/$/, '')
+                navigationTarget.set(changingPage ? pathname : '')
+            },
+            afterLoad: () => navigationTarget.set(''),
+            onError(_error, { pathname }) {
+                navigationTarget.update((target) => (target === pathname ? '' : target))
+            }
+        },
         '/': {
             hooks: {
                 beforeLoad({ pathname }) {

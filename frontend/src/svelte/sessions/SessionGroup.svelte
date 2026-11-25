@@ -70,8 +70,7 @@
             var(--mantine-color-body);
         box-shadow:
             1px 0 0 0 var(--mantine-color-body),
-            -1px 0 0 0 var(--mantine-color-body),
-            0 1px 0 0 rgba(var(--gw-fg-rgb), 0.06);
+            -1px 0 0 0 var(--mantine-color-body);
     }
     h3 {
         min-width: 0;

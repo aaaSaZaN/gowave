@@ -12,6 +12,7 @@
     import { onMount } from 'svelte'
     import { generateX25519 } from '../../widgets/dashboard/config-profiles/keypair-generator/keypair-utils'
     import { locale } from '../i18n.svelte'
+    import RouteLoading from '../RouteLoading.svelte'
     import { theme } from '../theme.svelte'
 
     interface Props {
@@ -174,7 +175,7 @@
     {#if error}
         <p role="alert">{error}</p>
     {:else if loading}
-        <p role="status">{locale.t('common.message.loading')}</p>
+        <RouteLoading compact />
     {/if}
     {#if language === 'json'}
         <div class="path" title={path.join(' › ')}>{path.join(' › ')}</div>

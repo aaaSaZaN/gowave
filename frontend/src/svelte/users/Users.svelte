@@ -6,6 +6,7 @@
     import { locale } from '../i18n.svelte'
     import { flag } from '../nodes/analytics'
     import { nodesQuery } from '../nodes/queries'
+    import RouteLoading from '../RouteLoading.svelte'
     import { systemStatsQuery, userMetrics } from '../system-stats'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
@@ -83,7 +84,7 @@
 
     const users = createQuery(() => usersQuery(tableState, modes, userSelection.size === 0))
     const stats = createQuery(() => systemStatsQuery)
-    let metrics = $derived(stats.data ? userMetrics(stats.data.users, t) : [])
+    let metrics = $derived(stats.isPending || stats.data ? userMetrics(stats.data?.users, t) : [])
     const tags = createQuery(() => userTagsQuery)
     const nodes = createQuery(() => nodesQuery)
     const squads = createQuery(() => externalSquadsQuery)
@@ -482,7 +483,7 @@
         <MobileTableNotice />
     {/if}
     {#if metrics.length}
-        <div class="metrics">
+        <div class="metrics" aria-busy={stats.isPending}>
             {#each metrics as metric (metric.label)}
                 <MetricCard {...metric} />
             {/each}
@@ -522,7 +523,8 @@
                     tone="cyan"
                     label={t('common.action.update')}
                     onclick={() => void users.refetch()}
-                    disabled={users.isFetching}
+                    pending={users.isFetching && !users.isPending}
+                    disabled={users.isPending}
                 />
                 <ActionIcon
                     icon="TbPlus"
@@ -787,7 +789,9 @@
             <p role="alert">{storageMessage}</p>
         {/if}
         {#if users.isPending}
-            <p class="table-message" role="status">{t('common.message.loading')}</p>
+            <div class="table-loading">
+                <RouteLoading compact />
+            </div>
         {:else if users.isError}
             <p class="table-message" role="alert">{users.error.message}</p>
             <button type="button" onclick={() => void users.refetch()}>
@@ -932,6 +936,12 @@
 
     .users-panel:fullscreen {
         overflow: auto;
+    }
+
+    .table-loading {
+        display: grid;
+        min-block-size: 12rem;
+        place-items: center;
     }
 
     .table-controls {

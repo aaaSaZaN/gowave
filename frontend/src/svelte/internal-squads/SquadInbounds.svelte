@@ -11,6 +11,7 @@
     import { type Profile, profilesQuery } from '../config-profiles/queries'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
+    import RouteLoading from '../RouteLoading.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Icon from '../ui/Icon.svelte'
     import type { IconName } from '../ui/icons'
@@ -206,7 +207,7 @@
     {/snippet}
     <div class="squad-panel" tabindex="-1" data-autofocus>
         {#if squad.isPending || profiles.isPending}
-            <p role="status">{t('common.message.loading')}</p>
+            <RouteLoading compact />
         {:else if squad.error || profiles.error}
             <p role="alert">{squad.error?.message || profiles.error?.message}</p>
         {:else if squad.data}

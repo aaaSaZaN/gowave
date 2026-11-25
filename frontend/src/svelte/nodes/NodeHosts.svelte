@@ -4,6 +4,7 @@
     import HostDialog from '../hosts/HostDialog.svelte'
     import { type Host, hostsQuery } from '../hosts/queries'
     import { locale } from '../i18n.svelte'
+    import RouteLoading from '../RouteLoading.svelte'
     import EmptyState from '../ui/EmptyState.svelte'
     import Icon from '../ui/Icon.svelte'
     import Overlay from '../ui/Overlay.svelte'
@@ -47,7 +48,7 @@
     {close}
 >
     {#if hosts.isPending || (mode === 'inbounds' && profiles.isPending)}
-        <p role="status">{t('common.message.loading')}</p>
+        <RouteLoading compact />
     {:else if hosts.error || (mode === 'inbounds' && profiles.error)}
         <p role="alert">{hosts.error?.message || profiles.error?.message}</p>
     {:else if mode === 'linked'}

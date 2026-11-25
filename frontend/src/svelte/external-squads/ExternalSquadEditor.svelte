@@ -9,6 +9,7 @@
     import { submitCommand } from '../commands'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
+    import RouteLoading from '../RouteLoading.svelte'
     import HwidFields from '../subscriptions/HwidFields.svelte'
     import { removedHeaderNames } from '../subscriptions/headers'
     import {
@@ -335,7 +336,7 @@
                 {#if templates.error}
                     <p role="alert">{templates.error.message}</p>
                 {:else if templates.isPending}
-                    <p role="status">{t('common.message.loading')}</p>
+                    <RouteLoading compact />
                 {:else}
                     <div class="template-fields">
                         {#each templateFields as [type, label, logo] (type)}
@@ -556,7 +557,7 @@
                 {#if configs.error}
                     <p role="alert">{configs.error.message}</p>
                 {:else if configs.isPending}
-                    <p role="status">{t('common.message.loading')}</p>
+                    <RouteLoading compact />
                 {:else}
                     <SelectField
                         name="subpageConfigUuid"

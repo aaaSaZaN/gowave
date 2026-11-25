@@ -5,6 +5,7 @@
     import { submitVoidCommand } from '../commands'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
+    import RouteLoading from '../RouteLoading.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
     import Icon from '../ui/Icon.svelte'
@@ -94,7 +95,7 @@
             <ActionIcon
                 icon="TbRefresh"
                 label={t('common.action.refresh')}
-                disabled={list.isFetching}
+                pending={list.isFetching}
                 onclick={() => void list.refetch()}
             />
             <ActionIcon
@@ -105,7 +106,7 @@
             />
         </div>
         {#if list.isPending}
-            <p role="status">{t('common.message.loading')}</p>
+            <RouteLoading compact />
         {/if}
         {#if list.error}
             <p role="alert">{list.error.message}</p>
@@ -204,7 +205,7 @@
         {/key}
     {:else}
         {#if selected.isPending}
-            <p role="status">{t('common.message.loading')}</p>
+            <RouteLoading compact />
         {/if}
         {#if selected.error}
             <p role="alert">{selected.error.message}</p>

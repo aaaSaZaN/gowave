@@ -3,6 +3,7 @@
     import { createQuery } from '@tanstack/svelte-query'
     import { onDestroy } from 'svelte'
     import { locale } from '../i18n.svelte'
+    import RouteLoading from '../RouteLoading.svelte'
     import { navigate, route } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import EntityStage from '../ui/EntityStage.svelte'
@@ -62,7 +63,7 @@
         <p role="alert">{t('common.message.error')}</p>
     {/if}
     {#if squad.isPending}
-        <p role="status">{t('common.message.loading')}</p>
+        <RouteLoading compact />
     {:else if squad.isError}
         <p role="alert">{squad.error.message}</p>
     {:else}

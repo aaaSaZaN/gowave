@@ -1,50 +1,42 @@
 <script lang="ts">
+    import { locale } from './i18n.svelte'
+
     let {
         height = '100dvh',
-        label = 'Loading…',
+        compact = false,
+        label,
         text
-    }: { height?: string; label?: string; text?: string } = $props()
+    }: { height?: string; compact?: boolean; label?: string; text?: string } = $props()
 </script>
-<div class="loader" role="status" aria-label={text ?? label} style:--height={height}>
+
+<div
+    class="loading-state"
+    class:compact
+    role="status"
+    aria-label={text ?? label ?? (locale.ready ? locale.t('common.message.loading') : 'Loading…')}
+    style:--height={height}
+>
+    <span class="loading-spinner" aria-hidden="true"></span>
     {#if text}
-        <p>{text}</p>
+        <span class="message">{text}</span>
     {/if}
-    <span></span>
 </div>
+
 <style>
-    .loader {
+    .loading-state {
         display: flex;
-        flex-direction: column;
+        min-block-size: max(3rem, calc(var(--height) - var(--header-height, 0px) - 20px));
         align-items: center;
         justify-content: center;
         gap: var(--mantine-spacing-xs);
+        color: var(--mantine-color-cyan-light-color);
+    }
 
-        min-height: max(3rem, calc(var(--height) - var(--header-height, 0px) - 20px));
+    .compact {
+        min-block-size: 3rem;
     }
-    p {
-        margin: 0;
-        font-size: var(--mantine-font-size-lg);
-    }
-    span {
-        width: min(80%, 32rem);
-        height: 8px;
-        border-radius: var(--mantine-radius-xs);
-        background-color: var(--mantine-color-cyan-filled);
-        background-image: repeating-linear-gradient(
-            45deg,
-            transparent 0 5px,
-            rgb(255 255 255 / 15%) 5px 10px
-        );
-        animation: stripes 1s linear infinite;
-    }
-    @keyframes stripes {
-        to {
-            background-position: 28px 0;
-        }
-    }
-    @media (prefers-reduced-motion: reduce) {
-        span {
-            animation: none;
-        }
+
+    .message {
+        color: var(--mantine-color-dimmed);
     }
 </style>

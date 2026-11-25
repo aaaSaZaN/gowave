@@ -4,6 +4,7 @@
     import { z } from 'zod'
     import { callCommand } from '../commands'
     import { locale } from '../i18n.svelte'
+    import RouteLoading from '../RouteLoading.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
     import Icon from '../ui/Icon.svelte'
@@ -110,7 +111,7 @@
             tone="gray"
             size={30}
             iconSize={16}
-            disabled={logs.isFetching}
+            pending={logs.isFetching}
             onclick={() => void logs.refetch()}
         />
         <Button
@@ -129,7 +130,7 @@
 </div>
 <div class="viewer">
     {#if logs.isPending}
-        <p role="status">{t('common.message.loading')}</p>
+        <RouteLoading compact />
     {:else if logs.error || copyError}
         <p role="alert">{logs.error?.message || copyError}</p>
     {:else if count}

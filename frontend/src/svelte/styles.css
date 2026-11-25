@@ -130,6 +130,28 @@ button:disabled:not([class*="mantine-"]) {
     color: var(--gw-error);
 }
 
+.loading-spinner {
+    display: inline-block;
+    width: var(--spinner-size, 24px);
+    height: var(--spinner-size, 24px);
+    flex: none;
+    border: 2px solid color-mix(in srgb, currentColor 25%, transparent);
+    border-inline-end-color: currentColor;
+    border-radius: 50%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .loading-spinner {
+        animation: spin 700ms linear infinite;
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(1turn);
+    }
+}
+
 .brand {
     display: flex;
     align-items: center;

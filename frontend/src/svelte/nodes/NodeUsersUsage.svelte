@@ -6,6 +6,7 @@
     import { onDestroy } from 'svelte'
     import { submitCommand } from '../commands'
     import { locale } from '../i18n.svelte'
+    import RouteLoading from '../RouteLoading.svelte'
     import { navigate } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import EmptyState from '../ui/EmptyState.svelte'
@@ -111,7 +112,7 @@
         {/snippet}
     </UsageFilters>
     {#if stats.isPending}
-        <p role="status">{t('common.message.loading')}</p>
+        <RouteLoading compact />
     {:else if stats.isError}
         <p role="alert">{stats.error.message}</p>
         <button type="button" onclick={() => void stats.refetch()}>

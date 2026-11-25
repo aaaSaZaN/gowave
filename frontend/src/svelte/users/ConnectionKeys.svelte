@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createQuery } from '@tanstack/svelte-query'
     import { locale } from '../i18n.svelte'
+    import RouteLoading from '../RouteLoading.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
     import EmptyState from '../ui/EmptyState.svelte'
@@ -56,7 +57,7 @@
             >Raw Subscription</Button
         >
         {#if keys.isPending}
-            <p role="status">{t('common.message.loading')}</p>
+            <RouteLoading compact />
         {:else if keys.isError}
             <p role="alert">{keys.error.message}</p>
             <Button variant="default" onclick={() => void keys.refetch()}
@@ -114,7 +115,7 @@
         close={() => (showRaw = false)}
     >
         {#if raw.isPending}
-            <p role="status">{t('common.message.loading')}</p>
+            <RouteLoading compact />
         {:else if raw.isError}
             <p role="alert">{raw.error.message}</p>
             <Button variant="default" onclick={() => void raw.refetch()}

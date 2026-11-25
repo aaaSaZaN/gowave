@@ -59,7 +59,7 @@
                     size={36}
                     iconSize={22}
                     label={t('common.action.refresh')}
-                    disabled={tokens.isFetching}
+                    pending={tokens.isFetching}
                     onclick={() => void tokens.refetch()}
                 />
             </Tooltip>

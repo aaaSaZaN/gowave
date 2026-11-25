@@ -529,7 +529,7 @@
                     size="md"
                     variant="light"
                     icon="PiFloppyDiskDuotone"
-                    disabled={mutation.isPending}
+                    pending={mutation.isPending}
                     >{t('common.action.update')}</Button
                 >
             </footer>
@@ -715,7 +715,7 @@
                 type="submit"
                 color={subdialog === 'extend' ? 'cyan' : 'red'}
                 variant="soft"
-                disabled={mutation.isPending}
+                pending={mutation.isPending}
             >
                 {t(
                     subdialog === 'extend'

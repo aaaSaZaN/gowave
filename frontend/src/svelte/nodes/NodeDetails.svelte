@@ -17,6 +17,7 @@
     import { locale } from '../i18n.svelte'
     import Metadata, { nodeMetadataQuery } from '../Metadata.svelte'
     import { queryClient } from '../query-client'
+    import RouteLoading from '../RouteLoading.svelte'
     import { navigate, route } from '../router'
     import ActiveSessions from '../sessions/ActiveSessions.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
@@ -152,7 +153,7 @@
         {/if}
     {/snippet}
     {#if record.isPending}
-        <p role="status">{t('common.message.loading')}</p>
+        <RouteLoading compact />
     {:else if record.isError && !record.data}
         <p role="alert">{record.error.message}</p>
         <Button onclick={() => void record.refetch()}>{t('common.action.try-again')}</Button>

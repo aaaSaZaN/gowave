@@ -547,7 +547,7 @@
                 size="md"
                 variant={original ? 'soft' : 'light'}
                 color="teal"
-                disabled={save.isPending}
+                pending={save.isPending}
             >
                 {t(original ? 'common.action.save' : 'common.action.create')}
             </Button>

@@ -153,7 +153,8 @@
                       getItemKey: (index) => visible[index]?.uuid ?? index,
                       overscan: 4
                   },
-                  { offset, height },
+                  // The first cards give the scroll container its measurable height.
+                  { offset, height: height || rowHeight },
                   cardSizes
               )
             : undefined
@@ -368,6 +369,7 @@
             icon="PiSpiral"
             tone="grape"
             label={t('nodes-header-action-buttons.feature.restart-all-nodes')}
+            pending={update.isPending && update.variables?.kind === 'restartAll'}
             disabled={update.isPending}
             onclick={() => (confirmRestart = true)}
         />
@@ -375,7 +377,8 @@
             icon="TbRefresh"
             tone="cyan"
             label={t('common.action.refresh')}
-            disabled={nodes.isFetching}
+            pending={nodes.isFetching && !nodes.isPending}
+            disabled={nodes.isPending}
             onclick={() => void nodes.refetch()}
         />
         <ActionIcon
@@ -662,6 +665,10 @@
                 size={28}
                 iconSize={16}
                 subtle
+                pending={update.isPending &&
+                    update.variables?.kind === 'one' &&
+                    update.variables.uuid === node.uuid &&
+                    update.variables.action === action}
                 disabled={update.isPending}
                 onclick={() => apply(action as NodeAction, node.uuid)}
             />

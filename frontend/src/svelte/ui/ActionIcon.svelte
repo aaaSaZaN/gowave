@@ -13,6 +13,7 @@
         size?: number
         iconSize?: number
         subtle?: boolean
+        pending?: boolean
     }
 
     let {
@@ -25,6 +26,8 @@
         size = 42,
         iconSize = 24,
         subtle = false,
+        pending = false,
+        disabled,
         type = 'button',
         class: className,
         ...attrs
@@ -43,6 +46,8 @@
     this={href ? 'a' : 'button'}
     {...attrs}
     type={href ? undefined : type}
+    disabled={href ? undefined : disabled || pending}
+    aria-busy={pending || attrs['aria-busy']}
     {href}
     {target}
     {rel}
@@ -56,7 +61,15 @@
     style:--action-edge={edge}
     style:--action-shade={shade}
 >
-    <Icon name={icon} size={iconSize} />
+    {#if pending}
+        <span
+            class="loading-spinner"
+            aria-hidden="true"
+            style:--spinner-size={`${iconSize}px`}
+        ></span>
+    {:else}
+        <Icon name={icon} size={iconSize} />
+    {/if}
 </svelte:element>
 
 <style>
@@ -94,8 +107,25 @@
         background-color: color-mix(in srgb, var(--action-ink) 10%, transparent);
     }
 
+    .action-icon:not(:disabled):active {
+        background-color: color-mix(in srgb, var(--action-ink) 20%, transparent);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        .action-icon {
+            transition: scale 100ms ease-out;
+        }
+
+        .action-icon:not(:disabled):active {
+            scale: 0.94;
+        }
+    }
+
     .action-icon:disabled {
         cursor: not-allowed;
+    }
+
+    .action-icon:disabled:not([aria-busy="true"]) {
         background: var(--mantine-color-disabled);
         border-color: transparent;
         color: var(--mantine-color-disabled-color);

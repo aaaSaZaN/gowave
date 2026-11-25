@@ -4,6 +4,7 @@
     import { createQuery } from '@tanstack/svelte-query'
     import { MediaQuery } from 'svelte/reactivity'
     import { locale } from '../i18n.svelte'
+    import RouteLoading from '../RouteLoading.svelte'
     import { p } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import ChartPlaceholder from '../ui/ChartPlaceholder.svelte'
@@ -77,7 +78,7 @@
         <MobileTableNotice />
     {/if}
     {#if stats.isPending}
-        <p role="status">{t('common.message.loading')}</p>
+        <RouteLoading compact />
     {/if}
     {#if stats.error}
         <p role="alert">{stats.error.message}</p>
@@ -160,7 +161,7 @@
         </section>
         <section class="leaderboard" aria-label="Top users by devices">
             {#if leaders.isPending}
-                <p role="status">{t('common.message.loading')}</p>
+                <RouteLoading compact />
             {/if}
             {#if leaders.error}
                 <p role="alert">{leaders.error.message}</p>
@@ -228,7 +229,7 @@
                             tone="cyan"
                             size={28}
                             iconSize={20}
-                            disabled={leaders.isFetching}
+                            pending={leaders.isFetching}
                             onclick={() => void leaders.refetch()}
                         />
                         <select
