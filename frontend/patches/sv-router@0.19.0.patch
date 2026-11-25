@@ -1,0 +1,15 @@
+diff --git a/src/create-router.svelte.js b/src/create-router.svelte.js
+index 31c7915b7e263d6458cb9f2545711c54c3d540ac..58f9b26d4c0d6496af25f21b86c448a3be7e7fea 100644
+--- a/src/create-router.svelte.js
++++ b/src/create-router.svelte.js
+@@ -352,10 +352,6 @@ function getMatchPath(path) {
+ 		matchPath = globalThis.location.pathname;
+ 	}
+ 
+-	if (base.name && matchPath.startsWith(base.name)) {
+-		matchPath = matchPath.slice(base.name.length) || '/';
+-	}
+-
+ 	return stripBase(matchPath);
+ }
+ 

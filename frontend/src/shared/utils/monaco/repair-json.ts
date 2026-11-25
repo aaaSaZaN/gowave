@@ -1,4 +1,3 @@
-import { runAsync } from '@shared/lib/run-async'
 import { jsonrepair } from 'jsonrepair'
 import type { editor } from 'monaco-editor'
 
@@ -38,8 +37,6 @@ export const repairJsonInEditor = (instance: editor.IStandaloneCodeEditor): Repa
         }
     ])
     instance.pushUndoStop()
-
-    runAsync(instance.getAction('editor.action.formatDocument')?.run())
 
     return 'repaired'
 }

@@ -71,7 +71,10 @@
       "select-all": "انتخاب همه",
       "try-again": "Try again",
       "update": "به‌روزرسانی",
-      "view": "View"
+      "view": "View",
+      "default": "پیش‌فرض",
+      "load-more": "بارگذاری بیشتر",
+      "previous": "قبلی"
     },
     "field": {
       "active-sessions": "Active sessions",
@@ -112,7 +115,8 @@
       "usage-stats": "Usage stats",
       "user-agent": "عامل کاربر",
       "user-status": "وضعیت کاربر",
-      "username": "نام کاربر"
+      "username": "نام کاربر",
+      "rows-per-page": "تعداد سطرها در هر صفحه"
     },
     "message": {
       "click-to-see-all": "برای دیدن همه کلیک کنید",
@@ -140,7 +144,9 @@
       "search-profiles-or-inbounds": "جستجوی پروفایل یا اینباند...",
       "selected": "Selected: {{count}}",
       "success": "با موفقیت انجام شد",
-      "warning": "هشدار"
+      "warning": "هشدار",
+      "no-records-to-display": "موردی برای نمایش نمی باشد.",
+      "table-range": "{{first}}-{{last}} از {{total}}"
     }
   },
   "bandwidth-metrics": {
@@ -262,7 +268,9 @@
       "connected": "متصل",
       "connecting": "در حال اتصال",
       "disabled": "غیرفعال",
-      "disconnected": "قطع شده"
+      "disconnected": "قطع شده",
+      "config-not-applied": "پیکربندی اعمال نشد",
+      "error": "خطا"
     }
   },
   "create-user-modal": {
@@ -282,7 +290,9 @@
       "disable-hwid-limit": "غیرفعالسازی لیمیت HWID",
       "hwid-device-limit": "لیمیت دستگاه براساس HWID",
       "expire-at-description": "تاریخ و ساعت منقضی شدن اشتراک کاربر.",
-      "internal-squads-description": "اسکوادهایی که کاربر عضو آن‌ها خواهد بود را مشخص کنید."
+      "internal-squads-description": "اسکوادهایی که کاربر عضو آن‌ها خواهد بود را مشخص کنید.",
+      "expiry-time": "زمان انقضا",
+      "create-or-select-tag": "یک برچسب بسازید یا انتخاب کنید"
     }
   },
   "home-page": {},
@@ -381,7 +391,9 @@
     "no-bulk-options-description": "Every option you add is applied to all selected hosts. Leave one empty to clear that field on all of them.",
     "bulk-option-will-be-cleared": "Will be cleared on all selected hosts.",
     "leave-field-untouched": "Leave this field untouched",
-    "options": "Options"
+    "options": "Options",
+    "response-rules-placeholder": "نام قوانین را انتخاب یا وارد کنید",
+    "response-rules-description": "اگر قانون پاسخ منطبق شود، میزبان فقط در صورت انتخاب نام آن قانون درج می‌شود. نام‌ها به حروف بزرگ و کوچک حساس‌اند. برای پذیرش همه قوانین خالی بگذارید. نشانی اشتراک با نوع کلاینت مشخص از این محدودیت مستثناست."
   },
   "base-node-form": {
     "country": "کشور",
@@ -401,7 +413,16 @@
     "consumption": "مصرف",
     "core-configuration": "پیکربندی هسته",
     "tracking-and-billing": "پایش و صورتحساب‌ها",
-    "management": "مدیریت"
+    "management": "مدیریت",
+    "tracking-start": {
+      "label": "شروع شمارش از",
+      "period": "دوره فعلی",
+      "period-description": "ترافیک از {{date}}، یعنی آغاز دوره فعلی.",
+      "zero": "صفر",
+      "zero-description": "شمارنده هنگام ذخیره از صفر شروع می‌شود.",
+      "keep": "ترافیک انباشته",
+      "keep-description": "مقدار انباشته تا کنون حفظ می‌شود: {{value}}."
+    }
   },
   "home": {
     "page": {
@@ -655,7 +676,8 @@
       "delete-device": "حذف دستگاه",
       "devices": "دستگاه‌ها",
       "hwid-devices": "دستگاه‌های HWID",
-      "delete-all-devices": "حذف همه دستگاه‌ها"
+      "delete-all-devices": "حذف همه دستگاه‌ها",
+      "sort-by": "مرتب‌سازی بر اساس"
     }
   },
   "headers-manager": {
@@ -684,7 +706,9 @@
   },
   "pm2-metrics": {
     "total-memory": "کل رم مصرفی",
-    "uptime": "Uptime پنل"
+    "uptime": "Uptime پنل",
+    "heap-used": "حافظه هیپ مصرف‌شده",
+    "goroutines": "گوروتین‌ها"
   },
   "internal-squads-grid": {
     "widget": {
@@ -940,7 +964,8 @@
       "xray-core-version": "نسخه هسته Xray",
       "gowave-node-version": "نسخه نود، Gowave Node",
       "local-core": "هسته Xray روی نود مدیریت می‌شود",
-      "local-core-override": "نود از CUSTOM_CORE_URL در فایل .env استفاده می‌کند. برای به‌روزرسانی هسته Xray، این فرمان را روی نود اجرا کنید."
+      "local-core-override": "نود از CUSTOM_CORE_URL در فایل .env استفاده می‌کند. برای به‌روزرسانی هسته Xray، این فرمان را روی نود اجرا کنید.",
+      "select-node-version": "انتخاب نسخه Gowave Node. نسخه نصب‌شده {{version}}"
     }
   },
   "config-profiles": {
@@ -962,7 +987,9 @@
   "node-stats": {
     "card": {
       "traffic-refill-in-days": "شارژ ترافیک در (روز):",
-      "represents-the-uptime-of-the-xray-core": "نشان‌دهنده آپتایم هسته Xray"
+      "represents-the-uptime-of-the-xray-core": "نشان‌دهنده آپتایم هسته Xray",
+      "lifetime-traffic": "کل دوره",
+      "lifetime-traffic-description": "کل ترافیک واقعی عبوری از زمان افزودن نود. بازنشانی ماهانه آن را پاک نمی‌کند."
     }
   },
   "host-tags-input": {
@@ -1054,7 +1081,8 @@
       "or": "یا",
       "curl-command": "دستور cURL",
       "copy-curl-command": "کپی کردن دستور cURL",
-      "debugger": "عیب‌یاب"
+      "debugger": "عیب‌یاب",
+      "saved": "قوانین پاسخ ذخیره شدند"
     }
   },
   "copy-node-install-command": {
@@ -1230,7 +1258,16 @@
       "col-expires": "Expires",
       "expired": "Expired",
       "expires-in-days": "Expires in (days)",
-      "one-time-notice": "For security reasons, the token is shown <emphasis>only once</emphasis> right after creation. Make sure to copy and store it somewhere safe — you won't be able to see it again."
+      "one-time-notice": "For security reasons, the token is shown <emphasis>only once</emphasis> right after creation. Make sure to copy and store it somewhere safe — you won't be able to see it again.",
+      "token": "توکن",
+      "copy-token": "کپی توکن",
+      "copy-scopes": "کپی مجوزها",
+      "paste-scopes": "چسباندن مجوزها",
+      "clear-scopes": "پاک کردن مجوزها",
+      "read-only": "فقط خواندن",
+      "read": "خواندن",
+      "write": "نوشتن",
+      "invalid-scopes": "محتوای کلیپ‌بورد باید یک آرایه JSON از رشته‌های مجوز باشد."
     }
   },
   "external-squads-hosts": {
@@ -1678,7 +1715,8 @@
     "invalid-ip": "Not a valid IPv4 or IPv6 address",
     "ip-is-required": "IP address is required",
     "max-ips-reached": "Maximum {{max}} IP addresses",
-    "no-ips-yet": "No IP addresses yet"
+    "no-ips-yet": "No IP addresses yet",
+    "reorder-ip": "تغییر ترتیب IP"
   },
   "node-ip-statuses": {
     "inbound": "اینباند",
@@ -1766,5 +1804,75 @@
     "page": {
       "description": "Open any entity by its identifier, or copy a direct link to share"
     }
+  },
+  "oauth-callback": {
+    "incomplete": "اطلاعات ورود ناقص است. لطفاً دوباره وارد شوید.",
+    "denied": "ارائه‌دهنده درخواست ورود را رد کرد.",
+    "pending": "در حال ورود…",
+    "verifying": "در حال بررسی اطلاعات ورود…"
+  },
+  "host-preview": {
+    "open": "پیش‌نمایش",
+    "title": "پیش‌نمایش اشتراک میزبان",
+    "saved-host": "از تنظیمات ذخیره‌شده میزبان و یک مشترک نمونه با دسترسی به این میزبان استفاده می‌شود.",
+    "draft-host": "از تنظیمات فعلی فرم و یک مشترک نمونه با دسترسی به این میزبان استفاده می‌شود.",
+    "request-headers": "سرآیندهای درخواست",
+    "headers-format": "در هر خط یک سرآیند با قالب Name: value وارد کنید.",
+    "invalid-header": "هر سرآیند درخواست را با قالب Name: value وارد کنید.",
+    "response-headers": "سرآیندهای پاسخ",
+    "as-enabled": "پیش‌نمایش با فرض فعال بودن میزبان",
+    "generate": "ساخت پیش‌نمایش",
+    "socket-drop": "اتصال بدون پاسخ بسته شد",
+    "status": "HTTP {{status}}",
+    "matched-rule": "قانون منطبق: {{rule}}",
+    "response-body": "بدنه پاسخ"
+  },
+  "node-error-message": {
+    "config-checking": "در حال بررسی پیکربندی در نودها: {{nodes}}",
+    "config-not-applied": "پیکربندی جدید اعمال نشد",
+    "config-not-applied-description": "Xray پیکربندی را نپذیرفت و نود همچنان از پیکربندی قبلی استفاده می‌کند. پروفایل پیکربندی را اصلاح و دوباره ذخیره کنید."
+  },
+  "node-versions": {
+    "title": "مدیریت نسخه‌ها",
+    "restart-warning": "نصب به‌روزرسانی سرویس نود را مجدداً راه‌اندازی می‌کند و اتصال‌های فعال برای مدت کوتاهی قطع می‌شوند.",
+    "installed": "نسخه نصب‌شده: {{version}}",
+    "loading": "در حال دریافت نسخه‌ها…",
+    "channel": "کانال انتشار",
+    "stable": "آخرین نسخه پایدار",
+    "prerelease": "آخرین نسخه آزمایشی",
+    "specific": "نسخه مشخص",
+    "version": "نسخه",
+    "select": "نسخه‌ای انتخاب کنید",
+    "prerelease-label": "پیش‌انتشار",
+    "url": "پیوند دانلود مستقیم HTTPS",
+    "invalid-url": "یک نشانی HTTPS معتبر وارد کنید.",
+    "target": "مقصد: {{target}}",
+    "direct": "دانلود مستقیم",
+    "empty": "نسخه سازگاری برای این نود موجود نیست.",
+    "confirm": "نصب {{component}} و راه‌اندازی مجدد سرویس نود",
+    "install": "اکنون نصب شود",
+    "installing": "در حال نصب…",
+    "accepted": "درخواست به‌روزرسانی پذیرفته شد. نسخه نصب‌شده پس از راه‌اندازی مجدد نود نمایش داده می‌شود."
+  },
+  "node-logs": {
+    "source": "منبع گزارش",
+    "line-count": "تعداد خط‌ها",
+    "lines": "تعداد خط‌ها: {{value}}",
+    "auto-refresh": "تازه‌سازی خودکار (۲٫۵ ثانیه)",
+    "auto-scroll": "پیمایش خودکار"
+  },
+  "node-metrics": {
+    "title": "نمای کلی سنجه‌ها",
+    "empty": "سنجه‌ای برای نودها موجود نیست",
+    "total": "کل نودها",
+    "active": "نودهای فعال",
+    "online": "کاربران آنلاین",
+    "inbounds": "کل ورودی‌ها",
+    "info": "اطلاعات بیشتر",
+    "interval": "داده‌ها هر ۳۰ ثانیه از /metrics به‌روز می‌شوند",
+    "partial": "این داشبورد بخشی از داده‌ها را نمایش می‌دهد",
+    "since-start": "ترافیک ورودی و خروجی از زمان شروع پنل یا نود جمع می‌شود",
+    "source": "سنجه‌های Prometheus",
+    "live": "به‌روزرسانی زنده از /metrics"
   }
 }

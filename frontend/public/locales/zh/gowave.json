@@ -71,7 +71,10 @@
       "select-all": "全选",
       "try-again": "重试",
       "update": "更新",
-      "view": "查看"
+      "view": "查看",
+      "default": "默认",
+      "load-more": "加载更多",
+      "previous": "上一页"
     },
     "field": {
       "active-sessions": "活跃会话",
@@ -112,7 +115,8 @@
       "usage-stats": "流量使用统计",
       "user-agent": "User Agent",
       "user-status": "用户状态",
-      "username": "用户名"
+      "username": "用户名",
+      "rows-per-page": "每页行数"
     },
     "message": {
       "click-to-see-all": "点击查看全部",
@@ -140,7 +144,9 @@
       "search-profiles-or-inbounds": "搜索配置文件或入站配置……",
       "selected": "已选 {{count}} 项",
       "success": "成功",
-      "warning": "警告"
+      "warning": "警告",
+      "no-records-to-display": "没有记录可显示",
+      "table-range": "{{first}}-{{last}}，共 {{total}} 条"
     }
   },
   "bandwidth-metrics": {
@@ -262,7 +268,9 @@
       "connected": "已连接",
       "connecting": "连接中",
       "disabled": "已禁用",
-      "disconnected": "已断开"
+      "disconnected": "已断开",
+      "config-not-applied": "配置未应用",
+      "error": "错误"
     }
   },
   "create-user-modal": {
@@ -282,7 +290,9 @@
       "disable-hwid-limit": "禁用 HWID 限制",
       "hwid-device-limit": "HWID 设备限制",
       "expire-at-description": "用户的订阅服务将于该时间结束。",
-      "internal-squads-description": "指定用户将加入的内部分组。"
+      "internal-squads-description": "指定用户将加入的内部分组。",
+      "expiry-time": "到期时间",
+      "create-or-select-tag": "创建或选择标签"
     }
   },
   "home-page": {},
@@ -381,7 +391,9 @@
     "no-bulk-options-description": "您添加的每个选项都适用于所有选定的主机。留空则清除所有主机的字段。",
     "bulk-option-will-be-cleared": "将清除所有选中的主机。",
     "leave-field-untouched": "未触及此字段",
-    "options": "设置"
+    "options": "设置",
+    "response-rules-placeholder": "选择或输入规则名称",
+    "response-rules-description": "匹配响应规则时，仅在选中了该规则名称时包含此主机。名称区分大小写。留空以允许所有规则。指定客户端类型的订阅链接不受此限制。"
   },
   "base-node-form": {
     "country": "国家",
@@ -401,7 +413,16 @@
     "consumption": "流量消耗",
     "core-configuration": "核心配置",
     "tracking-and-billing": "跟踪与计费",
-    "management": "管理"
+    "management": "管理",
+    "tracking-start": {
+      "label": "计数起点",
+      "period": "当前周期",
+      "period-description": "从本周期开始日期 {{date}} 起的流量。",
+      "zero": "从零开始",
+      "zero-description": "保存时计数器从零开始。",
+      "keep": "累计流量",
+      "keep-description": "保留目前累计的流量：{{value}}。"
+    }
   },
   "home": {
     "page": {
@@ -655,7 +676,8 @@
       "delete-device": "删除设备",
       "devices": "设备",
       "hwid-devices": "HWID 设备列表",
-      "delete-all-devices": "删除所有设备"
+      "delete-all-devices": "删除所有设备",
+      "sort-by": "排序方式"
     }
   },
   "headers-manager": {
@@ -684,7 +706,9 @@
   },
   "pm2-metrics": {
     "total-memory": "总内存使用",
-    "uptime": "面板 Uptime"
+    "uptime": "面板 Uptime",
+    "heap-used": "已用堆内存",
+    "goroutines": "Goroutine 数"
   },
   "internal-squads-grid": {
     "widget": {
@@ -940,7 +964,8 @@
       "xray-core-version": "Xray 核心版本",
       "gowave-node-version": "节点版本，Gowave Node",
       "local-core": "Xray 核心由节点管理",
-      "local-core-override": "节点使用 .env 文件中的 CUSTOM_CORE_URL。要更新 Xray 核心，请在节点上运行以下命令。"
+      "local-core-override": "节点使用 .env 文件中的 CUSTOM_CORE_URL。要更新 Xray 核心，请在节点上运行以下命令。",
+      "select-node-version": "选择 Gowave Node 版本。已安装 {{version}}"
     }
   },
   "config-profiles": {
@@ -962,7 +987,9 @@
   "node-stats": {
     "card": {
       "traffic-refill-in-days": "流量重置(天)：",
-      "represents-the-uptime-of-the-xray-core": "表示Xray 核心的运行时间"
+      "represents-the-uptime-of-the-xray-core": "表示Xray 核心的运行时间",
+      "lifetime-traffic": "历史累计",
+      "lifetime-traffic-description": "自添加节点以来的实际流量，每月重置时保留。"
     }
   },
   "host-tags-input": {
@@ -1054,7 +1081,8 @@
       "or": "，或",
       "curl-command": "cURL 命令",
       "copy-curl-command": "复制 cURL 命令",
-      "debugger": "调试器"
+      "debugger": "调试器",
+      "saved": "响应规则已保存"
     }
   },
   "copy-node-install-command": {
@@ -1230,7 +1258,16 @@
       "col-expires": "过期",
       "expired": "已过期",
       "expires-in-days": "过期时间 (天)",
-      "one-time-notice": "出于安全原因，令牌会在创建后立即显示 <emphasis>仅此一次</emphasis>。请务必复制并将其妥善保存在安全的地方——之后你将无法再次查看它。"
+      "one-time-notice": "出于安全原因，令牌会在创建后立即显示 <emphasis>仅此一次</emphasis>。请务必复制并将其妥善保存在安全的地方——之后你将无法再次查看它。",
+      "token": "令牌",
+      "copy-token": "复制令牌",
+      "copy-scopes": "复制权限",
+      "paste-scopes": "粘贴权限",
+      "clear-scopes": "清除权限",
+      "read-only": "只读",
+      "read": "读取",
+      "write": "写入",
+      "invalid-scopes": "剪贴板中必须是由权限字符串组成的 JSON 数组。"
     }
   },
   "external-squads-hosts": {
@@ -1678,7 +1715,8 @@
     "invalid-ip": "不是有效的 IPv4 或 IPv6 地址",
     "ip-is-required": "IP 地址为必填项",
     "max-ips-reached": "最多允许 {{max}} 个 IP 地址",
-    "no-ips-yet": "还没有填写IP地址"
+    "no-ips-yet": "还没有填写IP地址",
+    "reorder-ip": "调整 IP 顺序"
   },
   "node-ip-statuses": {
     "inbound": "入站",
@@ -1766,5 +1804,75 @@
     "page": {
       "description": "输入ID用来打开UI，或方便分享直达连接"
     }
+  },
+  "oauth-callback": {
+    "incomplete": "登录响应不完整，请重新登录。",
+    "denied": "身份提供方拒绝了登录请求。",
+    "pending": "正在验证身份…",
+    "verifying": "正在验证凭据…"
+  },
+  "host-preview": {
+    "open": "预览",
+    "title": "主机订阅预览",
+    "saved-host": "使用已保存的主机设置和有权访问该主机的示例订阅用户。",
+    "draft-host": "使用当前表单设置和有权访问该主机的示例订阅用户。",
+    "request-headers": "请求头",
+    "headers-format": "每行一个请求头，格式为 Name: value。",
+    "invalid-header": "请按 Name: value 格式输入每个请求头。",
+    "response-headers": "响应头",
+    "as-enabled": "按主机已启用预览",
+    "generate": "生成预览",
+    "socket-drop": "连接已关闭，未收到响应",
+    "status": "HTTP {{status}}",
+    "matched-rule": "匹配的规则：{{rule}}",
+    "response-body": "响应正文"
+  },
+  "node-error-message": {
+    "config-checking": "正在节点上检查配置：{{nodes}}",
+    "config-not-applied": "新配置未应用",
+    "config-not-applied-description": "Xray 拒绝了新配置，节点继续使用原配置。请修复配置文件并重新保存。"
+  },
+  "node-versions": {
+    "title": "管理版本",
+    "restart-warning": "安装更新会重启节点服务并短暂中断活动连接。",
+    "installed": "已安装：{{version}}",
+    "loading": "正在加载版本…",
+    "channel": "发布渠道",
+    "stable": "最新稳定版",
+    "prerelease": "最新预发布版",
+    "specific": "指定版本",
+    "version": "版本",
+    "select": "选择版本",
+    "prerelease-label": "预发布版",
+    "url": "HTTPS 直链下载",
+    "invalid-url": "请输入有效的 HTTPS 地址。",
+    "target": "目标：{{target}}",
+    "direct": "直接下载",
+    "empty": "没有适用于此节点的版本。",
+    "confirm": "安装 {{component}} 并重启节点服务",
+    "install": "立即安装",
+    "installing": "正在安装…",
+    "accepted": "更新请求已接受。节点重启后将报告已安装的版本。"
+  },
+  "node-logs": {
+    "source": "日志来源",
+    "line-count": "行数",
+    "lines": "行数：{{value}}",
+    "auto-refresh": "自动刷新（2.5 秒）",
+    "auto-scroll": "自动滚动"
+  },
+  "node-metrics": {
+    "title": "指标概览",
+    "empty": "暂无节点指标",
+    "total": "节点总数",
+    "active": "活动节点",
+    "online": "在线用户",
+    "inbounds": "入站总数",
+    "info": "补充说明",
+    "interval": "每 30 秒从 /metrics 更新",
+    "partial": "此页面显示部分指标",
+    "since-start": "入站和出站流量从面板或节点启动时开始累计",
+    "source": "来自 Prometheus 的指标",
+    "live": "来自 /metrics 的实时更新"
   }
 }

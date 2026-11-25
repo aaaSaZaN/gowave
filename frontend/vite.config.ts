@@ -1,4 +1,5 @@
-import react from '@vitejs/plugin-react'
+import { fileURLToPath } from 'node:url'
+import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { defineConfig, loadEnv } from 'vite'
 import webfontDownload from 'vite-plugin-webfont-dl'
 
@@ -11,10 +12,9 @@ export default defineConfig(({ mode }) => {
     return {
         base: './',
         assetsInclude: ['**/*.lottie'],
-        plugins: [react(), webfontDownload()],
+        plugins: [svelte(), webfontDownload()],
         optimizeDeps: {
             include: [
-                'html-parse-stringify',
                 'monaco-editor/editor',
                 'monaco-editor/features/register.all',
                 'monaco-editor/languages/definitions/yaml/yaml',
@@ -31,78 +31,14 @@ export default defineConfig(({ mode }) => {
                     defaultHandler(warning)
                 },
                 output: {
-                    minify: { compress: { dropConsole: true } },
-                    codeSplitting: {
-                        groups: [
-                            {
-                                name: 'react',
-                                test: /node_modules[\\/](react|react-dom|react-router)[\\/]/
-                            },
-                            {
-                                name: 'markdown',
-                                test: /node_modules[\\/](react-markdown|remark-gfm|rehype-raw)[\\/]/
-                            },
-                            {
-                                name: 'icons',
-                                test: /node_modules[\\/](react-icons|@lottiefiles[\\/]dotlottie-react)[\\/]/
-                            },
-                            {
-                                name: 'zod',
-                                test: /node_modules[\\/](axios|zod|zustand|zod-to-json-schema)[\\/]/
-                            },
-                            {
-                                name: 'utils',
-                                test: /node_modules[\\/](jsonc-parser|json-edit-react|dayjs)[\\/]/
-                            },
-                            {
-                                name: 'mantine',
-                                test: /node_modules[\\/]@mantine[\\/](core|hooks|dates|nprogress|notifications|modals)[\\/]/
-                            },
-                            {
-                                name: 'gowave',
-                                test: /node_modules[\\/]@gowave[\\/](backend-contract|subscription-page-types)[\\/]/
-                            },
-                            {
-                                name: 'i18n',
-                                test: /node_modules[\\/](i18next)[\\/]/
-                            },
-                            {
-                                name: 'motion',
-                                test: /node_modules[\\/](motion|motion-dom|motion-utils)[\\/]/
-                            },
-                            {
-                                name: 'charts',
-                                test: /node_modules[\\/](recharts|highcharts)[\\/]/
-                            },
-                            {
-                                name: 'dnd',
-                                test: /node_modules[\\/]@dnd-kit[\\/](abstract|dom|helpers|react)[\\/]/
-                            },
-                            {
-                                name: 'mantinetable',
-                                test: /node_modules[\\/](@kastov[\\/]mantine-react-table-open|mantine-datatable)[\\/]/
-                            },
-                            {
-                                name: 'prettier',
-                                test: /node_modules[\\/](prettier|vscode-languageserver-types)[\\/]/
-                            },
-                            {
-                                name: 'monaco',
-                                test: /node_modules[\\/](monaco-editor|monaco-yaml)[\\/]/
-                            },
-                            {
-                                name: 'tanstack',
-                                test: /node_modules[\\/]@tanstack[\\/](react-query|react-table|react-virtual)[\\/]/
-                            }
-                        ]
-                    }
+                    minify: { compress: { dropConsole: true } }
                 }
             }
         },
         define: {
             __TELEGRAM_CHAT_URL__: JSON.stringify(telegramChatUrl.href),
             __DOMAIN_BACKEND__: JSON.stringify(env['DOMAIN_BACKEND']?.trim() || ''),
-            __NODE_ENV__: JSON.stringify(process.env['NODE_ENV']).trim(),
+            __NODE_ENV__: JSON.stringify(process.env['NODE_ENV'] ?? mode),
             __DOMAIN_OVERRIDE__: JSON.stringify(env['DOMAIN_OVERRIDE'] || '0').trim(),
             // Busts the browser cache of unhashed files such as locales on each build.
             __BUILD_ID__: JSON.stringify(Date.now().toString(36))
@@ -131,6 +67,19 @@ export default defineConfig(({ mode }) => {
         resolve: {
             tsconfigPaths: true,
             alias: [
+                // The pinned contract ships declarations in build/backend and browser JS in build/frontend.
+                {
+                    find: '@remnawave/backend-contract/build/backend',
+                    replacement: '@remnawave/backend-contract/build/frontend'
+                },
+                {
+                    find: '@shared',
+                    replacement: fileURLToPath(new URL('./src/shared', import.meta.url))
+                },
+                {
+                    find: '@entities',
+                    replacement: fileURLToPath(new URL('./src/entities', import.meta.url))
+                },
                 {
                     find: /^monaco-editor\/esm\/vs\/(.*)$/,
                     replacement: 'monaco-editor/$1'

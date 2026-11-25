@@ -8,10 +8,10 @@ restructuring requests do not authorize automatic README updates.
 
 ## Repository context
 
-Gowave combines a Go backend with a React frontend. Compatibility with `@remnawave/backend-contract` is a core constraint, including endpoint coverage, response envelopes, status codes, and subscription output. The frontend currently pins contract version `3.4.17`; `internal/server/parity_test.go` also checks that version explicitly.
+Gowave combines a Go backend with a Svelte 5 frontend. Compatibility with `@remnawave/backend-contract` is a core constraint, including endpoint coverage, response envelopes, status codes, and subscription output. The frontend currently pins contract version `3.4.17`; `internal/server/parity_test.go` also checks that version explicitly.
 
 - `backend/` is the Go module (`gowave`); run Go commands there, not at the repository root. Its `go.mod` declares Go `1.27.1`.
-- `frontend/` is a separate React/TypeScript/Vite application. Use Bun 1.4.2 for dependency installation and package scripts locally, in CI, and in Docker. `frontend/package.json` pins the version and `frontend/bun.lock` locks dependencies.
+- `frontend/` is a separate Svelte 5/TypeScript/Vite application. Use Bun 1.4.2 for dependency installation and package scripts locally, in CI, and in Docker. `frontend/package.json` pins the version and `frontend/bun.lock` locks dependencies.
 - `scripts/` contains contract export/validation, subscription differential fixtures, and a node migration installer.
 - Root `README.md` links to the external project documentation and Ansible repository. For defaults, consult executable configuration (`backend/config/config.go`); the default SQLite filename is `gowave.db`.
 
@@ -51,7 +51,7 @@ bun run check
 - Commit dependency changes together with `bun.lock`; use `bun install` to update it. Biome is pinned in `package.json` and configured in `biome.json`.
 - `build` runs only `vite build`; it does **not** typecheck. CI runs `typecheck` separately. `dev` runs the Go backend and Vite together with Bun parallel scripts; `dev:frontend` and `dev:backend` run either component separately. Backend setup requires a private `APP_SECRET` in the root/backend `.env`.
 - `check` runs Biome lint, formatting and import checks and fails on warnings. `fix` applies safe fixes. CI runs `check`, unit tests, typecheck, build and contract checks.
-- `typecheck` verifies generated CSS declarations and checks application/tests and Vite configuration under the shared strict options in `tsconfig.base.json`. Run `bun run css:types` after changing CSS class names; commit the generated `*.module.d.css.ts` files. `skipLibCheck` remains enabled for incompatible upstream declarations; application code is still checked strictly.
+- `typecheck` verifies generated CSS declarations and runs svelte-check on the application and TypeScript on the Vite configuration under the shared strict options in `tsconfig.base.json`. Run `bun run css:types` after changing CSS class names; commit the generated `*.module.d.css.ts` files. `skipLibCheck` remains enabled for incompatible upstream declarations; application code is still checked strictly.
 - `bun run test` runs frontend unit and crypto interoperability tests with Bun's built-in test runner. `bun run test:browser` runs UI smoke checks using a local Chromium executable (`CHROMIUM_BIN` overrides its path). Backend tests and schema probes cover API compatibility.
 - Vite listens on `0.0.0.0:3333` with `strictPort`; `/api` proxies to `127.0.0.1:3000`. `preview` serves an existing build on loopback port 3333 and proxies `/api` to the same backend; start the API separately.
 - `bun run editor:download` fetches the hash-pinned Xray validator WASM, `wasm_exec.js`, and Xray schemas into `public/assets/`; `bun run editor:compress` writes `.gz` siblings into `dist` and keeps `main.wasm` only as `main.wasm.gz`. Release and Docker builds run both. Monaco and the validator load lazily in the administrator's browser, never at startup. See the asset-serving caveat below before changing their paths.
@@ -109,14 +109,13 @@ Use `internal/httpx` for upstream-compatible JSON: success is commonly `{"respon
 
 ## Frontend patterns
 
-`src/app.tsx` composes Mantine, authentication, React Query, i18n, and routing. `src/app/router/` owns routing and `app/layouts/` owns shells. UI code is organized into `pages`, `widgets`, `features`, `entities`, and `shared`.
+`src/svelte/main.ts` mounts `App.svelte`, which provides TanStack Query, notifications and the router. Routes in `src/svelte/router.ts` load dashboard screens on demand. Components and queries are grouped by feature in `src/svelte/`.
 
-- Page `connectors` fetch data and handle loading before passing props to page `components`; `config-profiles` is a representative example. Filenames use role suffixes such as `.page.connector.tsx`, `.page.component.tsx`, `.widget.tsx`, and `.feature.tsx`.
-- API hooks live in `shared/api/hooks/<domain>`. They use command definitions from `@remnawave/backend-contract` and reusable factories in `shared/api/tsq-helpers`, including Zod schemas, route/query parameters, and query keys. Extend these patterns for related endpoints.
+- Feature queries use `@tanstack/svelte-query`. The helpers in `src/svelte/commands.ts` validate request and response bodies with schemas from the pinned backend contract.
 - `shared/api/axios.ts` owns backend-domain selection, authorization headers, browser-client headers, and logout on 401. Production defaults to `window.location.origin`; `DOMAIN_OVERRIDE=1` forces the compiled backend domain. Vite injects `DOMAIN_BACKEND`, `DOMAIN_OVERRIDE`, and `NODE_ENV` at build time.
 - The sample frontend environment uses an empty `DOMAIN_BACKEND` and `DOMAIN_OVERRIDE=0`, so development and preview requests use Vite’s proxy to the Go default port **3000**. Remote APIs require a full `DOMAIN_BACKEND` and `DOMAIN_OVERRIDE=1`. Do not pin `NODE_ENV` in frontend environment files.
-- TypeScript aliases for `@shared`, `@entities`, `@features`, `@widgets`, `@pages`, and `@public` are declared in `tsconfig.json`; Vite resolves those paths. Do not assume every formatter import group has a matching TypeScript alias.
-- Styling uses Mantine and colocated CSS modules. `biome.json` defines four spaces for code, single quotes, optional semicolons, no trailing commas, and import organization. Biome enforces React hook/compiler and promise rules and rejects explicit `any` and non-null assertions. Use bracket access for index signatures as required by TypeScript; the conflicting stylistic `useLiteralKeys` rule is disabled. Local CSS classes have generated exact declarations; use native media-query breakpoint values with the existing Mantine PostCSS mixins.
+- TypeScript paths for `@shared`, `@entities` and `@public` are declared in `tsconfig.json`.
+- Components use scoped Svelte styles, shared panel controls in `src/svelte/ui`, and CSS modules for shell and dashboard layouts. Keep exact CSS module declarations current with `bun run css:types`.
 - Translations live in `public/locales`; `bun run i18n:types` regenerates `@types/resources.ts` from English resources. Translations are maintained locally; Crowdin is not used.
 
 ## Tests and fixtures

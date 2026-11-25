@@ -1,0 +1,244 @@
+:root {
+    --gw-background: var(--mantine-color-body);
+    --gw-surface: var(--gw-card-bg);
+    --gw-border: var(--mantine-color-default-border);
+    --gw-text: var(--mantine-color-text);
+    --gw-accent: var(--mantine-color-cyan-4);
+    --gw-error: var(--mantine-color-error);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    color: var(--gw-text);
+    background: var(--gw-background);
+}
+
+a {
+    color: var(--gw-accent);
+}
+
+:where(.dashboard-content, dialog)
+    :where(
+        input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"]),
+        select,
+        textarea
+    ):where(:not([class*="mantine-"])) {
+    min-height: 36px;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--mantine-color-default-border);
+    border-radius: var(--mantine-radius-md);
+    background: light-dark(white, var(--mantine-color-dark-6));
+    color: var(--mantine-color-text);
+    font: inherit;
+    font-size: var(--mantine-font-size-sm);
+}
+
+:where(.dashboard-content, dialog) :where(button:not([class*="mantine-"])) {
+    min-height: 36px;
+    padding: 0 var(--mantine-spacing-md);
+    border: 1px solid transparent;
+    border-radius: var(--mantine-radius-md);
+    background: var(--mantine-color-cyan-light);
+    color: var(--mantine-color-cyan-light-color);
+    font: inherit;
+    font-size: var(--mantine-font-size-sm);
+    font-weight: 600;
+}
+
+:where(input[type="radio"]) {
+    accent-color: var(--mantine-primary-color-filled);
+}
+
+:where(input[type="checkbox"]:not([role="switch"])) {
+    appearance: none;
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: var(--gw-checkbox-size, 20px);
+    height: var(--gw-checkbox-size, 20px);
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--mantine-color-default-border);
+    border-radius: var(--mantine-radius-sm);
+    background-color: var(--mantine-color-default);
+    color: var(--mantine-color-bright);
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+:where(input[type="checkbox"]:not([role="switch"])):is(:checked, :indeterminate) {
+    border-color: light-dark(var(--mantine-color-cyan-7), var(--mantine-color-cyan-4));
+    background-color: transparent;
+}
+
+:where(input[type="checkbox"]:not([role="switch"])):is(:checked, :indeterminate)::after {
+    width: 65%;
+    aspect-ratio: 1;
+    background: currentColor;
+    mask:
+        center / contain no-repeat
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m2 8 4 4 8-8' fill='none' stroke='black' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    content: "";
+}
+
+:where(input[type="checkbox"]:not([role="switch"])):indeterminate::after {
+    height: 2.5px;
+    border-radius: 999px;
+    mask: none;
+}
+
+:where(input[type="checkbox"]:not([role="switch"])):disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+:where(.mantine-UnstyledButton-root) {
+    appearance: none;
+    border: 0;
+    padding: 0;
+    color: inherit;
+    background: transparent;
+    text-align: start;
+    touch-action: manipulation;
+}
+
+textarea {
+    resize: vertical;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:disabled:not([class*="mantine-"]) {
+    opacity: 0.65;
+    cursor: progress;
+}
+
+:focus-visible {
+    outline: 2px solid var(--mantine-color-cyan-4);
+    outline-offset: 2px;
+}
+
+[role="alert"] {
+    color: var(--gw-error);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: Unbounded, Montserrat, system-ui, sans-serif;
+    text-decoration: none;
+}
+
+.brand img {
+    object-fit: contain;
+}
+
+.dashboard-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--gw-border);
+    background: var(--gw-surface);
+}
+
+.dashboard-content {
+    max-width: 88rem;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+dialog {
+    width: min(calc(100% - 2rem), 32rem);
+    max-height: calc(100dvh - 2rem);
+    padding: 1.25rem;
+    border: 1px solid var(--gw-border);
+    border-radius: 0.5rem;
+    background: var(--gw-surface);
+    color: var(--gw-text);
+}
+
+dialog::backdrop {
+    background: rgb(0 0 0 / 55%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    dialog[open],
+    dialog[open]::backdrop {
+        animation: dialog-fade-in 200ms ease-out;
+    }
+
+    dialog[open][data-closing],
+    dialog[open][data-closing]::backdrop {
+        animation: dialog-fade-out 200ms ease-in both;
+    }
+
+    dialog.panel-overlay.drawer[open] {
+        animation-name: dialog-slide-in;
+    }
+
+    dialog.panel-overlay.drawer[open][data-closing] {
+        animation-name: dialog-slide-out;
+    }
+}
+
+dialog[open][data-closing] {
+    pointer-events: none;
+}
+
+@keyframes dialog-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes dialog-fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes dialog-slide-in {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes dialog-slide-out {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(100%);
+    }
+}
+
+.button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+html:has(dialog:modal) {
+    overflow: hidden;
+}

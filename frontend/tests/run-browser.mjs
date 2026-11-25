@@ -1,13 +1,14 @@
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { build } from 'vite'
+import { startSvelteFixture } from './svelte-app-fixture.mjs'
 
 const output = mkdtempSync(join(tmpdir(), 'gowave-browser-'))
 let browser
+let server
 try {
     const root = resolve(import.meta.dirname, '..')
     await build({
@@ -15,34 +16,31 @@ try {
         root,
         base: './',
         logLevel: 'error',
-        define: { __BUILD_ID__: JSON.stringify('browser-test') },
+        define: {
+            __BUILD_ID__: JSON.stringify('browser-test'),
+            __DOMAIN_BACKEND__: JSON.stringify(''),
+            __DOMAIN_OVERRIDE__: JSON.stringify('0'),
+            __NODE_ENV__: JSON.stringify('production')
+        },
         build: {
             outDir: output,
-            emptyOutDir: true,
-            copyPublicDir: false,
-            rollupOptions: { input: join(root, 'tests/browser.html') }
+            emptyOutDir: true
         }
     })
-    const html = join(output, 'tests/browser.html')
-    const pageHtml = readFileSync(html, 'utf8')
-        .replace(
-            /(src|href)="([^"]+)"/g,
-            (_match, attribute, value) =>
-                `${attribute}="${new URL(value, pathToFileURL(html)).href}"`
-        )
-        .replace('<head>', '<head><base href="https://gowave.invalid/panel/">')
-    writeFileSync(html, pageHtml)
+    const fixture = startSvelteFixture(output)
+    server = fixture.server
+    const url = fixture.url
     browser = spawn(
         process.env.CHROMIUM_BIN || 'chromium',
         [
             '--headless',
             '--no-sandbox',
             '--disable-gpu',
+            '--window-size=1440,900',
             '--disable-background-networking',
-            '--allow-file-access-from-files',
             '--remote-debugging-port=0',
             `--user-data-dir=${join(output, 'profile')}`,
-            pathToFileURL(html).href
+            url
         ],
         { stdio: ['ignore', 'ignore', 'pipe'] }
     )
@@ -78,41 +76,84 @@ try {
     if (!page) throw new Error('Chromium did not create a page')
     const socket = new WebSocket(page.webSocketDebuggerUrl)
     const result = await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('Browser smoke tests timed out')), 20000)
+        const timeout = setTimeout(() => reject(new Error('Browser smoke tests timed out')), 30000)
         socket.onerror = () => {
             clearTimeout(timeout)
             reject(new Error('Chromium debugging connection failed'))
         }
-        socket.onopen = () =>
+        const poll = () => {
+            if (socket.readyState !== WebSocket.OPEN) return
             socket.send(
                 JSON.stringify({
                     id: 1,
                     method: 'Runtime.evaluate',
                     params: {
-                        expression: `new Promise((resolve) => {
-                    const poll = () => document.body?.dataset.result
-                        ? resolve(document.body.dataset.result + ': ' + document.body.textContent)
-                        : setTimeout(poll, 50)
-                    poll()
-                })`,
-                        awaitPromise: true,
+                        expression: `(() => {
+                            const { result, editorInput } = document.body?.dataset || {}
+                            if (result) return result + ': ' + document.body.textContent
+                            if (!editorInput) return null
+                            delete document.body.dataset.editorInput
+                            return { editorInput: JSON.parse(editorInput) }
+                        })()`,
                         returnByValue: true
                     }
                 })
             )
+        }
+        socket.onopen = poll
         socket.onmessage = (event) => {
             const message = JSON.parse(event.data)
+            if (message.id === 2) {
+                if (message.error) {
+                    clearTimeout(timeout)
+                    reject(new Error(JSON.stringify(message.error)))
+                } else {
+                    setTimeout(poll, 50)
+                }
+                return
+            }
+            if (message.id === 3 || message.id === 4) return
             if (message.id !== 1) return
+            const value = message.result?.result?.value
+            if (value?.editorInput) {
+                const { text, x, y } = value.editorInput
+                for (const [id, type] of [
+                    [3, 'mousePressed'],
+                    [4, 'mouseReleased']
+                ]) {
+                    socket.send(
+                        JSON.stringify({
+                            id,
+                            method: 'Input.dispatchMouseEvent',
+                            params: { type, x, y, button: 'left', clickCount: 1 }
+                        })
+                    )
+                }
+                socket.send(
+                    JSON.stringify({
+                        id: 2,
+                        method: 'Input.insertText',
+                        params: { text }
+                    })
+                )
+                return
+            }
+            // Chromium may replace the initial execution context while opening the test HTML.
+            if (message.error?.code === -32000 || value === null) {
+                setTimeout(poll, 50)
+                return
+            }
             clearTimeout(timeout)
-            resolve(message.result?.result?.value || JSON.stringify(message))
+            resolve(value || JSON.stringify(message))
         }
     }).finally(() => socket.close())
     if (!String(result).startsWith('passed:')) throw new Error(String(result))
-    process.stdout.write('Browser smoke tests passed\n')
+    process.stdout.write('Svelte browser smoke tests passed\n')
 } finally {
-    if (browser && browser.exitCode === null) {
+    if (browser?.pid !== undefined && browser.exitCode === null && browser.signalCode === null) {
         browser.kill()
         await once(browser, 'exit')
     }
+    server?.stop(true)
     rmSync(output, { recursive: true, force: true })
 }

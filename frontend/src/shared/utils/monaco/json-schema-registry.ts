@@ -1,4 +1,4 @@
-import { runAsync } from '@shared/lib/run-async'
+import logger from '@shared/lib/logger'
 import type { jsonDefaults } from '@shared/utils/setup-monaco/setup-monaco'
 
 type DiagnosticsOptions = Parameters<typeof jsonDefaults.setDiagnosticsOptions>[0]
@@ -19,13 +19,13 @@ export const registerJsonSchema = (schema: JsonSchema, diagnostics?: SeverityOpt
 
     // Callers run once Monaco is mounted, so this resolves the already loaded module
     // without pulling Monaco into the main bundle.
-    runAsync(
-        import('@shared/utils/setup-monaco/setup-monaco').then(({ jsonDefaults: defaults }) => {
+    void import('@shared/utils/setup-monaco/setup-monaco')
+        .then(({ jsonDefaults: defaults }) => {
             defaults.setDiagnosticsOptions({
                 ...DEFAULT_DIAGNOSTICS,
                 ...diagnostics,
                 schemas: [...registry.values()]
             })
         })
-    )
+        .catch((error: unknown) => logger.error('Failed to register the JSON schema:', error))
 }
