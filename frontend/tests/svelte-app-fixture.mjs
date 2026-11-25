@@ -2361,6 +2361,48 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
             'Creating a subpage did not open the new editor'
         )
 
+        openPanelRoute('dashboard/tools/sessions-explorer')
+        const startScan = await until(() => {
+            const button = findButton('Start exploring')
+            return button && !button.disabled && button
+        }, 'The Sessions Explorer did not find the online nodes')
+        startScan.click()
+        await until(
+            () =>
+                select('main [role="progressbar"]')?.getAttribute('aria-valuenow') === '0' &&
+                select('main li')?.closest('section')?.textContent.includes('GeoCheck node'),
+            'The scan did not show progress and active nodes'
+        )
+        await until(
+            () =>
+                performance
+                    .getEntriesByType('resource')
+                    .some(({ name }) =>
+                        /\/dashboard\/lotties\/(duck-progress|globe|jail)\.lottie$/.test(name)
+                    ),
+            'The scan did not load a bundled progress animation under the panel base path'
+        )
+        const searchIp = await until(
+            () => select('main input[type="search"]'),
+            'The scan did not display results and IP search'
+        )
+        const explorer = searchIp.closest('main')
+        if (
+            !findButton('Restart scan', explorer.querySelector('header')) ||
+            !findButton('Clear results', explorer.querySelector('header')) ||
+            !explorer.querySelector('a[aria-label="IP Info: 192.0.2.11"]') ||
+            !findButton('Copy 192.0.2.11', explorer)
+        )
+            throw new Error('The session results omitted header actions or IP actions')
+        setValue(searchIp, '192.0.2.12')
+        await until(
+            () =>
+                findButton('Copy 192.0.2.12', explorer) && !findButton('Copy 192.0.2.11', explorer),
+            'IP search did not narrow the user cards'
+        )
+        findButton('Clear results', explorer).click()
+        await until(() => findButton('Start exploring'), 'Clearing results did not reset the scan')
+
         findButton('Sign out', select('header')).click()
         await until(
             () => location.pathname === `${scope}auth/login`,
@@ -3447,6 +3489,31 @@ export function startSvelteFixture(output) {
                 }
                 if (pathname === `/api/node-plugins/${fixturePlugin.uuid}`)
                     return result(fixturePlugin)
+                if (pathname.startsWith('/api/connections/by-node/')) {
+                    const node = nodes.find(({ uuid }) => pathname.endsWith(`/${uuid}`))
+                    if (!node) return new Response(null, { status: 404 })
+                    if (request.method === 'POST')
+                        return Response.json({ response: { jobId: node.uuid } }, { status: 201 })
+                    return result({
+                        isCompleted: true,
+                        isFailed: false,
+                        result: {
+                            success: true,
+                            nodeUuid: node.uuid,
+                            users: [
+                                {
+                                    userId: node.id,
+                                    ips: [
+                                        {
+                                            ip: `192.0.2.${10 + node.id}`,
+                                            lastSeen: new Date().toISOString()
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    })
+                }
                 if (pathname === '/api/nodes' || pathname === '/api/nodes/') return result(nodes)
                 if (pathname === `/api/metadata/node/${geoNode.uuid}`) {
                     return result({ metadata: { location: 'fixture-location' } })

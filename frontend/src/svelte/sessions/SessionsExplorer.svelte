@@ -5,12 +5,16 @@
     import { nodesQuery } from '../nodes/queries'
     import RouteLoading from '../RouteLoading.svelte'
     import { p } from '../router'
+    import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import EmptyState from '../ui/EmptyState.svelte'
     import FormCard from '../ui/FormCard.svelte'
     import Icon from '../ui/Icon.svelte'
+    import MetricCard from '../ui/MetricCard.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
     import { loadNodeSessions } from './queries'
     import SessionGroup from './SessionGroup.svelte'
+    import SessionScanProgress from './SessionScanProgress.svelte'
     import { type ScanProgress, scanSessions } from './scan'
 
     const nodes = createQuery(() => ({ ...nodesQuery, refetchInterval: 15_000 }))
@@ -29,11 +33,22 @@
         ) ?? []
     )
     let pages = $derived(Math.max(1, Math.ceil(matches.length / pageSize)))
+    let highestCount = $derived(result?.users[0]?.uniqueIps ?? 0)
+    let lowestCount = $derived(result?.users.at(-1)?.uniqueIps ?? 0)
     let visible = $derived(matches.slice(page * pageSize, (page + 1) * pageSize))
     let t = $derived(locale.t)
     let notice = $state('')
     let failure = $state('')
     let copyFailure = $state('')
+    let now = $state(Date.now())
+    let format = $derived(new Intl.NumberFormat(locale.language))
+
+    $effect(() => {
+        if (phase !== 'completed') return
+        now = Date.now()
+        const clock = window.setInterval(() => (now = Date.now()), 30_000)
+        return () => window.clearInterval(clock)
+    })
 
     onDestroy(() => controller?.abort())
 
@@ -76,6 +91,14 @@
         }
     }
 
+    function countTone(count: number): 'teal' | 'yellow' | 'red' {
+        const range = highestCount - lowestCount
+        if (!range) return 'teal'
+        const rank = (count - lowestCount) / range
+        if (rank >= 0.66) return 'red'
+        return rank >= 0.33 ? 'yellow' : 'teal'
+    }
+
     function copy(ip: string): void {
         notice = ''
         copyFailure = ''
@@ -92,7 +115,25 @@
     {#if nodes.isPending}
         <RouteLoading label={t('common.message.loading')} />
     {:else}
-        <PageHeader title={t('constants.sessions-explorer')} icon="TbRadar2" />
+        <PageHeader title={t('constants.sessions-explorer')} icon="TbRadar2">
+            {#if phase === 'completed'}
+                <ActionIcon
+                    icon="TbRefresh"
+                    label={t('sessions-explorer.widget.restart-scan')}
+                    tone="teal"
+                    iconSize={20}
+                    disabled={!online.length}
+                    onclick={() => void start()}
+                />
+                <ActionIcon
+                    icon="TbTrash"
+                    label={t('sessions-explorer.widget.clear-results')}
+                    tone="red"
+                    iconSize={20}
+                    onclick={reset}
+                />
+            {/if}
+        </PageHeader>
 
         {#if nodes.error}
             <p role="alert">{nodes.error.message}</p>
@@ -132,80 +173,91 @@
                 {t('sessions-explorer-idle.start-exploring')}
             </Button>
         {:else if phase === 'running' && progress}
-            <section class="surface">
-                <h2>{t('sessions-explorer-progress.exploring-nodes')}</h2>
-                <progress
-                    value={progress.completed + progress.failed}
-                    max={progress.total}
-                    aria-label={t('sessions-explorer-progress.exploring-nodes')}
-                ></progress>
-                <p role="status">
-                    {t('sessions-explorer-progress.nodes-processed', {
-                        completed: progress.completed + progress.failed,
-                        total: progress.total
-                    })}
-                    · {t('sessions-explorer-progress.nodes-failed', { count: progress.failed })}
-                </p>
-                <ul>
-                    {#each progress.active as node (node.uuid)}
-                        <li>{node.name}</li>
-                    {/each}
-                </ul>
-                <button type="button" onclick={reset}>{t('common.action.cancel')}</button>
-            </section>
+            <SessionScanProgress explorer={progress}>
+                <Button variant="subtle" color="gray" icon="TbX" onclick={reset}>
+                    {t('common.action.cancel')}
+                </Button>
+            </SessionScanProgress>
         {:else if phase === 'failed'}
-            <p role="alert">
-                {failure || t('sessions-explorer.widget.all-nodes-failed-to-return-session-data')}
-            </p>
-            <button type="button" onclick={() => void start()} disabled={!online.length}>
-                {t('common.action.try-again')}
-            </button>
-            <button type="button" onclick={reset}>
-                {t('sessions-explorer.widget.clear-results')}
-            </button>
+            <FormCard
+                title={t('sessions-explorer.widget.all-nodes-failed-to-return-session-data')}
+                icon="TbAlertTriangle"
+                tone="red"
+            >
+                {#if failure}
+                    <p role="alert">{failure}</p>
+                {/if}
+                <div class="button-row">
+                    <Button
+                        variant="soft"
+                        color="teal"
+                        icon="TbRefresh"
+                        disabled={!online.length}
+                        onclick={() => void start()}
+                    >
+                        {t('common.action.try-again')}
+                    </Button>
+                    <Button onclick={reset}>{t('sessions-explorer.widget.clear-results')}</Button>
+                </div>
+            </FormCard>
         {:else if result}
-            <dl class="metrics">
-                <div>
-                    <dt>{t('sessions-explorer.widget.total-ips')}</dt>
-                    <dd>{result.totalIps.toLocaleString(locale.language)}</dd>
-                </div>
-                <div>
-                    <dt>{t('sessions-explorer.widget.unique-ips')}</dt>
-                    <dd>{result.uniqueIps.toLocaleString(locale.language)}</dd>
-                </div>
-                <div>
-                    <dt>{t('sessions-explorer.widget.nodes-explored')}</dt>
-                    <dd>{result.completed.toLocaleString(locale.language)}</dd>
-                </div>
-                <div>
-                    <dt>{t('sessions-explorer.widget.total-users')}</dt>
-                    <dd>{result.users.length.toLocaleString(locale.language)}</dd>
-                </div>
-            </dl>
-            <div class="button-row">
-                <button type="button" disabled={!online.length} onclick={() => void start()}>
-                    {t('sessions-explorer.widget.restart-scan')}
-                </button>
-                <button type="button" onclick={reset}>
-                    {t('sessions-explorer.widget.clear-results')}
-                </button>
+            <div class="metrics">
+                <MetricCard
+                    label={t('sessions-explorer.widget.total-ips')}
+                    value={format.format(result.totalIps)}
+                    icon="TbNetwork"
+                    color="blue"
+                />
+                <MetricCard
+                    label={t('sessions-explorer.widget.unique-ips')}
+                    value={format.format(result.uniqueIps)}
+                    icon="TbFingerprint"
+                    color="teal"
+                />
+                <MetricCard
+                    label={t('sessions-explorer.widget.nodes-explored')}
+                    value={format.format(result.completed)}
+                    icon="TbServer"
+                    color="indigo"
+                />
+                <MetricCard
+                    label={t('sessions-explorer.widget.total-users')}
+                    value={format.format(result.users.length)}
+                    icon="TbUser"
+                    color="violet"
+                />
             </div>
             {#if result.users.length}
-                <label class="search">
-                    {t('sessions-explorer.widget.search-by-ip')}
-                    <input type="search" bind:value={search} oninput={() => (page = 0)}>
-                </label>
-                {#if term}
-                    <button
-                        type="button"
-                        onclick={() => {
-                            search = ''
-                            page = 0
-                        }}
-                    >
-                        {t('action-group.feature.clear-filters')}
-                    </button>
-                {/if}
+                <div class="search-row">
+                    <div class="search">
+                        <span class="search-icon" aria-hidden="true"><Icon name="TbSearch" /></span>
+                        <input
+                            type="search"
+                            aria-label={t('sessions-explorer.widget.search-by-ip')}
+                            placeholder={t('sessions-explorer.widget.search-by-ip')}
+                            bind:value={search}
+                            oninput={() => (page = 0)}
+                        >
+                        {#if search}
+                            <ActionIcon
+                                icon="TbX"
+                                label={t('action-group.feature.clear-filters')}
+                                size={28}
+                                iconSize={16}
+                                subtle
+                                onclick={() => {
+                                    search = ''
+                                    page = 0
+                                }}
+                            />
+                        {/if}
+                    </div>
+                    {#if term}
+                        <span class="count teal" role="status"
+                            >{format.format(matches.length)}</span
+                        >
+                    {/if}
+                </div>
             {/if}
         {/if}
         {#if result?.errors.size}
@@ -221,58 +273,75 @@
             </details>
         {/if}
         {#if phase === 'completed'}
-            {#if !visible.length}
-                <p>
-                    {term
-                        ? t('sessions-explorer.widget.no-results-for-ip', { ip: term })
-                        : t('common.message.nothing-found')}
-                </p>
-            {/if}
             {#if notice}
                 <p role="status">{notice}</p>
             {/if}
             {#if copyFailure}
                 <p role="alert">{copyFailure}</p>
             {/if}
-            <div class="results">
-                {#each visible as user (user.userId)}
-                    <article class="surface">
-                        <header>
-                            <h2>
-                                <a
-                                    href={p('/dashboard/open/user/:id', {
-                                        params: { id: String(user.userId) }
-                                    })}
-                                    >User {user.userId}</a
-                                >
-                            </h2>
-                            <span
-                                >{t('sessions-explorer.widget.unique-ips')}
-                                {user.uniqueIps.toLocaleString(locale.language)}
-                                ·
-                                {t('sessions-explorer.widget.total-ips')}
-                                {user.totalIps.toLocaleString(locale.language)}</span
-                            >
-                        </header>
-                        {#each user.nodes as { node, ips } (node.uuid)}
-                            {#if ips.length}
-                                <SessionGroup {node} {ips} search={term} {copy} />
-                            {/if}
-                        {/each}
-                    </article>
-                {/each}
-            </div>
+            {#if !visible.length}
+                <EmptyState
+                    icon="TbRadar"
+                    label={term
+                        ? t('sessions-explorer.widget.no-results-for-ip', { ip: term })
+                        : t('common.message.nothing-found')}
+                />
+            {:else}
+                <div class="results">
+                    {#each visible as user (user.userId)}
+                        {@const tone = countTone(user.uniqueIps)}
+                        {@const uniqueLabel = t('sessions-explorer.widget.unique-ips')}
+                        {@const totalLabel = t('sessions-explorer.widget.total-ips')}
+                        <article>
+                            <header>
+                                <h2>
+                                    <ActionIcon
+                                        icon="PiUserCircle"
+                                        label={t('node-active-session.item.widget.view-user')}
+                                        tone="cyan"
+                                        size={34}
+                                        iconSize={20}
+                                        href={p('/dashboard/open/user/:id', {
+                                            params: { id: String(user.userId) }
+                                        })}
+                                    />
+                                    {user.userId}
+                                </h2>
+                                <div class="counts">
+                                    <span class={['count', tone]} title={uniqueLabel}>
+                                        <Icon name="TbFingerprint" size={16} />
+                                        <span class="sr-only">{uniqueLabel}</span>
+                                        {format.format(user.uniqueIps)}
+                                    </span>
+                                    <span class="count" title={totalLabel}>
+                                        <Icon name="TbSum" size={16} />
+                                        <span class="sr-only">{totalLabel}</span>
+                                        {format.format(user.totalIps)}
+                                    </span>
+                                </div>
+                            </header>
+                            <div class="groups">
+                                {#each user.nodes as { node, ips } (node.uuid)}
+                                    {#if ips.length}
+                                        <SessionGroup {node} {ips} search={term} {copy} {now} />
+                                    {/if}
+                                {/each}
+                            </div>
+                        </article>
+                    {/each}
+                </div>
+            {/if}
             {#if pages > 1}
                 <div class="button-row pagination">
                     <button type="button" disabled={page === 0} onclick={() => (page -= 1)}>
-                        Previous
+                        {t('common.action.previous')}
                     </button>
                     <span
                         >{page + 1}
                         / {pages} · {matches.length.toLocaleString(locale.language)}</span
                     >
                     <button type="button" disabled={page + 1 >= pages} onclick={() => (page += 1)}>
-                        Next
+                        {t('common.action.next')}
                     </button>
                 </div>
             {/if}
@@ -326,50 +395,130 @@
         font-weight: 600;
     }
 
-    .surface,
-    .metrics > div {
-        border: 1px solid var(--gw-border);
-        border-radius: 0.5rem;
-        padding: 1rem;
-        background: var(--gw-surface);
-    }
     .results,
     .metrics {
         display: grid;
-        gap: 0.75rem;
-    }
-    .results {
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 27rem), 1fr));
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--mantine-spacing-sm);
     }
     .metrics {
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+        gap: var(--mantine-spacing-xs);
     }
-    .metrics dd {
-        margin: 0.25rem 0 0;
-        font-size: 1.25rem;
-        font-weight: bold;
+    @media (min-width: 36em) {
+        .metrics {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (min-width: 56em) {
+        .results {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (min-width: 68em) {
+        .metrics {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+    }
+    @media (min-width: 80em) {
+        .results {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+    article {
+        min-width: 0;
+        border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
+        border-radius: var(--mantine-radius-md);
+        padding: var(--mantine-spacing-md);
+        background: var(--gw-raised-bg);
+    }
+    article header,
+    article h2,
+    .counts,
+    .search-row {
+        display: flex;
+        align-items: center;
+        gap: var(--mantine-spacing-xs);
     }
     article header {
-        margin-block-end: 0.75rem;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        padding-block-end: var(--mantine-spacing-xs);
+        border-block-end: 1px solid rgba(var(--gw-fg-rgb), 0.08);
     }
-    h2 {
-        font-size: 1.15rem;
-        margin-block: 0 0.4rem;
+    article h2 {
+        margin: 0;
+        font-size: var(--mantine-h5-font-size);
+        color: var(--mantine-color-bright);
+    }
+    .groups {
+        max-block-size: 400px;
+        overflow: auto;
+    }
+    .count {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.18rem 0.55rem;
+        border: 1px solid var(--count-border, var(--mantine-color-default-border));
+        border-radius: var(--mantine-radius-md);
+        background: var(--count-bg, var(--mantine-color-default));
+        color: var(--count-ink, var(--mantine-color-text));
+        font-weight: 700;
+        font-size: var(--mantine-font-size-xs);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+    .count.teal {
+        --count-border: color-mix(in srgb, var(--mantine-color-teal-6) 30%, transparent);
+        --count-bg: var(--mantine-color-teal-light);
+        --count-ink: var(--mantine-color-teal-light-color);
+    }
+    .count.yellow {
+        --count-border: color-mix(in srgb, var(--mantine-color-yellow-6) 30%, transparent);
+        --count-bg: var(--mantine-color-yellow-light);
+        --count-ink: var(--mantine-color-yellow-light-color);
+    }
+    .count.red {
+        --count-border: color-mix(in srgb, var(--mantine-color-red-6) 30%, transparent);
+        --count-bg: var(--mantine-color-red-light);
+        --count-ink: var(--mantine-color-red-light-color);
     }
     .search {
+        position: relative;
         display: grid;
-        gap: 0.25rem;
-        max-width: 30rem;
-        margin-block: 0.75rem;
+        flex: 1;
+        min-width: 0;
+    }
+    .search input {
+        width: 100%;
+        padding-inline: 2.15rem;
+    }
+    .search input::-webkit-search-cancel-button {
+        appearance: none;
+    }
+    .search-icon,
+    .search :global(.action-icon) {
+        position: absolute;
+        align-self: center;
+    }
+    .search-icon {
+        display: flex;
+        inset-inline-start: 0.65rem;
+        color: var(--mantine-color-dimmed);
+        pointer-events: none;
+    }
+    .search :global(.action-icon) {
+        inset-inline-end: 0.25rem;
     }
     .pagination {
-        margin-block: 0.75rem;
         align-items: center;
     }
-    details {
-        margin-block: 0.75rem;
-    }
-    progress {
-        width: min(100%, 32rem);
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
     }
 </style>
