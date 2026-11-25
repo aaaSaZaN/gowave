@@ -47,21 +47,23 @@ type StubHandler struct {
 	nodeClient      *nodes.Client
 	jobs            sync.Map
 	subPublicDomain string
+	subscriptions   *subscription.Handler
 	cfg             *config.Config
 	clientSource    func() *nodes.Client
 }
 
-func NewHandler(db *gorm.DB, appSecret string, jwtLifetime int, nodeClient ...*nodes.Client) *StubHandler {
+func NewHandler(db *gorm.DB, appSecret string, jwtLifetime int, subscriptions *subscription.Handler, nodeClient ...*nodes.Client) *StubHandler {
 	var nc *nodes.Client
 	if len(nodeClient) > 0 {
 		nc = nodeClient[0]
 	}
 	return &StubHandler{
-		db:          db,
-		keygenSvc:   keygen.NewService(db),
-		appSecret:   appSecret,
-		jwtLifetime: jwtLifetime,
-		nodeClient:  nc,
+		db:            db,
+		keygenSvc:     keygen.NewService(db),
+		appSecret:     appSecret,
+		jwtLifetime:   jwtLifetime,
+		nodeClient:    nc,
+		subscriptions: subscriptions,
 	}
 }
 
@@ -1233,40 +1235,32 @@ func (s *StubHandler) UpsertUserMetadata(w http.ResponseWriter, r *http.Request)
 	})
 }
 
-func (s *StubHandler) subscriptions() *subscription.Handler {
-	h := subscription.NewHandler(s.db, s.subPublicDomain)
-	if s.cfg != nil {
-		h.SetDisableHistory(s.cfg.Service.DisableSrhRecords)
-	}
-	return h
-}
-
 func (s *StubHandler) GetAllSubscriptions(w http.ResponseWriter, r *http.Request) {
-	s.subscriptions().ListProtected(w, r)
+	s.subscriptions.ListProtected(w, r)
 }
 
 func (s *StubHandler) GetSubscriptionById(w http.ResponseWriter, r *http.Request) {
-	s.subscriptions().InfoProtected(w, r)
+	s.subscriptions.InfoProtected(w, r)
 }
 
 func (s *StubHandler) GetSubscriptionByShortUuid(w http.ResponseWriter, r *http.Request) {
-	s.subscriptions().InfoProtected(w, r)
+	s.subscriptions.InfoProtected(w, r)
 }
 
 func (s *StubHandler) GetRawSubscriptionByShortUuid(w http.ResponseWriter, r *http.Request) {
-	s.subscriptions().RawProtected(w, r)
+	s.subscriptions.RawProtected(w, r)
 }
 
 func (s *StubHandler) GetSubscriptionByUsername(w http.ResponseWriter, r *http.Request) {
-	s.subscriptions().InfoProtected(w, r)
+	s.subscriptions.InfoProtected(w, r)
 }
 
 func (s *StubHandler) GetConnectionKeysByUserId(w http.ResponseWriter, r *http.Request) {
-	s.subscriptions().ConnectionKeys(w, r)
+	s.subscriptions.ConnectionKeys(w, r)
 }
 
 func (s *StubHandler) GetSubpageConfigByShortUuid(w http.ResponseWriter, r *http.Request) {
-	s.subscriptions().SubpageConfig(w, r)
+	s.subscriptions.SubpageConfig(w, r)
 }
 
 func (s *StubHandler) GetSubHistory(w http.ResponseWriter, r *http.Request) {

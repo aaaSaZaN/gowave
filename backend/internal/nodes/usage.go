@@ -149,7 +149,7 @@ func (s *Service) writeUsageBatch(node *database.Node, batch []userUsage, now, d
 			args = append(args, entry.id, entry.billed)
 		}
 		args = append(args, now, now, node.UUID)
-		if err := tx.Exec(`UPDATE user_traffic SET
+		if err := database.WithUserTrafficChange(tx, ids).Exec(`UPDATE user_traffic SET
 			used_traffic_bytes = used_traffic_bytes + v.b,
 			lifetime_used_traffic_bytes = lifetime_used_traffic_bytes + v.b,
 			online_at = ?,

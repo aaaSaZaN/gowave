@@ -32,6 +32,8 @@ func Init(driver string, databaseURL string) (*gorm.DB, error) {
 
 	sqlDB, err := db.DB()
 	if err == nil {
+		pool := &commitPool{DB: sqlDB}
+		db.ConnPool, db.Statement.ConnPool = pool, pool
 		if !isPostgres {
 			// SQLite in concurrent environment: limit to 1 open connection to avoid database is locked
 			sqlDB.SetMaxOpenConns(1)

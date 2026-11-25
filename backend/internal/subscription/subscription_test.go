@@ -54,7 +54,7 @@ func subscriptionRouter(db *gorm.DB, domain ...string) http.Handler {
 	if len(domain) > 0 {
 		publicDomain = domain[0]
 	}
-	h := NewHandler(db, publicDomain)
+	h := NewHandler(db, publicDomain, 10000, 15*time.Second)
 	router := chi.NewRouter()
 	router.Get("/api/sub/{shortUuid}", h.GetSubscription)
 	router.Get("/api/sub/{shortUuid}/info", h.GetSubscriptionInfo)
@@ -349,8 +349,7 @@ func TestBrowserAndInfo(t *testing.T) {
 
 func TestUserCacheTrafficUpdate(t *testing.T) {
 	db, user := subscriptionDB(t)
-	h := NewHandler(db, "sub.example")
-	h.SetUserCache(100, 30*time.Second)
+	h := NewHandler(db, "sub.example", 100, 30*time.Second)
 
 	router := chi.NewRouter()
 	router.Get("/api/sub/{shortUuid}", h.GetSubscription)
@@ -422,7 +421,7 @@ func TestUserCacheTrafficUpdate(t *testing.T) {
 }
 
 func TestUserLRUCacheBasic(t *testing.T) {
-	cache := newUserLRUCache(nil, 3, 50*time.Millisecond)
+	cache := newUserLRUCache(3, 50*time.Millisecond)
 	if cache == nil {
 		t.Fatal("expected non-nil cache")
 	}
@@ -463,7 +462,7 @@ func TestUserLRUCacheBasic(t *testing.T) {
 
 func TestUserLRUCacheInvalidation(t *testing.T) {
 	db := testdb.Open(t)
-	cache := newUserLRUCache(db, 10, time.Minute)
+	cache := NewHandler(db, "sub.example", 10, time.Minute).userCache
 
 	user := database.User{ShortUUID: "inv-user", Username: "inv_user", ExpireAt: time.Now().Add(time.Hour)}
 	if err := db.Create(&user).Error; err != nil {
@@ -498,7 +497,7 @@ func TestUserLRUCacheInvalidation(t *testing.T) {
 }
 
 func TestUserLRUCacheConcurrent(t *testing.T) {
-	cache := newUserLRUCache(nil, 100, time.Second)
+	cache := newUserLRUCache(100, time.Second)
 	var wg sync.WaitGroup
 
 	for i := 0; i < 20; i++ {
@@ -516,9 +515,17 @@ func TestUserLRUCacheConcurrent(t *testing.T) {
 }
 
 func TestUserCacheInvalidationDuringLoad(t *testing.T) {
+	t.Run("local commit", func(t *testing.T) { testUserCacheInvalidationDuringLoad(t, false) })
+	t.Run("external write and TTL", func(t *testing.T) { testUserCacheInvalidationDuringLoad(t, true) })
+}
+
+func testUserCacheInvalidationDuringLoad(t *testing.T, external bool) {
+	t.Helper()
 	db, user := subscriptionDB(t)
-	h := NewHandler(db, "sub.example")
-	h.SetUserCache(100, 48*time.Hour)
+	ttl := 5 * time.Second
+	h := NewHandler(db, "sub.example", 100, ttl)
+	now := time.Now()
+	h.userCache.now = func() time.Time { return now }
 	read := make(chan struct{})
 	resume := make(chan struct{})
 	var release sync.Once
@@ -543,14 +550,26 @@ func TestUserCacheInvalidationDuringLoad(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("first request did not read user")
 	}
-	if err := db.Model(&database.User{}).Where("id = ?", user.ID).Update("status", "DISABLED").Error; err != nil {
+	disable := func(tx *gorm.DB) error {
+		return tx.Model(&database.User{}).Where("id = ?", user.ID).Update("status", "DISABLED").Error
+	}
+	if external {
+		sqlDB, err := db.DB()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := sqlDB.ExecContext(t.Context(), "UPDATE users SET status = 'DISABLED'"); err != nil {
+			t.Fatal(err)
+		}
+		now = now.Add(ttl)
+	} else if err := db.Transaction(disable); err != nil {
 		t.Fatal(err)
 	}
 	second := make(chan error, 1)
 	go func() {
 		got, _, err := h.findUserWithSquads(user.ShortUUID)
 		if err == nil && got.Status != "DISABLED" {
-			err = fmt.Errorf("status after committed disable = %s", got.Status)
+			err = fmt.Errorf("status after invalidation = %s", got.Status)
 		}
 		second <- err
 	}()
@@ -577,7 +596,7 @@ func TestUserCacheInvalidationDuringLoad(t *testing.T) {
 
 func BenchmarkUserLRUCache_ConcurrentGet(b *testing.B) {
 	const userCount = 1000
-	cache := newUserLRUCache(nil, 10000, 48*time.Hour)
+	cache := newUserLRUCache(10000, 48*time.Hour)
 	users := make([]string, userCount)
 	for i := 0; i < userCount; i++ {
 		uuid := fmt.Sprintf("bench-user-%04d", i)
@@ -601,7 +620,7 @@ func BenchmarkUserLRUCache_ConcurrentGet(b *testing.B) {
 
 func BenchmarkUserLRUCache_ConcurrentMixed(b *testing.B) {
 	const userCount = 1000
-	cache := newUserLRUCache(nil, 10000, 48*time.Hour)
+	cache := newUserLRUCache(10000, 48*time.Hour)
 	users := make([]string, userCount)
 	for i := 0; i < userCount; i++ {
 		uuid := fmt.Sprintf("bench-user-%04d", i)

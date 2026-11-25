@@ -1,12 +1,14 @@
 package subscription
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http/httptest"
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -63,16 +65,14 @@ func hostUUIDs(hosts []*subtpl.Host) []string {
 	return uuids
 }
 
-// enableCache turns the settle window off for the test, so only write
-// tracking keeps the cache fresh.
-// enableCache turns off the settle window and stretches the TTL: under -race
+// enableCache stretches the TTL: under -race
 // on a slow CI runner a test can take longer than CacheTTL, and an expired
 // snapshot would be rebuilt mid-test.
 func enableCache(t *testing.T) {
 	t.Helper()
-	settle, ttl := CacheSettle, CacheTTL
-	CacheSettle, CacheTTL = 0, time.Hour
-	t.Cleanup(func() { CacheSettle, CacheTTL = settle, ttl })
+	ttl := CacheTTL
+	CacheTTL = time.Hour
+	t.Cleanup(func() { CacheTTL = ttl })
 }
 
 func TestHostIndexMatchesQuery(t *testing.T) {
@@ -129,7 +129,7 @@ func TestHostIndexMatchesQuery(t *testing.T) {
 	if err := db.Exec("UPDATE hosts SET internal_squads_mode = NULL WHERE uuid = ?", "44444444-4444-4444-8444-000000000003").Error; err != nil {
 		t.Fatal(err)
 	}
-	h := NewHandler(db, "sub.example")
+	h := NewHandler(db, "sub.example", 10000, 15*time.Second)
 	service := users.NewService(db)
 	for i := 0; i < 12; i++ {
 		user, err := service.Create(users.CreateUserDTO{Username: fmt.Sprintf("user_%d", i), ExpireAt: time.Now().UTC().Add(time.Hour)})
@@ -197,11 +197,9 @@ func TestCachedRenderMatchesUncached(t *testing.T) {
 		router.Get("/api/sub/{shortUuid}/{clientType}", h.GetSubscription)
 		return router
 	}
-	cachedHandler := NewHandler(db, "sub.example")
+	cachedHandler := NewHandler(db, "sub.example", 10000, 15*time.Second)
 	cachedHandler.SetDisableHistory(true)
-	uncachedHandler := NewHandler(db, "sub.example")
-	uncachedHandler.SetDisableHistory(true)
-	uncachedHandler.cache = nil
+	uncachedHandler := &Handler{db: db, subPublicDomain: "sub.example", disableHistory: true}
 	cached, uncached := router(cachedHandler), router(uncachedHandler)
 	paths := []string{"", "/json", "/mihomo", "/singbox", "/stash", "/clash"}
 	agents := []string{"curl/8.0", "Happ/1.0", "FlClash X/1.0"}
@@ -282,17 +280,14 @@ func TestCachedRenderMatchesUncached(t *testing.T) {
 
 func TestCacheTracksWrites(t *testing.T) {
 	db, user := subscriptionDB(t)
-	tracker := trackerFor(db)
-	if trackerFor(db.Session(&gorm.Session{})) != tracker {
-		t.Fatal("sessions must share the tracker")
-	}
-	generation := tracker.generation.Load()
+	cache := NewHandler(db, "sub.example", 0, 0).cache
+	generation := cache.generation.Load()
 	unchanged := func(name string, write func() error) {
 		t.Helper()
 		if err := write(); err != nil {
 			t.Fatalf("%s: %v", name, err)
 		}
-		if tracker.generation.Load() != generation {
+		if cache.generation.Load() != generation {
 			t.Fatalf("%s invalidated the cache", name)
 		}
 	}
@@ -301,7 +296,7 @@ func TestCacheTracksWrites(t *testing.T) {
 		if err := write(); err != nil {
 			t.Fatalf("%s: %v", name, err)
 		}
-		if next := tracker.generation.Load(); next == generation {
+		if next := cache.generation.Load(); next == generation {
 			t.Fatalf("%s did not invalidate the cache", name)
 		} else {
 			generation = next
@@ -335,8 +330,25 @@ func TestCacheTracksWrites(t *testing.T) {
 	changed("raw quoted", func() error { return db.Exec(`UPDATE "hosts" SET port = 445`).Error })
 	changed("transaction", func() error {
 		return db.Transaction(func(tx *gorm.DB) error {
-			return tx.Create(&database.InternalSquad{UUID: "77777777-7777-4777-8777-777777777777", Name: "tx"}).Error
+			err := tx.Create(&database.InternalSquad{UUID: "77777777-7777-4777-8777-777777777777", Name: "tx"}).Error
+			if cache.generation.Load() != generation {
+				t.Error("uncommitted write invalidated the cache")
+			}
+			return err
 		})
+	})
+	unchanged("rolled back transaction", func() error {
+		rollback := errors.New("rollback")
+		err := db.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Exec("UPDATE hosts SET port = 446").Error; err != nil {
+				return err
+			}
+			return rollback
+		})
+		if errors.Is(err, rollback) {
+			return nil
+		}
+		return err
 	})
 	changed("squad inbound", func() error {
 		return db.Where("internal_squad_uuid = ?", "33333333-3333-4333-8333-333333333333").Delete(&database.InternalSquadInbound{}).Error
@@ -349,39 +361,103 @@ func TestCacheTracksWrites(t *testing.T) {
 	})
 }
 
-func TestCacheExpiresAndSettles(t *testing.T) {
+func TestCacheExpiresExternalChanges(t *testing.T) {
 	db, user := subscriptionDB(t)
-	h := NewHandler(db, "sub.example")
-	clock := time.Now().Add(time.Hour)
+	h := NewHandler(db, "sub.example", 100, 5*time.Second)
+	clock := time.Now()
 	h.cache.now = func() time.Time { return clock }
+	h.userCache.now = h.cache.now
 
-	if _, err := h.hostsForUser(user.ID, false, false); err != nil {
+	if _, err := h.loadSettings(); err != nil {
 		t.Fatal(err)
 	}
-	first := h.cache.current.Load()
-	if first == nil {
-		t.Fatal("not cached")
+	if _, _, err := h.findUserWithSquads(user.ShortUUID); err != nil {
+		t.Fatal(err)
 	}
-	clock = clock.Add(CacheTTL - time.Millisecond)
-	if h.cache.snapshot() != first {
-		t.Fatal("snapshot expired early")
+	// A direct SQL writer, like a different process, has no local callback.
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatal(err)
 	}
-	clock = clock.Add(time.Millisecond)
-	if h.cache.snapshot() == first {
-		t.Fatal("snapshot outlived its TTL")
+	if _, err := sqlDB.ExecContext(t.Context(), "UPDATE subscription_settings SET randomize_hosts = TRUE"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := sqlDB.ExecContext(t.Context(), "UPDATE users SET status = 'DISABLED'"); err != nil {
+		t.Fatal(err)
 	}
 
-	// A write disables caching until it settles.
-	setSettings(t, db, map[string]interface{}{"randomize_hosts": true})
-	clock = time.Now()
-	if h.cache.snapshot() != nil {
-		t.Fatal("cached while a write settles")
+	clock = clock.Add(CacheTTL - time.Millisecond)
+	if settings, err := h.loadSettings(); err != nil || settings.RandomizeHosts {
+		t.Fatalf("settings before TTL: %+v %v", settings, err)
+	}
+	if got, _, err := h.findUserWithSquads(user.ShortUUID); err != nil || got.Status != "ACTIVE" {
+		t.Fatalf("user before TTL: %+v %v", got, err)
+	}
+	clock = clock.Add(time.Millisecond)
+	if settings, err := h.loadSettings(); err != nil || !settings.RandomizeHosts {
+		t.Fatalf("settings after TTL: %+v %v", settings, err)
+	}
+	if got, _, err := h.findUserWithSquads(user.ShortUUID); err != nil || got.Status != "DISABLED" {
+		t.Fatalf("user after TTL: %+v %v", got, err)
+	}
+}
+
+func TestSettingsCacheInvalidationDuringLoad(t *testing.T) {
+	db, _ := subscriptionDB(t)
+	h := NewHandler(db, "sub.example", 0, 0)
+	read := make(chan struct{})
+	resume := make(chan struct{})
+	var release sync.Once
+	defer release.Do(func() { close(resume) })
+	var paused atomic.Bool
+	err := db.Callback().Query().After("gorm:after_query").Register("test:pause_settings_read", func(tx *gorm.DB) {
+		if tx.Statement.Table == "subscription_settings" && paused.CompareAndSwap(false, true) {
+			close(read)
+			<-resume
+		}
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	first := make(chan error, 1)
+	go func() {
+		settings, err := h.loadSettings()
+		if err == nil && settings.RandomizeHosts {
+			err = errors.New("in-flight load did not read original settings")
+		}
+		first <- err
+	}()
+	select {
+	case <-read:
+	case <-time.After(5 * time.Second):
+		t.Fatal("first request did not read the settings")
+	}
+	if err := db.Transaction(func(tx *gorm.DB) error {
+		return tx.Model(&database.SubscriptionSetting{}).Where("1=1").Update("randomize_hosts", true).Error
+	}); err != nil {
+		t.Fatal(err)
+	}
+	second := make(chan error, 1)
+	go func() {
+		settings, err := h.loadSettings()
+		if err == nil && !settings.RandomizeHosts {
+			err = errors.New("post-commit load read original settings")
+		}
+		second <- err
+	}()
+	select {
+	case err := <-second:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("post-commit request waited for the old snapshot")
+	}
+	release.Do(func() { close(resume) })
+	if err := <-first; err != nil {
+		t.Fatal(err)
 	}
 	if settings, err := h.loadSettings(); err != nil || !settings.RandomizeHosts {
-		t.Fatalf("settings while settling: %+v %v", settings, err)
-	}
-	clock = clock.Add(CacheSettle)
-	if h.cache.snapshot() == nil {
-		t.Fatal("not cached after the write settled")
+		t.Fatalf("old load repopulated cache: %+v %v", settings, err)
 	}
 }

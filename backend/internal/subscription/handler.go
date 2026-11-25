@@ -26,24 +26,16 @@ type Handler struct {
 	userCache       *UserLRUCache
 }
 
-func NewHandler(db *gorm.DB, subPublicDomain string) *Handler {
-	return &Handler{
+func NewHandler(db *gorm.DB, subPublicDomain string, userCacheSize int, userCacheTTL time.Duration) *Handler {
+	h := &Handler{
 		db:              db,
 		subPublicDomain: subPublicDomain,
 		history:         newHistoryWriter(db),
-		cache:           newSubCache(db),
-		userCache:       newUserLRUCache(db, 10000, 15*time.Second),
+		cache:           &subCache{now: time.Now},
+		userCache:       newUserLRUCache(userCacheSize, userCacheTTL),
 	}
-}
-
-// SetUserCache configures the size and TTL of the in-memory user cache.
-// Size 0 disables the user cache.
-func (h *Handler) SetUserCache(size int, ttl time.Duration) {
-	if size <= 0 {
-		h.userCache = nil
-		return
-	}
-	h.userCache = newUserLRUCache(h.db, size, ttl)
+	h.registerCacheInvalidation()
+	return h
 }
 
 func (h *Handler) findUserWithSquads(shortUUID string) (*database.User, []string, error) {
@@ -65,8 +57,11 @@ func (h *Handler) findUserWithSquads(shortUUID string) (*database.User, []string
 	}
 
 	generation := h.userCache.Generation()
-	// Requests after invalidation must not join a load of the previous generation.
-	key := strconv.FormatUint(generation, 10) + ":" + shortUUID
+	started := h.userCache.now()
+	// A request must not join a load from before a local invalidation or
+	// one old enough to outlive the freshness window for external writes.
+	window := started.UnixNano() / int64(h.userCache.ttl)
+	key := strconv.FormatUint(generation, 10) + ":" + strconv.FormatInt(window, 10) + ":" + shortUUID
 	val, err, _ := h.userCache.sf.Do(key, func() (interface{}, error) {
 		if cached, ok := h.userCache.Get(shortUUID); ok {
 			return cached, nil
@@ -82,6 +77,7 @@ func (h *Handler) findUserWithSquads(shortUUID string) (*database.User, []string
 		data := &CachedUserData{
 			User:           user,
 			InternalSquads: squads,
+			ExpiresAt:      started.Add(h.userCache.ttl),
 		}
 		h.userCache.Set(shortUUID, data, generation)
 		return data, nil

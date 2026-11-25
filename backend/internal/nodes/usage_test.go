@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand/v2"
+	"net/http"
+	"net/http/httptest"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,8 +15,11 @@ import (
 	"gowave/config"
 	"gowave/internal/database"
 	"gowave/internal/notify"
+	"gowave/internal/subscription"
 	"gowave/internal/testdb"
+	"gowave/internal/users"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -79,6 +84,60 @@ func TestRecordUserUsageBillsHistoryAndFirstConnection(t *testing.T) {
 	db.Model(&database.Job{}).Where("kind = 'webhook' AND entity_id = 'user.first_connected'").Count(&events)
 	if events != 1 {
 		t.Fatalf("first_connected events = %d, want 1", events)
+	}
+}
+
+func TestRecordUserUsageInvalidatesOnlyReportingUsers(t *testing.T) {
+	db := usageDB(t)
+	service := users.NewService(db)
+	create := func(name string) *database.User {
+		t.Helper()
+		user, err := service.Create(users.CreateUserDTO{Username: name, ExpireAt: time.Now().Add(time.Hour)})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return user
+	}
+	a, b := create("traffic_a"), create("traffic_b")
+	node := database.Node{UUID: uuid.NewString(), Name: "traffic_node", ConsumptionMultiplier: 1_000_000_000}
+	if err := db.Create(&node).Error; err != nil {
+		t.Fatal(err)
+	}
+	h := subscription.NewHandler(db, "sub.example", 100, time.Minute)
+	h.SetDisableHistory(true)
+	router := chi.NewRouter()
+	router.Get("/api/sub/{shortUuid}/{clientType}", h.GetSubscription)
+	userReads := 0
+	if err := db.Callback().Query().After("gorm:query").Register("test:user_reads", func(tx *gorm.DB) {
+		if tx.Statement.Table == "users" {
+			userReads++
+		}
+	}); err != nil {
+		t.Fatal(err)
+	}
+	check := func(user *database.User, bytes uint64) {
+		t.Helper()
+		request := httptest.NewRequest(http.MethodGet, "/api/sub/"+user.ShortUUID+"/json", nil)
+		request.Header.Set("User-Agent", "cache-test/1.0")
+		result := httptest.NewRecorder()
+		router.ServeHTTP(result, request)
+		header := result.Header().Get("Subscription-Userinfo")
+		if result.Code != http.StatusOK || !strings.Contains(header, fmt.Sprintf("download=%d;", bytes)) {
+			t.Fatalf("%s subscription: HTTP %d, traffic %q", user.Username, result.Code, header)
+		}
+	}
+	check(a, 0)
+	check(b, 0)
+
+	NewService(db, nil).recordUserUsage(&node, []NodeUserTraffic{{Username: itoa(a.ID), Downlink: 321}}, time.Now().UTC())
+	userReads = 0
+	check(b, 0)
+	if userReads != 0 {
+		t.Fatalf("unaffected user read from SQL %d times", userReads)
+	}
+	check(a, 321)
+	if userReads != 1 {
+		t.Fatalf("updated user loaded from SQL %d times, want once", userReads)
 	}
 }
 

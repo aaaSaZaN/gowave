@@ -9,17 +9,11 @@ import (
 	"time"
 
 	"gowave/internal/database"
-	"gowave/internal/subscription"
 )
 
 // TestSubscriptionCacheFollowsAdminChanges warms the public subscription
 // cache before every admin change and expects the next request to see it.
-// The settle window is off, so only the write tracking keeps it fresh.
 func TestSubscriptionCacheFollowsAdminChanges(t *testing.T) {
-	settle := subscription.CacheSettle
-	subscription.CacheSettle = 0
-	t.Cleanup(func() { subscription.CacheSettle = settle })
-
 	e := newProbeEnv(t)
 	mustDo := func(method, path string, body interface{}) json.RawMessage {
 		t.Helper()
@@ -206,4 +200,14 @@ func TestSubscriptionCacheFollowsAdminChanges(t *testing.T) {
 			t.Fatal(err)
 		}
 	}, lacks("raw.example.com"))
+
+	// Revoking a warmed URL must stop it immediately after the API returns.
+	sub("json")
+	oldKey := user.ShortUUID
+	mustDo("POST", "/api/users/"+userID+"/actions/revoke", map[string]string{"shortUuid": "revoked-cache-test"})
+	if status, data := e.do("GET", "/api/sub/"+oldKey+"/json", nil); status != http.StatusNotFound {
+		t.Fatalf("old subscription after revoke: %d %s", status, data)
+	}
+	user.ShortUUID = "revoked-cache-test"
+	sub("json")
 }

@@ -57,7 +57,7 @@ type Config struct {
 
 	// SubUserCacheSize is SUB_USER_CACHE_SIZE: max users cached in RAM (default 10000, 0 to disable).
 	SubUserCacheSize int
-	// SubUserCacheTTL is SUB_USER_CACHE_TTL: TTL for cached user data (supports s, m, h, d; default 2d).
+	// SubUserCacheTTL is SUB_USER_CACHE_TTL: TTL for cached user data (supports s, m, h, d; default 5s).
 	SubUserCacheTTL time.Duration
 
 	errors []string
@@ -383,7 +383,7 @@ func (c *Config) loadOptional() {
 		}
 	}
 
-	c.SubUserCacheTTL = 48 * time.Hour
+	c.SubUserCacheTTL = 5 * time.Second
 	if raw := os.Getenv("SUB_USER_CACHE_TTL"); raw != "" {
 		if d, err := parseDurationWithDays(raw); err == nil && d > 0 {
 			c.SubUserCacheTTL = d

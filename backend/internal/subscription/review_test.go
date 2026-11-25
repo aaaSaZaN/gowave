@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"gowave/internal/middleware"
@@ -15,7 +16,7 @@ import (
 func TestRawProtectedAnnounceOnlyForDeviceLimit(t *testing.T) {
 	db, user := subscriptionDB(t)
 	setSettings(t, db, map[string]interface{}{"hwid_settings": `{"enabled":true,"fallbackDeviceLimit":1,"maxDevicesAnnounce":"Too many for {{USERNAME}}"}`})
-	handler := NewHandler(db, "sub.example")
+	handler := NewHandler(db, "sub.example", 10000, 15*time.Second)
 	router := chi.NewRouter()
 	router.Get("/raw/{shortUuid}", handler.RawProtected)
 	for _, tc := range []struct{ hwid, announce string }{

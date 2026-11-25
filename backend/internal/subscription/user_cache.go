@@ -14,7 +14,7 @@ import (
 	"gowave/internal/database"
 )
 
-var userCachedTables = []string{"users", "internal_squad_members", "user_traffic"}
+var userCachedTables = []string{"users", "internal_squad_members", "user_traffic", "internal_squads", "external_squads"}
 
 var (
 	userCachedTableSet = func() map[string]bool {
@@ -57,6 +57,7 @@ type userCacheShard struct {
 	mu       sync.Mutex
 	capacity int
 	items    map[string]*userCacheItem
+	byID     map[uint64]*userCacheItem
 	evict    *list.List
 }
 
@@ -64,6 +65,7 @@ func newShard(capacity int) *userCacheShard {
 	return &userCacheShard{
 		capacity: capacity,
 		items:    make(map[string]*userCacheItem, capacity),
+		byID:     make(map[uint64]*userCacheItem, capacity),
 		evict:    list.New(),
 	}
 }
@@ -71,6 +73,7 @@ func newShard(capacity int) *userCacheShard {
 func (s *userCacheShard) removeItem(item *userCacheItem) {
 	s.evict.Remove(item.element)
 	delete(s.items, item.shortUUID)
+	delete(s.byID, item.data.User.ID)
 }
 
 func (s *userCacheShard) evictOldest() {
@@ -97,6 +100,7 @@ type UserLRUCache struct {
 	mask       uint32
 	capacity   int
 	ttl        time.Duration
+	now        func() time.Time
 	sf         singleflight.Group
 	generation atomic.Uint64
 }
@@ -108,12 +112,12 @@ func (c *UserLRUCache) shard(key string) *userCacheShard {
 	return c.shards[fnv32(key)&c.mask]
 }
 
-func newUserLRUCache(db *gorm.DB, capacity int, ttl time.Duration) *UserLRUCache {
+func newUserLRUCache(capacity int, ttl time.Duration) *UserLRUCache {
 	if capacity <= 0 {
 		return nil
 	}
 	if ttl <= 0 {
-		ttl = 48 * time.Hour
+		ttl = CacheTTL
 	}
 	numShards := 16
 	if capacity < 16 {
@@ -126,29 +130,14 @@ func newUserLRUCache(db *gorm.DB, capacity int, ttl time.Duration) *UserLRUCache
 	c := &UserLRUCache{
 		capacity: capacity,
 		ttl:      ttl,
+		now:      time.Now,
 		shards:   make([]*userCacheShard, numShards),
 		mask:     uint32(numShards - 1),
 	}
 	for i := 0; i < numShards; i++ {
 		c.shards[i] = newShard(shardCap)
 	}
-	if db != nil {
-		c.registerInvalidator(db)
-	}
 	return c
-}
-
-func (c *UserLRUCache) registerInvalidator(db *gorm.DB) {
-	notice := func(tx *gorm.DB) {
-		if tx.Error == nil && touchesUserTables(tx.Statement) {
-			c.Purge()
-		}
-	}
-	callbacks := db.Callback()
-	_ = callbacks.Create().After("gorm:commit_or_rollback_transaction").Register("subscription:user_cache_create", notice)
-	_ = callbacks.Update().After("gorm:commit_or_rollback_transaction").Register("subscription:user_cache_update", notice)
-	_ = callbacks.Delete().After("gorm:commit_or_rollback_transaction").Register("subscription:user_cache_delete", notice)
-	_ = callbacks.Raw().After("gorm:raw").Register("subscription:user_cache_raw", notice)
 }
 
 func (c *UserLRUCache) Get(shortUUID string) (*CachedUserData, bool) {
@@ -163,7 +152,7 @@ func (c *UserLRUCache) Get(shortUUID string) (*CachedUserData, bool) {
 	if !ok {
 		return nil, false
 	}
-	if time.Now().After(item.data.ExpiresAt) {
+	if !c.now().Before(item.data.ExpiresAt) {
 		s.removeItem(item)
 		return nil, false
 	}
@@ -191,12 +180,22 @@ func (c *UserLRUCache) Set(shortUUID string, data *CachedUserData, generation ui
 		return
 	}
 
-	data.ExpiresAt = time.Now().Add(c.ttl)
-
-	if item, ok := s.items[shortUUID]; ok {
-		item.data = data
-		s.evict.MoveToFront(item.element)
+	now := c.now()
+	if data.ExpiresAt.IsZero() {
+		data.ExpiresAt = now.Add(c.ttl)
+	}
+	if !now.Before(data.ExpiresAt) {
 		return
+	}
+	if item, ok := s.items[shortUUID]; ok && item.data.ExpiresAt.After(data.ExpiresAt) {
+		return
+	}
+
+	if item, ok := s.byID[data.User.ID]; ok && item.shortUUID != shortUUID {
+		s.removeItem(item)
+	}
+	if item, ok := s.items[shortUUID]; ok {
+		s.removeItem(item)
 	}
 
 	if s.evict.Len() >= s.capacity {
@@ -209,18 +208,21 @@ func (c *UserLRUCache) Set(shortUUID string, data *CachedUserData, generation ui
 	}
 	item.element = s.evict.PushFront(item)
 	s.items[shortUUID] = item
+	s.byID[data.User.ID] = item
 }
 
-func (c *UserLRUCache) Delete(shortUUID string) {
-	if c == nil {
-		return
-	}
+func (c *UserLRUCache) invalidateUsers(ids []uint64) {
+	// A cold load may not have reached the ID index yet. Advancing the
+	// generation prevents it from publishing a pre-commit traffic value.
 	c.generation.Add(1)
-	s := c.shard(shortUUID)
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if item, ok := s.items[shortUUID]; ok {
-		s.removeItem(item)
+	for _, s := range c.shards {
+		s.mu.Lock()
+		for _, id := range ids {
+			if item, ok := s.byID[id]; ok {
+				s.removeItem(item)
+			}
+		}
+		s.mu.Unlock()
 	}
 }
 
@@ -231,7 +233,8 @@ func (c *UserLRUCache) Purge() {
 	c.generation.Add(1)
 	for _, s := range c.shards {
 		s.mu.Lock()
-		s.items = make(map[string]*userCacheItem, s.capacity)
+		clear(s.items)
+		clear(s.byID)
 		s.evict.Init()
 		s.mu.Unlock()
 	}

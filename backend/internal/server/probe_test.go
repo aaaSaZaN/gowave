@@ -34,7 +34,10 @@ func newProbeEnv(t *testing.T) *probeEnv {
 	t.Helper()
 	db := testdb.Open(t)
 	secret := strings.Repeat("s", 32)
-	app := NewApp(&config.Config{AppSecret: secret, DBDriver: "sqlite", JWTLifetime: 12}, db)
+	app := NewApp(&config.Config{
+		AppSecret: secret, DBDriver: "sqlite", JWTLifetime: 12,
+		SubUserCacheSize: 10000, SubUserCacheTTL: 5 * time.Second,
+	}, db)
 	server := httptest.NewServer(app.Router)
 	t.Cleanup(server.Close)
 

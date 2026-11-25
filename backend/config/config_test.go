@@ -64,8 +64,8 @@ func TestSubUserCacheConfig(t *testing.T) {
 	if cfg.SubUserCacheSize != 10000 {
 		t.Fatalf("SubUserCacheSize default = %d, want 10000", cfg.SubUserCacheSize)
 	}
-	if cfg.SubUserCacheTTL != 48*time.Hour {
-		t.Fatalf("SubUserCacheTTL default = %v, want 48h", cfg.SubUserCacheTTL)
+	if cfg.SubUserCacheTTL != 5*time.Second {
+		t.Fatalf("SubUserCacheTTL default = %v, want 5s", cfg.SubUserCacheTTL)
 	}
 
 	// Supports s, m, h, d
