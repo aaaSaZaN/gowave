@@ -64,22 +64,20 @@
     $effect(() => () => clearTimeout(timer))
 </script>
 
-<div class="m_46b77525 mantine-InputWrapper-root copyable-field" data-size={size}>
+<div class="mantine-InputWrapper-root copyable-field" data-size={size}>
     {#if label}
-        <label for={inputId} class="m_8fdc1311 mantine-InputWrapper-label copyable-label"
-            >{label}</label
-        >
+        <label for={inputId} class="mantine-InputWrapper-label copyable-label">{label}</label>
     {/if}
     <div
-        class="m_6c018570 input-wrapper"
+        class="mantine-Input-wrapper input-wrapper"
         data-size={size}
         data-with-left-section={hasLeft ? true : undefined}
         data-with-right-section="true"
     >
         {#if left}
-            <div class="m_82577fc2 section" data-position="left">{@render left()}</div>
+            <div class="mantine-Input-section section" data-position="left">{@render left()}</div>
         {:else if leftIcon}
-            <div class="m_82577fc2 section" data-position="left" aria-hidden="true">
+            <div class="mantine-Input-section section" data-position="left" aria-hidden="true">
                 <Icon name={leftIcon} size={leftIconSize} />
             </div>
         {/if}
@@ -87,7 +85,7 @@
         <input
             id={inputId}
             type="text"
-            class="m_8fb7ebe7 mantine-Input-input copy-input"
+            class="mantine-Input-input copy-input"
             class:monospace
             readonly
             aria-label={label ? undefined : (ariaLabel ?? t('common.action.copy'))}
@@ -95,7 +93,7 @@
             onclick={copy}
         >
 
-        <div class="m_82577fc2 section" data-position="right">
+        <div class="mantine-Input-section section" data-position="right">
             <ActionIcon
                 icon={copied ? 'PiCheck' : 'PiCopy'}
                 label={copied

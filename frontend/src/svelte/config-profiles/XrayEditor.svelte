@@ -193,7 +193,7 @@
         <div class="status" class:invalid={!configValid} class:wasm={validator.status !== 'ready'}>
             {#if validator.status === 'idle' || validator.status === 'loading'}
                 <p class="loading" role="status">
-                    <span class="m_5ae2e3c m_b34414df" aria-hidden="true"></span>
+                    <span class="loading-spinner" aria-hidden="true"></span>
                     <code
                         >Xray Core (WASM) is loading...
                         {validator.status === 'loading' ? validator.progress : 0}%</code
@@ -343,8 +343,7 @@
         gap: var(--mantine-spacing-xs);
     }
     .loading > span {
-        --loader-size: var(--loader-size-xs);
-        --loader-color: var(--mantine-color-orange-filled);
+        --spinner-size: 18px;
         flex: none;
     }
     @media (prefers-reduced-motion: reduce) {

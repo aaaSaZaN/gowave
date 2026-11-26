@@ -31,9 +31,11 @@
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
     import Button from '../ui/Button.svelte'
-    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import Icon from '../ui/Icon.svelte'
     import { notifications } from '../ui/notification-state.svelte'
+    import Overlay from '../ui/Overlay.svelte'
+    import Textarea from '../ui/Textarea.svelte'
+    import ThemeIcon from '../ui/ThemeIcon.svelte'
 
     let {
         settings,
@@ -51,8 +53,8 @@
     let importOpen = $state(false)
     let error = $state('')
     let curlCommand = $state('')
-    let warning: HTMLDialogElement
-    let debuggerDialog: HTMLDialogElement
+    let showWarning = $state(false)
+    let warning = $state<ReturnType<typeof Overlay>>()
     let t = $derived(locale.t)
 
     const save = createMutation(() => ({
@@ -88,19 +90,16 @@
 
     onMount(() => {
         try {
-            if (!readMiscPreferences(localStorage).srrAdvancedModalClosed) {
-                warning.showModal()
-                warning.focus({ preventScroll: true })
-            }
+            showWarning = !readMiscPreferences(localStorage).srrAdvancedModalClosed
         } catch {
-            warning.showModal()
-            warning.focus({ preventScroll: true })
+            showWarning = true
         }
     })
 
     $effect(() => setupResponseRulesSchema(groupedTemplates))
 
     function dismissWarning(): void {
+        showWarning = false
         try {
             writeMiscPreferences(localStorage, { srrAdvancedModalClosed: true })
         } catch {
@@ -175,7 +174,6 @@
             `-H ${quote(`${REMNAWAVE_CLIENT_TYPE_HEADER}: ${REMNAWAVE_CLIENT_TYPE_BROWSER}`)}`,
             `-d ${quote(JSON.stringify({ responseRules: parsed.value }))}`
         ].join(' \\\n')
-        debuggerDialog.showModal()
     }
 </script>
 
@@ -231,80 +229,104 @@
     {/snippet}
 </EditorFrame>
 
-<dialog
-    oncancel={cancelDialog}
-    class="rules-warning"
-    bind:this={warning}
-    tabindex="-1"
-    closedby="any"
-    onclose={dismissWarning}
-    aria-labelledby="rules-warning-title"
->
-    <div class="warning-content">
-        <span class="warning-icon"><Icon name="TbAlertTriangle" size={40} /></span>
-        <div class="warning-copy">
-            <h2 id="rules-warning-title">{t('common.message.warning')}</h2>
-            <p>{t('srr-advanced-warning-overlay.warning-line-1')}</p>
-            <ul>
-                <li>
-                    <span><Icon name="TbAlertTriangle" size={12} /></span>
-                    <div>
-                        <strong
-                            >{t(
-                                'srr-advanced-warning-overlay.incorrect-configuration-line-1'
-                            )}</strong
-                        > {t('srr-advanced-warning-overlay.incorrect-configuration-line-2')}
-                    </div>
-                </li>
-                <li>
-                    <span><Icon name="TbAlertTriangle" size={12} /></span>
-                    <div>
-                        <strong
-                            >{t(
-                                'srr-advanced-warning-overlay.review-settings-carefully-line-1'
-                            )}</strong
-                        > {t('srr-advanced-warning-overlay.review-settings-carefully-line-2')}
-                    </div>
-                </li>
-            </ul>
+{#if showWarning}
+    <Overlay
+        bind:this={warning}
+        title={t('common.message.warning')}
+        icon="TbAlertTriangle"
+        tone="orange"
+        hideHeader
+        width={440}
+        fullscreenOnMobile={false}
+        largePadding
+        close={dismissWarning}
+    >
+        <div class="warning-content">
+            <ThemeIcon icon="TbAlertTriangle" tone="orange" size={44} iconSize={26} glow />
+            <div class="warning-copy">
+                <h2>{t('common.message.warning')}</h2>
+                <p>{t('srr-advanced-warning-overlay.warning-line-1')}</p>
+                <ul>
+                    <li>
+                        <span><Icon name="TbAlertTriangle" size={12} /></span>
+                        <div>
+                            <strong
+                                >{t(
+                                    'srr-advanced-warning-overlay.incorrect-configuration-line-1'
+                                )}</strong
+                            > {t('srr-advanced-warning-overlay.incorrect-configuration-line-2')}
+                        </div>
+                    </li>
+                    <li>
+                        <span><Icon name="TbAlertTriangle" size={12} /></span>
+                        <div>
+                            <strong
+                                >{t(
+                                    'srr-advanced-warning-overlay.review-settings-carefully-line-1'
+                                )}</strong
+                            > {t('srr-advanced-warning-overlay.review-settings-carefully-line-2')}
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <Button
+                color="orange"
+                variant="light"
+                icon="TbCheck"
+                iconSize={18}
+                size="md"
+                onclick={() => warning?.dismiss()}
+                >{t('common.action.continue')}</Button
+            >
         </div>
-        <Button
-            color="orange"
-            variant="light"
-            icon="TbCheck"
-            iconSize={18}
-            size="md"
-            onclick={() => dismissDialog(warning)}
-            >{t('common.action.continue')}</Button
-        >
-    </div>
-</dialog>
+    </Overlay>
+{/if}
 
-<dialog
-    oncancel={cancelDialog}
-    bind:this={debuggerDialog}
-    onclose={() => {
-        curlCommand = ''
-    }}
-    aria-labelledby="rules-debugger-title"
->
-    <h2 id="rules-debugger-title">
-        {t('response-rules-editor-actions.feature.response-rules-debugger')}
-    </h2>
-    <p>{t('response-rules-editor-actions.feature.response-rules-debugger-description-1')}</p>
-    <label>
-        {t('response-rules-editor-actions.feature.curl-command')}
-        <textarea readonly rows="9" value={curlCommand} dir="ltr"></textarea>
-    </label>
-    <div class="button-row">
-        <button type="button" onclick={() => dismissDialog(debuggerDialog)}>
-            {t('common.action.close')}
-        </button>
-        <button type="button" onclick={() => copy(curlCommand)}>
-            {t('response-rules-editor-actions.feature.copy-curl-command')}
-        </button>
-    </div>
-</dialog>
+{#if curlCommand}
+    <Overlay
+        title={t('response-rules-editor-actions.feature.response-rules-debugger')}
+        icon="TbBug"
+        tone="teal"
+        width={640}
+        fullscreenOnMobile={false}
+        largePadding
+        close={() => (curlCommand = '')}
+    >
+        <div class="debugger">
+            <p>
+                {t('response-rules-editor-actions.feature.response-rules-debugger-description-1')}
+            </p>
+            <p>
+                {t('response-rules-editor-actions.feature.response-rules-debugger-description-2')}
+                <a href="https://www.postman.com/" target="_blank" rel="noopener noreferrer"
+                    >Postman</a
+                >,
+                <a href="https://insomnia.rest/" target="_blank" rel="noopener noreferrer"
+                    >Insomnia</a
+                >,
+                <a href="https://hoppscotch.io/" target="_blank" rel="noopener noreferrer"
+                    >Hoppscotch</a
+                >
+                {t('response-rules-editor-actions.feature.or')}
+                <a href="https://httpie.io/cli" target="_blank" rel="noopener noreferrer">HTTPie</a
+                >.
+            </p>
+            <Textarea
+                label={t('response-rules-editor-actions.feature.curl-command')}
+                class="curl-command"
+                readonly
+                rows={9}
+                value={curlCommand}
+                dir="ltr"
+            />
+            <div class="button-row">
+                <Button color="teal" variant="soft" icon="TbCopy" onclick={() => copy(curlCommand)}>
+                    {t('response-rules-editor-actions.feature.copy-curl-command')}
+                </Button>
+            </div>
+        </div>
+    </Overlay>
+{/if}
 
 {#if importOpen}
     <TemplatePicker
@@ -318,16 +340,15 @@
 {/if}
 
 <style>
-    .rules-warning {
-        width: min(calc(100% - 40px), 440px);
-        padding: 12px;
-        border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
-        border-radius: var(--mantine-radius-md);
-        background: var(--mantine-color-body);
-        outline: none;
+    .debugger {
+        display: grid;
+        gap: var(--mantine-spacing-md);
     }
-    .rules-warning::backdrop {
-        background: rgb(0 0 0 / 60%);
+    .debugger p {
+        margin: 0;
+    }
+    .debugger :global(.curl-command textarea) {
+        font-family: var(--mantine-font-family-monospace);
     }
     .warning-content,
     .warning-copy {
@@ -341,17 +362,6 @@
     .warning-copy {
         gap: var(--mantine-spacing-md);
         color: var(--mantine-color-dimmed);
-    }
-    .warning-icon {
-        width: 80px;
-        height: 80px;
-        display: grid;
-        place-items: center;
-        border: 3px solid rgb(251 146 60 / 30%);
-        border-radius: var(--mantine-radius-xl);
-        background: linear-gradient(135deg, rgb(251 146 60 / 15%), rgb(251 146 60 / 5%));
-        color: var(--mantine-color-orange-light-color);
-        box-shadow: 0 8px 32px rgb(251 146 60 / 20%);
     }
     .warning-copy h2 {
         margin: 0;
@@ -408,12 +418,5 @@
         font-family: var(--mantine-font-family-monospace);
         font-size: var(--mantine-font-size-xs);
         color: var(--mantine-color-red-4);
-    }
-
-    textarea {
-        display: block;
-        width: 100%;
-        margin-block: 0.5rem;
-        resize: vertical;
     }
 </style>

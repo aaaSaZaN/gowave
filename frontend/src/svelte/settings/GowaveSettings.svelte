@@ -7,7 +7,8 @@
     import { layout } from '../layout.svelte'
     import { queryClient } from '../query-client'
     import RouteLoading from '../RouteLoading.svelte'
-    import Icon from '../ui/Icon.svelte'
+    import Button from '../ui/Button.svelte'
+    import CheckboxCard from '../ui/CheckboxCard.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
     import ApiTokens from './ApiTokens.svelte'
     import AuthenticationSettings from './AuthenticationSettings.svelte'
@@ -42,9 +43,9 @@
 
         {#if settings.error}
             <p role="alert">{settings.error.message}</p>
-            <button type="button" onclick={() => void settings.refetch()}>
+            <Button onclick={() => void settings.refetch()}>
                 {t('common.action.try-again')}
-            </button>
+            </Button>
         {/if}
         <div class="settings">
             <div class="settings-left">
@@ -59,22 +60,12 @@
                             icon="TbFlask"
                             tone="grape"
                         >
-                            <label class="layout-toggle" class:enabled={layout.legacy}>
-                                <span class="layout-icon"
-                                    ><Icon name="TbLayoutSidebar" size={20} /></span
-                                >
-                                <span
-                                    >{t(
-                                        'experimental-settings-card.widget.legacy-layout-style'
-                                    )}</span
-                                >
-                                <input
-                                    type="checkbox"
-                                    checked={layout.legacy}
-                                    onchange={(event) =>
-                                        layout.setLegacy(event.currentTarget.checked)}
-                                >
-                            </label>
+                            <CheckboxCard
+                                icon="TbLayoutSidebar"
+                                label={t('experimental-settings-card.widget.legacy-layout-style')}
+                                checked={layout.legacy}
+                                onchange={(checked) => layout.setLegacy(checked)}
+                            />
                         </SettingsCard>
                     </div>
                 {/if}
@@ -109,42 +100,6 @@
     .experimental {
         order: 4;
         min-width: 0;
-    }
-    .layout-toggle {
-        display: flex;
-        align-items: center;
-        gap: var(--mantine-spacing-sm);
-        padding: 10px 12px;
-        min-height: 56px;
-        background: var(--gw-raised-bg);
-        border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
-        border-radius: var(--mantine-radius-md);
-        color: var(--mantine-color-bright);
-        font-size: var(--mantine-font-size-sm);
-        font-weight: 600;
-        line-height: 1.2;
-        cursor: pointer;
-    }
-    .layout-toggle.enabled {
-        border-color: var(--mantine-primary-color-filled);
-        background-image: linear-gradient(135deg, rgb(34 184 207 / 8%), transparent 60%);
-    }
-    .layout-toggle input {
-        margin-inline-start: auto;
-        width: 20px;
-        height: 20px;
-        accent-color: var(--mantine-primary-color-filled);
-    }
-    .layout-icon {
-        display: grid;
-        place-items: center;
-        width: 34px;
-        height: 34px;
-        flex: none;
-        border-radius: var(--mantine-radius-md);
-        color: var(--mantine-color-cyan-4);
-        border: 1px solid rgb(21 170 191 / 30%);
-        background: linear-gradient(135deg, rgb(21 170 191 / 15%), rgb(16 152 173 / 10%));
     }
     @media (width < 48em) {
         .experimental {

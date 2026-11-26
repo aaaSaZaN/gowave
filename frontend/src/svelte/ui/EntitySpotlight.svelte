@@ -2,10 +2,10 @@
     import { tick } from 'svelte'
     import { locale } from '../i18n.svelte'
     import ActionIcon from './ActionIcon.svelte'
-    import { cancelDialog } from './dialog-motion'
     import EmptyState from './EmptyState.svelte'
     import Icon from './Icon.svelte'
     import type { IconName } from './icons'
+    import Overlay from './Overlay.svelte'
 
     type ResultBadge = { icon: IconName; count: number; tone: string }
     type Result = {
@@ -26,7 +26,7 @@
         searchIcon = 'TbSearch'
     }: { items: Result[]; icon: IconName; searchIcon?: IconName } = $props()
 
-    let dialog = $state<HTMLDialogElement>()
+    let resultList = $state<HTMLDivElement>()
     let input = $state<HTMLInputElement>()
     let visible = $state(false)
     let query = $state('')
@@ -48,7 +48,6 @@
         active = -1
         visible = true
         await tick()
-        if (dialog && !dialog.open) dialog.showModal()
         input?.focus()
     }
 
@@ -71,7 +70,7 @@
         if (!results.length || event.isComposing) return
         if (event.key === 'Enter') {
             event.preventDefault()
-            dialog?.querySelector<HTMLElement>('[data-selected=true]')?.click()
+            resultList?.querySelector<HTMLElement>('[data-selected=true]')?.click()
             return
         }
         if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
@@ -79,7 +78,7 @@
         const direction = event.key === 'ArrowDown' ? 1 : -1
         active = selected < 0 ? 0 : (selected + direction + results.length) % results.length
         await tick()
-        dialog?.querySelector('[data-selected=true]')?.scrollIntoView({ block: 'nearest' })
+        resultList?.querySelector('[data-selected=true]')?.scrollIntoView({ block: 'nearest' })
     }
 </script>
 
@@ -87,20 +86,23 @@
 <ActionIcon icon="TbSearch" tone="gray" {label} onclick={() => void open()} />
 
 {#if visible}
-    <dialog
-        oncancel={cancelDialog}
-        bind:this={dialog}
-        onclose={() => (visible = false)}
-        aria-label={label}
-        closedby="any"
+    <Overlay
+        title={label}
+        {icon}
+        hideHeader
+        fullscreenOnMobile={false}
+        width={600}
+        close={() => (visible = false)}
         class="entity-spotlight"
     >
         <div class="search">
             <Icon name={searchIcon} size={searchIcon === 'TbSearch' ? 16 : 20} />
             <input
+                class="gw-input"
                 bind:this={input}
                 bind:value={query}
                 type="search"
+                data-autofocus
                 role="combobox"
                 aria-label={label}
                 aria-expanded="true"
@@ -111,7 +113,7 @@
                 onkeydown={(event) => void moveSelection(event)}
             >
         </div>
-        <div {id} class="results" role="listbox" aria-label={label}>
+        <div {id} bind:this={resultList} class="results" role="listbox" aria-label={label}>
             {#each results as item, index (item.id)}
                 {@const match = item.name.toLowerCase().indexOf(term)}
                 {#snippet content()}
@@ -171,7 +173,7 @@
                         data-selected={index === selected}
                         tabindex="-1"
                         onmousedown={(event) => event.preventDefault()}
-                        onclick={() => dialog?.close()}
+                        onclick={() => (visible = false)}
                         >{@render content()}</a
                     >
                 {:else}
@@ -185,7 +187,7 @@
                         tabindex="-1"
                         onmousedown={(event) => event.preventDefault()}
                         onclick={() => {
-                            dialog?.close()
+                            visible = false
                             item.select()
                         }}
                     >
@@ -197,7 +199,7 @@
         {#if results.length === 0}
             <EmptyState icon="TbSearch" label={locale.t('common.message.nothing-found')} />
         {/if}
-    </dialog>
+    </Overlay>
 {/if}
 
 <style>
@@ -244,19 +246,10 @@
         font-weight: 700;
     }
 
-    .entity-spotlight {
-        width: min(600px, calc(100% - 32px));
-        margin: auto;
-        padding: 0;
-        border: 1px solid var(--gw-border);
-        border-radius: var(--mantine-radius-md);
-        background: var(--mantine-color-body);
-        color: var(--mantine-color-text);
-        box-shadow: var(--mantine-shadow-xl);
+    :global(.panel-overlay.entity-spotlight) {
+        --overlay-padding: 0;
     }
-    .entity-spotlight::backdrop {
-        background: rgb(0 0 0 / 60%);
-    }
+
     .search,
     a,
     button {

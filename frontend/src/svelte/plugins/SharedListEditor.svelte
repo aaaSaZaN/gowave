@@ -78,7 +78,12 @@
 <div class="fields">
     <label
         >{t('common.field.name')}
-        <input name="sharedListName" bind:value={name} readonly={persistedName !== null}></label
+        <input
+            class="gw-input"
+            name="sharedListName"
+            bind:value={name}
+            readonly={persistedName !== null}
+        ></label
     >
     <p>{t('shared-lists.editor.name-description')}</p>
     <div class="editor">

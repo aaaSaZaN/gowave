@@ -17,6 +17,7 @@
     import { subscriptionTemplatesQuery, templateQuery } from '../subscriptions/queries'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import { useConfirmation } from '../ui/confirmation'
     import EmptyState from '../ui/EmptyState.svelte'
     import EntityCard from '../ui/EntityCard.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
@@ -34,6 +35,8 @@
         templateType,
         templateTypes
     } from './templates'
+
+    const confirmAction = useConfirmation()
 
     const list = createQuery(() => subscriptionTemplatesQuery)
     let t = $derived(locale.t)
@@ -244,9 +247,9 @@
                                         tabindex="-1"
                                         data-tone="red"
                                         disabled={mutate.isPending || active}
-                                        onclick={() => {
+                                        onclick={async () => {
                                             if (
-                                                window.confirm(
+                                                await confirmAction(
                                                     t('common.message.confirm-action-description')
                                                 )
                                             )
@@ -304,6 +307,7 @@
                             {/if}</span
                         >
                         <input
+                            class="gw-input"
                             name={editingTags ? 'tags' : 'name'}
                             required={!editingTags}
                             data-autofocus

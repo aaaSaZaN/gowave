@@ -31,9 +31,9 @@
     import FormCard from '../ui/FormCard.svelte'
     import HelpDrawer from '../ui/HelpDrawer.svelte'
     import Icon from '../ui/Icon.svelte'
-    import { notifications } from '../ui/notification-state.svelte'
     import SelectField from '../ui/SelectField.svelte'
     import Switch from '../ui/Switch.svelte'
+    import Tabs from '../ui/Tabs.svelte'
     import { type ExternalSquad, externalSquadQuery, externalSquadsQuery } from './queries'
 
     const tabs = [
@@ -69,6 +69,7 @@
     let t = $derived(locale.t)
     let section = $state<Section>('templates')
     let error = $state('')
+    let saved = $state(false)
     let saveError = $state('')
     let saving = $state(false)
     let copied = $state(false)
@@ -95,6 +96,7 @@
         if (saving || !(event.currentTarget instanceof HTMLFormElement)) return
         const data = new FormData(event.currentTarget)
         saving = true
+        saved = false
         saveError = ''
         try {
             if (editIdentity) {
@@ -129,11 +131,7 @@
                     await submitCommand(UpdateExternalSquadCommand, { uuid: squad.uuid, ...patch })
                 )
             }
-            notifications.show({
-                title: t('common.message.success'),
-                message: t('common.message.operation-completed'),
-                color: 'teal'
-            })
+            saved = true
         } catch (cause) {
             saveError = cause instanceof Error ? cause.message : String(cause)
         } finally {
@@ -206,6 +204,7 @@
 
     function open(next: Section): void {
         if (section === next || saving) return
+        saved = false
         error = ''
         saveError = ''
         useDeviceSettings = squad.hwidSettings !== null
@@ -215,23 +214,6 @@
         )
         hostOverrides = hostKeys.filter((key) => squad.hostOverrides?.[key] !== undefined)
         section = next
-    }
-
-    function moveTab(event: KeyboardEvent, index: number): void {
-        const direction = document.documentElement.dir === 'rtl' ? -1 : 1
-        const last = tabs.length - 1
-        const next = {
-            ArrowLeft: (index - direction + tabs.length) % tabs.length,
-            ArrowRight: (index + direction + tabs.length) % tabs.length,
-            Home: 0,
-            End: last
-        }[event.key]
-        if (next === undefined || saving) return
-        const tab = tabs[next]
-        if (!tab) return
-        event.preventDefault()
-        open(tab[0])
-        document.getElementById(`${tabsId}-${tab[0]}`)?.focus()
     }
 
     function copyUuid(): void {
@@ -271,33 +253,23 @@
 </section>
 
 {#if !editIdentity}
-    <div
-        role="tablist"
-        class="squad-tabs"
-        aria-label={t('external-squads.drawer.widget.edit-external-squad')}
-    >
-        {#each tabs as [id, label, icon], index (id)}
-            <button
-                type="button"
-                class="m_4ec4dce6 mantine-UnstyledButton-root squad-tab"
-                role="tab"
-                id={`${tabsId}-${id}`}
-                disabled={saving}
-                aria-selected={section === id}
-                aria-controls={`${tabsId}-panel-${id}`}
-                tabindex={section === id ? 0 : -1}
-                onclick={() => open(id)}
-                onkeydown={(event) => moveTab(event, index)}
-            >
-                <Icon name={icon} size="1.2rem" />{label === 'HWID' ? label : t(label)}
-            </button>
-        {/each}
-    </div>
+    <Tabs
+        id={tabsId}
+        label={t('external-squads.drawer.widget.edit-external-squad')}
+        selected={section}
+        items={tabs.map(([id, label, icon]) => ({
+            id,
+            icon,
+            label: label === 'HWID' ? label : t(label)
+        }))}
+        disabled={saving}
+        onselect={open}
+    />
     {#each tabs as [id] (id)}
         <div
             role="tabpanel"
             id={`${tabsId}-panel-${id}`}
-            aria-labelledby={`${tabsId}-${id}`}
+            aria-labelledby={`${tabsId}-tab-${id}`}
             hidden={id !== section}
         >
             {#if id === section}
@@ -320,11 +292,23 @@
             {#if editIdentity}
                 <label>
                     {t('common.field.name')}
-                    <input name="name" value={squad.name} required minlength="2" maxlength="30">
+                    <input
+                        class="gw-input"
+                        name="name"
+                        value={squad.name}
+                        required
+                        minlength="2"
+                        maxlength="30"
+                    >
                 </label>
                 <label>
                     {t('common.field.tags')}
-                    <input name="tags" value={squad.tags.join(', ')} spellcheck="false">
+                    <input
+                        class="gw-input"
+                        name="tags"
+                        value={squad.tags.join(', ')}
+                        spellcheck="false"
+                    >
                 </label>
             {:else if section === 'templates'}
                 <h3>{t('external-squads.drawer.widget.subscription-templates')}</h3>
@@ -416,6 +400,7 @@
                             {t(hostOptions[key])}
                             {#if key === 'serverDescription'}
                                 <input
+                                    class="gw-input"
                                     id={`${tabsId}-override-${key}`}
                                     name="description"
                                     maxlength="30"
@@ -423,6 +408,7 @@
                                 >
                             {:else}
                                 <input
+                                    class="gw-input"
                                     id={`${tabsId}-override-${key}`}
                                     name="routeId"
                                     type="number"
@@ -487,6 +473,7 @@
                         {t('external-squads-response-headers.widget.remove-headers-description')}
                     </p>
                     <input
+                        class="gw-input"
                         name="removeHeaders"
                         aria-label={t('external-squads-response-headers.widget.remove-headers')}
                         placeholder={t('external-squads-response-headers.widget.enter-header-key')}
@@ -624,12 +611,19 @@
 {/if}
 {#if saveError}
     <p role="alert">{saveError}</p>
+{:else if saved}
+    <p class="save-status" role="status">{t('common.message.operation-completed')}</p>
 {/if}
 {#if error}
     <p role="alert">{error}</p>
 {/if}
 
 <style>
+    .save-status {
+        color: var(--mantine-color-teal-light-color);
+        font-size: var(--mantine-font-size-sm);
+    }
+
     .squad-card {
         padding: var(--mantine-spacing-md);
         border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
@@ -684,28 +678,6 @@
         color: var(--mantine-color-gray-light-color);
         font-size: var(--mantine-font-size-xs);
         font-weight: 700;
-    }
-    .squad-tabs {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-block-end: var(--mantine-spacing-xl);
-    }
-    .squad-tab {
-        gap: var(--mantine-spacing-xs);
-        background: var(--gw-raised-bg);
-        border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
-        border-radius: var(--mantine-radius-md);
-        font-weight: 500;
-    }
-    .squad-tab:hover {
-        background: var(--mantine-color-default-hover);
-        border-color: var(--mantine-color-default-border);
-    }
-    .squad-tab[aria-selected="true"] {
-        color: var(--mantine-primary-color-4);
-        background: color-mix(in srgb, var(--mantine-primary-color-6) 12%, transparent);
-        border-color: color-mix(in srgb, var(--mantine-primary-color-6) 30%, transparent);
     }
     .editor,
     fieldset,

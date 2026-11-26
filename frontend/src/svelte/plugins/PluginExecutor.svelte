@@ -1,16 +1,23 @@
 <script lang="ts">
     import { PluginExecutorCommand } from '@remnawave/backend-contract'
     import { createMutation } from '@tanstack/svelte-query'
-    import { onMount } from 'svelte'
     import { submitVoidCommand } from '../commands'
     import { locale } from '../i18n.svelte'
     import type { Node } from '../nodes/queries'
-    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
+    import Button from '../ui/Button.svelte'
+    import Checkbox from '../ui/Checkbox.svelte'
+    import { useConfirmation } from '../ui/confirmation'
+    import FormCard from '../ui/FormCard.svelte'
+    import Overlay from '../ui/Overlay.svelte'
+    import SelectField from '../ui/SelectField.svelte'
+    import Textarea from '../ui/Textarea.svelte'
     import { type ExecutorAction, executorCommand } from './config'
+
+    const confirmAction = useConfirmation()
 
     let { nodes, close }: { nodes: Node[]; close: () => void } = $props()
     let t = $derived(locale.t)
-    let dialog: HTMLDialogElement
+    let overlay: ReturnType<typeof Overlay>
     let action = $state<ExecutorAction>('blockIps')
     let input = $state('')
     let selection = $state<string[]>([])
@@ -28,12 +35,10 @@
     const run = createMutation(() => ({
         mutationFn: (data: PluginExecutorCommand.RequestBody) =>
             submitVoidCommand(PluginExecutorCommand, data),
-        onSuccess: () => dismissDialog(dialog)
+        onSuccess: () => overlay.dismiss()
     }))
 
-    onMount(() => dialog.showModal())
-
-    function submit(event: SubmitEvent): void {
+    async function submit(event: SubmitEvent): Promise<void> {
         event.preventDefault()
         if (!selected.length || run.isPending) return
         run.reset()
@@ -44,15 +49,18 @@
         }
         try {
             const command = executorCommand(action, input)
+            const targetNodes = selected
             if (
-                !window.confirm(`${actionLabel} · ${selected.map((node) => node.name).join(', ')}?`)
+                !(await confirmAction(
+                    `${actionLabel} · ${targetNodes.map((node) => node.name).join(', ')}?`
+                ))
             )
                 return
             run.mutate({
                 command,
                 targetNodes: {
                     target: 'specificNodes',
-                    nodeUuids: selected.map((node) => node.uuid)
+                    nodeUuids: targetNodes.map((node) => node.uuid)
                 }
             })
         } catch (error) {
@@ -61,111 +69,112 @@
     }
 </script>
 
-<dialog
-    bind:this={dialog}
-    aria-labelledby="plugin-executor-title"
-    onclose={close}
-    oncancel={(event) => cancelDialog(event, run.isPending)}
+<Overlay
+    title="Plugin executor"
+    icon="TbTerminal"
+    width={800}
+    largePadding
+    {close}
+    fullscreenOnMobile={false}
+    bind:this={overlay}
+    preventClose={run.isPending}
 >
     <form onsubmit={submit}>
-        <h2 id="plugin-executor-title">Plugin executor</h2>
-        <label>
-            {t('common.action.select')}
-            <select
-                bind:value={action}
-                onchange={() => {
-                    input = ''
-                    problem = ''
-                    run.reset()
-                }}
-                disabled={run.isPending}
-            >
-                <option value="blockIps">{t('node-plugin-executor.content.block-ips')}</option>
-                <option value="unblockIps">{t('node-plugin-executor.content.unblock-ips')}</option>
-                <option value="recreateTables">
-                    {t('node-plugin-executor.content.recreate-tables')}
-                </option>
-            </select>
-        </label>
+        <SelectField
+            label={t('common.action.select')}
+            placeholder=""
+            value={action}
+            searchable={false}
+            clearable={false}
+            options={[
+                { value: 'blockIps', label: t('node-plugin-executor.content.block-ips') },
+                { value: 'unblockIps', label: t('node-plugin-executor.content.unblock-ips') },
+                {
+                    value: 'recreateTables',
+                    label: t('node-plugin-executor.content.recreate-tables')
+                }
+            ]}
+            onchoose={(value) => {
+                if (value !== 'blockIps' && value !== 'unblockIps' && value !== 'recreateTables')
+                    return
+                action = value
+                input = ''
+                problem = ''
+                run.reset()
+            }}
+            disabled={run.isPending}
+        />
         <p>{t('node-plugin-executor.content.executor-description')}</p>
         {#if action !== 'recreateTables'}
-            <label>
-                {action === 'blockIps'
+            <Textarea
+                label={action === 'blockIps'
                     ? t('node-plugin-executor.content.ips-to-block')
                     : t('node-plugin-executor.content.ips-to-unblock')}
-                <textarea
-                    bind:value={input}
-                    rows="5"
-                    placeholder={action === 'blockIps' ? 'IP;timeout' : 'IP'}
-                    disabled={run.isPending}
-                ></textarea>
-            </label>
-            <p>
-                {action === 'blockIps'
+                description={action === 'blockIps'
                     ? t('node-plugin-executor.content.block-ips-description')
                     : t('node-plugin-executor.content.unblock-ips-description')}
-            </p>
+                bind:value={input}
+                rows={5}
+                placeholder={action === 'blockIps' ? 'IP;timeout' : 'IP'}
+                disabled={run.isPending}
+            />
         {/if}
-        <fieldset disabled={run.isPending}>
-            <legend>{t('constants.nodes')}</legend>
+        <FormCard title={t('constants.nodes')} icon="TbServer" tone="indigo">
             {#if connected.length}
                 <div class="button-row">
-                    <button
-                        type="button"
+                    <Button
+                        disabled={run.isPending}
                         onclick={() => (selection = connected.map((node) => node.uuid))}
                     >
                         {t('common.action.select-all')}
-                    </button>
-                    <button type="button" onclick={() => (selection = [])}>
+                    </Button>
+                    <Button disabled={run.isPending} onclick={() => (selection = [])}>
                         {t('node-plugin-executor.content.deselect-all')}
-                    </button>
+                    </Button>
                 </div>
                 {#each connected as node (node.uuid)}
-                    <label class="node"
-                        ><input type="checkbox" value={node.uuid} bind:group={selection}>
-                        {node.name}</label
-                    >
+                    <Checkbox
+                        disabled={run.isPending}
+                        label={node.name}
+                        checked={selection.includes(node.uuid)}
+                        onchange={(event) => {
+                            selection = event.currentTarget.checked
+                                ? [...selection, node.uuid]
+                                : selection.filter((uuid) => uuid !== node.uuid)
+                        }}
+                    />
                 {/each}
             {:else}
                 <p>{t('node-plugin-executor.content.no-connected-nodes-available')}</p>
             {/if}
-        </fieldset>
+        </FormCard>
         {#if problem || run.error}
             <p role="alert">{problem || run.error?.message}</p>
         {/if}
         <div class="button-row">
-            <button type="submit" disabled={!selected.length || run.isPending}>
+            <Button
+                type="submit"
+                variant="soft"
+                color="teal"
+                pending={run.isPending}
+                disabled={!selected.length}
+            >
                 {t('node-plugin-executor.content.execute')}
-            </button>
-            <button type="button" disabled={run.isPending} onclick={() => dismissDialog(dialog)}>
+            </Button>
+            <Button disabled={run.isPending} onclick={() => overlay.dismiss()}>
                 {t('common.action.cancel')}
-            </button>
+            </Button>
         </div>
     </form>
-</dialog>
+</Overlay>
 
 <style>
-    dialog {
-        width: min(34rem, 95vw);
-    }
-    form,
-    label {
+    form {
         display: grid;
-        gap: 0.5rem;
+        gap: var(--mantine-spacing-md);
     }
-    label.node {
-        display: flex;
-        align-items: center;
-    }
-    textarea {
-        width: 100%;
-        resize: vertical;
-    }
-    h2,
+
     p {
         margin: 0;
-    }
-    fieldset {
-        min-width: 0;
     }
 </style>

@@ -9,6 +9,7 @@
     import { locale } from '../i18n.svelte'
     import { flag } from '../nodes/analytics'
     import RouteLoading from '../RouteLoading.svelte'
+    import DataTable from '../ui/DataTable.svelte'
     import EmptyState from '../ui/EmptyState.svelte'
     import Icon from '../ui/Icon.svelte'
     import { notifications } from '../ui/notification-state.svelte'
@@ -161,14 +162,14 @@
     <EmptyState icon="TbTimeline" label={t('common.message.no-data-available')} />
 {:else}
     <input
-        class="search"
+        class="gw-input search"
         type="search"
         aria-label={t('common.action.search')}
         placeholder={t('common.action.search')}
         bind:value={search}
     >
     <div class="requests">
-        <table>
+        <DataTable class="user-access-table">
             <thead>
                 <tr>
                     {#each columns as [column, label] (column)}
@@ -233,7 +234,7 @@
                     </tr>
                 {/each}
             </tbody>
-        </table>
+        </DataTable>
     </div>
 {/if}
 
@@ -293,7 +294,7 @@
     .requests {
         overflow: auto;
     }
-    table {
+    :global(.user-access-table) {
         width: 100%;
         border-collapse: collapse;
         text-align: start;

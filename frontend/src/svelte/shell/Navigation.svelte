@@ -70,7 +70,7 @@
 {#snippet desktopLink(item: MenuLink)}
     <a
         class={[
-            'menu-link m_99ac2aa1 mantine-UnstyledButton-root',
+            'menu-link gw-menu-item mantine-UnstyledButton-root',
             current(item) && desktopStyles['menuItemActive']
         ]}
         href={go(item)}
@@ -220,7 +220,7 @@
                                     {#if index > 0}
                                         <div class="menu-divider"></div>
                                     {/if}
-                                    <div class="m_9bfac126">{item.name}</div>
+                                    <div class="gw-menu-item-label">{item.name}</div>
                                     {#each item.dropdownItems as link (link.id)}
                                         {@render desktopLink(link)}
                                     {/each}

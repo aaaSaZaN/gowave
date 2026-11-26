@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Snippet } from 'svelte'
     import Icon from './Icon.svelte'
     import type { IconName } from './icons'
 
@@ -6,12 +7,14 @@
         icon,
         iconSize = 32,
         label,
-        description
+        description,
+        actions
     }: {
         icon: IconName
         iconSize?: number
         label: string
         description?: string | undefined
+        actions?: Snippet
     } = $props()
 </script>
 
@@ -23,6 +26,7 @@
             <p>{description}</p>
         {/if}
     </div>
+    {@render actions?.()}
 </div>
 
 <style>

@@ -147,7 +147,7 @@
         'aria-multiselectable': role === 'listbox' && multiple ? true : undefined
     }}
     tabindex="-1"
-    class={[className, 'table-popup m_38a85659']}
+    class={[className, 'table-popup gw-popover']}
     class:with-arrow={arrow}
     style:width={menuWidth ? `${menuWidth}px` : undefined}
     popover="auto"
@@ -159,7 +159,7 @@
     }}
 >
     {#if arrow}
-        <span class="popup-arrow m_a31dc6c1" aria-hidden="true"></span>
+        <span class="popup-arrow gw-popover-arrow" aria-hidden="true"></span>
         <div class="popup-content">{@render children()}</div>
     {:else}
         {@render children()}

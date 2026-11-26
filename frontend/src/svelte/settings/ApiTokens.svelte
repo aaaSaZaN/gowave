@@ -8,12 +8,15 @@
     import RouteLoading from '../RouteLoading.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import ActionMenu from '../ui/ActionMenu.svelte'
+    import { useConfirmation } from '../ui/confirmation'
     import Icon from '../ui/Icon.svelte'
     import { notifications } from '../ui/notification-state.svelte'
     import Tooltip from '../ui/Tooltip.svelte'
     import { type ApiToken, apiTokens } from './queries'
     import SettingsCard from './SettingsCard.svelte'
     import TokenDialog from './TokenDialog.svelte'
+
+    const confirmAction = useConfirmation()
 
     let t = $derived(locale.t)
     let selected = $state<ApiToken | null>()
@@ -138,9 +141,9 @@
                                 tabindex="-1"
                                 class="danger"
                                 disabled={remove.isPending}
-                                onclick={() => {
+                                onclick={async () => {
                                     if (
-                                        window.confirm(
+                                        await confirmAction(
                                             t('common.message.confirm-action-description')
                                         )
                                     )

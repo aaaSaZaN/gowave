@@ -187,10 +187,7 @@
                         </div>
                         <label class="app-name-field">
                             <span>{t('app-editor-drawer-content.component.app-name')}</span>
-                            <input
-                                class="m_8fb7ebe7 mantine-Input-input input-dark"
-                                bind:value={app.name}
-                            >
+                            <input class="mantine-Input-input input-dark" bind:value={app.name}>
                         </label>
                         <IconKey {library} optional bind:value={app.svgIconKey} />
                     </div>
@@ -278,7 +275,7 @@
                         <div class="input-with-help">
                             <label>
                                 {t('block-editor.modal.component.icon-color')}
-                                <input bind:value={block.svgIconColor}>
+                                <input class="gw-input" bind:value={block.svgIconColor}>
                             </label>
                             <ActionIcon
                                 icon="TbInfoSquare"
@@ -342,6 +339,7 @@
                                             <label>
                                                 {t('button-editor.component.link')}
                                                 <input
+                                                    class="gw-input"
                                                     placeholder="https:// or app://"
                                                     bind:value={button.link}
                                                 >

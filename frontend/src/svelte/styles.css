@@ -5,6 +5,8 @@
     --gw-text: var(--mantine-color-text);
     --gw-accent: var(--mantine-color-cyan-4);
     --gw-error: var(--mantine-color-error);
+    --gw-input-height: 36px;
+    --gw-input-background: light-dark(white, var(--mantine-color-dark-6));
 }
 
 *,
@@ -23,32 +25,15 @@ a {
     color: var(--gw-accent);
 }
 
-:where(.dashboard-content, dialog)
-    :where(
-        input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"]),
-        select,
-        textarea
-    ):where(:not([class*="mantine-"])) {
-    min-height: 36px;
-    padding: 0.4rem 0.75rem;
+:where(.gw-input) {
+    min-height: var(--gw-input-height);
+    padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
     border: 1px solid var(--mantine-color-default-border);
     border-radius: var(--mantine-radius-md);
-    background: light-dark(white, var(--mantine-color-dark-6));
+    background: var(--gw-input-background);
     color: var(--mantine-color-text);
     font: inherit;
     font-size: var(--mantine-font-size-sm);
-}
-
-:where(.dashboard-content, dialog) :where(button:not([class*="mantine-"])) {
-    min-height: 36px;
-    padding: 0 var(--mantine-spacing-md);
-    border: 1px solid transparent;
-    border-radius: var(--mantine-radius-md);
-    background: var(--mantine-color-cyan-light);
-    color: var(--mantine-color-cyan-light-color);
-    font: inherit;
-    font-size: var(--mantine-font-size-sm);
-    font-weight: 600;
 }
 
 :where(input[type="radio"]) {
@@ -114,11 +99,6 @@ textarea {
 
 button {
     cursor: pointer;
-}
-
-button:disabled:not([class*="mantine-"]) {
-    opacity: 0.65;
-    cursor: progress;
 }
 
 .table-sort-button {

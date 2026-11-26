@@ -4,6 +4,7 @@
     import { p } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import { useConfirmation } from '../ui/confirmation'
     import EmptyState from '../ui/EmptyState.svelte'
     import FormCard from '../ui/FormCard.svelte'
     import { notifications } from '../ui/notification-state.svelte'
@@ -19,6 +20,8 @@
     import SessionIps from './SessionIps.svelte'
     import SessionScanProgress from './SessionScanProgress.svelte'
     import { sessionActivityCounts } from './scan'
+
+    const confirmAction = useConfirmation()
 
     type Target =
         | { kind: 'node'; uuid: string; name: string }
@@ -113,7 +116,7 @@
 
     async function drop(selection: SessionDrop, detail: string): Promise<void> {
         if (target.kind !== 'user' || sending || loading) return
-        if (!window.confirm(`${dropLabel(selection)} — ${detail}`)) return
+        if (!(await confirmAction(`${dropLabel(selection)} — ${detail}`))) return
         sending = true
         actionError = ''
         try {
@@ -241,13 +244,12 @@
                                 >
                                 <small>{node.countryCode} · {format.format(node.ips.length)}</small>
                             </h3>
-                            <button
-                                type="button"
+                            <Button
                                 disabled={sending}
                                 onclick={() => void drop(selection, node.nodeName)}
                             >
                                 {dropLabel(selection)}
-                            </button>
+                            </Button>
                             <SessionIps ips={node.ips} {copy} {now}>
                                 {#snippet actions(session)}
                                     {@const ipSelection = {
@@ -255,8 +257,7 @@
                                         nodeUuid: node.nodeUuid,
                                         ip: session.ip
                                     }}
-                                    <button
-                                        type="button"
+                                    <Button
                                         disabled={sending}
                                         onclick={() =>
                                             void drop(
@@ -265,7 +266,7 @@
                                             )}
                                     >
                                         {dropLabel(ipSelection)}
-                                    </button>
+                                    </Button>
                                 {/snippet}
                             </SessionIps>
                         </section>
@@ -314,16 +315,13 @@
                     {/each}
                     {#if sortedUsers.length > pageSize}
                         <div class="button-row">
-                            <button type="button" disabled={page === 0} onclick={() => page--}>
-                                Previous
-                            </button>
-                            <button
-                                type="button"
+                            <Button disabled={page === 0} onclick={() => page--}> Previous </Button>
+                            <Button
                                 disabled={(page + 1) * pageSize >= sortedUsers.length}
                                 onclick={() => page++}
                             >
                                 {t('common.action.next')}
-                            </button>
+                            </Button>
                         </div>
                     {/if}
                 {:else}

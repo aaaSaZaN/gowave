@@ -14,6 +14,7 @@
     import FormCard from '../ui/FormCard.svelte'
     import Icon from '../ui/Icon.svelte'
     import type { IconName } from '../ui/icons'
+    import NumberInput from '../ui/NumberInput.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import SelectField from '../ui/SelectField.svelte'
     import ExpirationPicker from './ExpirationPicker.svelte'
@@ -72,8 +73,8 @@
     let dateText = $derived.by(() => {
         const date = new Date(expireAt)
         if (!Number.isFinite(date.getTime())) return ''
-        const format = new Intl.DateTimeFormat(locale.language, { dateStyle: 'long' })
-        return `${format.format(date)} - ${expireAt.slice(11, 16)}`
+        const month = new Intl.DateTimeFormat(locale.language, { month: 'long' }).format(date)
+        return `${month} ${date.getDate()}, ${date.getFullYear()} - ${expireAt.slice(11, 16)}`
     })
     let error = $state('')
     let chosenSquads = $state(original?.activeInternalSquads.map(({ uuid }) => uuid) ?? [])
@@ -231,6 +232,7 @@
                             )}
                             {#snippet username(controlId: string)}
                                 <input
+                                    class="gw-input"
                                     id={controlId}
                                     name="username"
                                     value={original?.username ?? ''}
@@ -249,20 +251,18 @@
                     tone="teal"
                 >
                     {#snippet children()}
-                        {@render inputField('Telegram ID', '', 'PiTelegramLogoDuotone', telegram)}
-                        {#snippet telegram(controlId: string)}
-                            <input
-                                id={controlId}
-                                type="number"
-                                name="telegramId"
-                                step="1"
-                                value={original?.telegramId ?? ''}
-                                placeholder="Enter user's Telegram ID (optional)"
-                            >
-                        {/snippet}
+                        <NumberInput
+                            label="Telegram ID"
+                            leftIcon="PiTelegramLogoDuotone"
+                            name="telegramId"
+                            step={1}
+                            value={original?.telegramId ?? undefined}
+                            placeholder="Enter user's Telegram ID (optional)"
+                        />
                         {@render inputField('Email', '', 'PiEnvelopeDuotone', email)}
                         {#snippet email(controlId: string)}
                             <input
+                                class="gw-input"
                                 id={controlId}
                                 type="email"
                                 name="email"
@@ -306,19 +306,16 @@
                                 <input type="checkbox" bind:checked={noDeviceLimit}>
                                 {t('create-user-modal.widget.disable-hwid-limit')}
                             </label>
-                            <span class="input-wrap">
-                                <span class="leading"><Icon name="TbDevices2" size={16} /></span>
-                                <input
-                                    id="device-limit"
-                                    type="number"
-                                    name="hwidDeviceLimit"
-                                    min="0"
-                                    step="1"
-                                    value={original?.hwidDeviceLimit || ''}
-                                    disabled={noDeviceLimit}
-                                    placeholder="Fallback Device Limit in use"
-                                >
-                            </span>
+                            <NumberInput
+                                id="device-limit"
+                                name="hwidDeviceLimit"
+                                leftIcon="TbDevices2"
+                                min={0}
+                                step={1}
+                                value={original?.hwidDeviceLimit || undefined}
+                                disabled={noDeviceLimit}
+                                placeholder="Fallback Device Limit in use"
+                            />
                         </div>
                         <SelectField
                             name="tag"
@@ -343,6 +340,7 @@
                             <span>{t('common.field.description')}</span>
                             <small>{t('create-user-modal.widget.user-description')}</small>
                             <textarea
+                                class="gw-input"
                                 name="description"
                                 oninput={() => touched.add('description')}
                                 rows="2"
@@ -362,23 +360,16 @@
                 >
                     {#snippet children()}
                         <div class="traffic-limit">
-                            {@render inputField(
-                                t('traffic-limits-card.traffic-limit'),
-                                t('traffic-limits-card.traffic-limit-description'),
-                                'TbChartLine',
-                                amount
-                            )}
-                            {#snippet amount(controlId: string)}
-                                <input
-                                    id={controlId}
-                                    type="number"
-                                    name="trafficLimit"
-                                    oninput={() => touched.add('trafficLimit')}
-                                    min="0"
-                                    step="any"
-                                    value={initialBytes / (units.get(initialUnit) ?? 1)}
-                                >
-                            {/snippet}
+                            <NumberInput
+                                label={t('traffic-limits-card.traffic-limit')}
+                                description={t('traffic-limits-card.traffic-limit-description')}
+                                leftIcon="TbChartLine"
+                                name="trafficLimit"
+                                oninput={() => touched.add('trafficLimit')}
+                                min={0}
+                                step="any"
+                                value={initialBytes / (units.get(initialUnit) ?? 1)}
+                            />
                             <SelectField
                                 name="trafficUnit"
                                 label="Traffic unit"
@@ -460,6 +451,7 @@
                                     ><Icon name="TbCirclesRelation" size={16} /></span
                                 >
                                 <input
+                                    class="gw-input"
                                     type="search"
                                     aria-label={t(
                                         'internal-squads-list.widget.search-internal-squads'
@@ -631,9 +623,6 @@
         display: grid;
         min-width: 0;
         margin-block-start: 2px;
-    }
-    .device-limit .input-wrap {
-        margin-block-start: 0;
     }
     .leading {
         display: grid;

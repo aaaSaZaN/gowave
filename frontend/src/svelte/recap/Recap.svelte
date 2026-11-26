@@ -280,6 +280,7 @@
                 <section class="controlPanel">
                     <label class="controlLabel" for={`${id}note`}>Custom note</label>
                     <input
+                        class="gw-input"
                         id={`${id}note`}
                         name="recap-note"
                         maxlength="40"

@@ -173,28 +173,30 @@
 )}
     {@const fieldId = `${id}-${name}`}
     <div class="field">
-        <label for={fieldId} class="m_8fdc1311"
+        <label for={fieldId} class="mantine-InputWrapper-label"
             >{label}
             {#if options.required}
                 <span class="required" aria-hidden="true">*</span>
             {/if}</label
         >
         {#if options.description}
-            <div id={`${fieldId}-description`} class="m_fe47ce59">{options.description}</div>
+            <div id={`${fieldId}-description`} class="mantine-InputWrapper-description">
+                {options.description}
+            </div>
         {/if}
         <div
-            class="m_6c018570 control"
+            class="mantine-Input-wrapper control"
             data-variant="default"
             data-with-left-section={options.icon ? true : undefined}
         >
             {#if options.icon}
-                <span class="m_82577fc2" data-position="left"
+                <span class="mantine-Input-section" data-position="left"
                     ><Icon name={options.icon} size={options.iconSize ?? 16} /></span
                 >
             {/if}
             <input
                 id={fieldId}
-                class="m_8fb7ebe7 mantine-Input-input"
+                class="mantine-Input-input"
                 {name}
                 value={options.value ?? ''}
                 placeholder={options.placeholder}
@@ -257,18 +259,25 @@
 
 {#snippet dateField(label: string, description: string, min?: string, max?: string)}
     <div class="field">
-        <label for={`${id}-date-trigger`} class="m_8fdc1311"
+        <label for={`${id}-date-trigger`} class="mantine-InputWrapper-label"
             >{label} <span class="required" aria-hidden="true">*</span></label
         >
-        <div id={`${id}-date-description`} class="m_fe47ce59">{description}</div>
-        <div class="m_6c018570 control" data-pointer data-variant="default" data-with-left-section>
-            <span class="m_82577fc2" data-position="left"
+        <div id={`${id}-date-description`} class="mantine-InputWrapper-description">
+            {description}
+        </div>
+        <div
+            class="mantine-Input-wrapper control"
+            data-pointer
+            data-variant="default"
+            data-with-left-section
+        >
+            <span class="mantine-Input-section" data-position="left"
                 ><Icon name="HiCalendar" size={16} /></span
             >
             <button
                 bind:this={dateTrigger}
                 id={`${id}-date-trigger`}
-                class="m_8fb7ebe7 mantine-Input-input date-trigger"
+                class="mantine-Input-input date-trigger"
                 data-autofocus={mode.kind === 'node' && nodeType === 'existing' ? '' : undefined}
                 type="button"
                 aria-expanded={calendarOpen}
@@ -535,7 +544,7 @@
     .control {
         --input-fz: var(--mantine-font-size-sm);
     }
-    .field:has(.m_fe47ce59) .control {
+    .field:has(.mantine-InputWrapper-description) .control {
         margin-block-start: 5px;
     }
     .required,

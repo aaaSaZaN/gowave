@@ -77,7 +77,13 @@
                             <div class="key">
                                 <span>{label}</span>
                                 <div class="control">
-                                    <input aria-label={label} type="text" readonly value={key}>
+                                    <input
+                                        class="gw-input"
+                                        aria-label={label}
+                                        type="text"
+                                        readonly
+                                        value={key}
+                                    >
                                     <ActionIcon
                                         class="left"
                                         icon="PiCopy"

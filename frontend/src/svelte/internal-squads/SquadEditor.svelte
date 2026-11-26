@@ -10,8 +10,12 @@
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
     import RouteLoading from '../RouteLoading.svelte'
+    import Accordion from '../ui/Accordion.svelte'
+    import Button from '../ui/Button.svelte'
+    import Checkbox from '../ui/Checkbox.svelte'
     import { dismissContainingDialog } from '../ui/dialog-motion'
     import Overlay from '../ui/Overlay.svelte'
+    import TextInput from '../ui/TextInput.svelte'
     import type { Squad } from './queries'
 
     let { squad, close }: { squad: Squad; close: () => void } = $props()
@@ -76,10 +80,7 @@
         {/if}
     </section>
     <form onsubmit={save}>
-        <label>
-            {t('common.field.name')}
-            <input bind:value={name} name="name" required>
-        </label>
+        <TextInput label={t('common.field.name')} bind:value={name} name="name" required />
         <fieldset>
             <legend>{t('common.field.inbounds')}</legend>
             {#if profiles.isPending}
@@ -88,13 +89,25 @@
                 <p role="alert">{profiles.error.message}</p>
             {:else}
                 {#each profiles.data.configProfiles as profile (profile.uuid)}
-                    <h3>{profile.name}</h3>
-                    {#each profile.inbounds as inbound (inbound.uuid)}
-                        <label class="inbound">
-                            <input type="checkbox" bind:group={selected} value={inbound.uuid}>
-                            {inbound.tag}
-                        </label>
-                    {/each}
+                    <Accordion>
+                        {#snippet heading()}
+                            {profile.name}
+                        {/snippet}
+                        <div class="inbound-list">
+                            {#each profile.inbounds as inbound (inbound.uuid)}
+                                <Checkbox
+                                    label={inbound.tag}
+                                    value={inbound.uuid}
+                                    checked={selected.includes(inbound.uuid)}
+                                    onchange={(event) => {
+                                        selected = event.currentTarget.checked
+                                            ? [...selected, inbound.uuid]
+                                            : selected.filter((uuid) => uuid !== inbound.uuid)
+                                    }}
+                                />
+                            {/each}
+                        </div>
+                    </Accordion>
                 {/each}
             {/if}
         </fieldset>
@@ -102,32 +115,38 @@
             <p role="alert">{mutation.error.message}</p>
         {/if}
         <div class="button-row">
-            <button type="button" onclick={dismissContainingDialog}>
+            <Button onclick={dismissContainingDialog}>
                 {t('common.action.cancel')}
-            </button>
-            <button
+            </Button>
+            <Button
                 type="submit"
+                variant="soft"
+                color="teal"
                 disabled={!name.trim() || mutation.isPending || saveTags.isPending}
             >
                 {t('common.action.save')}
-            </button>
+            </Button>
         </div>
     </form>
     <form onsubmit={updateTags}>
-        <label>
-            {t('common.field.tags')}
-            <input name="tags" bind:value={tags} placeholder="TAG1, TAG2">
-        </label>
+        <TextInput
+            label={t('common.field.tags')}
+            bind:value={tags}
+            name="tags"
+            placeholder="TAG1, TAG2"
+        />
         <div class="button-row">
-            <button
+            <Button
                 type="submit"
+                variant="soft"
+                color="teal"
                 disabled={saveTags.isPending ||
                     mutation.isPending ||
                     tags === squad.tags.join(', ')}
             >
                 {t('common.action.save')}
                 · {t('common.field.tags')}
-            </button>
+            </Button>
         </div>
         {#if saveTags.error}
             <p role="alert">{saveTags.error.message}</p>
@@ -136,6 +155,11 @@
 </Overlay>
 
 <style>
+    .inbound-list {
+        display: grid;
+        gap: var(--mantine-spacing-xs);
+    }
+
     .squad-summary,
     form {
         margin: 0 0 var(--mantine-spacing-md);
@@ -157,19 +181,8 @@
         font-size: var(--mantine-font-size-xs);
     }
     form,
-    label:not(.inbound) {
-        display: grid;
-        gap: 0.5rem;
-    }
-
     fieldset {
         max-height: 40dvh;
         overflow: auto;
-    }
-
-    .inbound {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
     }
 </style>

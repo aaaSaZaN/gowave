@@ -13,6 +13,10 @@
     import { createInfiniteQuery, createQuery } from '@tanstack/svelte-query'
     import dayjs from 'dayjs'
     import { MediaQuery, SvelteSet } from 'svelte/reactivity'
+    import Button from '../ui/Button.svelte'
+    import { useConfirmation } from '../ui/confirmation'
+
+    const confirmAction = useConfirmation()
 
     import { executeCommand, submitCommand } from '../commands'
     import { locale } from '../i18n.svelte'
@@ -72,9 +76,10 @@
     let overdue = $derived(
         list.filter((node) => dayjs.utc(node.nextBillingAt).isBefore(today)).length
     )
-    let upcomingMonth = $derived(
-        new Intl.DateTimeFormat(locale.language, { month: 'long' }).format(new Date())
-    )
+    let upcomingMonth = $derived.by(() => {
+        const month = new Intl.DateTimeFormat(locale.language, { month: 'long' }).format(new Date())
+        return month.charAt(0).toLocaleUpperCase(locale.language) + month.slice(1)
+    })
     const refreshing = $derived(nodes.isFetching || providers.isFetching || history.isFetching)
 
     function dateText(time: Date): string {
@@ -103,14 +108,14 @@
         }
     }
 
-    function remove(
+    async function remove(
         command:
             | typeof DeleteInfraBillingNodeCommand
             | typeof DeleteInfraProviderCommand
             | typeof DeleteInfraBillingRecordCommand,
         uuids: string[]
-    ): void {
-        if (!window.confirm(t('common.message.confirm-action-description'))) return
+    ): Promise<void> {
+        if (!(await confirmAction(t('common.message.confirm-action-description')))) return
         void run(async () => {
             const results = await Promise.allSettled(
                 uuids.map(async (uuid) => {
@@ -562,9 +567,9 @@
                         </ul>
                     {/each}
                     {#if history.hasNextPage}
-                        <button type="button" disabled={history.isFetching} onclick={loadMore}>
+                        <Button disabled={history.isFetching} onclick={loadMore}>
                             {t('common.action.load-more')}
-                        </button>
+                        </Button>
                     {/if}
                 </div>
             {/if}

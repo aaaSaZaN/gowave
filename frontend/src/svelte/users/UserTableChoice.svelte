@@ -152,7 +152,7 @@
                 aria-selected={chosen}
                 data-combobox-selected={option.value === active ? '' : undefined}
                 onmousedown={(event) => event.preventDefault()}
-                class="option m_92253aa5 m_b2821a6e mantine-UnstyledButton-root"
+                class="option gw-combobox-option gw-combobox-option-layout mantine-UnstyledButton-root"
                 onclick={() => choose(option.value)}
             >
                 {#if chosen}

@@ -24,6 +24,7 @@
     import ActionMenu from '../ui/ActionMenu.svelte'
     import BrandIcon from '../ui/BrandIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import { useConfirmation } from '../ui/confirmation'
     import EntityStage from '../ui/EntityStage.svelte'
     import FormCard from '../ui/FormCard.svelte'
     import Icon from '../ui/Icon.svelte'
@@ -39,6 +40,8 @@
     import NodeUsersUsage from './NodeUsersUsage.svelte'
     import NodeVersions from './NodeVersions.svelte'
     import { nodeQuery, nodesKey, trafficSummaryQuery } from './queries'
+
+    const confirmAction = useConfirmation()
 
     let { nodeId, onclose }: { nodeId?: string; onclose?: () => void } = $props()
     let id = $derived(nodeId ?? route.params['id'] ?? '')
@@ -91,11 +94,11 @@
         else void navigate(ROUTES.DASHBOARD.MANAGEMENT.NODES, { replace: true })
     }
 
-    function apply(action: NodeAction): void {
+    async function apply(action: NodeAction): Promise<void> {
         if (
             action !== 'enable' &&
             action !== 'disable' &&
-            !window.confirm(t('common.message.confirm-action-description'))
+            !(await confirmAction(t('common.message.confirm-action-description')))
         )
             return
         update.mutate(action)

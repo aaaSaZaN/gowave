@@ -2,9 +2,9 @@
     import { onDestroy, type Snippet } from 'svelte'
     import { fly } from 'svelte/transition'
     import { locale } from '../i18n.svelte'
-    import BrandIcon from './BrandIcon.svelte'
     import Icon from './Icon.svelte'
     import type { IconName } from './icons'
+    import ThemeIcon from './ThemeIcon.svelte'
 
     let {
         title,
@@ -51,13 +51,7 @@
 
 <header class="page-header" class:compact>
     <div class="page-title">
-        <span class="page-icon">
-            {#if icon === 'Logo'}
-                <BrandIcon />
-            {:else}
-                <Icon name={icon} size={iconSize} />
-            {/if}
-        </span>
+        <ThemeIcon {icon} size={compact ? 34 : 44} {iconSize} />
         <div class="title-text" class:has-description={Boolean(description)}>
             <h1>{title}</h1>
             {#if description}
@@ -79,23 +73,23 @@
 
 {#if notice}
     <div
-        class="m_a513464 copy-notice"
+        class="mantine-Notification-root copy-notice"
         style:--notification-color={notice.copied
             ? 'var(--mantine-color-teal-filled)'
             : 'var(--mantine-color-red-filled)'}
         transition:fly={{ x: 24, duration: 200 }}
     >
-        <div class="m_a49ed24" role={notice.copied ? 'status' : 'alert'}>
-            <div class="m_3feedf16">
+        <div class="mantine-Notification-body" role={notice.copied ? 'status' : 'alert'}>
+            <div class="mantine-Notification-title">
                 {locale.t(notice.copied ? 'common.message.copied' : 'common.message.error')}
             </div>
             {#if notice.copied}
-                <div class="m_3d733a3a" data-with-title>{notice.text}</div>
+                <div class="mantine-Notification-description" data-with-title>{notice.text}</div>
             {/if}
         </div>
         <button
             type="button"
-            class="m_919a4d88 mantine-UnstyledButton-root notice-close"
+            class="gw-close-button mantine-UnstyledButton-root notice-close"
             aria-label={locale.t('common.action.close')}
             onclick={() => (notice = undefined)}
         >
@@ -126,19 +120,19 @@
     }
 
     .page-title {
-        flex: 1 1 auto;
+        flex: 1 1 min-content;
         min-width: 0;
     }
 
     .compact {
-        --page-icon-size: 34px;
         align-items: center;
         border-radius: var(--mantine-radius-lg);
         box-shadow: none;
     }
 
     .page-actions {
-        flex: 0 1 auto;
+        max-width: 100%;
+        flex: 0 0 auto;
         margin-inline-start: auto;
         flex-wrap: wrap;
         justify-content: end;
@@ -148,20 +142,8 @@
     @media (max-width: 48em) {
         .page-actions.wrap-actions {
             flex-basis: 100%;
-            justify-content: start;
+            justify-content: center;
         }
-    }
-
-    .page-icon {
-        display: inline-grid;
-        width: var(--page-icon-size, 44px);
-        height: var(--page-icon-size, 44px);
-        flex: 0 0 auto;
-        place-items: center;
-        color: var(--mantine-color-cyan-4);
-        border: 1px solid rgb(21 170 191 / 30%);
-        border-radius: var(--mantine-radius-md);
-        background: linear-gradient(135deg, rgb(21 170 191 / 15%), rgb(16 152 173 / 10%));
     }
 
     .title-text {

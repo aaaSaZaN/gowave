@@ -1,5 +1,10 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import {
+    GetApiTokensCommand,
+    GetPasskeysCommand,
+    GetRemnawaveSettingsCommand
+} from '@remnawave/backend-contract'
 
 const panel = '/dashboard/'
 const token = 'browser-smoke-token'
@@ -21,6 +26,13 @@ const templateValidationCases = ['MIHOMO', 'STASH', 'CLASH', 'SINGBOX', 'STASH']
 // Runs inside Chromium after the app entry module.
 async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateValidationCases }) {
     performance.setResourceTimingBufferSize(1500)
+    const browserErrors = []
+    window.addEventListener('error', (event) =>
+        browserErrors.push(event.error?.stack ?? event.message)
+    )
+    window.addEventListener('unhandledrejection', (event) =>
+        browserErrors.push(event.reason?.stack ?? String(event.reason))
+    )
 
     async function until(read, message) {
         for (let attempt = 0; attempt < 150; attempt++) {
@@ -56,6 +68,33 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
                 (button.getAttribute('aria-label') ??
                     button.textContent.trim().replace(/\s+/g, ' ')) === text
         )
+    const confirmation = () =>
+        until(
+            () =>
+                [...document.querySelectorAll('dialog[open]')].find((dialog) =>
+                    findButton('Confirm action', dialog)
+                ),
+            'The action did not open a shared confirmation'
+        )
+    const confirmAction = async () => {
+        const dialog = await confirmation()
+        findButton('Confirm action', dialog).click()
+        await until(() => !dialog.isConnected, 'Confirmation did not close')
+    }
+    const chooseOption = async (label, value, parent) => {
+        const field = parent.querySelector(`[role=combobox][aria-label="${label}"]`)
+        field.click()
+        const option = await until(() => {
+            const list = document.getElementById(field.getAttribute('aria-controls'))
+            return (
+                list &&
+                [...list.querySelectorAll('[role=option]')].find(
+                    (option) => option.textContent.trim() === value
+                )
+            )
+        }, `The ${label} control did not offer ${value}`)
+        option.click()
+    }
     const clickVisibleCenter = (element) => {
         const rect = element.getBoundingClientRect()
         document
@@ -136,8 +175,23 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
                 select('dialog[open] h2')?.textContent === 'fixture-42',
             'Quick Open did not display the selected user'
         )
+        const previousView = select('.route-content')
         findButton('Close', select('dialog[open]')).click()
         await until(() => !select('dialog[open]'), 'Quick Open user dialog did not close')
+        await until(
+            () => select('.navigation-loading [role=status]'),
+            'A slow route change did not show navigation progress'
+        )
+        if (
+            previousView?.isConnected &&
+            (!previousView.inert || getComputedStyle(previousView).visibility !== 'hidden')
+        ) {
+            throw new Error('The previous page remained visible while Users was loading')
+        }
+        await until(
+            () => select('.users-panel .table-loading .loading-state[role=status]'),
+            'The users panel did not show its initial loading state'
+        )
 
         const userLink = (id) => select(`tbody a.username[href$="/open/user/${id}"]`)
         const waitForUserDialog = (id) =>
@@ -433,32 +487,38 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
         findButton('Close', usage).click()
         await until(() => !select('dialog'), 'Squad usage did not close')
 
-        const nativeConfirm = window.confirm
-        window.confirm = () => true
-        try {
-            findButton('Squad actions').click()
-            const remove = await until(
-                () => findButton('Remove users'),
-                'Squad actions did not reopen'
-            )
-            remove.click()
-            await until(
-                () => select('.squad-list li [title=Users]')?.textContent.trim() === '0',
-                'Removing members did not refresh the squad'
-            )
-            findButton('Squad actions').click()
-            const add = await until(() => {
-                const button = findButton('Add all users')
-                return button && !button.disabled && button
-            }, 'Squad membership mutation did not settle')
-            add.click()
-            await until(
-                () => select('.squad-list li [title=Users]')?.textContent.trim() === '2',
-                'Adding members did not refresh the squad'
-            )
-        } finally {
-            window.confirm = nativeConfirm
-        }
+        findButton('Squad actions').click()
+        const remove = await until(() => findButton('Remove users'), 'Squad actions did not reopen')
+        remove.click()
+        const cancel = await confirmation()
+        if (document.activeElement !== findButton('Cancel', cancel))
+            throw new Error('A confirmation did not focus Cancel')
+        findButton('Cancel', cancel).click()
+        await until(() => !cancel.isConnected, 'Cancel did not close confirmation')
+        if (select('.squad-list li [title=Users]')?.textContent.trim() === '0')
+            throw new Error('Cancel removed squad members')
+        findButton('Squad actions').click()
+        const removeAfterCancel = await until(
+            () => findButton('Remove users'),
+            'Squad actions did not reopen after cancellation'
+        )
+        removeAfterCancel.click()
+        await confirmAction()
+        await until(
+            () => select('.squad-list li [title=Users]')?.textContent.trim() === '0',
+            'Removing members did not refresh the squad'
+        )
+        findButton('Squad actions').click()
+        const add = await until(() => {
+            const button = findButton('Add all users')
+            return button && !button.disabled && button
+        }, 'Squad membership mutation did not settle')
+        add.click()
+        await confirmAction()
+        await until(
+            () => select('.squad-list li [title=Users]')?.textContent.trim() === '2',
+            'Adding members did not refresh the squad'
+        )
 
         clickVisibleCenter(select('.squad-list .card-icon'))
         const squadInbounds = await until(
@@ -860,12 +920,8 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
             () => !findButton('Apply now', snippets) && snippets.querySelector('[role=status]'),
             'Snippet sync did not finish'
         )
-        window.confirm = () => true
-        try {
-            findButton('Delete', snippets).click()
-        } finally {
-            window.confirm = nativeConfirm
-        }
+        findButton('Delete', snippets).click()
+        await confirmAction()
         const applyDeletion = await until(
             () => !findButton('Edit', snippets) && findButton('Apply now', snippets),
             'Deleting a snippet did not refresh the list and offer to apply it to nodes'
@@ -1177,12 +1233,12 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
             )
             const managedLocally = 'Xray Core is managed on the node'
             if (source === 'local') {
-                if (coreVersion.title !== managedLocally)
+                if (!coreVersion.getAttribute('aria-label')?.startsWith(managedLocally))
                     throw new Error('The local core version did not indicate local management')
                 if (coreVersion.disabled) throw new Error('The local core details were unavailable')
                 coreVersion.click()
                 const versions = await until(
-                    () => select('dialog.node-versions[open]'),
+                    () => select('dialog[open] .node-versions-body')?.closest('dialog'),
                     'Local core version dialog did not open'
                 )
                 await until(
@@ -1201,7 +1257,7 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
                 coreVersion.click()
             }
             const versions = await until(
-                () => select('dialog.node-versions[open]'),
+                () => select('dialog[open] .node-versions-body')?.closest('dialog'),
                 'Version dialog did not open'
             )
             const confirm = await until(() => {
@@ -1240,13 +1296,27 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
         }
         select('nav a[href$="/management/settings"]').click()
         const layoutSwitch = await until(
-            () => select('.layout-toggle input[type=checkbox]'),
+            () => select('.experimental input[type=checkbox]'),
             'Desktop layout setting did not appear'
         )
         const experimental = select('.experimental')
         if (experimental.querySelectorAll('input, [role=checkbox]').length !== 1) {
             throw new Error('Only the legacy layout option should remain')
         }
+        findButton('Passkey', select('main')).click()
+        const passkeysButton = await until(
+            () => findButton('Manage Passkeys', select('main')),
+            'The passkey management action did not appear'
+        )
+        passkeysButton.click()
+        const passkeyDrawer = await until(
+            () =>
+                select('dialog[open]')?.textContent.includes('No passkeys registered yet') &&
+                select('dialog[open]'),
+            'The passkey drawer did not render its empty state'
+        )
+        findButton('Close', passkeyDrawer).click()
+        await until(() => !passkeyDrawer.isConnected, 'The passkey drawer did not close')
         layoutSwitch.click()
         const nodesToggle = await until(
             () =>
@@ -1404,6 +1474,27 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
             () => select('#hwid-platforms + .platform-grid button'),
             'The device platform card did not render'
         )
+        const inspectorPanel = select('.inspector-panel')
+        const fullscreenEnabled = Object.getOwnPropertyDescriptor(document, 'fullscreenEnabled')
+        Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, value: false })
+        try {
+            findButton('Fullscreen', inspectorPanel).click()
+            await until(
+                () =>
+                    inspectorPanel.classList.contains('table-fullscreen') &&
+                    getComputedStyle(inspectorPanel).position === 'fixed',
+                'The table did not enter CSS fullscreen without the Fullscreen API'
+            )
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+            await until(
+                () => !inspectorPanel.classList.contains('table-fullscreen'),
+                'Escape did not exit CSS fullscreen'
+            )
+        } finally {
+            if (fullscreenEnabled)
+                Object.defineProperty(document, 'fullscreenEnabled', fullscreenEnabled)
+            else Reflect.deleteProperty(document, 'fullscreenEnabled')
+        }
         if (
             !platform.textContent.includes('Fixture client') ||
             platform.textContent.includes('Rare client')
@@ -1432,9 +1523,7 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
             () => leaders.querySelector('tbody')?.textContent.includes('device-user-6'),
             'The device leaderboard did not load the second page'
         )
-        const pageSize = leaders.querySelector('select')
-        pageSize.value = '10'
-        pageSize.dispatchEvent(new Event('change', { bubbles: true }))
+        await chooseOption('Users per page', '10', leaders)
         await until(
             () => leaders.querySelectorAll('tbody tr').length === 6,
             'Changing the leaderboard page size did not return to the first page'
@@ -1821,21 +1910,6 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
 
         select('nav.sidebar-navigation a[href$="/management/users"]').click()
         await until(
-            () => select('.navigation-loading [role=status]'),
-            'A slow route change did not show navigation progress'
-        )
-        const previousView = toggle.closest('.route-content')
-        if (
-            previousView?.isConnected &&
-            (!previousView.inert || getComputedStyle(previousView).visibility !== 'hidden')
-        ) {
-            throw new Error('The previous page remained visible while Users was loading')
-        }
-        await until(
-            () => select('.users-panel .table-loading .loading-state[role=status]'),
-            'The users panel did not show its initial loading state'
-        )
-        await until(
             () => select('.users-panel .user-row'),
             'The users table did not replace the initial loading state'
         )
@@ -1860,20 +1934,15 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
             throw new Error('The user bulk edit shortcut did not open the edit form')
         }
         bulkDialog.querySelector('input[name=trafficLimitBytes]').value = '1.5'
-        bulkDialog.querySelector('select[name=trafficUnit]').value = 'MiB'
+        await chooseOption('Traffic unit', 'MiB', bulkDialog)
         const clearEmail = findButton('Clear Email', bulkDialog)
         clearEmail.click()
         await until(
             () => clearEmail.getAttribute('aria-pressed') === 'true',
             'The edit form did not keep an explicit clear'
         )
-        const confirm = window.confirm
-        try {
-            window.confirm = () => true
-            findButton('Update', bulkDialog).click()
-        } finally {
-            window.confirm = confirm
-        }
+        findButton('Update', bulkDialog).click()
+        await confirmAction()
         await until(() => !bulkDialog.isConnected, 'A successful bulk edit did not close')
 
         const usernameMenu = await until(
@@ -2335,6 +2404,22 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
                 `Host column did not cycle to ${direction}`
             )
         }
+        const hostFilter = select('main.hosts-page input[aria-label="Filter by Remark"]')
+        setValue(hostFilter, 'Second host')
+        await until(
+            () =>
+                select('main.hosts-page .table-summary [role=status]')?.textContent.trim() ===
+                '1 / 2',
+            'The inline host filter did not reduce the results'
+        )
+        findButton('Reset', select('main.hosts-page .table-summary')).click()
+        await until(
+            () =>
+                !hostFilter.value &&
+                select('main.hosts-page .table-summary [role=status]')?.textContent.trim() ===
+                    '2 / 2',
+            'The host table reset did not restore the complete results'
+        )
         hostView.click()
         await until(() => select('.host-card'), 'Host cards did not return')
 
@@ -2457,6 +2542,33 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
         setValue(hostEditor.querySelector('[name=port]'), '8443')
         const draftPreview = await openPreview(hostEditor)
         const draftHeaders = draftPreview.querySelector('textarea:not([readonly])')
+        const draftUserAgent = draftPreview.querySelector('input[placeholder^=ClashMeta]')
+        if (
+            Math.abs(
+                draftUserAgent.getBoundingClientRect().top -
+                    draftHeaders.getBoundingClientRect().top
+            ) > 1
+        ) {
+            throw new Error('The host preview fields are vertically misaligned')
+        }
+        const headersHelp = findButton('Which headers should I enter?', draftPreview)
+        const headersGuide = document.getElementById(headersHelp.getAttribute('aria-controls'))
+        setValue(draftHeaders, 'X-Preview-Mode: draft:config')
+        headersHelp.click()
+        await until(
+            () => !headersGuide.hidden && headersHelp.getAttribute('aria-expanded') === 'true',
+            'The request headers guide did not open'
+        )
+        if (
+            !headersGuide.textContent.includes('X-HWID: demo-device-001') ||
+            !headersGuide.textContent.includes('x-hwid-not-supported: true') ||
+            !headersGuide.textContent.includes('Accept: text/html') ||
+            draftHeaders.value !== 'X-Preview-Mode: draft:config'
+        ) {
+            throw new Error('The request headers guide was incomplete or changed the request')
+        }
+        headersHelp.click()
+        await until(() => headersGuide.hidden, 'The request headers guide did not close')
         setValue(draftHeaders, 'invalid header')
         findButton('Generate preview', draftPreview).click()
         await until(
@@ -2808,7 +2920,7 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
         const controls = [...document.querySelectorAll('main button')].map(
             (button) => `${button.textContent.trim()}${button.disabled ? ' (disabled)' : ''}`
         )
-        message.textContent = `${detail} | ${controls.join(', ')} | ${select('main [role=alert]')?.textContent ?? ''}`
+        message.textContent = `${detail} | ${controls.join(', ')} | ${select('main [role=alert]')?.textContent ?? ''} | ${location.pathname} | ${browserErrors.join(' | ')}`
         document.body.replaceChildren(message)
     }
 }
@@ -3638,6 +3750,15 @@ export function startSvelteFixture(output) {
                 }
                 if (pathname === `/api/external-squads/${externalUuid}`)
                     return result(externalSquad)
+                if (pathname === GetRemnawaveSettingsCommand.TSQ_url)
+                    return result({
+                        passkeySettings: { enabled: false, rpId: null, origin: null },
+                        oauth2Settings: null,
+                        passwordSettings: { enabled: true },
+                        brandingSettings: { title: null, logoUrl: null }
+                    })
+                if (pathname === GetPasskeysCommand.TSQ_url) return result({ passkeys: [] })
+                if (pathname === GetApiTokensCommand.TSQ_url) return result({ tokens: [] })
                 if (pathname === '/api/external-squads/') {
                     if (request.method === 'POST') {
                         const body = await request.json()

@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Snippet } from 'svelte'
-    import Icon from './Icon.svelte'
     import type { IconName } from './icons'
+    import ThemeIcon from './ThemeIcon.svelte'
 
     let {
         title,
@@ -30,12 +30,12 @@
         class:large={headingSize === 'lg'}
         class:extra-large={headingSize === 'xl'}
     >
-        <span
-            style:--card-color={`var(--mantine-color-${tone}-4)`}
-            style:--card-tint={`var(--mantine-color-${tone}-6)`}
-            style:--card-shade={`var(--mantine-color-${tone}-7)`}
-            ><Icon name={icon} size={headingSize === 'xl' ? 24 : 20} /></span
-        >
+        <ThemeIcon
+            {icon}
+            {tone}
+            size={headingSize === 'xl' ? 44 : 34}
+            iconSize={headingSize === 'xl' ? 24 : 20}
+        />
         <div class="heading">
             <h3>{title}</h3>
             {#if description}
@@ -71,22 +71,6 @@
         border-block-end: 1px solid rgba(var(--gw-fg-rgb), 0.06);
     }
 
-    header span {
-        display: grid;
-        flex: none;
-        width: 34px;
-        height: 34px;
-        place-items: center;
-        border: 1px solid color-mix(in srgb, var(--card-tint) 30%, transparent);
-        border-radius: var(--mantine-radius-md);
-        background: linear-gradient(
-            135deg,
-            color-mix(in srgb, var(--card-tint) 15%, transparent),
-            color-mix(in srgb, var(--card-shade) 10%, transparent)
-        );
-        color: var(--card-color);
-    }
-
     h3 {
         margin: 0;
         color: var(--mantine-color-bright);
@@ -108,19 +92,14 @@
         gap: var(--mantine-spacing-md);
     }
 
-    .extra-large span {
-        width: 44px;
-        height: 44px;
-    }
-
     .heading {
-        flex: 1 1 110px;
+        flex: 1 1 min-content;
         min-width: 0;
     }
 
     .heading p {
         margin: 0;
-        overflow-wrap: anywhere;
+        overflow-wrap: break-word;
         color: var(--mantine-color-dimmed);
         font-size: var(--mantine-font-size-xs);
         line-height: var(--mantine-line-height-xs);

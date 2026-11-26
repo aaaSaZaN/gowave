@@ -2,10 +2,9 @@
     import type { Snippet } from 'svelte'
     import { locale } from '../i18n.svelte'
     import ActionIcon from './ActionIcon.svelte'
-    import BrandIcon from './BrandIcon.svelte'
     import { cancelDialog, dismissDialog } from './dialog-motion'
-    import Icon from './Icon.svelte'
     import type { IconName } from './icons'
+    import ThemeIcon from './ThemeIcon.svelte'
 
     let {
         title,
@@ -60,8 +59,8 @@
         )
     }
 
-    function dismiss(): void {
-        if (!preventClose) dismissDialog(dialog)
+    export function dismiss(): void {
+        dismissDialog(dialog)
     }
 
     $effect(() => {
@@ -84,7 +83,7 @@
     }}
     onpointercancel={() => (backdropPointer = undefined)}
     onpointerup={(event) => {
-        if (backdropPointer === event.pointerId && isBackdrop(event)) dismiss()
+        if (backdropPointer === event.pointerId && isBackdrop(event) && !preventClose) dismiss()
         backdropPointer = undefined
     }}
     closedby={preventClose ? 'none' : 'closerequest'}
@@ -103,17 +102,7 @@
                     class:with-inline-actions={inlineActions}
                     class:wrap-actions={wrapActions}
                 >
-                    <span
-                        class="drawer-icon"
-                        style:--drawer-ink={`var(--mantine-color-${tone}-4)`}
-                        style:--drawer-tint={`var(--mantine-color-${tone}-6)`}
-                    >
-                        {#if icon === 'Logo'}
-                            <BrandIcon size={20} />
-                        {:else}
-                            <Icon name={icon} size={20} />
-                        {/if}
-                    </span>
+                    <ThemeIcon {icon} {tone} />
                     <div class="overlay-title">
                         {#if titlePrefix}
                             <h2 {id}>
@@ -141,7 +130,9 @@
                     size={34}
                     iconSize={24}
                     disabled={preventClose}
-                    onclick={dismiss}
+                    onclick={() => {
+                        if (!preventClose) dismiss()
+                    }}
                 />
             </header>
         {/if}
@@ -227,17 +218,6 @@
         color: var(--mantine-color-dimmed);
         font-size: var(--mantine-font-size-xs);
         line-height: var(--mantine-line-height-xs);
-    }
-    .drawer-icon {
-        display: grid;
-        place-items: center;
-        width: 34px;
-        height: 34px;
-        flex: 0 0 auto;
-        border: 1px solid color-mix(in srgb, var(--drawer-tint) 30%, transparent);
-        border-radius: var(--mantine-radius-md);
-        background: color-mix(in srgb, var(--drawer-tint) 14%, transparent);
-        color: var(--drawer-ink);
     }
     .drawer-body {
         padding: var(--overlay-padding);

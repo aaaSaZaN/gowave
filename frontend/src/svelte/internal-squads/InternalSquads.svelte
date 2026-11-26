@@ -14,6 +14,7 @@
     import RouteLoading from '../RouteLoading.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import CreateSquad from '../ui/CreateSquad.svelte'
+    import { useConfirmation } from '../ui/confirmation'
     import EmptyState from '../ui/EmptyState.svelte'
     import EntityCard from '../ui/EntityCard.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
@@ -29,6 +30,8 @@
     import SquadInbounds from './SquadInbounds.svelte'
     import SquadNodes from './SquadNodes.svelte'
     import SquadUsage from './SquadUsage.svelte'
+
+    const confirmAction = useConfirmation()
 
     const squads = createQuery(() => squadsQuery)
     const commands = {
@@ -89,7 +92,7 @@
         )
     )
 
-    function perform(action: SquadAction, squad: Squad): void {
+    async function perform(action: SquadAction, squad: Squad): Promise<void> {
         const confirmation = {
             add: t('common.message.confirm-add-all-users-to-internal-squad', {
                 squadName: squad.name
@@ -97,7 +100,7 @@
             remove: `${t('common.action.remove-users')} · ${squad.name}?\n${t('common.message.confirm-action-description')}`,
             delete: `${t('common.action.delete')} ${squad.name}?`
         }
-        if (window.confirm(confirmation[action])) void apply({ action, uuid: squad.uuid })
+        if (await confirmAction(confirmation[action])) void apply({ action, uuid: squad.uuid })
     }
 
     async function saveOrder(ids: string[]): Promise<void> {

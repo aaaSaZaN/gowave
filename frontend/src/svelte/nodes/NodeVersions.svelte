@@ -265,18 +265,15 @@
                     {/if}
 
                     {#if component === 'core'}
-                        <div class="m_46b77525 mantine-InputWrapper-root url-field">
-                            <label
-                                for="node-core-url"
-                                class="m_8fdc1311 mantine-InputWrapper-label"
-                            >
+                        <div class="mantine-InputWrapper-root url-field">
+                            <label for="node-core-url" class="mantine-InputWrapper-label">
                                 {t('node-versions.url')}
                             </label>
                             <input
                                 id="node-core-url"
                                 type="url"
                                 name="downloadUrl"
-                                class="m_8fb7ebe7 mantine-Input-input"
+                                class="mantine-Input-input"
                                 placeholder="https://example.org/Xray-linux-64.zip"
                                 bind:value={download}
                                 oninput={changed}
@@ -577,7 +574,7 @@
         gap: 4px;
     }
 
-    .url-field .m_8fb7ebe7 {
+    .url-field .mantine-Input-input {
         --input-height: var(--input-height-sm);
         --input-padding: calc(var(--input-height) / 3);
         --input-padding-inline-start: var(--input-padding);

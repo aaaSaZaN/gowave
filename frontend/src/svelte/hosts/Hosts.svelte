@@ -22,6 +22,7 @@
     import { p } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import DataTable from '../ui/DataTable.svelte'
     import EmptyState from '../ui/EmptyState.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
     import EntityTagBar from '../ui/EntityTagBar.svelte'
@@ -32,7 +33,7 @@
     import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
-    import SelectField from '../ui/SelectField.svelte'
+    import TableFilter from '../ui/TableFilter.svelte'
     import Tooltip from '../ui/Tooltip.svelte'
     import { type EntityViewMode, readHostView, writeHostView } from '../view-preferences'
     import HostConfirmation from './HostConfirmation.svelte'
@@ -91,7 +92,7 @@
     let hostParameter = $state.raw<{ title: string; icon: IconName; value: unknown }>()
     let confirmation = $state.raw<{ action: 'clone' | 'delete'; items: Host[]; skipped: number }>()
     let helpOpen = $state(false)
-    let searchOpen = $state(false)
+    let searchOpen = $state(true)
     let editing = $state<string | null>(null)
     let viewport = $state(1024)
     let viewportHeight = $state(0)
@@ -103,8 +104,8 @@
     let t = $derived(locale.t)
     let mode = $state<EntityViewMode>(initial.mode)
     let tag = $state(initial.tag)
-    let search = $state('')
-    let status = $state('')
+    let filters = $state<Partial<Record<Column, string>>>({})
+    const hasFilters = $derived(Object.values(filters).some((value) => value.trim()))
     let sort = $state<{ column: Column; descending: boolean }>()
     let bulkIds = $state.raw<string[] | undefined>()
     let scrollArea = $state<HTMLDivElement>()
@@ -150,13 +151,17 @@
         )
     )
     let filtered = $derived.by(() => {
-        const normalized = search.trim().toLocaleLowerCase(locale.language)
+        const active = Object.entries(filters).flatMap(([key, value]) => {
+            const text = value.trim().toLocaleLowerCase(locale.language)
+            return text ? [{ column: key as Column, text }] : []
+        })
         const list = ordered.filter(
             (host) =>
                 (!tag || (tag === NO_TAG ? host.tags.length === 0 : host.tags.includes(tag))) &&
-                (!status || stateOf(host) === status) &&
-                [host.remark, host.address, String(host.port), ...host.tags, inboundOf(host)].some(
-                    (value) => value.toLocaleLowerCase(locale.language).includes(normalized)
+                active.every(({ column, text }) =>
+                    column === 'status'
+                        ? stateOf(host) === text
+                        : value(host, column).toLocaleLowerCase(locale.language).includes(text)
                 )
         )
         if (!sort) return list
@@ -171,7 +176,7 @@
             return descending ? -order : order
         })
     })
-    let reorderable = $derived(!sort && !tag && !status && !search.trim())
+    let reorderable = $derived(!sort && !tag && !hasFilters)
     let rowHeight = $derived(mode === 'table' ? 50 : compact ? 202 : 88)
     let range = $derived.by(() => {
         if (mode === 'table')
@@ -316,12 +321,16 @@
         mode = next
         sort = undefined
         if (next === 'cards') {
-            searchOpen = false
-            search = ''
-            status = ''
+            filters = {}
         }
         writeHostView(mode, tag)
         scrollToStart()
+    }
+
+    function resetTable(): void {
+        filters = {}
+        sort = undefined
+        tagsChanged('')
     }
 
     function sortBy(column: Column): void {
@@ -567,7 +576,7 @@
             <ActionIcon
                 icon="TbAdjustmentsHorizontal"
                 tone="gray"
-                label={t('common.field.status')}
+                label="Column filters"
                 aria-expanded={searchOpen}
                 onclick={() => (searchOpen = !searchOpen)}
             />
@@ -593,40 +602,6 @@
         />
     </PageHeader>
 
-    {#if searchOpen && mode === 'table'}
-        <div class="button-row toolbar">
-            <input
-                type="search"
-                aria-label={t('common.action.search')}
-                placeholder={t('common.action.search')}
-                bind:value={search}
-                oninput={scrollToStart}
-            >
-            <SelectField
-                label={t('common.field.status')}
-                placeholder={t('common.field.status')}
-                hideLabel
-                searchable={false}
-                value={status}
-                options={[
-                    { value: 'enabled', label: t('use-hosts-table-widget.enabled') },
-                    { value: 'disabled', label: t('use-hosts-table-widget.disabled') },
-                    { value: 'hidden', label: t('use-hosts-table-widget.hidden') }
-                ]}
-                onchoose={(value) => {
-                    status = value
-                    scrollToStart()
-                }}
-            />
-            <Button
-                disabled={!ordered.length || selected.length === ordered.length}
-                onclick={selectAll}
-            >
-                {t('common.action.select-all')}
-            </Button>
-        </div>
-    {/if}
-
     {#if hosts.isPending}
         <RouteLoading label={t('common.message.loading')} />
     {:else if hosts.isError}
@@ -636,7 +611,7 @@
         {#if update.error}
             <p role="alert">{update.error.message}</p>
         {/if}
-        {#if !filtered.length}
+        {#if !filtered.length && mode === 'cards'}
             <EmptyState icon="TbListCheck" label={t('common.message.nothing-found')} />
         {:else}
             <div
@@ -787,7 +762,7 @@
                         {/each}
                     </ul>
                 {:else}
-                    <table aria-label={t('constants.hosts')}>
+                    <DataTable class="hosts-table" aria-label={t('constants.hosts')}>
                         <thead>
                             <tr>
                                 <th scope="col">
@@ -804,7 +779,9 @@
                                         }}
                                     >
                                 </th>
-                                {#each Object.entries(columns) as [column, label] (column)}
+                                {#each Object.keys(columns) as key (key)}
+                                    {@const column = key as Column}
+                                    {@const label = t(columns[column])}
                                     {@const direction =
                                         sort?.column === column
                                             ? sort.descending
@@ -815,9 +792,9 @@
                                         <button
                                             class="mantine-UnstyledButton-root table-sort-button"
                                             type="button"
-                                            onclick={() => sortBy(column as Column)}
+                                            onclick={() => sortBy(column)}
                                         >
-                                            <span>{t(label)}</span>
+                                            <span>{label}</span>
                                             <span class="table-sort-indicator" aria-hidden="true">
                                                 <Icon
                                                     name={direction === 'ascending'
@@ -829,6 +806,39 @@
                                                 />
                                             </span>
                                         </button>
+                                        {#if searchOpen}
+                                            <TableFilter
+                                                {label}
+                                                value={filters[column] ?? ''}
+                                                live
+                                                options={column === 'status'
+                                                    ? [
+                                                          {
+                                                              value: 'enabled',
+                                                              label: t(
+                                                                  'use-hosts-table-widget.enabled'
+                                                              )
+                                                          },
+                                                          {
+                                                              value: 'disabled',
+                                                              label: t(
+                                                                  'use-hosts-table-widget.disabled'
+                                                              )
+                                                          },
+                                                          {
+                                                              value: 'hidden',
+                                                              label: t(
+                                                                  'use-hosts-table-widget.hidden'
+                                                              )
+                                                          }
+                                                      ]
+                                                    : undefined}
+                                                onfilter={(value) => {
+                                                    filters[column] = value
+                                                    scrollToStart()
+                                                }}
+                                            />
+                                        {/if}
                                     </th>
                                 {/each}
                                 <th scope="col" aria-label={t('common.action.edit')}>
@@ -837,6 +847,13 @@
                             </tr>
                         </thead>
                         <tbody>
+                            {#if !filtered.length}
+                                <tr>
+                                    <td colspan={tableColumnCount}>
+                                        {t('common.message.nothing-found')}
+                                    </td>
+                                </tr>
+                            {/if}
                             <tr aria-hidden="true" style:height={`${range.from * rowHeight}px`}>
                                 <td colspan={tableColumnCount}></td>
                             </tr>
@@ -881,9 +898,22 @@
                                 <td colspan={tableColumnCount}></td>
                             </tr>
                         </tbody>
-                    </table>
+                    </DataTable>
                 {/if}
             </div>
+            {#if mode === 'table'}
+                <footer class="table-summary">
+                    <Button
+                        size="compact-sm"
+                        variant="subtle"
+                        disabled={!hasFilters && !sort && !tag}
+                        onclick={resetTable}
+                    >
+                        {t('common.action.reset')}
+                    </Button>
+                    <span role="status">{filtered.length} / {ordered.length}</span>
+                </footer>
+            {/if}
         {/if}
     {/if}
 
@@ -1308,7 +1338,17 @@
         opacity: 0.5;
     }
 
-    table {
+    .table-summary {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: var(--mantine-spacing-sm);
+        padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+        border-block-start: 1px solid var(--mantine-color-default-border);
+        font-family: var(--mantine-font-family-monospace);
+    }
+
+    :global(.hosts-table) {
         width: 100%;
         border-collapse: collapse;
         text-align: start;
@@ -1330,10 +1370,10 @@
     tbody tr.selected {
         background: var(--mantine-color-cyan-light);
     }
-    table tr:not([aria-hidden]) > :not(:last-child) {
+    :global(.hosts-table) tr:not([aria-hidden]) > :not(:last-child) {
         border-inline-end: 1px solid var(--gw-border);
     }
-    table tr:not([aria-hidden]) > :last-child {
+    :global(.hosts-table) tr:not([aria-hidden]) > :last-child {
         position: sticky;
         inset-inline-end: 0;
         background: var(--gw-surface);

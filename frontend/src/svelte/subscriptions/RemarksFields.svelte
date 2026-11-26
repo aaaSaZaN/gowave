@@ -84,6 +84,7 @@
                                 <div class="remark-input">
                                     <span><TemplateVariables /></span>
                                     <input
+                                        class="gw-input"
                                         name={group.field}
                                         bind:value={row.value}
                                         aria-label={t('remarks-manager.widget.enter-remark')}

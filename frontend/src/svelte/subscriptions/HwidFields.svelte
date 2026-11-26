@@ -43,6 +43,7 @@
     <span>
         <span class="leading"><Icon name="TbDevices2" size={16} /></span>
         <input
+            class="gw-input"
             id={limitId}
             aria-describedby={`${limitId}-description`}
             name="fallbackDeviceLimit"
@@ -84,6 +85,7 @@
     <span>
         <span class="variables"><TemplateVariables /></span>
         <textarea
+            class="gw-input"
             id={announceId}
             aria-describedby={`${announceId}-description`}
             name="maxDevicesAnnounce"

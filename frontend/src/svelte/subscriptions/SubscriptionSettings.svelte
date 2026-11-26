@@ -17,6 +17,7 @@
     import { notifications } from '../ui/notification-state.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
     import Switch from '../ui/Switch.svelte'
+    import Tabs from '../ui/Tabs.svelte'
     import HwidFields from './HwidFields.svelte'
     import { subscriptionSettingsQuery } from './queries'
     import RemarksFields from './RemarksFields.svelte'
@@ -118,33 +119,6 @@
         save.reset()
     }
 
-    function navigateTabs(event: KeyboardEvent, current: number): void {
-        const rtl = document.documentElement.dir === 'rtl'
-        const last = sections.length - 1
-        let next: number
-        switch (event.key) {
-            case 'ArrowLeft':
-                next = (current + (rtl ? 1 : last)) % sections.length
-                break
-            case 'ArrowRight':
-                next = (current + (rtl ? last : 1)) % sections.length
-                break
-            case 'Home':
-                next = 0
-                break
-            case 'End':
-                next = last
-                break
-            default:
-                return
-        }
-        const tab = sections[next]
-        if (!tab || save.isPending) return
-        event.preventDefault()
-        selectSection(tab.id)
-        document.getElementById(`${tabsId}-tab-${tab.id}`)?.focus()
-    }
-
     function submit(event: SubmitEvent, target: Section): void {
         event.preventDefault()
         if (save.isPending || !(event.currentTarget instanceof HTMLFormElement)) return
@@ -170,25 +144,14 @@
             <Button onclick={() => void settings.refetch()}>{t('common.action.try-again')}</Button>
         {:else}
             {@const current = settings.data}
-            <div role="tablist" aria-label={t('constants.subscription-settings')} class="tabs">
-                {#each sections as item, index (item.id)}
-                    <button
-                        type="button"
-                        class="m_4ec4dce6 mantine-UnstyledButton-root settings-tab"
-                        role="tab"
-                        id={`${tabsId}-tab-${item.id}`}
-                        disabled={save.isPending}
-                        aria-selected={section === item.id}
-                        aria-controls={`${tabsId}-panel-${item.id}`}
-                        tabindex={section === item.id ? 0 : -1}
-                        onclick={() => selectSection(item.id)}
-                        onkeydown={(event) => navigateTabs(event, index)}
-                    >
-                        <Icon name={item.icon} size="1.2rem" />
-                        {t(item.label)}
-                    </button>
-                {/each}
-            </div>
+            <Tabs
+                id={tabsId}
+                label={t('constants.subscription-settings')}
+                selected={section}
+                items={sections.map(({ id, icon, label }) => ({ id, icon, label: t(label) }))}
+                disabled={save.isPending}
+                onselect={selectSection}
+            />
             {#each sections as item (item.id)}
                 <div
                     role="tabpanel"
@@ -344,40 +307,6 @@
     }
     .editable-card {
         max-width: 1500px;
-    }
-    .tabs {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: var(--mantine-spacing-md);
-    }
-    .settings-tab {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--mantine-spacing-xs);
-        background: var(--gw-raised-bg);
-        border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
-        border-radius: var(--mantine-radius-md);
-        font-size: var(--mantine-font-size-sm);
-        font-weight: 500;
-        white-space: nowrap;
-        transition:
-            color 150ms ease,
-            background-color 150ms ease,
-            border-color 150ms ease;
-    }
-    .settings-tab:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-    .settings-tab:hover {
-        background: var(--mantine-color-default-hover);
-        border-color: var(--mantine-color-default-border);
-    }
-    .settings-tab[aria-selected="true"] {
-        color: var(--mantine-primary-color-4);
-        background: color-mix(in srgb, var(--mantine-primary-color-6) 12%, transparent);
-        border-color: color-mix(in srgb, var(--mantine-primary-color-6) 30%, transparent);
     }
     fieldset {
         margin: 0;

@@ -36,7 +36,13 @@
         <label for={id}>Secret Key (SECRET_KEY)</label>
         <div class="secret-field">
             <span class="key-icon"><Icon name="TbServerCog" size={16} /></span>
-            <input {id} readonly value={secret.data?.secretKey ?? ''} spellcheck="false">
+            <input
+                class="gw-input"
+                {id}
+                readonly
+                value={secret.data?.secretKey ?? ''}
+                spellcheck="false"
+            >
             <span class="copy-key">
                 <ActionIcon
                     icon="TbCopy"

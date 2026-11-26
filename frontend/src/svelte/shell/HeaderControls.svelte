@@ -13,7 +13,6 @@
         mobile = false,
         footer = false,
         version,
-        dev = false,
         updateAvailable,
         showRecap,
         showBuild
@@ -21,7 +20,6 @@
         mobile?: boolean
         footer?: boolean
         version: string
-        dev?: boolean
         updateAvailable: boolean
         showRecap: () => void
         showBuild: () => void
@@ -59,7 +57,9 @@
     const stars = createQuery(() => ({
         queryKey: ['gowave', 'repository-stars'],
         queryFn: async ({ signal }) => {
-            const response = await fetch('https://ungh.cc/stars/aaaSaZaN/gowave', { signal })
+            const response = await fetch('https://ungh.cc/stars/aaaSaZaN/gowave', {
+                signal: AbortSignal.any([signal, AbortSignal.timeout(5000)])
+            })
             if (!response.ok) throw new Error('Could not load repository stars')
             return starsSchema.parse(await response.json()).totalStars
         },
@@ -121,8 +121,7 @@
         <button
             type="button"
             class="header-control version"
-            class:update-available={updateAvailable}
-            class:dev
+            class:update-available={updateAvailable && version !== 'dev'}
             aria-label="Build info"
             title="Build info"
             disabled={!version}
@@ -303,6 +302,7 @@
         padding-inline: 10px;
         font-size: var(--mantine-font-size-sm);
         font-weight: 600;
+        font-family: var(--mantine-font-family-monospace);
     }
 
     .header-control.logout {
@@ -323,11 +323,6 @@
                 0 1px 4px rgb(0 0 0 / 10%),
                 0 0 12px 2px rgb(6 182 212 / 30%);
         }
-    }
-
-    .header-control.version.dev {
-        border-color: var(--mantine-color-red-4);
-        color: var(--mantine-color-red-4);
     }
 
     .version:disabled::after {

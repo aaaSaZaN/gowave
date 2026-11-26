@@ -13,6 +13,7 @@
     import { ipDetailsUrl } from '../torrent-reports/queries'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import DataTable from '../ui/DataTable.svelte'
     import EmptyState from '../ui/EmptyState.svelte'
     import { reorderHandle } from '../ui/entity-order'
     import FormCard from '../ui/FormCard.svelte'
@@ -229,9 +230,10 @@
                 bind:clientHeight={tableHeight}
                 onscroll={(event) => (offset = event.currentTarget.scrollTop)}
             >
-                <table
+                <DataTable
+                    class="user-devices-table"
                     aria-label={t('get-hwid-user-devices.feature.hwid-devices')}
-                    style:width={`${tableWidth}px`}
+                    style={`width: ${tableWidth}px`}
                 >
                     <colgroup>
                         {#each visible as field (field)}
@@ -397,7 +399,7 @@
                             </tr>
                         {/if}
                     </tbody>
-                </table>
+                </DataTable>
                 {#if !rows.length}
                     <div class="table-empty">
                         {#if devices.isPending}
@@ -465,7 +467,7 @@
             {#if popup.mode === 'filter' && popup.field}
                 {@const field = popup.field}
                 <input
-                    class="filter"
+                    class="gw-input filter"
                     type="search"
                     data-popup-autofocus
                     aria-label={labels[field]}
@@ -614,7 +616,7 @@
         border: 1px solid var(--mantine-color-default-border);
         border-radius: var(--mantine-radius-sm);
     }
-    table {
+    :global(.user-devices-table) {
         min-width: 100%;
         border-collapse: separate;
         border-spacing: 0;

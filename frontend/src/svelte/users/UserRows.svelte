@@ -9,6 +9,7 @@
     import { locale } from '../i18n.svelte'
     import { flag } from '../nodes/analytics'
     import { p } from '../router'
+    import DataTable from '../ui/DataTable.svelte'
     import Icon from '../ui/Icon.svelte'
     import type { visibleUserColumns } from './columns'
     import type { User } from './queries'
@@ -126,12 +127,9 @@
         scrollTop = viewport.scrollTop
     }}
 >
-    <table
-        style:width={`${width}px`}
-        style:--row-height={`${rowHeight}px`}
-        style:--cell-block={`${padding}px`}
-        style:--cell-inline={`${density === 'xxs' ? 6 : padding}px`}
-        class:resizing={resizing !== undefined}
+    <DataTable
+        style={`width: ${width}px; --row-height: ${rowHeight}px; --cell-block: ${padding}px; --cell-inline: ${density === 'xxs' ? 6 : padding}px`}
+        class={['user-rows-table', { resizing: resizing !== undefined }]}
     >
         <colgroup>
             <col style="width:60px">
@@ -351,14 +349,14 @@
                 </tr>
             {/if}
         </tbody>
-    </table>
+    </DataTable>
 </section>
 
 <style>
     .user-row {
         cursor: pointer;
     }
-    .resizing {
+    :global(.user-rows-table.resizing) {
         user-select: none;
         cursor: col-resize;
     }
@@ -368,7 +366,7 @@
         overscroll-behavior: contain;
     }
 
-    table {
+    :global(.user-rows-table) {
         min-width: 100%;
         border-spacing: 0;
         table-layout: fixed;
@@ -498,11 +496,7 @@
     }
     .column-filter.filter-tag :global(.filter-choice) {
         width: 132px;
-        height: 22.4px;
         margin-inline-start: 1px;
-    }
-    .column-filter.filter-tag :global(.filter-choice input) {
-        height: 22.4px;
     }
 
     .username {

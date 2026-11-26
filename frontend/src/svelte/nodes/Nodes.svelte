@@ -23,7 +23,9 @@
     import { p } from '../router'
     import type { SummaryMetric } from '../system-stats'
     import ActionIcon from '../ui/ActionIcon.svelte'
-    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
+    import Button from '../ui/Button.svelte'
+    import { useConfirmation } from '../ui/confirmation'
+    import DataTable from '../ui/DataTable.svelte'
     import EmptyState from '../ui/EmptyState.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
     import EntityTagBar from '../ui/EntityTagBar.svelte'
@@ -31,6 +33,7 @@
     import Icon from '../ui/Icon.svelte'
     import MetricCard from '../ui/MetricCard.svelte'
     import { notifications } from '../ui/notification-state.svelte'
+    import Overlay from '../ui/Overlay.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
     import { type EntityViewMode, readNodeView, writeNodeView } from '../view-preferences'
     import { type NodeAction, nodeActionLabels, runNodeAction } from './actions'
@@ -41,6 +44,8 @@
     import NodeEditor from './NodeEditor.svelte'
     import NodeUsersUsage from './NodeUsersUsage.svelte'
     import { type Node, nodesKey, nodesQuery } from './queries'
+
+    const confirmAction = useConfirmation()
 
     type BulkAction = Exclude<NodeAction, 'delete'>
     type EditMode = 'fields' | 'profile'
@@ -139,7 +144,7 @@
             return descending ? -cmp : cmp
         })
     })
-    let canReorder = $derived(!sort && !tag)
+    let canReorder = $derived(!sort && !tag && pendingOrder === undefined)
     let area = $state<HTMLDivElement>()
     let height = $state(0)
     let offset = $state(0)
@@ -174,7 +179,6 @@
             : 0
     )
     let rows = $derived(visible.slice(range.from, range.to))
-    let dialog: HTMLDialogElement
     let edit = $state<{ mode: EditMode; ids: string[] }>()
 
     const update = createMutation(() => ({
@@ -212,9 +216,12 @@
                 color: 'teal'
             })
         },
-        onSettled: (_, __, change) => {
-            if (change.kind === 'order') pendingOrder = undefined
-            return queryClient.invalidateQueries({ queryKey: nodesKey })
+        onSettled: async (_, __, change) => {
+            try {
+                await queryClient.invalidateQueries({ queryKey: nodesKey })
+            } finally {
+                if (change.kind === 'order') pendingOrder = undefined
+            }
         }
     }))
 
@@ -312,21 +319,20 @@
         update.mutate({ kind: 'order', ids })
     }
 
-    function apply(action: NodeAction, uuid?: string): void {
+    async function apply(action: NodeAction, uuid?: string): Promise<void> {
         if (update.isPending) return
+        const ids = selected
         if (
             (action === 'delete' || action === 'restart' || action === 'reset') &&
-            !window.confirm(t('common.message.confirm-action-description'))
+            !(await confirmAction(t('common.message.confirm-action-description')))
         )
             return
         if (uuid) update.mutate({ kind: 'one', uuid, action })
-        else if (action !== 'delete' && selected.length)
-            update.mutate({ kind: 'bulk', ids: selected, action })
+        else if (action !== 'delete' && ids.length) update.mutate({ kind: 'bulk', ids, action })
     }
 
     function open(mode: EditMode): void {
         edit = { mode, ids: selected }
-        dialog.showModal()
     }
     function openNode(uuid: string, event?: MouseEvent): void {
         if (event) {
@@ -406,21 +412,21 @@
             class="button-row toolbar restart-actions"
             aria-label={t('nodes-header-action-buttons.feature.restart-all-nodes')}
         >
-            <button
+            <Button
                 type="button"
                 disabled={!ordered.length || update.isPending}
-                onclick={() => {
-                    if (window.confirm(t('common.message.confirm-action-description'))) {
+                onclick={async () => {
+                    if (await confirmAction(t('common.message.confirm-action-description'))) {
                         update.mutate({ kind: 'restartAll' })
                         confirmRestart = false
                     }
                 }}
             >
                 {t('nodes-header-action-buttons.feature.restart-all-nodes')}
-            </button>
-            <button type="button" onclick={() => (confirmRestart = false)}>
+            </Button>
+            <Button type="button" onclick={() => (confirmRestart = false)}>
                 {t('common.action.cancel')}
-            </button>
+            </Button>
         </fieldset>
     {/if}
     <EntityTagBar
@@ -440,46 +446,33 @@
     {:else}
         {#if selected.length}
             <div class="button-row toolbar">
-                <button
-                    type="button"
+                <Button
                     disabled={!ordered.length || selected.length === ordered.length}
                     onclick={() => {
                         for (const { uuid } of ordered) selection.add(uuid)
                     }}
                 >
                     {t('common.action.select-all')}
-                </button>
+                </Button>
                 {#if selected.length}
-                    <button type="button" onclick={() => selection.clear()}>
+                    <Button onclick={() => selection.clear()}>
                         {t('common.action.clear-selection')}
-                    </button>
+                    </Button>
                     <span>{t('common.message.selected', { count: selected.length })}</span>
-                    <button
-                        type="button"
-                        disabled={update.isPending}
-                        onclick={() => open('fields')}
-                    >
+                    <Button disabled={update.isPending} onclick={() => open('fields')}>
                         {t('common.action.bulk-edit')}
-                    </button>
-                    <button
-                        type="button"
-                        disabled={update.isPending}
-                        onclick={() => open('profile')}
-                    >
+                    </Button>
+                    <Button disabled={update.isPending} onclick={() => open('profile')}>
                         {t('multi-select-nodes.feature.profile-and-inbounds')}
-                    </button>
-                    <button type="button" onclick={() => (usageTargets = selected)}>
+                    </Button>
+                    <Button onclick={() => (usageTargets = selected)}>
                         {t('common.field.usage-stats')}
-                    </button>
+                    </Button>
                     {#each Object.keys(bulkActions) as name (name)}
                         {@const action = name as BulkAction}
-                        <button
-                            type="button"
-                            disabled={update.isPending}
-                            onclick={() => apply(action)}
-                        >
+                        <Button disabled={update.isPending} onclick={() => apply(action)}>
                             {t(nodeActionLabels[action])}
-                        </button>
+                        </Button>
                     {/each}
                     {#if canReorder}
                         {#each [
@@ -488,13 +481,12 @@
                             ['down', 'Move down'],
                             ['bottom', 'Move to bottom']
                         ] as [direction, title] (direction)}
-                            <button
-                                type="button"
+                            <Button
                                 disabled={update.isPending}
                                 onclick={() => move(direction as Move)}
                             >
                                 {title}
-                            </button>
+                            </Button>
                         {/each}
                     {/if}
                 {/if}
@@ -548,7 +540,7 @@
                         <li aria-hidden="true" style:height={`${cardBottom}px`}></li>
                     </ul>
                 {:else}
-                    <table aria-label={t('constants.nodes')}>
+                    <DataTable class="nodes-table" aria-label={t('constants.nodes')}>
                         <thead>
                             <tr>
                                 <th scope="col">{t('common.action.select')}</th>
@@ -603,7 +595,7 @@
                                 <td colspan="9"></td>
                             </tr>
                         </tbody>
-                    </table>
+                    </DataTable>
                 {/if}
             </div>
         {/if}
@@ -618,24 +610,16 @@
             close={() => (usageTargets = undefined)}
         />
     {/if}
-    <dialog
-        oncancel={cancelDialog}
-        bind:this={dialog}
-        onclose={() => (edit = undefined)}
-        aria-labelledby="nodes-edit-heading"
-    >
-        {#if edit}
-            <div class="button-row dialog-title">
-                <h2 id="nodes-edit-heading">
-                    {edit.mode === 'profile'
-                        ? t('multi-select-nodes.feature.profile-and-inbounds')
-                        : t('common.action.bulk-edit')}
-                    · {edit.ids.length}
-                </h2>
-                <button type="button" onclick={() => dismissDialog(dialog)}>
-                    {t('common.action.close')}
-                </button>
-            </div>
+    {#if edit}
+        <Overlay
+            title={edit.mode === 'profile'
+                ? t('multi-select-nodes.feature.profile-and-inbounds')
+                : t('common.action.bulk-edit')}
+            subtitle={t('common.message.selected', { count: edit.ids.length })}
+            icon="TbServer"
+            width={928}
+            close={() => (edit = undefined)}
+        >
             <NodeEditor
                 ids={edit.ids}
                 profileOnly={edit.mode === 'profile'}
@@ -645,11 +629,11 @@
                         message: t('common.message.operation-completed'),
                         color: 'teal'
                     })
-                    dismissDialog(dialog)
+                    edit = undefined
                 }}
             />
-        {/if}
-    </dialog>
+        </Overlay>
+    {/if}
     {#if creating}
         <NodeCreation
             close={() => (creating = false)}
@@ -764,7 +748,7 @@
     .node-actions {
         flex-wrap: nowrap;
     }
-    table {
+    :global(.nodes-table) {
         border-collapse: collapse;
         width: 100%;
         white-space: nowrap;
@@ -786,12 +770,5 @@
     }
     tbody tr:not([aria-hidden]) {
         border-block-end: 1px solid var(--gw-border);
-    }
-    dialog {
-        width: min(calc(100% - 2rem), 52rem);
-    }
-    .dialog-title {
-        justify-content: space-between;
-        align-items: center;
     }
 </style>

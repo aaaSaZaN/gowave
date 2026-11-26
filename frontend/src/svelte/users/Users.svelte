@@ -13,10 +13,11 @@
     import Icon from '../ui/Icon.svelte'
     import type { IconName } from '../ui/icons'
     import MetricCard from '../ui/MetricCard.svelte'
-    import SelectField from '../ui/SelectField.svelte'
     import Switch from '../ui/Switch.svelte'
+    import TablePagination from '../ui/TablePagination.svelte'
     import TablePopup from '../ui/TablePopup.svelte'
     import TableTitle from '../ui/TableTitle.svelte'
+    import TableToolbar from '../ui/TableToolbar.svelte'
     import BulkUserActions from './BulkUserActions.svelte'
     import { orderUserColumns, userColumns, visibleUserColumns } from './columns'
     import MobileTableNotice from './MobileTableNotice.svelte'
@@ -78,7 +79,7 @@
     let bulk = $state<{ scope: 'selected' | 'all'; ids: number[]; editOnly?: boolean }>()
     let fullscreen = $state(false)
     let showColumnList = $state(false)
-    let panel: HTMLDivElement
+    let panel = $state<HTMLDivElement>()
     let t = $derived(locale.t)
 
     const users = createQuery(() => usersQuery(tableState, modes, userSelection.size === 0))
@@ -278,23 +279,9 @@
         templates = templates.filter((template) => template.id !== id)
         storeTemplates()
     }
-
-    function toggleFullscreen(): void {
-        void (fullscreen ? document.exitFullscreen() : panel.requestFullscreen()).catch(
-            (error: unknown) => {
-                storageMessage =
-                    error instanceof Error ? error.message : 'Fullscreen is unavailable.'
-            }
-        )
-    }
 </script>
 
 <svelte:head><title>{t('constants.users')} | Gowave</title></svelte:head>
-<svelte:document
-    onfullscreenchange={() => {
-        fullscreen = document.fullscreenElement === panel
-    }}
-/>
 
 {#snippet headerFilter(column: (typeof shown)[number])}
     {@const id = `user-filter-${column.id}`}
@@ -348,7 +335,7 @@
     <button
         type="button"
         role="menuitem"
-        class="column-action m_99ac2aa1 mantine-UnstyledButton-root"
+        class="column-action gw-menu-item mantine-UnstyledButton-root"
         {disabled}
         onclick={() => {
             const anchor = columnMenu?.anchor
@@ -396,7 +383,7 @@
                 () => setSorting([{ id, desc: true }]),
                 sort?.desc === true
             )}
-            <hr class="column-divider m_efdf90cb">
+            <hr class="column-divider gw-divider">
         {/if}
         {#if column.filter}
             {@render columnAction(
@@ -410,7 +397,7 @@
                 `Filter by ${column.label}`,
                 () => void focusFilter(id)
             )}
-            <hr class="column-divider m_efdf90cb">
+            <hr class="column-divider gw-divider">
         {/if}
         {@render columnAction(
             'TbPinned',
@@ -427,7 +414,7 @@
             -90
         )}
         {@render columnAction('TbPinnedOff', 'Unpin', () => pinColumn(id, ''), !pin)}
-        <hr class="column-divider m_efdf90cb">
+        <hr class="column-divider gw-divider">
         {@render columnAction(
             'TbArrowAutofitContent',
             'Reset column size',
@@ -459,7 +446,7 @@
                 type="button"
                 role="menuitemradio"
                 aria-checked={selected}
-                class="column-action m_99ac2aa1 mantine-UnstyledButton-root"
+                class="column-action gw-menu-item mantine-UnstyledButton-root"
                 onclick={() => {
                     modes = { ...modes, username: value }
                     modeAnchor?.focus({ preventScroll: true })
@@ -538,7 +525,7 @@
             {#if userSelection.size}
                 <div class="selection-summary">
                     <div class="selection-tools">
-                        <span class="selected-count m_347db0ec mantine-Badge-root" role="status">
+                        <span class="selected-count mantine-Badge-root" role="status">
                             {t('common.message.selected', { count: userSelection.size })}
                         </span>
                         <div class="selection-shortcuts">
@@ -586,65 +573,53 @@
                     </div>
                 </div>
             {/if}
-            <div class="table-toolbar">
-                <div class="action-group">
-                    <ActionIcon
-                        icon="TbBolt"
-                        size={34}
-                        iconSize={20}
-                        tone="green"
-                        label="Bulk actions for all users"
-                        onclick={() => (bulk = { scope: 'all', ids: [] })}
-                        disabled={fullscreen}
-                    />
-                    <ActionIcon
-                        icon="TbEdit"
-                        size={34}
-                        iconSize={20}
-                        tone="red"
-                        label={t('common.action.bulk-edit')}
-                        onclick={() => (bulk = { scope: 'all', ids: [], editOnly: true })}
-                        disabled={fullscreen}
-                    />
-                </div>
-                <ActionIcon
-                    icon={densityIcons[density]}
-                    size={34}
-                    iconSize={24}
-                    subtle
-                    label="Adjust row spacing density"
-                    onclick={() => {
+            <TableToolbar
+                {panel}
+                bind:fullscreen
+                layered
+                density={{
+                    icon: densityIcons[density],
+                    label: 'Adjust row spacing density',
+                    onclick: () => {
                         density =
                             tableDensities[
                                 (tableDensities.indexOf(density) + 1) % tableDensities.length
                             ] ?? 'xxs'
-                    }}
-                />
-                {#if typeof document.documentElement.requestFullscreen === 'function'}
-                    <ActionIcon
-                        icon={fullscreen ? 'PiArrowsIn' : 'TbMaximize'}
-                        size={34}
-                        iconSize={24}
-                        subtle
-                        label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-                        onclick={toggleFullscreen}
-                    />
-                {/if}
-                <ActionIcon
-                    icon="TbColumns"
-                    size={34}
-                    iconSize={24}
-                    subtle
-                    label="Show/Hide columns"
-                    aria-haspopup="menu"
-                    aria-expanded={showColumnList}
-                    aria-controls={showColumnList ? `${popupId}-columns` : undefined}
-                    onclick={(event) => {
+                    }
+                }}
+                columns={{
+                    label: 'Show/Hide columns',
+                    expanded: showColumnList,
+                    controls: `${popupId}-columns`,
+                    onclick: (event) => {
                         columnsAnchor = event.currentTarget
                         showColumnList = !showColumnList
-                    }}
-                />
-            </div>
+                    }
+                }}
+            >
+                {#snippet actions()}
+                    <div class="action-group">
+                        <ActionIcon
+                            icon="TbBolt"
+                            size={34}
+                            iconSize={20}
+                            tone="green"
+                            label="Bulk actions for all users"
+                            onclick={() => (bulk = { scope: 'all', ids: [] })}
+                            disabled={fullscreen}
+                        />
+                        <ActionIcon
+                            icon="TbEdit"
+                            size={34}
+                            iconSize={20}
+                            tone="red"
+                            label={t('common.action.bulk-edit')}
+                            onclick={() => (bulk = { scope: 'all', ids: [], editOnly: true })}
+                            disabled={fullscreen}
+                        />
+                    </div>
+                {/snippet}
+            </TableToolbar>
         </div>
         {#if showColumnList && columnsAnchor}
             <TablePopup
@@ -688,7 +663,7 @@
                         >Show all</Button
                     >
                 </div>
-                <hr class="column-divider m_efdf90cb">
+                <hr class="column-divider gw-divider">
                 <ul class="column-options">
                     <li class="selection-option">
                         <div class="column-pins"></div>
@@ -781,9 +756,9 @@
             </div>
         {:else if users.isError}
             <p class="table-message" role="alert">{users.error.message}</p>
-            <button type="button" onclick={() => void users.refetch()}>
+            <Button onclick={() => void users.refetch()}>
                 {t('common.action.try-again')}
-            </button>
+            </Button>
         {:else}
             <UserRows
                 {rows}
@@ -807,52 +782,15 @@
             {#if !rows.length}
                 <p class="table-message">{t('common.message.nothing-found')}</p>
             {/if}
-            <footer class="pagination">
-                <div class="page-size">
-                    <span>{t('common.field.rows-per-page')}</span>
-                    <SelectField
-                        label={t('common.field.rows-per-page')}
-                        placeholder=""
-                        options={(pageSizes.includes(pageSize)
-                            ? pageSizes
-                            : [pageSize, ...pageSizes]
-                        ).map((size) => ({
-                            value: String(size),
-                            label: String(size)
-                        }))}
-                        value={String(pageSize)}
-                        searchable={false}
-                        clearable={false}
-                        hideLabel
-                        onchoose={(value) => changePageSize(Number(value))}
-                    />
-                </div>
-                <span role="status"
-                    >{t('common.message.table-range', {
-                        first: total ? pageIndex * pageSize + 1 : 0,
-                        last: Math.min((pageIndex + 1) * pageSize, total),
-                        total
-                    })}</span
-                >
-                <div class="pagination-actions">
-                    <ActionIcon
-                        icon="PiCaretLeft"
-                        size={28}
-                        iconSize={18}
-                        label={t('common.action.previous')}
-                        disabled={pageIndex === 0 || users.isPlaceholderData}
-                        onclick={() => goToPage(pageIndex - 1)}
-                    />
-                    <ActionIcon
-                        icon="PiCaretRight"
-                        size={28}
-                        iconSize={18}
-                        label={t('common.action.next')}
-                        disabled={pageIndex + 1 >= pageCount || users.isPlaceholderData}
-                        onclick={() => goToPage(pageIndex + 1)}
-                    />
-                </div>
-            </footer>
+            <TablePagination
+                page={pageIndex}
+                size={pageSize}
+                sizes={pageSizes}
+                {total}
+                paused={users.isPlaceholderData}
+                onpage={goToPage}
+                onsize={changePageSize}
+            />
         {/if}
     </div>
 </main>
@@ -978,20 +916,6 @@
         }
     }
 
-    .table-toolbar {
-        display: flex;
-        align-items: flex-start;
-        justify-content: end;
-        min-height: 56px;
-        padding: 8px;
-        pointer-events: none;
-    }
-
-    .table-toolbar :global(.action-icon) {
-        position: relative;
-        pointer-events: auto;
-    }
-
     .action-group {
         display: flex;
     }
@@ -1104,45 +1028,8 @@
         color: var(--mantine-color-placeholder);
     }
 
-    .pagination,
-    .page-size,
-    .pagination-actions {
-        display: flex;
-        align-items: center;
-    }
-
-    .pagination {
-        justify-content: end;
-        gap: var(--mantine-spacing-md);
-        padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
-        border-top: 1px solid var(--mantine-color-default-border);
-    }
-
-    .page-size {
-        gap: var(--mantine-spacing-xs);
-    }
-
-    .page-size :global(.select-field) {
-        width: 80px;
-        flex: none;
-    }
-
-    .pagination-actions {
-        gap: 6px;
-    }
-
-    .pagination-actions :global(.action-icon) {
-        border-color: transparent;
-    }
-
     .table-message {
         margin: 0;
         padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
-    }
-
-    @media (max-width: 40em) {
-        .pagination {
-            flex-wrap: wrap;
-        }
     }
 </style>

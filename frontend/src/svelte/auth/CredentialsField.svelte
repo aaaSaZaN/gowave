@@ -27,29 +27,25 @@
 </script>
 
 <div
-    class={[
-        'm_46b77525 mantine-InputWrapper-root',
-        secret && 'm_f61ca620 mantine-PasswordInput-root',
-        className
-    ]}
+    class={['mantine-InputWrapper-root', secret && 'mantine-PasswordInput-root', className]}
     data-size={fieldSize}
     style:--psi-icon-size={`var(--psi-icon-size-${fieldSize})`}
     style:--psi-button-size={`var(--psi-button-size-${fieldSize})`}
 >
     <label
         for={id}
-        class="m_8fdc1311 mantine-InputWrapper-label"
+        class="mantine-InputWrapper-label"
         data-size={fieldSize}
         data-required={required || undefined}
         style:--input-label-size={`var(--mantine-font-size-${fieldSize})`}
     >
         {label}
         {#if required}
-            <span class="m_78a94662 mantine-InputWrapper-required" aria-hidden="true"> *</span>
+            <span class="mantine-InputWrapper-required" aria-hidden="true"> *</span>
         {/if}
     </label>
     <div
-        class="m_6c018570 mantine-Input-wrapper"
+        class="mantine-Input-wrapper"
         data-variant="default"
         data-size={fieldSize}
         data-with-right-section={secret || undefined}
@@ -58,31 +54,28 @@
         style:--input-radius="var(--mantine-radius-md)"
     >
         {#if secret}
-            <div
-                class="m_ccf8da4c m_8fb7ebe7 mantine-Input-input mantine-PasswordInput-input"
-                data-variant="default"
-            >
+            <div class="mantine-PasswordInput-input mantine-Input-input" data-variant="default">
                 <input
                     {...attrs}
                     {id}
                     {required}
                     bind:value
-                    class="m_f2d85dd2 mantine-PasswordInput-innerInput"
+                    class="mantine-PasswordInput-innerInput"
                     type={show ? 'text' : 'password'}
                     aria-invalid={Boolean(error) || undefined}
                     aria-describedby={error ? `${id}-error` : undefined}
                 >
             </div>
-            <div class="m_82577fc2 mantine-Input-section" data-position="right">
+            <div class="mantine-Input-section" data-position="right">
                 <button
                     type="button"
-                    class="m_b1072d44 mantine-PasswordInput-visibilityToggle m_8d3f4000 mantine-ActionIcon-root m_87cf2631"
+                    class="mantine-PasswordInput-visibilityToggle mantine-ActionIcon-root mantine-UnstyledButton-root"
                     data-variant="subtle"
                     aria-pressed={show}
                     aria-label="Toggle password visibility"
                     onclick={() => (show = !show)}
                 >
-                    <span class="m_8d3afb97 mantine-ActionIcon-icon">
+                    <span class="mantine-ActionIcon-icon">
                         <svg
                             aria-hidden="true"
                             viewBox="0 0 256 256"
@@ -112,7 +105,7 @@
                 {id}
                 {required}
                 bind:value
-                class="m_8fb7ebe7 mantine-Input-input"
+                class="mantine-Input-input"
                 data-variant="default"
                 aria-invalid={Boolean(error) || undefined}
                 aria-describedby={error ? `${id}-error` : undefined}
@@ -120,7 +113,7 @@
         {/if}
     </div>
     {#if error}
-        <div id={`${id}-error`} class="m_8f816625 mantine-InputWrapper-error" role="alert">
+        <div id={`${id}-error`} class="mantine-InputWrapper-error" role="alert">
             {error}
         </div>
     {/if}

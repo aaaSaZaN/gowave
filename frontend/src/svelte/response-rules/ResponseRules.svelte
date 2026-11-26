@@ -4,6 +4,7 @@
     import { locale } from '../i18n.svelte'
     import RouteLoading from '../RouteLoading.svelte'
     import { subscriptionSettingsQuery, subscriptionTemplatesQuery } from '../subscriptions/queries'
+    import Button from '../ui/Button.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
     import RulesEditor from './RulesEditor.svelte'
 
@@ -38,7 +39,7 @@
         {/key}
     {:else if settings.error || templates.error}
         <p role="alert">{(settings.error ?? templates.error)?.message}</p>
-        <button type="button" onclick={retry}>{t('common.action.try-again')}</button>
+        <Button onclick={retry}>{t('common.action.try-again')}</Button>
     {:else}
         <RouteLoading label={t('common.message.loading')} />
     {/if}

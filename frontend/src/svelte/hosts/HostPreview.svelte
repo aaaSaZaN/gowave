@@ -4,7 +4,10 @@
     import { callCommand } from '../commands'
     import { locale } from '../i18n.svelte'
     import Button from '../ui/Button.svelte'
+    import Checkbox from '../ui/Checkbox.svelte'
     import Overlay from '../ui/Overlay.svelte'
+    import Textarea from '../ui/Textarea.svelte'
+    import TextInput from '../ui/TextInput.svelte'
     import { formatPreviewBody } from './format-preview-body'
     import { formText, hostPatch } from './host-fields'
     import type { Host } from './queries'
@@ -15,11 +18,25 @@
     let t = $derived(locale.t)
     let userAgent = $state('ClashMeta')
     let headers = $state('')
+    let headersHelpOpen = $state(false)
     let previewAsEnabled = $state(false)
     let copied = $state(false)
     let copyError = $state('')
     let pending = $state(false)
     let problem = $state('')
+    const id = $props.id()
+    const hwidExample = [
+        'X-HWID: demo-device-001',
+        'X-Device-OS: Android',
+        'X-Ver-OS: 15',
+        'X-Device-Model: Pixel 8'
+    ].join('\n')
+    const hwidResponseHeaders = [
+        ['x-hwid-active', 'host-preview.hwid-active'],
+        ['x-hwid-limit', 'host-preview.hwid-limit'],
+        ['x-hwid-not-supported', 'host-preview.hwid-not-supported'],
+        ['x-hwid-max-devices-reached', 'host-preview.hwid-max-devices']
+    ] as const
     let disabled = $derived(
         'saved' in target ? target.saved.isDisabled : target.draft.has('isDisabled')
     )
@@ -108,36 +125,61 @@
             {t('saved' in target ? 'host-preview.saved-host' : 'host-preview.draft-host')}
         </p>
         <div class="preview-columns">
-            <label>
-                User-Agent
-                <input
-                    disabled={pending}
-                    bind:value={userAgent}
-                    oninput={reset}
-                    placeholder="ClashMeta, singbox, v2rayN/7.0.0"
-                >
-            </label>
-            <label>
-                {t('host-preview.request-headers')}
-                <textarea
-                    rows="4"
+            <TextInput
+                label="User-Agent"
+                disabled={pending}
+                bind:value={userAgent}
+                oninput={reset}
+                placeholder="ClashMeta, singbox, v2rayN/7.0.0"
+            />
+            <div class="request-fields">
+                <Textarea
+                    label={t('host-preview.request-headers')}
+                    aria-describedby={`${id}-headers-format`}
+                    rows={4}
                     disabled={pending}
                     bind:value={headers}
                     oninput={reset}
-                    placeholder={'Accept: application/json\nX-Client: desktop'}
-                ></textarea>
-                <small class="description">{t('host-preview.headers-format')}</small>
-            </label>
+                    placeholder={'X-HWID: demo-device-001\nX-Device-OS: Android'}
+                />
+                <p class="hint" id={`${id}-headers-format`}>{t('host-preview.headers-format')}</p>
+                <Button
+                    size="compact-sm"
+                    variant="subtle"
+                    icon="TbQuestionMark"
+                    aria-controls={`${id}-headers-help`}
+                    aria-expanded={headersHelpOpen}
+                    onclick={() => (headersHelpOpen = !headersHelpOpen)}
+                >
+                    {t('host-preview.headers-help')}
+                </Button>
+            </div>
         </div>
+        <section class="headers-help" id={`${id}-headers-help`} hidden={!headersHelpOpen}>
+            <p>{t('host-preview.client-request')}</p>
+            <p>{t('host-preview.browser-request', { header: 'Accept: text/html' })}</p>
+            <strong>{t('host-preview.hwid-request')}</strong>
+            <pre dir="ltr">{hwidExample}</pre>
+            <p>{t('host-preview.hwid-notes')}</p>
+            <strong>{t('host-preview.response-headers')}</strong>
+            <p>{t('host-preview.response-notes', { header: 'subscription-userinfo' })}</p>
+            <dl>
+                {#each hwidResponseHeaders as [name, key] (name)}
+                    <dt><code dir="ltr">{name}: true</code></dt>
+                    <dd>{t(key)}</dd>
+                {/each}
+            </dl>
+        </section>
         <fieldset class="generate" disabled={pending}>
             <Button type="submit" variant="filled" {pending}>
                 {t('host-preview.generate')}
             </Button>
             {#if disabled}
-                <label class="checkbox">
-                    <input type="checkbox" bind:checked={previewAsEnabled} onchange={reset}>
-                    {t('host-preview.as-enabled')}
-                </label>
+                <Checkbox
+                    label={t('host-preview.as-enabled')}
+                    bind:checked={previewAsEnabled}
+                    onchange={reset}
+                />
             {/if}
         </fieldset>
 
@@ -181,17 +223,12 @@
 </Overlay>
 
 <style>
-    form,
-    fieldset,
-    label {
+    form {
         display: grid;
-        gap: var(--mantine-spacing-xs);
-        align-content: start;
-        min-width: 0;
-    }
-    form,
-    fieldset {
         gap: var(--mantine-spacing-sm);
+    }
+    form > .description {
+        margin: 0;
     }
     fieldset {
         border: 0;
@@ -203,16 +240,33 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: var(--mantine-spacing-md);
     }
-    .description {
+    .hint {
+        margin: var(--mantine-spacing-xs) 0;
         color: var(--mantine-color-dimmed);
+        font-size: var(--mantine-font-size-xs);
+    }
+    .headers-help {
+        padding: var(--mantine-spacing-md);
+        border: 1px solid var(--mantine-color-default-border);
+        border-radius: var(--mantine-radius-md);
+        background: var(--gw-raised-bg);
+        font-size: var(--mantine-font-size-sm);
+    }
+    .headers-help p {
+        margin: 0 0 var(--mantine-spacing-xs);
+    }
+    .headers-help pre + p,
+    .headers-help strong + p {
+        margin-block-start: var(--mantine-spacing-xs);
+    }
+    .headers-help dl {
+        display: grid;
+        grid-template-columns: max-content minmax(0, 1fr);
+        gap: var(--mantine-spacing-xs);
         margin: 0;
     }
-    .checkbox {
-        display: flex;
-        align-items: center;
-    }
-    textarea {
-        font-family: var(--mantine-font-family-monospace);
+    .headers-help dd {
+        margin: 0;
     }
     .generate,
     .body-heading {
@@ -240,6 +294,9 @@
     }
     @media (max-width: 36em) {
         .preview-columns {
+            grid-template-columns: minmax(0, 1fr);
+        }
+        .headers-help dl {
             grid-template-columns: minmax(0, 1fr);
         }
     }

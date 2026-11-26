@@ -139,20 +139,20 @@
     }
 </script>
 
-<div class="m_46b77525 select-field">
+<div class="mantine-InputWrapper-root select-field">
     {#if !hideLabel}
-        <span id={`${id}-label`} class="m_8fdc1311">
+        <span id={`${id}-label`} class="mantine-InputWrapper-label">
             {label}
             {#if required}
-                <span class="m_78a94662"> *</span>
+                <span class="mantine-InputWrapper-required"> *</span>
             {/if}
         </span>
     {/if}
     {#if description}
-        <div id={`${id}-description`} class="m_fe47ce59">{description}</div>
+        <div id={`${id}-description`} class="mantine-InputWrapper-description">{description}</div>
     {/if}
     <div
-        class="m_6c018570 select-input"
+        class="mantine-Input-wrapper select-input"
         class:medium={size === 'md'}
         class:double-actions={doubleActions}
         data-variant="default"
@@ -165,7 +165,7 @@
         <input
             {id}
             bind:this={anchor}
-            class="m_8fb7ebe7 mantine-Input-input"
+            class="mantine-Input-input"
             role="combobox"
             aria-labelledby={hideLabel ? undefined : `${id}-label`}
             aria-label={hideLabel ? label : undefined}
@@ -201,7 +201,7 @@
             onkeydown={handleKeys}
         >
         {#if leading || selected?.flag || selected?.avatar}
-            <span class="m_82577fc2" data-position="left" aria-hidden="true">
+            <span class="mantine-Input-section" data-position="left" aria-hidden="true">
                 {#if leading}
                     <Icon name={leading} size={leadingSize} />
                 {:else if selected?.avatar}
@@ -214,7 +214,7 @@
         {#if canClear}
             <button
                 type="button"
-                class="m_82577fc2 clear mantine-UnstyledButton-root"
+                class="mantine-Input-section clear mantine-UnstyledButton-root"
                 data-position="right"
                 aria-label={locale.t('common.action.clear')}
                 disabled={!selected && (!autocomplete || !value)}
@@ -227,7 +227,7 @@
         {#if autocomplete === 'suggest'}
             <button
                 type="button"
-                class="m_82577fc2 mantine-UnstyledButton-root suggestion-toggle"
+                class="mantine-Input-section mantine-UnstyledButton-root suggestion-toggle"
                 disabled={unavailable}
                 data-position="right"
                 aria-label={locale.t('common.action.open')}
@@ -242,7 +242,7 @@
                 <Icon name="TbChevronDown" size={14} />
             </button>
         {:else if alwaysShowClear || !canClear}
-            <span class="m_82577fc2 arrow" data-position="right" aria-hidden="true"
+            <span class="mantine-Input-section arrow" data-position="right" aria-hidden="true"
                 ><Icon
                     name={autocomplete === 'create' ? 'TbChevronDown' : 'TbSelector'}
                     size={14}
@@ -271,7 +271,7 @@
                     class:keyboard-active={item.value === active}
                     onmousedown={(event) => event.preventDefault()}
                     aria-selected={item.value === value}
-                    class="m_92253aa5 m_b2821a6e option mantine-UnstyledButton-root"
+                    class="gw-combobox-option gw-combobox-option-layout option mantine-UnstyledButton-root"
                     onclick={() => choose(item.value)}
                 >
                     {#if item.value === value && !autocomplete}
@@ -328,10 +328,10 @@
         --input-height: var(--input-height-md);
         --input-fz: var(--mantine-font-size-md);
     }
-    .select-field > .m_8fdc1311 {
+    .select-field > .mantine-InputWrapper-label {
         font-weight: var(--select-label-weight, var(--mantine-font-weight-medium));
     }
-    .select-field:has(.m_fe47ce59) .select-input {
+    .select-field:has(.mantine-InputWrapper-description) .select-input {
         margin-block-start: 5px;
     }
     .arrow {

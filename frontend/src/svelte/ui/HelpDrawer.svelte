@@ -73,7 +73,7 @@
         </div>
     {:else}
         <!-- DOMPurify sanitizes the HTML emitted by marked. -->
-        <article class="m_b2a6d4e7 mantine-Typography-root documentation">{@html content}</article>
+        <article class="mantine-Typography-root documentation">{@html content}</article>
     {/if}
 </Overlay>
 

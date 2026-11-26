@@ -463,6 +463,7 @@
     {#snippet textControl()}
         {#snippet textInput()}
             <input
+                class="gw-input"
                 id={`${id}-${key}`}
                 name={key}
                 aria-label={label}
@@ -641,6 +642,7 @@
                             ><Icon name="TbInfoCircle" size={16} /></span
                         >
                         <input
+                            class="gw-input"
                             name="port"
                             aria-label={t('common.field.port')}
                             value={port ?? host?.port ?? 0}
@@ -694,6 +696,7 @@
         >
             <div class="option-picker">
                 <input
+                    class="gw-input"
                     aria-label={t('common.action.search')}
                     placeholder={t('common.action.search')}
                     bind:value={optionSearch}
@@ -874,6 +877,7 @@
             {@render entry('vlessRouteId', t('base-host-form.vless-route-id'), routeId)}
             {#snippet routeId()}
                 <input
+                    class="gw-input"
                     name="vlessRouteId"
                     aria-label={t('base-host-form.vless-route-id')}
                     type="number"

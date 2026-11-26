@@ -256,6 +256,7 @@
             <label class="search">
                 <span><Icon name="TbSearch" size={16} /></span>
                 <input
+                    class="gw-input"
                     type="search"
                     bind:value={search}
                     aria-label={t('common.message.search-profiles-or-inbounds')}

@@ -84,14 +84,14 @@
                 <button
                     type="button"
                     role="menuitem"
-                    class="template-option m_99ac2aa1 mantine-UnstyledButton-root"
+                    class="template-option gw-menu-item mantine-UnstyledButton-root"
                     onclick={() => {
                         closeMenu()
                         onapply(template.snapshot)
                     }}
                 >
                     <span
-                        class="swatch m_de3d2490"
+                        class="swatch gw-color-swatch"
                         style:--cs-size="14px"
                         style:--swatch={swatch(template.color)}
                         aria-hidden="true"
@@ -117,13 +117,13 @@
             </div>
         {/each}
         {#if templates.length}
-            <hr class="template-divider m_efdf90cb">
+            <hr class="template-divider gw-divider">
         {/if}
         <button
             id={`${menuId}-save`}
             type="button"
             role="menuitem"
-            class="template-option m_99ac2aa1 mantine-UnstyledButton-root"
+            class="template-option gw-menu-item mantine-UnstyledButton-root"
             onclick={() => {
                 closeMenu()
                 name = ''
@@ -148,7 +148,9 @@
     >
         <form class="template-form" onsubmit={save}>
             <label class="template-field">
-                <span class="m_8fdc1311">{t('header-action-buttons.feature.template-name')}</span>
+                <span class="mantine-InputWrapper-label"
+                    >{t('header-action-buttons.feature.template-name')}</span
+                >
                 <input
                     class="mantine-Input-input"
                     bind:value={name}
@@ -164,7 +166,7 @@
                     {#each colors as option (option)}
                         <button
                             type="button"
-                            class="swatch m_de3d2490 mantine-UnstyledButton-root"
+                            class="swatch gw-color-swatch mantine-UnstyledButton-root"
                             style:--swatch={swatch(option)}
                             aria-label={option}
                             aria-pressed={color === option}

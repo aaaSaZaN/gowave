@@ -7,6 +7,8 @@
     import RouteLoading from './RouteLoading.svelte'
     import { signOut } from './router'
     import { theme } from './theme.svelte'
+    import Button from './ui/Button.svelte'
+    import ConfirmProvider from './ui/ConfirmProvider.svelte'
     import ConnectionStatus from './ui/ConnectionStatus.svelte'
     import Notifications from './ui/Notifications.svelte'
 
@@ -26,16 +28,16 @@
     <Notifications />
     {#if locale.ready}
         <svelte:boundary>
-            <Router />
+            <ConfirmProvider><Router /></ConfirmProvider>
             {#snippet failed(error, retry)}
                 <main class="dashboard-content">
                     <h1>{locale.t('common.message.error')}</h1>
                     {#if error instanceof Error}
                         <p role="alert">{error.message}</p>
                     {/if}
-                    <button type="button" onclick={retry}>
+                    <Button onclick={retry}>
                         {locale.t('common.action.try-again')}
-                    </button>
+                    </Button>
                 </main>
             {/snippet}
         </svelte:boundary>

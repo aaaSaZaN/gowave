@@ -8,11 +8,14 @@
     import RouteLoading from '../RouteLoading.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import { useConfirmation } from '../ui/confirmation'
     import Icon from '../ui/Icon.svelte'
     import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import { sharedListQuery, sharedListsQuery } from './queries'
     import SharedListEditor from './SharedListEditor.svelte'
+
+    const confirmAction = useConfirmation()
 
     let { close }: { close: () => void } = $props()
     let path = $state<string[]>([])
@@ -48,12 +51,12 @@
         }
     }))
 
-    function apply(kind: 'delete' | 'sync', name: string): void {
+    async function apply(kind: 'delete' | 'sync', name: string): Promise<void> {
         const question =
             kind === 'delete'
                 ? t('shared-lists.modal.delete-description')
                 : t('apply-to-nodes.apply-description')
-        if (!window.confirm(question)) return
+        if (!(await confirmAction(question))) return
         action.mutate({ kind, name })
     }
 
@@ -86,6 +89,7 @@
     {#if editing === undefined}
         <div class="button-row">
             <input
+                class="gw-input"
                 type="search"
                 aria-label={t('common.action.search')}
                 placeholder={t('common.action.search')}
@@ -210,9 +214,9 @@
         {#if selected.error}
             <p role="alert">{selected.error.message}</p>
         {/if}
-        <button type="button" onclick={() => (editing = undefined)}>
+        <Button onclick={() => (editing = undefined)}>
             {t('common.action.cancel')}
-        </button>
+        </Button>
     {/if}
 </Overlay>
 

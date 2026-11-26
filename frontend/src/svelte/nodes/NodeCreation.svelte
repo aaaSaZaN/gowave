@@ -219,7 +219,7 @@
             {#snippet secretField(controlId: string)}
                 <input
                     id={controlId}
-                    class="secret"
+                    class="gw-input secret"
                     readonly
                     value={secret.data?.secretKey ?? ''}
                     onclick={() => copy(false)}
@@ -240,6 +240,7 @@
             {@render field(t('base-node-form.internal-name'), 'TbId', nameField, true)}
             {#snippet nameField(controlId: string)}
                 <input
+                    class="gw-input"
                     id={controlId}
                     name="name"
                     bind:value={name}
@@ -265,6 +266,7 @@
                 )}
                 {#snippet addressField(controlId: string)}
                     <input
+                        class="gw-input"
                         id={controlId}
                         name="address"
                         bind:value={address}
@@ -275,6 +277,7 @@
                 {@render field('Node Port', undefined, portField, true)}
                 {#snippet portField(controlId: string)}
                     <input
+                        class="gw-input"
                         id={controlId}
                         name="port"
                         type="number"
@@ -323,7 +326,7 @@
                 />
                 <label class="node-field">
                     {t('common.field.tags')}
-                    <input name="tags" bind:value={tags}>
+                    <input class="gw-input" name="tags" bind:value={tags}>
                 </label>
             </div>
             <div class="form-footer">

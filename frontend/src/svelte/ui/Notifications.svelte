@@ -31,7 +31,7 @@
 >
     {#each notifications.visible as notice (notice.id)}
         <div
-            class="m_a513464 mantine-Notification-root notice"
+            class="mantine-Notification-root notice"
             role={notice.color === 'red' ? 'alert' : 'status'}
             style:--notification-radius="var(--mantine-radius-md)"
             style:--notification-color={`var(--mantine-color-${notice.color}-filled)`}
@@ -41,15 +41,15 @@
                 easing: backOut
             }}
         >
-            <div class="m_a49ed24 mantine-Notification-body">
-                <strong class="m_3feedf16 mantine-Notification-title">{notice.title}</strong>
-                <div class="m_3d733a3a mantine-Notification-description" data-with-title>
+            <div class="mantine-Notification-body">
+                <strong class="mantine-Notification-title">{notice.title}</strong>
+                <div class="mantine-Notification-description" data-with-title>
                     {notice.message}
                 </div>
             </div>
             <button
                 type="button"
-                class="m_919a4d88 m_86a44da5 mantine-Notification-closeButton mantine-UnstyledButton-root"
+                class="gw-close-button mantine-Notification-closeButton mantine-UnstyledButton-root"
                 aria-label={locale.t('common.action.close')}
                 onclick={() => dismiss(notice.id)}
             >

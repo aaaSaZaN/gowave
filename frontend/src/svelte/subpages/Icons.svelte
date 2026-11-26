@@ -2,6 +2,12 @@
     import isSvg from '@shared/lib/is-svg'
     import { locale } from '../i18n.svelte'
     import Button from '../ui/Button.svelte'
+    import { useConfirmation } from '../ui/confirmation'
+    import SelectField from '../ui/SelectField.svelte'
+    import Textarea from '../ui/Textarea.svelte'
+    import TextInput from '../ui/TextInput.svelte'
+
+    const confirmAction = useConfirmation()
 
     let { library = $bindable() }: { library: Record<string, string> } = $props()
     let t = $derived(locale.t)
@@ -38,30 +44,32 @@
         select(name)
     }
 
-    function remove(): void {
-        if (!selected || !window.confirm(t('common.message.confirm-action-description'))) return
+    async function remove(): Promise<void> {
+        const icon = selected
+        if (!icon || !(await confirmAction(t('common.message.confirm-action-description')))) return
         const updated = { ...library }
-        delete updated[selected]
+        delete updated[icon]
         library = updated
         select('')
     }
 </script>
 
 <form onsubmit={apply}>
-    <label
-        >{t('common.field.svg-icon')}
-        <select value={selected} onchange={(event) => select(event.currentTarget.value)}>
-            <option value="">{t('common.action.add')}</option>
-            {#each keys as item (item)}
-                <option value={item}>{item}</option>
-            {/each}
-        </select>
-    </label>
-    <label>{t('common.field.name')} <input required bind:value={key}></label>
-    <label
-        >{t('svg-library-modal.component.svg-code')}
-        <textarea class="svg-code" required rows="6" bind:value={code}></textarea></label
-    >
+    <SelectField
+        label={t('common.field.svg-icon')}
+        placeholder={t('common.action.add')}
+        value={selected}
+        options={keys.map((item) => ({ value: item, label: item }))}
+        onchoose={select}
+    />
+    <TextInput label={t('common.field.name')} required bind:value={key} />
+    <Textarea
+        class="svg-code"
+        label={t('svg-library-modal.component.svg-code')}
+        required
+        rows={6}
+        bind:value={code}
+    />
     {#if error}
         <p role="alert">{error}</p>
     {/if}
@@ -88,13 +96,7 @@
         display: grid;
         gap: var(--mantine-spacing-md);
     }
-    label {
-        display: grid;
-        gap: var(--mantine-spacing-xs);
-        color: var(--mantine-color-dimmed);
-        font-size: var(--mantine-font-size-sm);
-    }
-    .svg-code {
+    :global(.svg-code textarea) {
         min-height: 180px;
         font-family: var(--mantine-font-family-monospace);
         font-size: var(--mantine-font-size-xs);

@@ -20,6 +20,7 @@
     import { subpageConfigsQuery, subpageQuery } from '../subscriptions/queries'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import { useConfirmation } from '../ui/confirmation'
     import EmptyState from '../ui/EmptyState.svelte'
     import EntityCard from '../ui/EntityCard.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
@@ -31,6 +32,8 @@
     import PageHeader from '../ui/PageHeader.svelte'
     import RenameDialog from '../ui/RenameDialog.svelte'
     import { readSectionTag, writeSectionTag } from '../view-preferences'
+
+    const confirmAction = useConfirmation()
 
     type Entry = GetSubpageConfigsCommand.Response['response']['configs'][number]
     type Edit = { action: 'create' } | { action: 'tags'; uuid: string }
@@ -238,9 +241,9 @@
                                     tabindex="-1"
                                     data-tone="red"
                                     disabled={reserved || action.isPending}
-                                    onclick={() => {
+                                    onclick={async () => {
                                         if (
-                                            window.confirm(
+                                            await confirmAction(
                                                 t('common.message.confirm-action-description')
                                             )
                                         )
@@ -285,6 +288,7 @@
                         {/if}
                     </span>
                     <input
+                        class="gw-input"
                         name={intent.action === 'tags' ? 'tags' : 'name'}
                         required={intent.action !== 'tags'}
                         data-autofocus

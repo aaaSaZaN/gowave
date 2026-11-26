@@ -20,6 +20,7 @@
     import { navigate, p } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import { useConfirmation } from '../ui/confirmation'
     import EmptyState from '../ui/EmptyState.svelte'
     import EntityCard from '../ui/EntityCard.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
@@ -33,6 +34,8 @@
     import PluginExecutor from './PluginExecutor.svelte'
     import { nodePluginsQuery, pluginQuery } from './queries'
     import SharedLists from './SharedLists.svelte'
+
+    const confirmAction = useConfirmation()
 
     type Entry = GetNodePluginsCommand.Response['response']['nodePlugins'][number]
     type Edit = { action: 'create' } | { action: 'name' | 'tags'; uuid: string }
@@ -164,7 +167,7 @@
     {:else}
         <PageHeader title={`${t('constants.node-plugins')} β`} icon="TbPackage" wrapActions>
             <div class="plugin-tools">
-                <div class="documentation">
+                <div>
                     <ActionIcon
                         icon="TbBook"
                         tone="lime"
@@ -336,9 +339,9 @@
                                     tabindex="-1"
                                     data-tone="red"
                                     disabled={action.isPending}
-                                    onclick={() => {
+                                    onclick={async () => {
                                         if (
-                                            window.confirm(
+                                            await confirmAction(
                                                 t('common.message.confirm-action-description')
                                             )
                                         )
@@ -416,6 +419,7 @@
                         {/if}
                     </span>
                     <input
+                        class="gw-input"
                         name={editing.action === 'tags' ? 'tags' : 'name'}
                         data-autofocus
                         placeholder={editing.action === 'create' ? 'My Node Plugin' : undefined}
@@ -482,13 +486,10 @@
     .plugin-tools {
         display: flex;
         flex-wrap: wrap;
-        gap: var(--mantine-spacing-md);
+        gap: var(--mantine-spacing-xs);
     }
     .plugin-tools > div {
-        flex: 1 0 42px;
-    }
-    .documentation :global(button) {
-        width: 100%;
+        flex: 0 0 auto;
     }
     .empty-plugins {
         min-width: 0;

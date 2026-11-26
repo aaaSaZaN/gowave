@@ -9,6 +9,7 @@
     import RouteLoading from '../RouteLoading.svelte'
     import { navigate } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
+    import Button from '../ui/Button.svelte'
     import EmptyState from '../ui/EmptyState.svelte'
     import Icon from '../ui/Icon.svelte'
     import Overlay from '../ui/Overlay.svelte'
@@ -115,9 +116,9 @@
         <RouteLoading compact />
     {:else if stats.isError}
         <p role="alert">{stats.error.message}</p>
-        <button type="button" onclick={() => void stats.refetch()}>
+        <Button onclick={() => void stats.refetch()}>
             {t('common.action.try-again')}
-        </button>
+        </Button>
     {:else}
         <UsageSummary values={stats.data.sparklineData} />
         <section aria-labelledby={`${title}-users`}>
@@ -148,16 +149,13 @@
                 </ol>
                 {#if users.length > pageSize}
                     <div class="button-row">
-                        <button type="button" disabled={page === 0} onclick={() => page--}>
-                            Previous
-                        </button>
-                        <button
-                            type="button"
+                        <Button disabled={page === 0} onclick={() => page--}> Previous </Button>
+                        <Button
                             disabled={(page + 1) * pageSize >= users.length}
                             onclick={() => page++}
                         >
                             {t('common.action.next')}
-                        </button>
+                        </Button>
                     </div>
                 {/if}
             {:else}

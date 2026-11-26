@@ -6,11 +6,11 @@
     import { onMount } from 'svelte'
     import { locale } from '../i18n.svelte'
     import Button from '../ui/Button.svelte'
-    import { dismissDialog } from '../ui/dialog-motion'
     import Icon from '../ui/Icon.svelte'
+    import Overlay from '../ui/Overlay.svelte'
 
-    let dialog: HTMLDialogElement
-    const heading = $props.id()
+    let overlay = $state<ReturnType<typeof Overlay>>()
+    let visible = $state(false)
     const t = $derived(locale.t)
     const terms = 'https://github.com/aaaSaZaN/gowave/blob/main/LICENSE'
 
@@ -20,7 +20,7 @@
         } catch {
             // Storage can be disabled.
         }
-        dialog.showModal()
+        visible = true
     })
 
     function accept(): void {
@@ -29,7 +29,7 @@
         } catch {
             // The dialog can be dismissed for this visit.
         }
-        dismissDialog(dialog)
+        overlay?.dismiss()
     }
 
     function parts(value: string) {
@@ -54,68 +54,58 @@
     {/each}
 {/snippet}
 
-<dialog
-    class="disclaimer notice-dialog"
-    bind:this={dialog}
-    aria-labelledby={heading}
-    oncancel={(event) => event.preventDefault()}
->
-    <div class="notice">
-        <div class="warning-icon"><Icon name="PiShieldWarning" size={36} /></div>
-        <div class="notice-title">
-            <h2 id={heading}>{t('disclaimer-overlay.title')}</h2>
-            <p>{t('disclaimer-overlay.subtitle')}</p>
+{#if visible}
+    <Overlay
+        bind:this={overlay}
+        title={t('disclaimer-overlay.title')}
+        icon="PiShieldWarning"
+        width={620}
+        hideHeader
+        fullscreenOnMobile={false}
+        preventClose
+        close={() => (visible = false)}
+    >
+        <div class="notice">
+            <div class="warning-icon"><Icon name="PiShieldWarning" size={36} /></div>
+            <div class="notice-title">
+                <h2>{t('disclaimer-overlay.title')}</h2>
+                <p>{t('disclaimer-overlay.subtitle')}</p>
+            </div>
+            <hr>
+            <div class="notice-body">
+                <p>{@render rich(t('disclaimer-overlay.intro'))}</p>
+                <ul>
+                    {#each [
+                        t('disclaimer-overlay.responsibility'),
+                        t('disclaimer-overlay.compliance'),
+                        t('disclaimer-overlay.liability')
+                    ] as item (item)}
+                        <li>
+                            <span class="gavel"><Icon name="PiGavel" size={12} /></span>
+                            <span>{@render rich(item)}</span>
+                        </li>
+                    {/each}
+                </ul>
+                <p class="license">
+                    {@render rich(t('disclaimer-overlay.license-acknowledgement'))}
+                </p>
+            </div>
+            <Button
+                block
+                color="yellow"
+                variant="light"
+                size="md"
+                icon="PiCheckCircle"
+                iconSize={18}
+                onclick={accept}
+            >
+                {t('disclaimer-overlay.accept-button')}
+            </Button>
         </div>
-        <hr>
-        <div class="notice-body">
-            <p>{@render rich(t('disclaimer-overlay.intro'))}</p>
-            <ul>
-                {#each [
-                    t('disclaimer-overlay.responsibility'),
-                    t('disclaimer-overlay.compliance'),
-                    t('disclaimer-overlay.liability')
-                ] as item (item)}
-                    <li>
-                        <span class="gavel"><Icon name="PiGavel" size={12} /></span>
-                        <span>{@render rich(item)}</span>
-                    </li>
-                {/each}
-            </ul>
-            <p class="license">{@render rich(t('disclaimer-overlay.license-acknowledgement'))}</p>
-        </div>
-        <Button
-            block
-            color="yellow"
-            variant="light"
-            size="md"
-            icon="PiCheckCircle"
-            iconSize={18}
-            onclick={accept}
-        >
-            {t('disclaimer-overlay.accept-button')}
-        </Button>
-    </div>
-</dialog>
+    </Overlay>
+{/if}
 
 <style>
-    .disclaimer {
-        width: min(620px, calc(100vw - 40px));
-        max-height: calc(100dvh - 40px);
-        max-width: none;
-        inset: 50dvh auto auto 50vw;
-        margin: 0;
-        transform: translate(-50%, -50%);
-        padding: var(--mantine-spacing-sm);
-        border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
-        border-radius: var(--mantine-radius-md);
-        background: rgb(var(--gw-surface-rgb));
-        box-shadow: var(--mantine-shadow-xl);
-    }
-
-    .disclaimer::backdrop {
-        background: rgb(0 0 0 / 60%);
-    }
-
     .notice {
         display: flex;
         flex-direction: column;

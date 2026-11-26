@@ -20,7 +20,7 @@
     "dev:frontend": "vite",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 3333 --strictPort",
-    "check": "biome check . --error-on-warnings && biome check --config-path=biome.json --vcs-enabled=false ../scripts/mock-db.mjs --error-on-warnings",
+    "check": "biome check . --error-on-warnings && biome check --config-path=biome.json --vcs-enabled=false ../scripts/mock-db.mjs ../scripts/check-svelte-ui.mjs --error-on-warnings && bun ../scripts/check-svelte-ui.mjs",
     "fix": "biome check --write . && biome check --config-path=biome.json --vcs-enabled=false --write ../scripts/mock-db.mjs",
     "css:types": "bun scripts/css-types.mjs",
     "typecheck": "bun scripts/css-types.mjs --check && svelte-check --tsgo --tsconfig tsconfig.json --fail-on-warnings && bun ./node_modules/@typescript/native/bin/tsc --project tsconfig.node.json",

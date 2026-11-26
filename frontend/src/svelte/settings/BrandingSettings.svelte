@@ -75,6 +75,7 @@
                 <div class="input-wrap">
                     <span class="start"><Icon name="TbStar" size={16} /></span>
                     <input
+                        class="gw-input"
                         id="brand-name"
                         name="title"
                         bind:value={title}
@@ -113,6 +114,7 @@
                 <div class="input-wrap">
                     <span class="start"><Icon name="TbLink" size={16} /></span>
                     <input
+                        class="gw-input"
                         id="brand-logo"
                         name="logoUrl"
                         bind:value={logo}

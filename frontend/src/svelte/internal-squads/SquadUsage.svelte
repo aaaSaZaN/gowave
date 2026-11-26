@@ -2,27 +2,25 @@
     import { prettifyBytesUtil } from '@shared/utils/bytes/pretty-bytes/pretty-bytes.util'
     import { getDefaultDateRange } from '@shared/utils/time-utils/get-default-date-range/get-default-date-range.util'
     import { createInfiniteQuery } from '@tanstack/svelte-query'
-    import { onMount } from 'svelte'
     import type resources from '../../../@types/resources'
     import { locale } from '../i18n.svelte'
     import UsageFilters from '../nodes/UsageFilters.svelte'
     import RouteLoading from '../RouteLoading.svelte'
     import { p } from '../router'
-    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
+    import Accordion from '../ui/Accordion.svelte'
+    import Button from '../ui/Button.svelte'
+    import NumberInput from '../ui/NumberInput.svelte'
+    import Overlay from '../ui/Overlay.svelte'
     import { squadUsageQuery } from './queries'
 
     let { uuid, name, close }: { uuid: string; name: string; close: () => void } = $props()
     let t = $derived(locale.t)
-    const title = $props.id()
     const gib = 1024 ** 3
     let threshold = $state<number | undefined>(100)
     let filters = $state({ ...getDefaultDateRange(), minTotalBytes: 100 * gib })
     let thresholdError = $state(false)
-    let dialog: HTMLDialogElement
     const usage = createInfiniteQuery(() => squadUsageQuery(uuid, filters))
     let users = $derived(usage.data?.pages.flatMap(({ users }) => users) ?? [])
-
-    onMount(() => dialog.showModal())
 
     function apply(range: { start: string; end: string }): void {
         const minTotalBytes = Math.round((threshold ?? 0) * gib)
@@ -40,13 +38,20 @@
     }
 </script>
 
-<dialog oncancel={cancelDialog} bind:this={dialog} onclose={close} aria-labelledby={title}>
-    <div class="button-row">
-        <h2 id={title}>{t('common.field.usage-stats')} · {name}</h2>
-        <button type="button" onclick={() => dismissDialog(dialog)}>
-            {t('common.action.close')}
-        </button>
-    </div>
+{#snippet info(
+    key: `internal-squads-usage-drawer.info.${keyof (typeof resources.gowave)['internal-squads-usage-drawer']['info']}`
+)}
+    {String(t(key)).replace(/<\/?(?:b|hl|code)>/g, '')}
+{/snippet}
+
+<Overlay
+    title={t('common.field.usage-stats')}
+    icon="TbChartLine"
+    width={672}
+    {close}
+    subtitle={name}
+    fullscreenOnMobile={false}
+>
     <UsageFilters
         range={filters}
         busy={usage.isFetching}
@@ -54,21 +59,21 @@
         refresh={() => void usage.refetch()}
     >
         {#snippet control()}
-            <label>
-                Minimum traffic (GiB)
-                <input type="number" name="minTrafficGib" min="0" step="any" bind:value={threshold}>
-            </label>
+            <NumberInput
+                label="Minimum traffic (GiB)"
+                name="minTrafficGib"
+                min={0}
+                step="any"
+                bind:value={threshold}
+            />
         {/snippet}
     </UsageFilters>
     {#if thresholdError}
         <p role="alert">Enter a valid non-negative traffic threshold.</p>
     {/if}
-    <details>
-        <summary>{t('internal-squads-usage-drawer.info.title')}</summary>
-        {#snippet info(
-            key: `internal-squads-usage-drawer.info.${keyof (typeof resources.gowave)['internal-squads-usage-drawer']['info']}`
-        )}
-            {String(t(key)).replace(/<\/?(?:b|hl|code)>/g, '')}
+    <Accordion>
+        {#snippet heading()}
+            {t('internal-squads-usage-drawer.info.title')}
         {/snippet}
         <p>{@render info('internal-squads-usage-drawer.info.summary')}</p>
         <h3>{t('internal-squads-usage-drawer.info.nodes-title')}</h3>
@@ -89,7 +94,7 @@
             <li>{@render info('internal-squads-usage-drawer.info.caveats-membership')}</li>
             <li>{@render info('internal-squads-usage-drawer.info.caveats-sorting')}</li>
         </ul>
-    </details>
+    </Accordion>
     {#if usage.isPending}
         <RouteLoading compact />
     {:else if usage.error}
@@ -110,18 +115,11 @@
         <p>{t('common.message.no-data-available')}</p>
     {/if}
     {#if usage.hasNextPage}
-        <button
-            type="button"
-            disabled={usage.isFetching}
-            onclick={() => void usage.fetchNextPage()}
-        >
+        <Button disabled={usage.isFetching} onclick={() => void usage.fetchNextPage()}>
             {t('common.action.load-more')}
-        </button>
+        </Button>
     {/if}
-</dialog>
+</Overlay>
 
 <style>
-    dialog {
-        width: min(42rem, calc(100vw - 2rem));
-    }
 </style>

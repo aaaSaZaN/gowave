@@ -61,17 +61,14 @@
             {#if sidebar}
                 <button
                     type="button"
-                    class="m_fea6bf1a mantine-Burger-root m_87cf2631 mantine-UnstyledButton-root"
+                    class="mantine-Burger-root mantine-UnstyledButton-root"
                     aria-label="Navigation"
                     aria-controls="dashboard-sidebar"
                     aria-expanded={navOpen}
                     style:--burger-size="var(--burger-size-md)"
                     onclick={toggleNavigation}
                 >
-                    <span
-                        class="m_d4fb9cad mantine-Burger-burger"
-                        data-opened={navOpen || undefined}
-                    ></span>
+                    <span class="mantine-Burger-burger" data-opened={navOpen || undefined}></span>
                 </button>
             {:else}
                 <div class="brand-group">
@@ -85,7 +82,6 @@
             <HeaderControls
                 mobile={mobile.current}
                 version={metadata.data?.version ?? ''}
-                dev={metadata.data?.git?.backend?.branch === 'dev'}
                 updateAvailable={Boolean(update.data?.hasUpdate)}
                 showBuild={() => (showBuild = true)}
                 showRecap={() => (showRecap = true)}
@@ -117,12 +113,12 @@
                 {#if mobile.current}
                     <button
                         type="button"
-                        class="m_fea6bf1a mantine-Burger-root m_87cf2631 mantine-UnstyledButton-root sidebar-burger"
+                        class="mantine-Burger-root mantine-UnstyledButton-root sidebar-burger"
                         aria-label="Close navigation"
                         style:--burger-size="var(--burger-size-sm)"
                         onclick={toggleNavigation}
                     >
-                        <span class="m_d4fb9cad mantine-Burger-burger" data-opened="true"></span>
+                        <span class="mantine-Burger-burger" data-opened="true"></span>
                     </button>
                 {/if}
                 <Brand />

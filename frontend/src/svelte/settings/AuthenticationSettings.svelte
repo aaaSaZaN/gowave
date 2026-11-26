@@ -157,6 +157,7 @@
                     <label>
                         {t('auth-settings.passkey.rpId.label')}
                         <input
+                            class="gw-input"
                             name="rpId"
                             value={settings.passkeySettings?.rpId ?? ''}
                             placeholder="example.com"
@@ -166,16 +167,17 @@
                     <label>
                         {t('auth-settings.passkey.origin.label')}
                         <input
+                            class="gw-input"
                             name="origin"
                             value={settings.passkeySettings?.origin ?? ''}
                             placeholder="https://example.com"
                         >
                         <small>{t('auth-settings.passkey.origin.description')}</small>
                     </label>
-                    <button type="button" onclick={() => (manageKeys = true)}>
+                    <Button variant="soft" icon="TbFingerprint" onclick={() => (manageKeys = true)}>
                         {t('auth-settings.passkey.manage-button')}
                         {t('passkeys-drawer.component.passkeys')}
-                    </button>
+                    </Button>
                 </div>
             </div>
             {#if settings.oauth2Settings}
@@ -208,6 +210,7 @@
                                     <label>
                                         {labels[field]}
                                         <input
+                                            class="gw-input"
                                             type={field === 'clientSecret' ? 'password' : 'text'}
                                             {name}
                                             value={oauthField(config, field)}

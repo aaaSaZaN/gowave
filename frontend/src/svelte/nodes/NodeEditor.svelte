@@ -31,6 +31,7 @@
     import { queryClient } from '../query-client'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import { useConfirmation } from '../ui/confirmation'
     import FormCard from '../ui/FormCard.svelte'
     import Icon from '../ui/Icon.svelte'
     import { notifications } from '../ui/notification-state.svelte'
@@ -49,6 +50,8 @@
         nodesKey,
         providersQuery
     } from './queries'
+
+    const confirmAction = useConfirmation()
 
     let {
         node,
@@ -181,7 +184,7 @@
         problem = ''
     }
 
-    function submit(event: SubmitEvent): void {
+    async function submit(event: SubmitEvent): Promise<void> {
         event.preventDefault()
         if (save.isPending || !(event.currentTarget instanceof HTMLFormElement)) return
         save.reset()
@@ -218,9 +221,9 @@
             }
             if (
                 ids &&
-                !window.confirm(
+                !(await confirmAction(
                     `${t('common.action.update')} ${ids.length} ${t('constants.nodes')}?`
-                )
+                ))
             )
                 return
             save.mutate(patch)
@@ -336,6 +339,7 @@
                         <span class="node-input">
                             <Icon name="PiUserDuotone" size={16} />
                             <input
+                                class="gw-input"
                                 name="name"
                                 required
                                 minlength="3"
@@ -352,6 +356,7 @@
                             <span class="node-input">
                                 <Icon name="TbWorld" size={16} />
                                 <input
+                                    class="gw-input"
                                     name="address"
                                     placeholder={t('base-node-form.e-g-example-com')}
                                     required
@@ -366,7 +371,7 @@
                             >
                             <input
                                 name="port"
-                                class="node-port"
+                                class="gw-input node-port"
                                 type="number"
                                 required
                                 min="1"
@@ -386,6 +391,7 @@
                             <span class="node-input secret-input">
                                 <Icon name="TbCertificate" size={16} />
                                 <input
+                                    class="gw-input"
                                     id={secretKeyId}
                                     readonly
                                     value={secret.data?.secretKey ?? 'Error loading...'}
@@ -417,6 +423,7 @@
                         <span class="node-input">
                             <Icon name="TbNetwork" size={16} />
                             <input
+                                class="gw-input"
                                 name="proxyUrl"
                                 placeholder="socks5://user:pass@address:port"
                                 value={initial?.proxyUrl ?? ''}
@@ -538,6 +545,7 @@
                                             <span class="node-input">
                                                 <Icon name="TbChartLine" size={16} />
                                                 <input
+                                                    class="gw-input"
                                                     type="number"
                                                     min="0"
                                                     step="any"
@@ -574,6 +582,7 @@
                                             <span class="node-input">
                                                 <Icon name="TbClock" size={16} />
                                                 <input
+                                                    class="gw-input"
                                                     name="trafficResetDay"
                                                     type="number"
                                                     min="1"
@@ -588,6 +597,7 @@
                                             <span class="node-input">
                                                 <Icon name="TbBell" size={16} />
                                                 <input
+                                                    class="gw-input"
                                                     name="notifyPercent"
                                                     type="number"
                                                     min="0"
@@ -645,6 +655,7 @@
                     <label class="note">
                         {t('node-tracking-and-billing.card.note')}
                         <textarea
+                            class="gw-input"
                             name="note"
                             maxlength="255"
                             rows="1"
@@ -737,7 +748,7 @@
 
 {#snippet input(key: NodeField, label: string, value: string, maxlength?: number)}
     {#snippet field()}
-        <label>{label} <input name={key} {value} {maxlength}></label>
+        <label>{label} <input class="gw-input" name={key} {value} {maxlength}></label>
     {/snippet}
     {@render entry(key, label, field)}
 {/snippet}
@@ -753,7 +764,16 @@
     {#snippet field()}
         <label
             >{label}
-            <input name={key} type="number" {value} {min} {max} {step} required={!!ids}></label
+            <input
+                class="gw-input"
+                name={key}
+                type="number"
+                {value}
+                {min}
+                {max}
+                {step}
+                required={!!ids}
+            ></label
         >
     {/snippet}
     {@render entry(key, label, field)}

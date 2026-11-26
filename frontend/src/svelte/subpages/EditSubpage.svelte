@@ -237,6 +237,7 @@
     {/if}
     {#if jsonMode}
         <textarea
+            class="gw-input"
             aria-label="Configuration JSON"
             name="configJson"
             rows="22"

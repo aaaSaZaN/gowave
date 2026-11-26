@@ -17,6 +17,7 @@
     import { navigate, p } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import CreateSquad from '../ui/CreateSquad.svelte'
+    import { useConfirmation } from '../ui/confirmation'
     import EmptyState from '../ui/EmptyState.svelte'
     import EntityCard from '../ui/EntityCard.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
@@ -29,6 +30,8 @@
     import RenameDialog from '../ui/RenameDialog.svelte'
     import { usersQueryKey } from '../users/queries'
     import { type ExternalSquad, externalSquadsKey, externalSquadsQuery } from './queries'
+
+    const confirmAction = useConfirmation()
 
     type Action = 'add' | 'remove' | 'delete' | 'clone'
     const squads = createQuery(() => externalSquadsQuery)
@@ -110,7 +113,7 @@
         return executeCommand({ ...command, TSQ_url: command.url(uuid) })
     }
 
-    function perform(action: Action, squad: ExternalSquad): void {
+    async function perform(action: Action, squad: ExternalSquad): Promise<void> {
         const confirmations = {
             add: t('common.message.confirm-add-all-users-to-external-squad', {
                 squadName: squad.name
@@ -119,7 +122,7 @@
             delete: `${t('common.action.delete')} ${squad.name}?`,
             clone: `${t('common.action.clone')} ${squad.name}?`
         }
-        if (window.confirm(confirmations[action])) update.mutate({ action, squad })
+        if (await confirmAction(confirmations[action])) update.mutate({ action, squad })
     }
 
     async function saveOrder(items: string[]): Promise<void> {

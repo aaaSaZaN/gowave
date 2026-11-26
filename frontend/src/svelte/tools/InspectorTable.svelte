@@ -5,11 +5,16 @@
     import { locale } from '../i18n.svelte'
     import RouteLoading from '../RouteLoading.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
+    import Button from '../ui/Button.svelte'
+    import DataTable from '../ui/DataTable.svelte'
     import Icon from '../ui/Icon.svelte'
     import type { IconName } from '../ui/icons'
     import { notifications } from '../ui/notification-state.svelte'
     import SelectField from '../ui/SelectField.svelte'
+    import TableFilter from '../ui/TableFilter.svelte'
+    import TablePagination from '../ui/TablePagination.svelte'
     import TableTitle from '../ui/TableTitle.svelte'
+    import TableToolbar from '../ui/TableToolbar.svelte'
     import type { Column, InspectorRow } from './columns'
     import type { InspectorParams } from './queries'
     import {
@@ -53,8 +58,7 @@
     let error = $state('')
     let live = $state(true)
     let selectedUser = $state<InspectorRow['userId']>()
-    let panel: HTMLElement
-    let fullscreen = $state(false)
+    let panel = $state<HTMLElement>()
     let byKey = $derived(
         new Map<string, Column<Row>>(columns.map((column) => [column.key, column]))
     )
@@ -102,19 +106,8 @@
     let pages = $derived(
         Math.max(1, Math.ceil((query.data?.total ?? 0) / prefs.paginationState.pageSize))
     )
-    let pageSizeOptions = $derived(
-        [...new Set([10, 25, 50, 100, prefs.paginationState.pageSize])]
-            .sort((a, b) => a - b)
-            .map((size) => ({ value: String(size), label: String(size) }))
-    )
     const actionsWidth = $derived(rowActions ? 130 : 110)
     const total = $derived(query.data?.total ?? 0)
-    const firstRow = $derived(
-        total ? prefs.paginationState.pageSize * prefs.paginationState.pageIndex + 1 : 0
-    )
-    const lastRow = $derived(
-        Math.min(total, prefs.paginationState.pageSize * (prefs.paginationState.pageIndex + 1))
-    )
 
     $effect(() => {
         if (query.data && prefs.paginationState.pageIndex >= pages) page(pages - 1)
@@ -233,17 +226,8 @@
         void query.refetch()
         onrefresh?.()
     }
-
-    function toggleFullscreen(): void {
-        void (fullscreen ? document.exitFullscreen() : panel.requestFullscreen()).catch(
-            (reason: unknown) => {
-                error = reason instanceof Error ? reason.message : String(reason)
-            }
-        )
-    }
 </script>
 
-<svelte:window onfullscreenchange={() => (fullscreen = document.fullscreenElement === panel)} />
 <section
     class="inspector-panel"
     aria-label={title}
@@ -279,39 +263,23 @@
         </div>
     </TableTitle>
     <div class="table-panel">
-        <div class="toolbar">
-            <ActionIcon
-                icon="TbBaselineDensitySmall"
-                label="Compact rows"
-                size={34}
-                iconSize={24}
-                subtle
-                aria-pressed={prefs.compact ?? true}
-                onclick={() => {
+        <TableToolbar
+            {panel}
+            density={{
+                icon: 'TbBaselineDensitySmall',
+                label: 'Compact rows',
+                pressed: prefs.compact ?? true,
+                onclick: () => {
                     prefs.compact = !(prefs.compact ?? true)
                     store()
-                }}
-            />
-            {#if document.fullscreenEnabled}
-                <ActionIcon
-                    icon={fullscreen ? 'TbMinimize' : 'TbMaximize'}
-                    size={34}
-                    iconSize={24}
-                    subtle
-                    label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-                    onclick={toggleFullscreen}
-                />
-            {/if}
-            <ActionIcon
-                icon="TbColumns"
-                label="Columns"
-                size={34}
-                iconSize={24}
-                subtle
-                aria-expanded={columnsOpen}
-                onclick={() => (columnsOpen = !columnsOpen)}
-            />
-        </div>
+                }
+            }}
+            columns={{
+                label: 'Columns',
+                expanded: columnsOpen,
+                onclick: () => (columnsOpen = !columnsOpen)
+            }}
+        />
         {#if columnsOpen}
             <div class="column-menu">
                 <div class="button-row">
@@ -343,36 +311,42 @@
                                     }}
                                 > {heading}</label
                             >
-                            <button
-                                type="button"
+                            <Button
+                                size="compact-sm"
                                 disabled={index === 0}
                                 onclick={() => move(index, -1)}
                                 aria-label={`Move ${heading} earlier`}
                             >
                                 ↑
-                            </button>
-                            <button
-                                type="button"
+                            </Button>
+                            <Button
+                                size="compact-sm"
                                 disabled={index === allOrder.length - 1}
                                 onclick={() => move(index, 1)}
                                 aria-label={`Move ${heading} later`}
                             >
                                 ↓
-                            </button>
-                            <select
-                                aria-label={`Pin ${heading}`}
+                            </Button>
+                            <SelectField
+                                label={`Pin ${heading}`}
+                                placeholder=""
+                                hideLabel
+                                searchable={false}
+                                clearable={false}
                                 value={left.includes(id)
                                     ? 'left'
                                     : right.includes(id)
                                       ? 'right'
                                       : ''}
-                                onchange={(event) => pin(id, event.currentTarget.value)}
-                            >
-                                <option value="">Unpinned</option>
-                                <option value="left">Start</option>
-                                <option value="right">End</option>
-                            </select>
+                                options={[
+                                    { value: '', label: 'Unpinned' },
+                                    { value: 'left', label: 'Start' },
+                                    { value: 'right', label: 'End' }
+                                ]}
+                                onchoose={(value) => pin(id, value)}
+                            />
                             <input
+                                class="gw-input"
                                 type="number"
                                 aria-label={`Width of ${heading}`}
                                 min="48"
@@ -402,9 +376,10 @@
         {/if}
         {#if query.data}
             <div class="scroll">
-                <table
+                <DataTable
+                    class="inspector-table-table"
                     aria-label={title}
-                    style:width={`${ordered.reduce((sum, id) => sum + width(id), actionsWidth)}px`}
+                    style={`width: ${ordered.reduce((sum, id) => sum + width(id), actionsWidth)}px`}
                 >
                     <thead>
                         <tr>
@@ -431,7 +406,9 @@
                                                 type="button"
                                                 onclick={(event) => sort(id, event.shiftKey)}
                                             >
-                                                <span class="column-label"
+                                                <span
+                                                    class="column-label"
+                                                    title={column?.label ?? id}
                                                     >{column?.label ?? id}</span
                                                 >
                                                 <Icon
@@ -457,43 +434,21 @@
                                     </div>
                                     {#if prefs.showColumnFilters && column?.filter}
                                         <div class="column-filter">
-                                            {#if column.filter === 'select'}
-                                                {@const value = String(
+                                            <TableFilter
+                                                label={column.label}
+                                                type={column.filter === 'number'
+                                                    ? 'number'
+                                                    : 'text'}
+                                                options={column.filter === 'select'
+                                                    ? (column.options ?? [])
+                                                    : undefined}
+                                                value={String(
                                                     prefs.columnFilter.find(
                                                         (filter) => filter.id === id
                                                     )?.value ?? ''
                                                 )}
-                                                <div class="column-filter-select">
-                                                    <SelectField
-                                                        label={column.label}
-                                                        hideLabel
-                                                        placeholder="Filter by..."
-                                                        options={column.options ?? []}
-                                                        alwaysShowClear
-                                                        {value}
-                                                        onchoose={(next) => setFilter(id, next)}
-                                                    />
-                                                </div>
-                                            {:else}
-                                                <input
-                                                    aria-label={`Filter by ${column.label}`}
-                                                    type={column.filter === 'number'
-                                                        ? 'number'
-                                                        : 'text'}
-                                                    placeholder="Filter by..."
-                                                    value={String(
-                                                        prefs.columnFilter.find(
-                                                            (filter) => filter.id === id
-                                                        )?.value ?? ''
-                                                    )}
-                                                    onchange={(event) =>
-                                                        setFilter(id, event.currentTarget.value)}
-                                                    onkeydown={(event) => {
-                                                        if (event.key === 'Enter')
-                                                            event.currentTarget.blur()
-                                                    }}
-                                                >
-                                            {/if}
+                                                onfilter={(next) => setFilter(id, next)}
+                                            />
                                             {#if column.filterMode === 'choose'}
                                                 {@const exact =
                                                     prefs.filterModes?.[id] === 'equals'}
@@ -594,58 +549,22 @@
                             </tr>
                         {/each}
                     </tbody>
-                </table>
+                </DataTable>
             </div>
             {#if !query.data.rows.length}
                 <p class="empty">{t('common.message.no-records-to-display')}</p>
             {/if}
-            <div class="button-row pagination">
-                <div class="rows-per-page">
-                    <span class="rows-label">{t('common.field.rows-per-page')}</span>
-                    <div class="page-size-select">
-                        <SelectField
-                            label={t('common.field.rows-per-page')}
-                            hideLabel
-                            searchable={false}
-                            clearable={false}
-                            placeholder=""
-                            options={pageSizeOptions}
-                            value={String(prefs.paginationState.pageSize)}
-                            onchoose={(value) => {
-                                prefs.paginationState.pageSize = Number(value)
-                                page(0)
-                            }}
-                        />
-                    </div>
-                </div>
-                <span>
-                    {t('common.message.table-range', {
-                        first: firstRow.toLocaleString(locale.language),
-                        last: lastRow.toLocaleString(locale.language),
-                        total: total.toLocaleString(locale.language)
-                    })}
-                </span>
-                <div class="page-controls">
-                    <ActionIcon
-                        icon="PiCaretLeft"
-                        label={t('create-node-modal.widget.back')}
-                        size={28}
-                        iconSize={16}
-                        subtle
-                        disabled={prefs.paginationState.pageIndex === 0}
-                        onclick={() => page(prefs.paginationState.pageIndex - 1)}
-                    />
-                    <ActionIcon
-                        icon="PiCaretRight"
-                        label={t('common.action.next')}
-                        size={28}
-                        iconSize={16}
-                        subtle
-                        disabled={prefs.paginationState.pageIndex + 1 >= pages}
-                        onclick={() => page(prefs.paginationState.pageIndex + 1)}
-                    />
-                </div>
-            </div>
+            <TablePagination
+                page={prefs.paginationState.pageIndex}
+                size={prefs.paginationState.pageSize}
+                sizes={[10, 25, 50, 100]}
+                {total}
+                onpage={page}
+                onsize={(size) => {
+                    prefs.paginationState.pageSize = size
+                    page(0)
+                }}
+            />
         {/if}
     </div>
 </section>
@@ -681,14 +600,6 @@
     .table-panel {
         position: relative;
     }
-    .toolbar {
-        display: flex;
-        justify-content: flex-end;
-        align-items: flex-start;
-        gap: 2px;
-        min-height: 56px;
-        padding: 8px;
-    }
     .column-menu {
         position: absolute;
         inset-inline-end: 8px;
@@ -716,57 +627,6 @@
         align-items: center;
         gap: 4px;
     }
-    .column-filter input {
-        min-width: 0;
-        width: 100%;
-        font: inherit;
-        font-weight: 400;
-        color: inherit;
-        border: 0;
-        min-height: 36px;
-        border-bottom: 2px solid var(--mantine-color-default-border);
-        border-radius: 0;
-        padding: 0 1px;
-        background: transparent;
-    }
-    .column-filter input::placeholder {
-        color: var(--mantine-color-placeholder);
-    }
-    .column-filter-select {
-        display: flex;
-        flex: 1;
-        min-width: 0;
-    }
-    .column-filter-select :global(.select-field) {
-        flex: 1;
-    }
-    .column-filter-select :global(.select-input) {
-        --input-height: 36px;
-        border: 0;
-        border-radius: 0;
-        background: transparent;
-    }
-    .column-filter-select :global(.mantine-Input-input) {
-        height: 36px;
-        min-height: 36px;
-        padding-inline: 1px 60px;
-        border: 0;
-        border-bottom: 2px solid var(--mantine-color-default-border);
-        border-radius: 0;
-        background: transparent;
-        color: inherit;
-        font: inherit;
-        font-weight: 400;
-    }
-    .column-filter-select :global(.mantine-Input-input::placeholder) {
-        color: var(--mantine-color-placeholder);
-    }
-    .column-filter-select :global(.clear[data-position="right"]) {
-        inset-inline-end: 21px;
-    }
-    .column-filter-select :global(.arrow[data-position="right"]) {
-        inset-inline-end: 1px;
-    }
     .column-heading {
         display: flex;
         position: relative;
@@ -791,20 +651,11 @@
     .column-label {
         min-width: 0;
         overflow: hidden;
-        text-overflow: clip;
+        text-overflow: ellipsis;
         white-space: nowrap;
     }
     .column-heading > button:not(.column-options) :global(svg) {
         flex: 0 0 16px;
-    }
-    .column-heading::after {
-        position: absolute;
-        inset-inline-end: -6px;
-        width: 4px;
-        height: 24px;
-        border-radius: var(--mantine-radius-xs);
-        background: light-dark(var(--mantine-color-gray-5), var(--mantine-color-dark-3));
-        content: "";
     }
     .column-options {
         flex: 0 0 22px;
@@ -826,51 +677,10 @@
         border: 0;
         font: inherit;
     }
-    .pagination {
-        position: relative;
-        justify-content: flex-end;
-        padding: var(--mantine-spacing-xs) 12px;
-        border-top: 0;
-        gap: 20px;
-    }
-    .pagination::before {
-        position: absolute;
-        inset-block-start: 0;
-        inset-inline: 0;
-        height: 1px;
-        background: var(--gw-border);
-        content: "";
-    }
-    .rows-label {
-        display: flex;
-        align-items: center;
-    }
-    .rows-per-page,
-    .page-controls {
-        display: flex;
-        align-items: center;
-    }
-    .rows-per-page {
-        gap: 10px;
-    }
-    .page-controls {
-        gap: 6px;
-    }
-    .page-size-select {
-        flex: none;
-        width: 80px;
-    }
-    .page-size-select :global(.select-field) {
-        flex: none;
-    }
-
     th button,
     .cell {
         background: transparent;
         color: inherit;
-    }
-    .pagination {
-        align-items: center;
     }
     .check {
         display: flex;
@@ -893,7 +703,7 @@
         overflow: auto;
         background: var(--gw-surface);
     }
-    table {
+    :global(.inspector-table-table) {
         min-width: 100%;
         font-size: var(--mantine-font-size-sm);
         border-collapse: separate;

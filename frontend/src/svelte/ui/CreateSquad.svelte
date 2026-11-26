@@ -74,6 +74,7 @@
                 <span class="required">*</span></span
             >
             <input
+                class="gw-input"
                 name="name"
                 bind:value={name}
                 required

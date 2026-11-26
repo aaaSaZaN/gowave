@@ -58,6 +58,7 @@
                     {/if}
                     {#if multiline}
                         <textarea
+                            class="gw-input"
                             id={`${id}-${key}`}
                             rows="3"
                             data-autofocus={index === 0 || undefined}
@@ -66,6 +67,7 @@
                         ></textarea>
                     {:else}
                         <input
+                            class="gw-input"
                             id={`${id}-${key}`}
                             data-autofocus={index === 0 || undefined}
                             value={value[key] ?? ''}

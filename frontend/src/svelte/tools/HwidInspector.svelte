@@ -7,10 +7,12 @@
     import RouteLoading from '../RouteLoading.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import ChartPlaceholder from '../ui/ChartPlaceholder.svelte'
+    import DataTable from '../ui/DataTable.svelte'
     import Icon from '../ui/Icon.svelte'
     import Leaderboard from '../ui/Leaderboard.svelte'
     import MetricCard from '../ui/MetricCard.svelte'
     import Overlay from '../ui/Overlay.svelte'
+    import SelectField from '../ui/SelectField.svelte'
     import MobileTableNotice from '../users/MobileTableNotice.svelte'
     import type { Column } from './columns'
     import { devicePlatforms } from './device-platforms'
@@ -56,7 +58,7 @@
         },
         { key: 'hwid', label: 'HWID', filter: 'text', width: 200 },
         { key: 'platform', label: t('common.field.platform'), filter: 'text' },
-        { key: 'osVersion', label: t('common.field.os-version'), width: 100 },
+        { key: 'osVersion', label: t('common.field.os-version'), width: 136 },
         { key: 'deviceModel', label: t('use-hwid-inspector-table-columns.device-model') },
         { key: 'userAgent', label: t('common.field.user-agent'), width: 500 },
         { key: 'createdAt', label: t('common.field.created-at'), width: 250 },
@@ -168,7 +170,7 @@
             {/if}
             {#if leaders.data}
                 <div class="leaders-scroll">
-                    <table aria-label="Top users by devices">
+                    <DataTable class="hwid-inspector-table" aria-label="Top users by devices">
                         <thead>
                             <tr>
                                 <th aria-label={t('common.action.open')}>
@@ -207,7 +209,7 @@
                                 </tr>
                             {/each}
                         </tbody>
-                    </table>
+                    </DataTable>
                     {#if !leaders.data.users.length}
                         <div class="no-records">
                             <span><Icon name="TbDatabaseOff" size={24} /></span>
@@ -231,15 +233,24 @@
                             pending={leaders.isFetching}
                             onclick={() => void leaders.refetch()}
                         />
-                        <select
-                            aria-label="Users per page"
-                            bind:value={topSize}
-                            onchange={() => (topPage = 0)}
-                        >
-                            {#each [5, 10, 25, 50, 100] as size (size)}
-                                <option value={size}>{size}</option>
-                            {/each}
-                        </select>
+                        <div class="top-page-size">
+                            <SelectField
+                                label="Users per page"
+                                placeholder=""
+                                value={String(topSize)}
+                                options={[5, 10, 25, 50, 100].map((size) => ({
+                                    value: String(size),
+                                    label: String(size)
+                                }))}
+                                hideLabel
+                                searchable={false}
+                                clearable={false}
+                                onchoose={(value) => {
+                                    topSize = Number(value)
+                                    topPage = 0
+                                }}
+                            />
+                        </div>
                         <div class="page-buttons">
                             <ActionIcon
                                 icon="PiCaretLeft"
@@ -334,6 +345,9 @@
         }
     }
     @media (min-width: 80em) {
+        .panels {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
         .metrics {
             grid-template-columns: repeat(3, minmax(0, 1fr));
         }
@@ -494,7 +508,7 @@
         border-radius: 50%;
         background: var(--mantine-color-gray-light);
     }
-    table {
+    :global(.hwid-inspector-table) {
         width: 100%;
         border-collapse: collapse;
         font-size: var(--mantine-font-size-sm);
@@ -559,12 +573,9 @@
         color: var(--mantine-color-text);
         line-height: 1.45;
     }
-    .pages select {
-        width: 48px;
-        min-width: 48px;
-        min-height: 28px;
-        padding-block: 0;
-        padding-inline: 4px;
+    .top-page-size {
+        flex: none;
+        width: 76px;
     }
     .page-buttons {
         display: flex;

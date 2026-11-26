@@ -18,6 +18,7 @@
     import ActionMenu from '../ui/ActionMenu.svelte'
     import Button from '../ui/Button.svelte'
     import CopyableField from '../ui/CopyableField.svelte'
+    import { useConfirmation } from '../ui/confirmation'
     import Icon from '../ui/Icon.svelte'
     import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
@@ -32,6 +33,8 @@
     import UserForm from './UserForm.svelte'
     import UserInfo from './UserInfo.svelte'
     import UserStatusBadge from './UserStatusBadge.svelte'
+
+    const confirmAction = useConfirmation()
 
     let { id, close }: { id: number; close: () => void } = $props()
     const record = createQuery(() => userQuery(String(id)))
@@ -107,8 +110,9 @@
         })
     }
 
-    function run(action: Action, label: string): void {
-        if (!user || mutation.isPending || !window.confirm(`${label} · ${user.username}?`)) return
+    async function run(action: Action, label: string): Promise<void> {
+        if (!user || mutation.isPending || !(await confirmAction(`${label} · ${user.username}?`)))
+            return
         mutation.mutate({ id: user.id, action })
     }
 

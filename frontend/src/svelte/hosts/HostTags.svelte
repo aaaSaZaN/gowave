@@ -104,6 +104,7 @@
         </span>
     {/each}
     <input
+        class="gw-input"
         bind:this={input}
         aria-label={label}
         role="combobox"
@@ -164,7 +165,7 @@
                 type="button"
                 id={optionId(value)}
                 role="option"
-                class="option m_92253aa5 m_b2821a6e mantine-UnstyledButton-root"
+                class="option gw-combobox-option gw-combobox-option-layout mantine-UnstyledButton-root"
                 class:keyboard-active={active === value}
                 aria-selected={active === value}
                 tabindex="-1"

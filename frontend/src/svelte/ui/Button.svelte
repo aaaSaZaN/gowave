@@ -42,7 +42,9 @@
     const soft = $derived(variant === 'soft')
     const tint = $derived(`var(--mantine-color-${color}-6)`)
     const shade = $derived(`var(--mantine-color-${color}-7)`)
-    const ink = $derived(`var(--mantine-color-${color}-4)`)
+    const ink = $derived(
+        `light-dark(var(--mantine-color-${color}-7), var(--mantine-color-${color}-4))`
+    )
     const background = $derived.by(() => {
         if (soft) {
             return `linear-gradient(135deg, color-mix(in srgb, ${tint} 15%, transparent), color-mix(in srgb, ${shade} 10%, transparent))`
@@ -69,10 +71,7 @@
     {type}
     disabled={disabled || pending}
     aria-busy={pending || attrs['aria-busy']}
-    class={[
-        'm_77c9d27d mantine-Button-root m_87cf2631 mantine-UnstyledButton-root mantine-active',
-        className
-    ]}
+    class={['mantine-Button-root mantine-UnstyledButton-root mantine-active', className]}
     data-variant={variant}
     data-size={size}
     data-block={block || undefined}
@@ -96,9 +95,9 @@
           ? '1px solid var(--mantine-color-default-border)'
           : '1px solid transparent'}
 >
-    <span class="m_80f1301b mantine-Button-inner">
+    <span class="mantine-Button-inner">
         {#if icon || start}
-            <span class="m_a74036a mantine-Button-section" data-position="left">
+            <span class="mantine-Button-section" data-position="left">
                 {#if start}
                     {@render start()}
                 {:else if icon}
@@ -106,7 +105,7 @@
                 {/if}
             </span>
         {/if}
-        <span class="m_811560b9 mantine-Button-label">{@render children?.()}</span>
+        <span class="mantine-Button-label">{@render children?.()}</span>
     </span>
     {#if pending}
         <span class="pending" aria-hidden="true">

@@ -222,6 +222,7 @@
                     <div class="search">
                         <span class="search-icon" aria-hidden="true"><Icon name="TbSearch" /></span>
                         <input
+                            class="gw-input"
                             type="search"
                             aria-label={t('sessions-explorer.widget.search-by-ip')}
                             placeholder={t('sessions-explorer.widget.search-by-ip')}
@@ -325,16 +326,16 @@
             {/if}
             {#if pages > 1}
                 <div class="button-row pagination">
-                    <button type="button" disabled={page === 0} onclick={() => (page -= 1)}>
+                    <Button disabled={page === 0} onclick={() => (page -= 1)}>
                         {t('common.action.previous')}
-                    </button>
+                    </Button>
                     <span
                         >{page + 1}
                         / {pages} · {matches.length.toLocaleString(locale.language)}</span
                     >
-                    <button type="button" disabled={page + 1 >= pages} onclick={() => (page += 1)}>
+                    <Button disabled={page + 1 >= pages} onclick={() => (page += 1)}>
                         {t('common.action.next')}
-                    </button>
+                    </Button>
                 </div>
             {/if}
         {/if}

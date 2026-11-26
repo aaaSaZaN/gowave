@@ -139,7 +139,7 @@
         bind:this={popup}
         popover="manual"
         role="tooltip"
-        class="m_1b3c8819 tooltip-surface"
+        class="gw-tooltip tooltip-surface"
         data-fixed="true"
         data-multiline={multiline || width ? 'true' : undefined}
         style:width={width ? `${width}px` : undefined}

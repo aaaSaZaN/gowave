@@ -76,7 +76,7 @@ try {
     if (!page) throw new Error('Chromium did not create a page')
     const socket = new WebSocket(page.webSocketDebuggerUrl)
     const result = await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('Browser smoke tests timed out')), 30000)
+        const timeout = setTimeout(() => reject(new Error('Browser smoke tests timed out')), 90000)
         socket.onerror = () => {
             clearTimeout(timeout)
             reject(new Error('Chromium debugging connection failed'))

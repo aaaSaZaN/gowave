@@ -138,9 +138,9 @@
         <span>{label}</span>
         <div class="control">
             {#if multiline}
-                <textarea aria-label={label} readonly {value} rows="3"></textarea>
+                <textarea class="gw-input" aria-label={label} readonly {value} rows="3"></textarea>
             {:else}
-                <input aria-label={label} readonly {value} spellcheck={false}>
+                <input class="gw-input" aria-label={label} readonly {value} spellcheck={false}>
             {/if}
             <ActionIcon
                 icon={copied === label ? 'PiCheck' : 'PiCopy'}

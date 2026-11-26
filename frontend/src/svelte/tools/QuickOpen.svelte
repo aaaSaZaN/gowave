@@ -66,6 +66,7 @@
                 </div>
                 <div class="target-form">
                     <input
+                        class="gw-input"
                         name={entity}
                         aria-label={entity === OPEN_ENTITY.USER ? 'User ID' : 'UUID'}
                         bind:value={values[entity]}

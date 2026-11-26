@@ -21,7 +21,7 @@
 </script>
 
 <label
-    class="m_5f93f3bb m_5f75b09e mantine-Switch-root switch"
+    class="mantine-Switch-root gw-switch-layout switch"
     class:rounded-square={roundedSquare}
     data-label-position="right"
     title={description ? undefined : label}
@@ -35,7 +35,7 @@
         : 'var(--mantine-primary-color-filled)'}
 >
     <input
-        class="m_926b4011 mantine-Switch-input"
+        class="mantine-Switch-input"
         {...input}
         bind:checked
         type="checkbox"
@@ -45,18 +45,20 @@
         aria-describedby={input['aria-describedby']}
     >
     <span
-        class="m_9307d992 mantine-Switch-track"
+        class="mantine-Switch-track"
         data-without-labels
         data-label-position="right"
         aria-hidden="true"
     >
-        <span class="m_93039a1d mantine-Switch-thumb" data-with-thumb-indicator></span>
+        <span class="mantine-Switch-thumb" data-with-thumb-indicator></span>
     </span>
     {#if description || showLabel}
-        <span class="m_d3ea56bb">
-            <span class="m_8ee546b8">{label}</span>
+        <span class="gw-switch-copy">
+            <span class="gw-switch-label">{label}</span>
             {#if description}
-                <span class="m_fe47ce59 m_328f68c0">{description}</span>
+                <span class="mantine-InputWrapper-description gw-switch-description"
+                    >{description}</span
+                >
             {/if}
         </span>
     {/if}

@@ -127,6 +127,7 @@
             <label class="search">
                 <Icon name="TbSearch" size={16} />
                 <input
+                    class="gw-input"
                     type="search"
                     aria-label={t('template-selector.search-templates')}
                     placeholder={t('template-selector.search-templates')}

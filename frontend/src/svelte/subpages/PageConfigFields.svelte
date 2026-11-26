@@ -8,14 +8,18 @@
     import { locale } from '../i18n.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import { useConfirmation } from '../ui/confirmation'
     import Icon from '../ui/Icon.svelte'
     import type { IconName } from '../ui/icons'
     import Overlay from '../ui/Overlay.svelte'
     import SelectField from '../ui/SelectField.svelte'
+    import ThemeIcon from '../ui/ThemeIcon.svelte'
     import { type PageConfig, type PlatformKey, platformLabels } from './config'
     import Icons from './Icons.svelte'
     import LocalizedFields from './LocalizedFields.svelte'
     import PlatformFields from './PlatformFields.svelte'
+
+    const askConfirmation = useConfirmation()
 
     let { config = $bindable() }: { config: PageConfig } = $props()
     let t = $derived(locale.t)
@@ -60,8 +64,8 @@
         }
     }
 
-    function removePlatform(key: PlatformKey): void {
-        if (window.confirm(t('common.message.confirm-action-description'))) {
+    async function removePlatform(key: PlatformKey): Promise<void> {
+        if (await askConfirmation(t('common.message.confirm-action-description'))) {
             delete config.platforms[key]
             delete loaded[key]
         }
@@ -76,13 +80,7 @@
 
 {#snippet heading(title: string, icon: IconName, tone: string, description?: string)}
     <div class="section-heading">
-        <span
-            class="theme-icon"
-            style:--section-tone={`var(--mantine-color-${tone}-6)`}
-            style:--section-ink={`var(--mantine-color-${tone}-4)`}
-        >
-            <Icon name={icon} size={20} />
-        </span>
+        <ThemeIcon {icon} {tone} />
         <div>
             <h2>{title}</h2>
             {#if description}
@@ -108,6 +106,7 @@
                     <span class="required">*</span></span
                 >
                 <input
+                    class="gw-input"
                     name="brandTitle"
                     required
                     placeholder={t('subpage-config-visual-editor.widget.your-brand-name')}
@@ -117,6 +116,7 @@
             <label class="field branded">
                 <span>{t('common.field.logo-url')} <span class="required">*</span></span>
                 <input
+                    class="gw-input"
                     required
                     placeholder="https://example.com/logo.png"
                     bind:value={config.brandingSettings.logoUrl}
@@ -128,6 +128,7 @@
                     <span class="required">*</span></span
                 >
                 <input
+                    class="gw-input"
                     type="url"
                     required
                     placeholder="https://t.me/support"
@@ -184,17 +185,22 @@
                     >{t('base-settings-block.component.meta-title')}
                     <span class="required">*</span></span
                 >
-                <input name="metaTitle" required bind:value={config.baseSettings.metaTitle}>
+                <input
+                    class="gw-input"
+                    name="metaTitle"
+                    required
+                    bind:value={config.baseSettings.metaTitle}
+                >
             </label>
             <label class="field">
                 <span
                     >{t('base-settings-block.component.meta-description')}
                     <span class="required">*</span></span
                 >
-                <input required bind:value={config.baseSettings.metaDescription}>
+                <input class="gw-input" required bind:value={config.baseSettings.metaDescription}>
             </label>
             <label class="option">
-                <span class="theme-icon"><Icon name="TbKey" size={20} /></span>
+                <ThemeIcon icon="TbKey" />
                 <span class="option-copy">
                     <strong>{t('base-settings-block.component.show-connection-keys')}</strong>
                     <span
@@ -204,7 +210,7 @@
                 <input type="checkbox" bind:checked={config.baseSettings.showConnectionKeys}>
             </label>
             <label class="option">
-                <span class="theme-icon"><Icon name="TbLink" size={20} /></span>
+                <ThemeIcon icon="TbLink" />
                 <span class="option-copy">
                     <strong>{t('base-settings-block.component.hide-get-link-button')}</strong>
                     <span
@@ -302,22 +308,23 @@
                 t('subpage-config-visual-editor.widget.configure-apps-for-each-platform')
             )}
             {#if available.length}
-                <select
-                    class="add-platform"
-                    aria-label={t('subpage-config-visual-editor.widget.add-platform')}
-                    onchange={(event) => {
-                        const input = event.currentTarget
-                        addPlatform(input.value as PlatformKey | '')
-                        input.value = ''
-                    }}
-                >
-                    <option value="" disabled selected>
-                        {t('subpage-config-visual-editor.widget.add-platform')}
-                    </option>
-                    {#each available as key (key)}
-                        <option value={key}>{platformLabels[key]}</option>
-                    {/each}
-                </select>
+                <div class="add-platform">
+                    <SelectField
+                        label={t('subpage-config-visual-editor.widget.add-platform')}
+                        placeholder={t('subpage-config-visual-editor.widget.add-platform')}
+                        hideLabel
+                        searchable={false}
+                        clearable={false}
+                        options={available.map((value) => ({
+                            value,
+                            label: platformLabels[value]
+                        }))}
+                        onchoose={(value) => {
+                            const platform = available.find((item) => item === value)
+                            if (platform) addPlatform(platform)
+                        }}
+                    />
+                </div>
             {/if}
         </div>
         <hr>
@@ -463,21 +470,9 @@
         font-size: var(--mantine-font-size-xs);
         line-height: var(--mantine-line-height-xs);
     }
-    .theme-icon {
-        --section-tone: var(--mantine-color-cyan-6);
-        --section-ink: var(--mantine-color-cyan-4);
-        display: grid;
-        place-items: center;
-        flex: 0 0 34px;
-        height: 34px;
-        border-radius: var(--mantine-radius-md);
-        border: 1px solid color-mix(in srgb, var(--section-tone) 30%, transparent);
-        color: var(--section-ink);
-        background: linear-gradient(
-            135deg,
-            color-mix(in srgb, var(--section-tone) 15%, transparent),
-            color-mix(in srgb, var(--section-tone) 10%, transparent)
-        );
+    .section-line > .section-heading,
+    .section-line > .section-label {
+        flex: 1 1 max-content;
     }
     hr {
         width: 100%;

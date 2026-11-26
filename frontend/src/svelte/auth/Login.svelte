@@ -174,10 +174,10 @@
                     {#if isRegister || authentication?.password.enabled}
                         <form onsubmit={handleSubmit} class="auth-form">
                             <div
-                                class="m_7485cace mantine-Container-root auth-container"
+                                class="mantine-Container-root auth-container"
                                 data-strategy="block"
                             >
-                                <div class="m_1b7284a3 mantine-Paper-root auth-paper">
+                                <div class="mantine-Paper-root auth-paper">
                                     {#if isRegister}
                                         <h2>{t('register-form.feature.registration')}</h2>
                                         <p class="register-description">

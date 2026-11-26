@@ -272,7 +272,7 @@
                             <span>{t('api-tokens-card.widget.token-name')}</span>
                             <input
                                 name="tokenName"
-                                class="m_8fb7ebe7 mantine-Input-input text-input"
+                                class="mantine-Input-input text-input"
                                 required
                                 minlength="2"
                                 maxlength="30"
@@ -283,7 +283,7 @@
                             <span>{t('api-tokens-card.widget.expires-in-days')}</span>
                             <input
                                 name="expiresInDays"
-                                class="m_8fb7ebe7 mantine-Input-input text-input"
+                                class="mantine-Input-input text-input"
                                 type="number"
                                 required
                                 min="1"

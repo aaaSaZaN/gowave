@@ -6,12 +6,12 @@
     import { onMount } from 'svelte'
     import { locale } from '../i18n.svelte'
     import Button from '../ui/Button.svelte'
-    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
     import Icon from '../ui/Icon.svelte'
     import type { IconName } from '../ui/icons'
+    import Overlay from '../ui/Overlay.svelte'
 
-    let dialog: HTMLDialogElement
-    const heading = $props.id()
+    let overlay = $state<ReturnType<typeof Overlay>>()
+    let visible = $state(false)
     const t = $derived(locale.t)
     const actions = $derived<{ name: IconName; text: string }[]>([
         { name: 'TbColumns', text: t('mobile-warning-overlay.show-or-hide-columns') },
@@ -28,10 +28,11 @@
         } catch {
             // Storage can be disabled.
         }
-        dialog.showModal()
+        visible = true
     })
 
     function save(): void {
+        visible = false
         try {
             writeMiscPreferences(localStorage, { mobileWarningClosed: true })
         } catch {
@@ -40,71 +41,55 @@
     }
 </script>
 
-<dialog
-    oncancel={cancelDialog}
-    class="mobile-warning notice-dialog"
-    aria-labelledby={heading}
-    bind:this={dialog}
-    closedby="any"
-    onclose={save}
->
-    <div class="modal-copy">
-        <span class="warning"><Icon name="PiWarning" size={32} /></span>
-        <div class="description">
-            <h2 id={heading}>{t('mobile-warning-overlay.mobile-device-detected')}</h2>
-            <p class="lead">{t('mobile-warning-overlay.description-line-1')}</p>
-            <p>{t('mobile-warning-overlay.description-line-2')}</p>
-            {#each actions as action (action.name)}
-                <div class="hint">
-                    <Icon name={action.name} size="1.2rem" />{action.text}
-                </div>
-            {/each}
+{#if visible}
+    <Overlay
+        bind:this={overlay}
+        title={t('mobile-warning-overlay.mobile-device-detected')}
+        icon="PiWarning"
+        width={440}
+        hideHeader
+        fullscreenOnMobile={false}
+        close={save}
+    >
+        <div class="modal-copy">
+            <span class="warning"><Icon name="PiWarning" size={32} /></span>
+            <div class="description">
+                <h2>{t('mobile-warning-overlay.mobile-device-detected')}</h2>
+                <p class="lead">{t('mobile-warning-overlay.description-line-1')}</p>
+                <p>{t('mobile-warning-overlay.description-line-2')}</p>
+                {#each actions as action (action.name)}
+                    <div class="hint">
+                        <Icon name={action.name} size="1.2rem" />{action.text}
+                    </div>
+                {/each}
+            </div>
+            <hr>
+            <div class="device-recommendations">
+                <span class="desktop hint">
+                    <Icon name="PiMonitor" size="1.2rem" />
+                    {t('mobile-warning-overlay.desktop-recommended')}
+                </span>
+                <span class="or">{t('mobile-warning-overlay.or')}</span>
+                <span class="rotate hint">
+                    <Icon name="TbRotate2" size="1.2rem" />
+                    {t('mobile-warning-overlay.rotate-device')}
+                </span>
+            </div>
+            <Button
+                block
+                variant="light"
+                color="orange"
+                icon="PiDeviceMobile"
+                size="md"
+                onclick={() => overlay?.dismiss()}
+            >
+                {t('mobile-warning-overlay.i-understand-continue-anyway')}
+            </Button>
         </div>
-        <hr>
-        <div class="device-recommendations">
-            <span class="desktop hint">
-                <Icon name="PiMonitor" size="1.2rem" />
-                {t('mobile-warning-overlay.desktop-recommended')}
-            </span>
-            <span class="or">{t('mobile-warning-overlay.or')}</span>
-            <span class="rotate hint">
-                <Icon name="TbRotate2" size="1.2rem" />{t('mobile-warning-overlay.rotate-device')}
-            </span>
-        </div>
-        <Button
-            block
-            variant="light"
-            color="orange"
-            icon="PiDeviceMobile"
-            size="md"
-            onclick={() => dismissDialog(dialog)}
-        >
-            {t('mobile-warning-overlay.i-understand-continue-anyway')}
-        </Button>
-    </div>
-</dialog>
+    </Overlay>
+{/if}
 
 <style>
-    .mobile-warning {
-        width: min(440px, calc(100vw - 40px));
-        max-height: calc(100dvh - 40px);
-        max-width: none;
-        inset: 50dvh auto auto 50vw;
-        margin: 0;
-        transform: translate(-50%, -50%);
-        padding: var(--mantine-spacing-sm);
-        border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
-        border-radius: var(--mantine-radius-md);
-        color: var(--mantine-color-gray-4);
-        background: rgb(var(--gw-surface-rgb));
-        box-shadow: var(--mantine-shadow-xl);
-        text-align: center;
-    }
-
-    .mobile-warning::backdrop {
-        background: rgb(0 0 0 / 60%);
-    }
-
     .modal-copy,
     .description {
         display: flex;

@@ -37,7 +37,9 @@
     }: Props = $props()
 
     const ink = $derived(
-        tone ? `var(--mantine-color-${tone}-4)` : 'var(--mantine-color-gray-light-color)'
+        tone
+            ? `light-dark(var(--mantine-color-${tone}-7), var(--mantine-color-${tone}-4))`
+            : 'var(--mantine-color-gray-light-color)'
     )
     const edge = $derived(
         tone ? `var(--mantine-color-${tone}-6)` : 'var(--mantine-color-default-border)'

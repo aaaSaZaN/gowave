@@ -3,6 +3,7 @@
     import Icon from './Icon.svelte'
     import type { IconName } from './icons'
     import metric from './metric-card.module.css'
+    import ThemeIcon from './ThemeIcon.svelte'
 
     let {
         label,
@@ -30,14 +31,7 @@
 </script>
 
 <div class="metric-card" class:compact-on-mobile={mobileLabel !== undefined}>
-    <span
-        class="metric-icon"
-        style:--metric-ink={`var(--mantine-color-${color}-4)`}
-        style:--metric-edge={`var(--mantine-color-${color}-6)`}
-        style:--metric-shade={`var(--mantine-color-${color}-7)`}
-    >
-        <Icon name={icon} size={24} />
-    </span>
+    <ThemeIcon class="metric-icon" {icon} tone={color} size={44} iconSize={24} radius="lg" />
     <div class="metric-copy">
         <p class={[metric['title'], 'metric-primary-title']} title={label}>{label}</p>
         <p class={[metric['value'], 'metric-value']} class:text-value={valueFont === 'text'}>
@@ -85,23 +79,6 @@
         background: var(--gw-raised-bg);
     }
 
-    .metric-icon {
-        display: inline-flex;
-        width: 44px;
-        height: 44px;
-        flex: 0 0 auto;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid color-mix(in srgb, var(--metric-edge) 30%, transparent);
-        border-radius: var(--mantine-radius-lg);
-        color: var(--metric-ink);
-        background: linear-gradient(
-            135deg,
-            color-mix(in srgb, var(--metric-edge) 15%, transparent),
-            color-mix(in srgb, var(--metric-shade) 10%, transparent)
-        );
-    }
-
     .metric-copy {
         min-width: 0;
     }
@@ -122,12 +99,12 @@
             gap: var(--mantine-spacing-xs);
             background: var(--gw-card-bg);
         }
-        .compact-on-mobile .metric-icon {
+        .compact-on-mobile :global(.metric-icon) {
             width: 34px;
             height: 34px;
             border-radius: var(--mantine-radius-md);
         }
-        .compact-on-mobile .metric-icon :global(svg) {
+        .compact-on-mobile :global(.metric-icon) :global(svg) {
             width: 18px;
             height: 18px;
         }

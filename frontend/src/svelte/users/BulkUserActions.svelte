@@ -8,10 +8,14 @@
     import { systemStatsQuery } from '../system-stats'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import Checkbox from '../ui/Checkbox.svelte'
+    import { useConfirmation } from '../ui/confirmation'
     import FormCard from '../ui/FormCard.svelte'
     import Icon from '../ui/Icon.svelte'
     import type { IconName } from '../ui/icons'
+    import NumberInput from '../ui/NumberInput.svelte'
     import Overlay from '../ui/Overlay.svelte'
+    import SelectField from '../ui/SelectField.svelte'
     import { type BulkFields, runBulkAction } from './actions'
     import { isoDateTime, numberField, textField } from './form-values'
     import {
@@ -22,6 +26,8 @@
         userTagsQuery
     } from './queries'
     import { userSelection } from './selection.svelte'
+
+    const askConfirmation = useConfirmation()
 
     let {
         target: scope,
@@ -57,6 +63,7 @@
         )
     )
     let error = $state('')
+    let statusToDelete = $state('')
     let scopeDescription = $derived(
         scope === 'all'
             ? t('bulk-all-users-actions.modal.perform-actions-on-all-users')
@@ -144,13 +151,13 @@
         return fields
     }
 
-    function submitUpdate(event: SubmitEvent): void {
+    async function submitUpdate(event: SubmitEvent): Promise<void> {
         event.preventDefault()
         if (!(event.currentTarget instanceof HTMLFormElement) || mutation.isPending) return
         error = ''
         try {
             const fields = getFields(new FormData(event.currentTarget))
-            if (!window.confirm(`${scopeDescription}?`)) return
+            if (!(await askConfirmation(`${scopeDescription}?`))) return
             mutation.mutate(
                 scope === 'all'
                     ? { scope, action: 'update', fields }
@@ -161,7 +168,7 @@
         }
     }
 
-    function submitAction(event: SubmitEvent): void {
+    async function submitAction(event: SubmitEvent): Promise<void> {
         event.preventDefault()
         if (!(event.currentTarget instanceof HTMLFormElement) || mutation.isPending) return
         const data = new FormData(event.currentTarget)
@@ -176,8 +183,9 @@
                         : { scope, action: 'extend', extendDays, userIds: ids }
                 )
             } else if (subdialog === 'delete-status') {
-                const status = textField(data, 'status') as UserStatus
-                if (window.confirm(`${t('common.action.delete')} ${status}?`))
+                const status = userStatuses.find((value) => value === textField(data, 'status'))
+                if (!status) return
+                if (await askConfirmation(`${t('common.action.delete')} ${status}?`))
                     mutation.mutate({ scope: 'all', action: 'delete-status', status })
             }
         } catch (reason) {
@@ -186,6 +194,7 @@
     }
 
     function openAction(action: ActionDialog): void {
+        statusToDelete = ''
         confirmAction = undefined
         error = ''
         subdialog = action
@@ -286,6 +295,7 @@
         <span class="input-icon with-clear">
             <Icon name={icon} size={16} />
             <input
+                class="gw-input"
                 id={`${fieldId}-${name}`}
                 {name}
                 {type}
@@ -369,10 +379,10 @@
                                     {/if}
                                 {/each}
                             </small>
-                            <label class="checkbox">
-                                <input type="checkbox" bind:checked={disableDeviceLimit}>
-                                {t('create-user-modal.widget.disable-hwid-limit')}
-                            </label>
+                            <Checkbox
+                                label={t('create-user-modal.widget.disable-hwid-limit')}
+                                bind:checked={disableDeviceLimit}
+                            />
                             {@render optionalField(
                                 'hwidDeviceLimit',
                                 t('create-user-modal.widget.hwid-device-limit'),
@@ -402,6 +412,7 @@
                             <small>{t('create-user-modal.widget.user-description')}</small>
                             <span class="input-icon with-clear">
                                 <textarea
+                                    class="gw-input"
                                     id={`${fieldId}-description`}
                                     name="description"
                                     rows="2"
@@ -422,75 +433,66 @@
                         tone="violet"
                     >
                         <div class="traffic-limit">
-                            <label>
-                                {t('traffic-limits-card.traffic-limit')}
-                                <small>{t('traffic-limits-card.traffic-limit-description')}</small>
-                                <span class="input-icon"
-                                    ><Icon name="TbChartLine" size={16} />
-                                    <input
-                                        name="trafficLimitBytes"
-                                        type="number"
-                                        min="0"
-                                        step="any"
-                                    ></span
-                                >
-                            </label>
-                            <select name="trafficUnit" aria-label="Traffic unit" value="GiB">
-                                {#each trafficUnits.keys() as unit (unit)}
-                                    <option value={unit}>{unit}</option>
-                                {/each}
-                            </select>
+                            <NumberInput
+                                label={t('traffic-limits-card.traffic-limit')}
+                                description={t('traffic-limits-card.traffic-limit-description')}
+                                name="trafficLimitBytes"
+                                leftIcon="TbChartLine"
+                                min={0}
+                                step="any"
+                            />
+                            <SelectField
+                                name="trafficUnit"
+                                label="Traffic unit"
+                                placeholder=""
+                                hideLabel
+                                value="GiB"
+                                searchable={false}
+                                clearable={false}
+                                options={Array.from(trafficUnits.keys(), (value) => ({
+                                    value,
+                                    label: value
+                                }))}
+                            />
                         </div>
-                        <label>
-                            {t('create-user-modal.widget.traffic-reset-strategy')}
-                            <small
-                                >{t(
-                                    'create-user-modal.widget.traffic-reset-strategy-description'
-                                )}</small
-                            >
-                            <span class="input-icon"
-                                ><Icon name="PiClockDuotone" size={16} />
-                                <select name="trafficLimitStrategy">
-                                    <option value="">
-                                        {t('create-user-modal.widget.pick-value')}
-                                    </option>
-                                    {#each trafficStrategies as strategy (strategy)}
-                                        <option value={strategy}>
-                                            {t(strategyLabels[strategy])}
-                                        </option>
-                                    {/each}
-                                </select></span
-                            >
-                        </label>
+                        <SelectField
+                            name="trafficLimitStrategy"
+                            label={t('create-user-modal.widget.traffic-reset-strategy')}
+                            description={t(
+                                'create-user-modal.widget.traffic-reset-strategy-description'
+                            )}
+                            placeholder={t('create-user-modal.widget.pick-value')}
+                            leading="PiClockDuotone"
+                            searchable={false}
+                            options={trafficStrategies.map((value) => ({
+                                value,
+                                label: t(strategyLabels[value])
+                            }))}
+                        />
                     </FormCard>
                     <FormCard
                         title={t('access-settings-card.access-settings')}
                         icon="TbShield"
                         tone="indigo"
                     >
-                        <label>
-                            {t('common.field.status')}
-                            <small>{t('common.field.user-status')}</small>
-                            <span class="input-icon"
-                                ><Icon name="TbUser" size={16} />
-                                <select name="status">
-                                    <option value="">
-                                        {t(
-                                            'bulk-all-user-actions-tabs.update.tab.feature.select-status'
-                                        )}
-                                    </option>
-                                    {#each userStatuses as status (status)}
-                                        <option value={status}>{status}</option>
-                                    {/each}
-                                </select></span
-                            >
-                        </label>
+                        <SelectField
+                            name="status"
+                            label={t('common.field.status')}
+                            description={t('common.field.user-status')}
+                            placeholder={t(
+                                'bulk-all-user-actions-tabs.update.tab.feature.select-status'
+                            )}
+                            leading="TbUser"
+                            searchable={false}
+                            options={userStatuses.map((value) => ({ value, label: value }))}
+                        />
                         <label>
                             {t('create-user-modal.widget.expiry-date')}
                             <small>{t('create-user-modal.widget.expire-at-description')}</small>
                             <span class="input-icon"
                                 ><Icon name="PiCalendarDuotone" size={16} />
                                 <input
+                                    class="gw-input"
                                     class:empty-date={!expiration}
                                     name="expireAt"
                                     type="datetime-local"
@@ -498,27 +500,22 @@
                                 ></span
                             >
                         </label>
-                        <label>
-                            {t('access-settings-card.external-squad')}
-                            <small
-                                >{t(
-                                    'access-settings-card.select-an-external-squad-to-apply-custom-settings-to-this-user'
-                                )}</small
-                            >
-                            <span class="input-icon"
-                                ><Icon name="TbWebhook" size={16} />
-                                <select name="externalSquadUuid">
-                                    <option value="">
-                                        {t('access-settings-card.select-an-external-squad')}
-                                    </option>
-                                    <option value="__clear__">Clear external squad</option>
-                                    {#each external.data?.externalSquads ??
-                                        [] as squad (squad.uuid)}
-                                        <option value={squad.uuid}>{squad.name}</option>
-                                    {/each}
-                                </select></span
-                            >
-                        </label>
+                        <SelectField
+                            name="externalSquadUuid"
+                            label={t('access-settings-card.external-squad')}
+                            description={t(
+                                'access-settings-card.select-an-external-squad-to-apply-custom-settings-to-this-user'
+                            )}
+                            placeholder={t('access-settings-card.select-an-external-squad')}
+                            leading="TbWebhook"
+                            options={[
+                                { value: '__clear__', label: 'Clear external squad' },
+                                ...(external.data?.externalSquads ?? []).map(({ uuid, name }) => ({
+                                    value: uuid,
+                                    label: name
+                                }))
+                            ]}
+                        />
                     </FormCard>
                 </div>
             </fieldset>
@@ -584,6 +581,7 @@
                     <span class="input-icon">
                         <Icon name="TbCirclesRelation" size={16} />
                         <input
+                            class="gw-input"
                             type="search"
                             aria-label={t('internal-squads-list.widget.search-internal-squads')}
                             placeholder={t('internal-squads-list.widget.search-internal-squads')}
@@ -592,26 +590,30 @@
                     </span>
                     <div class="squad-choices">
                         {#each filteredSquads as squad (squad.uuid)}
-                            <label class="checkbox"
-                                ><input
-                                    type="checkbox"
-                                    checked={chosenSquads.includes(squad.uuid)}
-                                    disabled={mutation.isPending}
-                                    onchange={(event) => {
-                                        chosenSquads = event.currentTarget.checked
-                                            ? [...chosenSquads, squad.uuid]
-                                            : chosenSquads.filter((id) => id !== squad.uuid)
-                                    }}
-                                >
-                                <strong>{squad.name}</strong>
-                                <span class="squad-count teal" title={t('constants.users')}
-                                    ><Icon name="TbUsers" size={14} />
-                                    {squad.info.membersCount}</span
-                                >
-                                <span class="squad-count blue" title={t('common.field.inbounds')}
-                                    ><Icon name="TbTag" size={14} />{squad.info.inboundsCount}</span
-                                >
-                            </label>
+                            <Checkbox
+                                label={squad.name}
+                                checked={chosenSquads.includes(squad.uuid)}
+                                disabled={mutation.isPending}
+                                onchange={(event) => {
+                                    chosenSquads = event.currentTarget.checked
+                                        ? [...chosenSquads, squad.uuid]
+                                        : chosenSquads.filter((id) => id !== squad.uuid)
+                                }}
+                            >
+                                {#snippet end()}
+                                    <span class="squad-count teal" title={t('constants.users')}>
+                                        <Icon name="TbUsers" size={14} />
+                                        {squad.info.membersCount}
+                                    </span>
+                                    <span
+                                        class="squad-count blue"
+                                        title={t('common.field.inbounds')}
+                                    >
+                                        <Icon name="TbTag" size={14} />
+                                        {squad.info.inboundsCount}
+                                    </span>
+                                {/snippet}
+                            </Checkbox>
                         {:else}
                             <small
                                 >{t(
@@ -629,9 +631,9 @@
                         <Button
                             variant="soft"
                             disabled={mutation.isPending || !squads.isSuccess}
-                            onclick={() => {
+                            onclick={async () => {
                                 error = ''
-                                if (window.confirm(`${scopeDescription}?`))
+                                if (await askConfirmation(`${scopeDescription}?`))
                                     mutation.mutate({
                                         scope: 'selected',
                                         action: 'squads',
@@ -688,6 +690,7 @@
                         )}</small
                     >
                     <input
+                        class="gw-input"
                         name="extendDays"
                         type="number"
                         min="1"
@@ -699,15 +702,15 @@
                     >
                 </label>
             {:else}
-                <label>
-                    {t('common.field.status')}
-                    <select name="status" required data-autofocus>
-                        <option value="">Choose a status</option>
-                        {#each userStatuses as status (status)}
-                            <option value={status}>{status}</option>
-                        {/each}
-                    </select>
-                </label>
+                <SelectField
+                    name="status"
+                    label={t('common.field.status')}
+                    placeholder="Choose a status"
+                    searchable={false}
+                    required
+                    bind:value={statusToDelete}
+                    options={userStatuses.map((value) => ({ value, label: value }))}
+                />
             {/if}
             {@render feedback()}
             <Button
@@ -716,6 +719,7 @@
                 color={subdialog === 'extend' ? 'cyan' : 'red'}
                 variant="soft"
                 pending={mutation.isPending}
+                disabled={subdialog === 'delete-status' && !statusToDelete}
             >
                 {t(
                     subdialog === 'extend'
@@ -754,8 +758,7 @@
     }
 
     input:not([type="checkbox"]),
-    textarea,
-    select {
+    textarea {
         min-width: 0;
         width: 100%;
         min-height: 36px;
@@ -796,8 +799,7 @@
         pointer-events: none;
     }
 
-    .input-icon input:not([type="hidden"]),
-    .input-icon select {
+    .input-icon input:not([type="hidden"]) {
         padding-inline-start: 36px;
     }
 
@@ -855,24 +857,6 @@
 
     [data-autofocus]:focus {
         outline: none;
-    }
-
-    .checkbox {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--mantine-color-dimmed);
-        font-size: var(--mantine-font-size-xs);
-    }
-
-    .device-limit .checkbox {
-        padding-block: 5px;
-        font-size: var(--mantine-font-size-sm);
-    }
-
-    .checkbox input {
-        min-height: 0;
-        accent-color: var(--mantine-primary-color-filled);
     }
 
     .optional-field {

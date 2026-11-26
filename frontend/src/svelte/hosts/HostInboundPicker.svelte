@@ -111,6 +111,7 @@
         <div class="search">
             <Icon name="TbSearch" size={16} />
             <input
+                class="gw-input"
                 type="search"
                 aria-label={t('common.message.search-profiles-or-inbounds')}
                 placeholder={t('common.message.search-profiles-or-inbounds')}

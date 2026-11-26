@@ -39,6 +39,7 @@
                     {t('headers-manager.widget.key')}
                 {/if}
                 <input
+                    class="gw-input"
                     name="headerName"
                     aria-label={t('headers-manager.widget.key')}
                     placeholder={compact ? t('headers-manager.widget.key') : undefined}
@@ -53,6 +54,7 @@
                 <div>
                     <TemplateVariables />
                     <textarea
+                        class="gw-input"
                         id={id + row.id}
                         name="headerValue"
                         rows="1"

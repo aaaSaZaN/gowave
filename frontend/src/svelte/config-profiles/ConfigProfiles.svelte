@@ -21,7 +21,7 @@
     import ActionIcon from '../ui/ActionIcon.svelte'
     import ActionMenu from '../ui/ActionMenu.svelte'
     import Button from '../ui/Button.svelte'
-    import { cancelDialog, dismissDialog } from '../ui/dialog-motion'
+    import { useConfirmation } from '../ui/confirmation'
     import EmptyState from '../ui/EmptyState.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
     import EntityTagBar from '../ui/EntityTagBar.svelte'
@@ -30,22 +30,27 @@
     import Icon from '../ui/Icon.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
+    import TextInput from '../ui/TextInput.svelte'
     import { downloadProfile } from './download-profile'
     import ProfilePreview from './ProfilePreview.svelte'
     import ProfileRelations from './ProfileRelations.svelte'
     import { type Profile, profileQuery, profilesQuery } from './queries'
     import Snippets from './Snippets.svelte'
 
+    const confirmAction = useConfirmation()
+
     let showSnippets = $state(false)
     let relations = $state<{ uuid: string; mode: 'nodes' | 'inbounds' }>()
     let preview = $state<{ uuid: string; computed: boolean }>()
     let renameUuid = $state('')
-    let renameDialog: HTMLDialogElement
+    let renameDialog = $state<ReturnType<typeof Overlay>>()
+    let renameOpen = $state(false)
     let renameName = $state('')
     let helpOpen = $state(false)
     let clipboardError = $state('')
     let tag = $state('')
-    let tagsDialog: HTMLDialogElement
+    let tagsDialog = $state<ReturnType<typeof Overlay>>()
+    let tagsOpen = $state(false)
     let tagDraft = $state('')
     let tagUuid = $state('')
     let tagsError = $state('')
@@ -112,7 +117,7 @@
         tagUuid = profile.uuid
         tagDraft = profile.tags.join(', ')
         tagsError = ''
-        tagsDialog.showModal()
+        tagsOpen = true
     }
 
     async function saveTags(event: SubmitEvent): Promise<void> {
@@ -133,7 +138,7 @@
             await queryClient.invalidateQueries({ queryKey: ['configProfiles'] })
             if (tag && tag !== NO_TAG && !ordered.some((profile) => profile.tags.includes(tag)))
                 tag = ''
-            dismissDialog(tagsDialog)
+            tagsDialog?.dismiss()
         } catch (error) {
             tagsError =
                 error instanceof ZodError
@@ -167,7 +172,7 @@
         onSuccess: async (profile) => {
             queryClient.setQueryData(profileQuery(profile.uuid).queryKey, profile)
             await queryClient.invalidateQueries({ queryKey: ['configProfiles'] })
-            dismissDialog(renameDialog)
+            renameDialog?.dismiss()
         }
     }))
 
@@ -175,7 +180,7 @@
         renameProfile.reset()
         renameUuid = profile.uuid
         renameName = profile.name
-        renameDialog.showModal()
+        renameOpen = true
     }
 
     function rename(event: SubmitEvent): void {
@@ -383,9 +388,9 @@
                                     tabindex="-1"
                                     data-tone="red"
                                     disabled={removeProfile.isPending || reordering}
-                                    onclick={() => {
+                                    onclick={async () => {
                                         if (
-                                            window.confirm(
+                                            await confirmAction(
                                                 `${t('common.action.delete')} ${profile.name}?`
                                             )
                                         ) {
@@ -474,6 +479,7 @@
                     <span class="required">*</span></span
                 >
                 <input
+                    class="gw-input"
                     bind:value={name}
                     name="name"
                     required
@@ -512,57 +518,70 @@
     </Overlay>
 {/if}
 
-<dialog
-    bind:this={tagsDialog}
-    aria-labelledby="profile-tags-title"
-    oncancel={(event) => cancelDialog(event, savingTags)}
->
-    <h2 id="profile-tags-title">{t('common.field.tags')}</h2>
-    <form onsubmit={(event) => void saveTags(event)}>
-        <label>
-            {t('common.field.tags')}
-            <input name="tags" bind:value={tagDraft} placeholder="TAG1, TAG2" disabled={savingTags}>
-        </label>
-        {#if tagsError}
-            <p role="alert">{tagsError}</p>
-        {/if}
-        <div class="button-row">
-            <button type="button" disabled={savingTags} onclick={() => dismissDialog(tagsDialog)}>
-                {t('common.action.cancel')}
-            </button>
-            <button type="submit" disabled={savingTags}>{t('common.action.save')}</button>
-        </div>
-    </form>
-</dialog>
+{#if tagsOpen}
+    <Overlay
+        bind:this={tagsDialog}
+        title={t('common.field.tags')}
+        icon="TbTag"
+        fullscreenOnMobile={false}
+        preventClose={savingTags}
+        close={() => (tagsOpen = false)}
+    >
+        <form onsubmit={(event) => void saveTags(event)}>
+            <TextInput
+                label={t('common.field.tags')}
+                name="tags"
+                bind:value={tagDraft}
+                placeholder="TAG1, TAG2"
+                disabled={savingTags}
+                error={tagsError || undefined}
+            />
+            <div class="button-row">
+                <Button disabled={savingTags} onclick={() => tagsDialog?.dismiss()}
+                    >{t('common.action.cancel')}</Button
+                >
+                <Button type="submit" variant="soft" color="teal" pending={savingTags}
+                    >{t('common.action.save')}</Button
+                >
+            </div>
+        </form>
+    </Overlay>
+{/if}
 
-<dialog
-    bind:this={renameDialog}
-    aria-labelledby="profile-rename-title"
-    oncancel={(event) => cancelDialog(event, renameProfile.isPending)}
->
-    <h2 id="profile-rename-title">{t('common.action.rename')}</h2>
-    <form onsubmit={rename}>
-        <label>
-            {t('common.field.name')}
-            <input name="name" bind:value={renameName} required disabled={renameProfile.isPending}>
-        </label>
-        {#if renameProfile.error}
-            <p role="alert">{renameProfile.error.message}</p>
-        {/if}
-        <div class="button-row">
-            <button
-                type="button"
+{#if renameOpen}
+    <Overlay
+        bind:this={renameDialog}
+        title={t('common.action.rename')}
+        icon="TbEdit"
+        fullscreenOnMobile={false}
+        preventClose={renameProfile.isPending}
+        close={() => (renameOpen = false)}
+    >
+        <form onsubmit={rename}>
+            <TextInput
+                label={t('common.field.name')}
+                name="name"
+                bind:value={renameName}
+                required
                 disabled={renameProfile.isPending}
-                onclick={() => dismissDialog(renameDialog)}
-            >
-                {t('common.action.close')}
-            </button>
-            <button type="submit" disabled={renameProfile.isPending || !renameName.trim()}>
-                {t('common.action.save')}
-            </button>
-        </div>
-    </form>
-</dialog>
+                error={renameProfile.error?.message}
+            />
+            <div class="button-row">
+                <Button disabled={renameProfile.isPending} onclick={() => renameDialog?.dismiss()}
+                    >{t('common.action.close')}</Button
+                >
+                <Button
+                    type="submit"
+                    variant="soft"
+                    color="teal"
+                    pending={renameProfile.isPending}
+                    disabled={!renameName.trim()}
+                    >{t('common.action.save')}</Button
+                >
+            </div>
+        </form>
+    </Overlay>
+{/if}
 
 <style>
     .profiles-page {

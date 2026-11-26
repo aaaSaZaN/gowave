@@ -161,7 +161,7 @@
     {/if}
     {#if command}
         <pre>{command}</pre>
-        <button type="button" onclick={() => void copy(command)}>{t('common.action.copy')}</button>
+        <Button onclick={() => void copy(command)}>{t('common.action.copy')}</Button>
     {/if}
     {#if copyError}
         <p role="alert">{copyError}</p>

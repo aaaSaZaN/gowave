@@ -12,6 +12,7 @@
     import InspectorTable from '../tools/InspectorTable.svelte'
     import { torrentStorage } from '../tools/table-state'
     import ActionIcon from '../ui/ActionIcon.svelte'
+    import { useConfirmation } from '../ui/confirmation'
     import Icon from '../ui/Icon.svelte'
     import JsonTree from '../ui/JsonTree.svelte'
     import Leaderboard from '../ui/Leaderboard.svelte'
@@ -19,6 +20,8 @@
     import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import { reportRows, reportStats, type TorrentReport } from './queries'
+
+    const confirmAction = useConfirmation()
 
     let t = $derived(locale.t)
     const stats = createQuery(() => reportStats)
@@ -101,8 +104,12 @@
         }
     ])
 
-    function removeReports(): void {
-        if (!window.confirm(t('torrent-blocker-reports-table.widget.truncate-reports-description')))
+    async function removeReports(): Promise<void> {
+        if (
+            !(await confirmAction(
+                t('torrent-blocker-reports-table.widget.truncate-reports-description')
+            ))
+        )
             return
         truncate.mutate()
     }

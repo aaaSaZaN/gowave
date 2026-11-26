@@ -3,6 +3,7 @@
     import type { Snippet } from 'svelte'
     import { locale } from '../i18n.svelte'
     import ActionIcon from '../ui/ActionIcon.svelte'
+    import Button from '../ui/Button.svelte'
     import CopyableField from '../ui/CopyableField.svelte'
     import Icon from '../ui/Icon.svelte'
     import type { IconName } from '../ui/icons'
@@ -142,7 +143,7 @@
     {/each}
 </ul>
 {#if visible.length > limit}
-    <button type="button" onclick={() => (limit += 20)}>Show more</button>
+    <Button onclick={() => (limit += 20)}>Show more</Button>
 {/if}
 
 <style>

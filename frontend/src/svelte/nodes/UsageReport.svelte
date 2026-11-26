@@ -7,7 +7,9 @@
     import RouteLoading from '../RouteLoading.svelte'
     import { p } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
+    import Button from '../ui/Button.svelte'
     import Chart from '../ui/Chart.svelte'
+    import DataTable from '../ui/DataTable.svelte'
     import Icon from '../ui/Icon.svelte'
     import Leaderboard from '../ui/Leaderboard.svelte'
     import Overlay from '../ui/Overlay.svelte'
@@ -98,9 +100,9 @@
         <RouteLoading compact />
     {:else if stats.isError}
         <p role="alert">{stats.error.message}</p>
-        <button type="button" onclick={() => void stats.refetch()}>
+        <Button onclick={() => void stats.refetch()}>
             {t('common.action.try-again')}
-        </button>
+        </Button>
     {:else}
         <div class="summary">
             <UsageSummary
@@ -189,7 +191,7 @@
         close={() => (selectedDay = undefined)}
     >
         <div class="details">
-            <table>
+            <DataTable class="usage-report-table">
                 <thead>
                     <tr>
                         <th scope="col">{t('statistic-nodes.component.node')}</th>
@@ -212,7 +214,7 @@
                         </tr>
                     {/each}
                 </tbody>
-            </table>
+            </DataTable>
         </div>
     </Overlay>
 {/if}
@@ -277,7 +279,7 @@
         overflow: auto;
         scrollbar-gutter: stable;
     }
-    table {
+    :global(.usage-report-table) {
         width: 100%;
         border-collapse: collapse;
         border: 1px solid var(--gw-border);

@@ -5,6 +5,7 @@
     import RouteLoading from '../RouteLoading.svelte'
     import { navigate, route } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
+    import Button from '../ui/Button.svelte'
     import CopyEntityAction from '../ui/CopyEntityAction.svelte'
     import HelpDrawer from '../ui/HelpDrawer.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
@@ -58,7 +59,7 @@
         {/key}
     {:else if profile.error || snippets.error}
         <p role="alert">{(profile.error ?? snippets.error)?.message}</p>
-        <button type="button" onclick={retry}>{t('common.action.try-again')}</button>
+        <Button onclick={retry}>{t('common.action.try-again')}</Button>
     {:else}
         <RouteLoading label={t('common.message.loading')} />
     {/if}

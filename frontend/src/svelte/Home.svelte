@@ -13,6 +13,7 @@
     import RouteLoading from './RouteLoading.svelte'
     import Disclaimer from './shell/Disclaimer.svelte'
     import { type SummaryMetric, systemStatsQuery, userMetrics } from './system-stats'
+    import Button from './ui/Button.svelte'
     import type { IconName } from './ui/icons'
     import MetricCard from './ui/MetricCard.svelte'
 
@@ -244,7 +245,7 @@
 <main class="home">
     {#if error && !sections.length}
         <p role="alert">{error.message}</p>
-        <button type="button" onclick={refresh}>{t('common.action.try-again')}</button>
+        <Button onclick={refresh}>{t('common.action.try-again')}</Button>
     {:else if !sections.length}
         <RouteLoading label={t('common.message.loading')} />
     {:else}

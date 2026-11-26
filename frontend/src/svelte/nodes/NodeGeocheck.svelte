@@ -200,7 +200,11 @@
                 <label>
                     {t('node-geocheck.source-default')}
                     <small>{t('node-geocheck.default-description')}</small>
-                    <input placeholder={t('node-geocheck.default-placeholder')} disabled>
+                    <input
+                        class="gw-input"
+                        placeholder={t('node-geocheck.default-placeholder')}
+                        disabled
+                    >
                 </label>
             {:else if source === 'ip'}
                 <SelectField
@@ -249,7 +253,7 @@
         <p role="alert">
             {result.error?.message || report?.message || t('node-geocheck.failed-description')}
         </p>
-        <button type="button" onclick={() => (job = '')}>{t('common.action.try-again')}</button>
+        <Button onclick={() => (job = '')}>{t('common.action.try-again')}</Button>
     {:else if result.data?.isCompleted}
         <div class="report-toolbar">
             <fieldset class="sources report-views" aria-label={t('node-geocheck.title')}>

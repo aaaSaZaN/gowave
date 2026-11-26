@@ -113,6 +113,7 @@
     </ActionMenu>
     <div class="address">
         <input
+            class="gw-input"
             bind:this={input}
             bind:value={ip}
             name="ips"
