@@ -17,8 +17,8 @@ interface IJsonSchemaDocument {
     properties?: Record<string, unknown>
 }
 
-export const getTemplateModelPath = (templateType: TSubscriptionTemplateType) =>
-    `subscription-template://${templateType.toLowerCase()}`
+export const getTemplateModelPath = (templateType: TSubscriptionTemplateType, modelId: string) =>
+    `subscription-template://${templateType.toLowerCase()}/${modelId}`
 
 const YAML_OPTIONS: MonacoYamlOptions = {
     validate: true,
@@ -31,19 +31,52 @@ const YAML_OPTIONS: MonacoYamlOptions = {
     }
 }
 
+const COMMON_YAML_PORT = {
+    type: 'integer',
+    minimum: 0,
+    maximum: 65535
+} as const
+
 let monacoYaml: Promise<MonacoYaml> | undefined
 
 // monaco-yaml depends on monaco-editor, so it is imported lazily with the editor.
-const configureYaml = async (monaco: Monaco, schemas: SchemasSettings[] = []) => {
+const configureYaml = async (monaco: Monaco) => {
+    if (monacoYaml !== undefined) {
+        await monacoYaml
+        return
+    }
+    const schemas: SchemasSettings[] = [
+        {
+            fileMatch: [getTemplateModelPath(SUBSCRIPTION_TEMPLATE_TYPE.MIHOMO, '*')],
+            uri: new URL(app.templateEditor.mihomoYamlSchemaUrl, window.location.origin).href
+        },
+        {
+            fileMatch: [
+                getTemplateModelPath(SUBSCRIPTION_TEMPLATE_TYPE.CLASH, '*'),
+                getTemplateModelPath(SUBSCRIPTION_TEMPLATE_TYPE.STASH, '*')
+            ],
+            uri: 'gowave://schemas/clash-compatible-template.json',
+            // Both clients extend the format independently. Validate the shared fields only.
+            schema: {
+                type: 'object',
+                properties: {
+                    port: COMMON_YAML_PORT,
+                    'socks-port': COMMON_YAML_PORT,
+                    'mixed-port': COMMON_YAML_PORT,
+                    'redir-port': COMMON_YAML_PORT,
+                    'tproxy-port': COMMON_YAML_PORT,
+                    'allow-lan': { type: 'boolean' },
+                    dns: { type: 'object' },
+                    proxies: { type: ['array', 'null'] },
+                    'proxy-groups': { type: ['array', 'null'] },
+                    rules: { type: ['array', 'null'], items: { type: 'string' } }
+                }
+            }
+        }
+    ]
     const options: MonacoYamlOptions = {
         ...YAML_OPTIONS,
         schemas
-    }
-
-    if (monacoYaml !== undefined) {
-        const instance = await monacoYaml
-        await instance.update(options)
-        return
     }
 
     monacoYaml = import('monaco-yaml')
@@ -97,20 +130,7 @@ export const configureMonaco = async (
 ) => {
     try {
         if (language === 'yaml') {
-            const schemas =
-                templateType === SUBSCRIPTION_TEMPLATE_TYPE.MIHOMO
-                    ? [
-                          {
-                              fileMatch: [getTemplateModelPath(templateType)],
-                              uri: new URL(
-                                  app.templateEditor.mihomoYamlSchemaUrl,
-                                  window.location.origin
-                              ).href
-                          }
-                      ]
-                    : undefined
-
-            await configureYaml(monaco, schemas)
+            await configureYaml(monaco)
         }
 
         if (language === 'json') {
@@ -283,7 +303,10 @@ export const configureMonaco = async (
             }
 
             registerJsonSchema({
-                fileMatch: ['subscription-template://*', getTemplateModelPath(templateType)],
+                fileMatch: [
+                    getTemplateModelPath(SUBSCRIPTION_TEMPLATE_TYPE.SINGBOX, '*'),
+                    getTemplateModelPath(SUBSCRIPTION_TEMPLATE_TYPE.XRAY_JSON, '*')
+                ],
                 schema,
                 uri: 'https://subscription-template-schema.json'
             })
@@ -295,7 +318,7 @@ export const configureMonaco = async (
                 const singboxSchema = response.data
 
                 registerJsonSchema({
-                    fileMatch: [getTemplateModelPath(templateType)],
+                    fileMatch: [getTemplateModelPath(templateType, '*')],
                     schema: {
                         ...singboxSchema,
                         properties: { ...singboxSchema.properties, remnawave: true }
@@ -306,5 +329,6 @@ export const configureMonaco = async (
         }
     } catch (error) {
         consola.error(`Failed to configure Monaco ${language.toUpperCase()}:`, error)
+        throw error
     }
 }

@@ -1,6 +1,16 @@
+<script module lang="ts">
+    export interface EditorDiagnostic {
+        message: string
+        line: number
+        column: number
+        warning: boolean
+    }
+</script>
+
 <script lang="ts">
     import {
         BASE_MONACO_OPTIONS,
+        COMPACT_MONACO_OPTIONS,
         MONACO_LIGHT_THEME_NAME,
         MONACO_THEME_NAME
     } from '@shared/constants/monaco-theme'
@@ -21,11 +31,25 @@
         label: string
         value: string
         readOnly?: boolean
+        compact?: boolean
         onchange: (text: string) => void
         onready?: (instance: editor.IStandaloneCodeEditor | null) => void
+        onvalidate?: (error: string) => void
+        ondiagnostics?: (diagnostics: EditorDiagnostic[]) => void
     }
 
-    let { language, modelUri, label, value, readOnly = false, onchange, onready }: Props = $props()
+    let {
+        language,
+        modelUri,
+        label,
+        value,
+        readOnly = false,
+        compact = false,
+        onchange,
+        onready,
+        onvalidate,
+        ondiagnostics
+    }: Props = $props()
     let container: HTMLDivElement
     let loading = $state(true)
     let error = $state('')
@@ -51,13 +75,46 @@
                 const model = monaco.editor.createModel(value, language, monaco.Uri.parse(modelUri))
                 dispose = () => model.dispose()
                 const instance = monaco.editor.create(container, {
-                    ...BASE_MONACO_OPTIONS,
+                    ...(compact ? COMPACT_MONACO_OPTIONS : BASE_MONACO_OPTIONS),
                     model,
                     readOnly,
                     ariaLabel: label,
                     theme: currentTheme()
                 })
+                const reportDiagnostics = () => {
+                    const diagnostics = monaco.editor.getModelMarkers({ resource: model.uri })
+                    const { Error: errorSeverity, Warning: warningSeverity } = monaco.MarkerSeverity
+                    const firstError = diagnostics.find(
+                        ({ severity }) => severity === errorSeverity
+                    )
+                    onvalidate?.(firstError?.message ?? '')
+                    ondiagnostics?.(
+                        diagnostics
+                            .filter(
+                                ({ severity }) =>
+                                    severity === errorSeverity || severity === warningSeverity
+                            )
+                            .sort(
+                                (a, b) =>
+                                    b.severity - a.severity || a.startLineNumber - b.startLineNumber
+                            )
+                            .map(({ severity, message, startLineNumber, startColumn }) => ({
+                                message,
+                                line: startLineNumber,
+                                column: startColumn,
+                                warning: severity === warningSeverity
+                            }))
+                    )
+                }
+                const markers =
+                    onvalidate || ondiagnostics
+                        ? monaco.editor.onDidChangeMarkers((uris) => {
+                              if (uris.some((uri) => uri.toString() === model.uri.toString()))
+                                  reportDiagnostics()
+                          })
+                        : undefined
                 dispose = () => {
+                    markers?.dispose()
                     instance.dispose()
                     model.dispose()
                 }
@@ -126,6 +183,7 @@
                     if (!updatingModel) onchange(documentText)
                 })
                 updateSnapshot()
+                if (markers) reportDiagnostics()
                 current = instance
                 loading = false
                 onready?.(instance)

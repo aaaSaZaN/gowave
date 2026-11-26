@@ -235,8 +235,7 @@
 
     function apply(key: HostField, enabled: boolean): void {
         if (enabled) applied.add(key)
-        else if (core.has(key)) applied.delete(key)
-        else resetOption(key)
+        else applied.delete(key)
     }
 
     function optionValue<Key extends HostField & keyof Host>(key: Key): Host[Key] | undefined {
@@ -255,14 +254,9 @@
             squadMode = INTERNAL_SQUADS_MODE.EXCLUDE
             assignedSquads = []
         }
-        if (bulk) {
-            applied.delete(key)
-            document.getElementById(`${id}-apply-${key}`)?.focus({ preventScroll: true })
-        } else {
-            activeOptions.delete(key)
-            onfieldchange(key)
-            trigger?.focus({ preventScroll: true })
-        }
+        activeOptions.delete(key)
+        if (!bulk) onfieldchange(key)
+        trigger?.focus({ preventScroll: true })
     }
 
     function changeInbound(profile: Profile, item: Profile['inbounds'][number]): void {
@@ -368,13 +362,14 @@
 )}
     {#if !bulk && core.has(key)}
         {@render field()}
-    {:else if bulk || activeOptions.has(key)}
-        {@const expanded = bulk ? applied.has(key) : true}
+    {:else if (bulk && core.has(key)) || activeOptions.has(key)}
+        {@const coreBulkField = bulk && core.has(key)}
+        {@const expanded = !coreBulkField || applied.has(key)}
         {@const helpText = helpMessage(key)}
         {@const docsUrl = optionHelpDocs[key]}
         <div class="field optional-field" class:inline={inline}>
             <div class="option-field-label">
-                {#if bulk}
+                {#if coreBulkField}
                     <label class="apply">
                         <input
                             id={`${id}-apply-${key}`}
@@ -387,6 +382,9 @@
                     </label>
                 {:else}
                     <span>{label}</span>
+                    {#if bulk}
+                        <input type="hidden" name={`apply:${key}`} value="">
+                    {/if}
                 {/if}
                 {#if key === 'serverDescription' || helpText}
                     <Tooltip multiline width={280}>
@@ -664,27 +662,25 @@
     <header class="option-header">
         <span class="visibility-icon enabled"><Icon name="PiListChecks" size={20} /></span>
         <h3>{t('base-host-form.options')}</h3>
-        {#if !bulk}
-            <Button
-                icon="TbPlus"
-                size="sm"
-                variant="soft"
-                color="gray"
-                disabled={activeOptions.size >= optional.length}
-                aria-haspopup="dialog"
-                aria-expanded={addOpen}
-                onclick={(event) => {
-                    trigger = event.currentTarget
-                    addOpen = !addOpen
-                    optionSearch = ''
-                    highlightedOption = undefined
-                }}
-            >
-                {t('common.action.add')}
-            </Button>
-        {/if}
+        <Button
+            icon="TbPlus"
+            size="sm"
+            variant="soft"
+            color="gray"
+            disabled={activeOptions.size >= optional.length}
+            aria-haspopup="dialog"
+            aria-expanded={addOpen}
+            onclick={(event) => {
+                trigger = event.currentTarget
+                addOpen = !addOpen
+                optionSearch = ''
+                highlightedOption = undefined
+            }}
+        >
+            {t('common.action.add')}
+        </Button>
     </header>
-    {#if addOpen && !bulk && trigger}
+    {#if addOpen && trigger}
         <TablePopup
             anchor={trigger}
             id={`${id}-host-picker`}
@@ -760,14 +756,14 @@
             </div>
         </TablePopup>
     {/if}
-    {#if !bulk && !activeOptions.size}
+    {#if !activeOptions.size}
         <div class="empty-options">
             <span><Icon name="TbAdjustmentsHorizontal" size={24} /></span>
             <strong>{t('base-host-form.no-options-title')}</strong>
             <p>{t('base-host-form.no-options-description')}</p>
         </div>
     {/if}
-    <div class="option-group" hidden={!bulk && !hasOption(assignmentFields)}>
+    <div class="option-group" hidden={!hasOption(assignmentFields)}>
         <div class="option-label">{t('base-host-form.group-assignment')}</div>
         <div class="fields">
             {@render entry('tags', t('common.field.tags'), tagsControl)}
@@ -837,7 +833,7 @@
         </div>
     </div>
 
-    <div class="option-group" hidden={!bulk && !hasOption(securityFields)}>
+    <div class="option-group" hidden={!hasOption(securityFields)}>
         <div class="option-label">{t('base-host-form.group-security')}</div>
         <div class="fields">
             {@render scalar('sni', t('base-host-form.sni'), optionValue('sni') ?? '')}
@@ -872,7 +868,7 @@
         </div>
     </div>
 
-    <div class="option-group" hidden={!bulk && !hasOption(transportFields)}>
+    <div class="option-group" hidden={!hasOption(transportFields)}>
         <div class="option-label">{t('base-host-form.group-transport')}</div>
         <div class="fields">
             {@render entry('vlessRouteId', t('base-host-form.vless-route-id'), routeId)}
@@ -898,7 +894,7 @@
         </div>
     </div>
 
-    <div class="option-group" hidden={!bulk && !hasOption(subscriptionFields)}>
+    <div class="option-group" hidden={!hasOption(subscriptionFields)}>
         <div class="option-label">{t('base-host-form.group-subscription')}</div>
         <div class="fields">
             {@render scalar(
@@ -974,7 +970,7 @@
         </div>
     </div>
 
-    <div class="option-group" hidden={!bulk && !hasOption(advancedFields)}>
+    <div class="option-group" hidden={!hasOption(advancedFields)}>
         <div class="option-label">{t('base-host-form.group-advanced')}</div>
         <div class="fields">
             {@render entry(
@@ -1011,6 +1007,9 @@
                         label={t(label)}
                         value={jsonText(optionValue(key))}
                         rawInbound={knownInbound?.rawInbound}
+                        disabled={key === 'xhttpExtraParams' &&
+                            (!bulk || Boolean(chosenInbound)) &&
+                            knownInbound?.network !== 'xhttp'}
                         onchange={() => onfieldchange(key)}
                     />
                 {/snippet}
@@ -1018,7 +1017,7 @@
         </div>
     </div>
 
-    <div class="option-group" hidden={!bulk && !hasOption(clientFields)}>
+    <div class="option-group" hidden={!hasOption(clientFields)}>
         <div class="option-label">{t('base-host-form.group-client')}</div>
         <div class="fields">
             {@render scalar(
@@ -1363,7 +1362,10 @@
         padding: var(--mantine-spacing-sm) var(--mantine-spacing-md) var(--mantine-spacing-md);
         min-width: 0;
     }
-    .option-group[hidden],
+    .option-group[hidden] {
+        display: none;
+    }
+
     .option-label {
         display: flex;
         align-items: center;

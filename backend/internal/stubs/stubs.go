@@ -769,7 +769,7 @@ FROM hwid_user_devices
 JOIN users ON users.id = hwid_user_devices.user_id
 GROUP BY users.id, users.username
 ORDER BY devices_count DESC, users.id ASC
-LIMIT ? OFFSET ?;
+LIMIT ? OFFSET ?
 `, size, start).Scan(&topUsers)
 	if topUsers == nil {
 		topUsers = []TopUserRow{}

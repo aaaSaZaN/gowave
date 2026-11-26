@@ -88,7 +88,6 @@
     )
     let ips = $state(untrack(() => initial?.ips.map((ip, index) => ({ ...ip, key: index })) ?? []))
     const maxIps = 64
-    const ipDragType = 'application/x-gowave-node-ip'
     let nextIp = untrack(() => initial?.ips.length ?? 0)
     let focusIp = $state<number>()
     let showIpErrors = $state(false)
@@ -493,21 +492,12 @@
                                         ips.splice(index, 1)
                                         changed.add('ips')
                                     }}
-                                    ondragstart={(event) => {
-                                        if (!event.dataTransfer) return
-                                        event.dataTransfer.effectAllowed = 'move'
-                                        event.dataTransfer.setData(ipDragType, String(item.key))
-                                    }}
-                                    ondragover={(event) => {
-                                        if (event.dataTransfer?.types.includes(ipDragType))
-                                            event.preventDefault()
-                                    }}
-                                    ondrop={(event) => {
-                                        const source = event.dataTransfer?.getData(ipDragType)
-                                        if (!source) return
-                                        event.preventDefault()
-                                        moveIp(Number(source), index)
-                                    }}
+                                    orderKey={String(item.key)}
+                                    onreorder={(target) =>
+                                        moveIp(
+                                            item.key,
+                                            ips.findIndex(({ key }) => String(key) === target)
+                                        )}
                                     onmove={(offset) => moveIp(item.key, index + offset)}
                                 />
                             {/each}

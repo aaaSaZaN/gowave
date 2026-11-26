@@ -21,7 +21,7 @@
     import EntityCard from '../ui/EntityCard.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
     import EntityTagBar from '../ui/EntityTagBar.svelte'
-    import { entityOrder } from '../ui/entity-order'
+    import { applyEntityOrder, entityOrder } from '../ui/entity-order'
     import HelpDrawer from '../ui/HelpDrawer.svelte'
     import Icon from '../ui/Icon.svelte'
     import { notifications } from '../ui/notification-state.svelte'
@@ -39,8 +39,12 @@
     let tag = $state('')
     let creating = $state(false)
     let ordered = $derived(squads.data?.externalSquads ?? [])
+    const { drag, pendingOrder } = entityOrder(
+        () => ordered,
+        (items) => saveOrder(items.map(({ uuid }) => uuid))
+    )
     let visible = $derived(
-        ordered.filter(
+        applyEntityOrder(ordered, $pendingOrder).filter(
             (squad) => !tag || (tag === NO_TAG ? !squad.tags.length : squad.tags.includes(tag))
         )
     )
@@ -118,9 +122,11 @@
         if (window.confirm(confirmations[action])) update.mutate({ action, squad })
     }
 
-    function saveOrder(items: string[]): void {
+    async function saveOrder(items: string[]): Promise<void> {
         if (filtering || update.isPending) return
-        update.mutate({ items: items.map((uuid, viewPosition) => ({ uuid, viewPosition })) })
+        await update.mutateAsync({
+            items: items.map((uuid, viewPosition) => ({ uuid, viewPosition }))
+        })
     }
 
     function openSquad(squad: ExternalSquad, editIdentity = false): void {
@@ -129,11 +135,6 @@
             search: editIdentity ? { edit: 'identity' } : {}
         })
     }
-
-    const drag = entityOrder(
-        () => ordered,
-        (items) => saveOrder(items.map(({ uuid }) => uuid))
-    )
 
     function copyUuid(uuid: string): void {
         void navigator.clipboard.writeText(uuid).then(

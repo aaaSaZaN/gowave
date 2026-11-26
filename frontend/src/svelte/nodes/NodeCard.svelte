@@ -10,6 +10,7 @@
     import { locale } from '../i18n.svelte'
     import { p } from '../router'
     import BrandIcon from '../ui/BrandIcon.svelte'
+    import { reorderHandle } from '../ui/entity-order'
     import Icon from '../ui/Icon.svelte'
     import { notifications } from '../ui/notification-state.svelte'
     import Tooltip from '../ui/Tooltip.svelte'
@@ -25,6 +26,7 @@
         onopen,
         onmeasure,
         reorder,
+        onreordering,
         selection,
         actions
     }: {
@@ -36,6 +38,7 @@
         onopen: (event: MouseEvent) => void
         onmeasure?: (height: number) => void
         reorder?: ((source: string, target: string) => void) | undefined
+        onreordering: (active: boolean) => void
         selection: Snippet
         actions: Snippet
     } = $props()
@@ -45,14 +48,11 @@
         const target = itemElement
         const report = onmeasure
         if (!target || !report || typeof ResizeObserver !== 'function') return
-        const observer = new ResizeObserver((entries) => {
-            const entry = entries[0]
-            const next = Math.round(
-                entry?.contentRect.height ?? target.getBoundingClientRect().height
-            )
-            if (next > 0) report(next)
+        const observer = new ResizeObserver(() => {
+            const height = target.offsetHeight
+            if (height > 0) report(height)
         })
-        observer.observe(target)
+        observer.observe(target, { box: 'border-box' })
         return () => observer.disconnect()
     })
 
@@ -60,9 +60,7 @@
     let lifetime = $derived(
         trafficSummary.data?.nodes.find((item) => item.uuid === node.uuid)?.lifetimeTrafficBytes
     )
-    const reorderType = 'application/x-gowave-node'
     let menu = $state(false)
-    let dragging = $state(false)
     let copied = $state(false)
     const menuId = $props.id()
     let hasError = $derived(Boolean(node.lastStatusMessage && node.lastStatusMessage !== 'OK'))
@@ -135,27 +133,6 @@
             () => (copied = false)
         )
     }
-
-    function dragstart(event: DragEvent): void {
-        if (!event.dataTransfer || !reorder) return
-        event.dataTransfer.effectAllowed = 'move'
-        event.dataTransfer.setData(reorderType, node.uuid)
-        dragging = true
-        menu = false
-    }
-
-    function dragover(event: DragEvent): void {
-        if (!reorder || !event.dataTransfer?.types.includes(reorderType)) return
-        event.preventDefault()
-        event.dataTransfer.dropEffect = 'move'
-    }
-
-    function drop(event: DragEvent): void {
-        const source = event.dataTransfer?.getData(reorderType)
-        if (!source || !reorder) return
-        event.preventDefault()
-        reorder(source, node.uuid)
-    }
 </script>
 
 {#snippet meter(value: number, fill: string, label: string)}
@@ -224,12 +201,10 @@
     bind:this={itemElement}
     class="node-item"
     class:mobile
-    class:dragging
     style:min-height={`${height}px`}
     style:--row-height={`${height}px`}
     style:--node-tone={border}
-    ondragover={dragover}
-    ondrop={drop}
+    data-reorder-key={node.uuid}
 >
     <article>
         <div class="node-main">
@@ -389,9 +364,15 @@
         <button
             type="button"
             class="mantine-UnstyledButton-root handle"
-            draggable={!!reorder}
-            ondragstart={dragstart}
-            ondragend={() => (dragging = false)}
+            use:reorderHandle={reorder
+                ? {
+                      drop: (target) => reorder?.(node.uuid, target),
+                      onactive: (active) => {
+                          if (active) menu = false
+                          onreordering(active)
+                      }
+                  }
+                : undefined}
             aria-label={locale.t('common.action.actions')}
             aria-expanded={menu}
             aria-controls={menu ? menuId : undefined}
@@ -428,9 +409,6 @@
     }
     article:hover {
         border-color: light-dark(var(--mantine-color-blue-3), var(--mantine-color-blue-5));
-    }
-    .dragging article {
-        opacity: 0.45;
     }
     .node-main {
         display: grid;
@@ -709,9 +687,6 @@
         padding: 8px;
         border-radius: 4px;
         color: var(--mantine-color-bright);
-    }
-    .handle[draggable="true"] {
-        cursor: grab;
     }
     .handle:hover {
         background: var(--mantine-color-default-hover);

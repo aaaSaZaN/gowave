@@ -14,12 +14,14 @@
         total = 0,
         percent = 0,
         explorer,
+        indeterminate,
         children
     }: {
         completed?: number
         total?: number
         percent?: number
         explorer?: ScanProgress
+        indeterminate?: { title: string; description: string }
         children?: Snippet
     } = $props()
     let t = $derived(locale.t)
@@ -31,9 +33,10 @@
             : Math.min(100, Math.max(0, percent))
     )
     let title = $derived(
-        explorer
-            ? t('sessions-explorer-progress.exploring-nodes')
-            : t('active-sessions-drawer.widget.fetching')
+        indeterminate?.title ??
+            (explorer
+                ? t('sessions-explorer-progress.exploring-nodes')
+                : t('active-sessions-drawer.widget.fetching'))
     )
 
     onMount(() => {
@@ -57,7 +60,12 @@
     })
 </script>
 
-<section class="scan" class:explorer={explorer !== undefined} aria-label={title}>
+<section
+    class="scan"
+    class:explorer={explorer !== undefined}
+    class:indeterminate={indeterminate !== undefined}
+    aria-label={title}
+>
     <div class="animation" aria-hidden="true">
         <canvas bind:this={canvas} class:ready></canvas>
         {#if !ready}
@@ -66,7 +74,9 @@
     </div>
     <div class="description" role="status">
         <strong>{title}</strong>
-        {#if explorer}
+        {#if indeterminate}
+            <span>{indeterminate.description}</span>
+        {:else if explorer}
             <span>
                 {t('sessions-explorer-progress.nodes-processed', {
                     completed: explorer.completed + explorer.failed,
@@ -82,14 +92,16 @@
             <span>{t('active-sessions-drawer.widget.progress', { completed, total })}</span>
         {/if}
     </div>
-    <div class="progress">
-        <div class="track" role="progressbar" aria-label={title} aria-valuenow={progress}>
-            <span style:width={`${progress}%`}></span>
+    {#if !indeterminate}
+        <div class="progress">
+            <div class="track" role="progressbar" aria-label={title} aria-valuenow={progress}>
+                <span style:width={`${progress}%`}></span>
+            </div>
+            {#if !explorer}
+                <b>{Math.round(progress)}%</b>
+            {/if}
         </div>
-        {#if !explorer}
-            <b>{Math.round(progress)}%</b>
-        {/if}
-    </div>
+    {/if}
     {#if explorer?.active.length}
         <ul class="active-nodes">
             {#each explorer.active as node (node.uuid)}
@@ -118,6 +130,11 @@
         justify-items: center;
         gap: var(--mantine-spacing-lg);
         padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 4vw, 3rem);
+    }
+    .scan.indeterminate {
+        padding: var(--mantine-spacing-lg);
+        border: 0;
+        background: transparent;
     }
     .active-nodes {
         display: flex;

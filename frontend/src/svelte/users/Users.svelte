@@ -73,7 +73,6 @@
     }>()
     let modeAnchor = $state<HTMLElement>()
     let columnsAnchor = $state<HTMLElement>()
-    let draggedColumn = $state<string>()
     let creating = $state(false)
     let editing = $state.raw<{ id: number }>()
     let bulk = $state<{ scope: 'selected' | 'all'; ids: number[]; editOnly?: boolean }>()
@@ -697,32 +696,20 @@
                     </li>
                     {#each ordered as column, index (column.id)}
                         {@const pin = pinFor(column.id)}
-                        <li
-                            ondragover={(event) => {
-                                if (draggedColumn) event.preventDefault()
-                            }}
-                            ondrop={(event) => {
-                                event.preventDefault()
-                                if (draggedColumn)
-                                    moveColumn(
-                                        ordered.findIndex(({ id }) => id === draggedColumn),
-                                        index
-                                    )
-                                draggedColumn = undefined
-                            }}
-                        >
+                        <li data-reorder-key={column.id}>
                             <ActionIcon
                                 icon="TbGripHorizontal"
                                 label={`Reorder ${column.label}`}
                                 size={28}
                                 iconSize={22}
                                 subtle
-                                draggable="true"
-                                ondragstart={(event) => {
-                                    draggedColumn = column.id
-                                    event.dataTransfer?.setData('text/plain', column.id)
+                                reorder={{
+                                    drop: (target) =>
+                                        moveColumn(
+                                            index,
+                                            ordered.findIndex(({ id }) => id === target)
+                                        )
                                 }}
-                                ondragend={() => (draggedColumn = undefined)}
                                 onkeydown={(event) => {
                                     if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return
                                     event.preventDefault()
@@ -1065,6 +1052,9 @@
 
     .column-options li:hover {
         background: var(--mantine-color-default-hover);
+    }
+    .column-options li:global([data-reorder-active]) {
+        background: var(--mantine-color-body);
     }
 
     .column-pins {

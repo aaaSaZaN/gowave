@@ -1,6 +1,66 @@
 // Paths from the icon sets used by Gowave's React frontend, as distributed in react-icons 5.7.0 and @tabler/icons-react 3.48.0.
 // Phosphor, Tabler, Heroicons, BoxIcons, and React Icons are MIT licensed. Simple Icons is CC0.
 export const dashboardIcons = {
+    TbArrowBarToUp: {
+        attrs: {
+            fill: 'none',
+            stroke: 'currentColor',
+            'stroke-width': '2',
+            viewBox: '0 0 24 24',
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round'
+        },
+        content:
+            '<path d="M12 10l0 10"></path><path d="M12 10l4 4"></path><path d="M12 10l-4 4"></path><path d="M4 4l16 0"></path>'
+    },
+    TbArrowBigUp: {
+        attrs: {
+            fill: 'none',
+            stroke: 'currentColor',
+            'stroke-width': '2',
+            viewBox: '0 0 24 24',
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round'
+        },
+        content:
+            '<path d="M9 20v-8h-3.586a1 1 0 0 1 -.707 -1.707l6.586 -6.586a1 1 0 0 1 1.414 0l6.586 6.586a1 1 0 0 1 -.707 1.707h-3.586v8a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1"></path>'
+    },
+    TbArrowBigDown: {
+        attrs: {
+            fill: 'none',
+            stroke: 'currentColor',
+            'stroke-width': '2',
+            viewBox: '0 0 24 24',
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round'
+        },
+        content:
+            '<path d="M15 4v8h3.586a1 1 0 0 1 .707 1.707l-6.586 6.586a1 1 0 0 1 -1.414 0l-6.586 -6.586a1 1 0 0 1 .707 -1.707h3.586v-8a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1"></path>'
+    },
+    TbArrowBarToDown: {
+        attrs: {
+            fill: 'none',
+            stroke: 'currentColor',
+            'stroke-width': '2',
+            viewBox: '0 0 24 24',
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round'
+        },
+        content:
+            '<path d="M4 20l16 0"></path><path d="M12 14l0 -10"></path><path d="M12 14l4 -4"></path><path d="M12 14l-4 -4"></path>'
+    },
+    TbCategoryPlus: {
+        attrs: {
+            fill: 'none',
+            stroke: 'currentColor',
+            'stroke-width': '2',
+            viewBox: '0 0 24 24',
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round'
+        },
+        content:
+            '<path d="M4 4h6v6h-6v-6"></path><path d="M14 4h6v6h-6v-6"></path><path d="M4 14h6v6h-6v-6"></path><path d="M14 17h6m-3 -3v6"></path>'
+    },
     PiArrowsDownUpDuotone: {
         attrs: {
             stroke: 'currentColor',

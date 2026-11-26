@@ -14,6 +14,7 @@ export interface VirtualLayoutOptions {
     getItemKey?: (index: number) => ItemKey
     overscan?: number
     scrollMargin?: number
+    pinnedKey?: ItemKey
 }
 
 export function fixedVirtualWindow(
@@ -37,13 +38,16 @@ export function virtualLayout(
     viewport: { offset: number; height: number },
     measurements: ReadonlyMap<ItemKey, number>
 ) {
-    const { count, estimateSize, getItemKey, overscan = 1, scrollMargin = 0 } = options
+    const { count, estimateSize, getItemKey, overscan = 1, scrollMargin = 0, pinnedKey } = options
     const items: VirtualItem[] = []
+    let pinned: VirtualItem | undefined
     let start = scrollMargin
     for (let index = 0; index < count; index++) {
         const key = getItemKey?.(index) ?? index
         const size = measurements.get(key) ?? estimateSize(index)
-        items.push({ index, key, start, size, end: start + size })
+        const item = { index, key, start, size, end: start + size }
+        items.push(item)
+        if (key === pinnedKey) pinned = item
         start += size
     }
     const totalSize = start - scrollMargin
@@ -65,5 +69,8 @@ export function virtualLayout(
     )
         last++
     last = Math.min(items.length - 1, last + overscan)
-    return { totalSize, virtualItems: items.slice(first, last + 1) }
+    const virtualItems = items.slice(first, last + 1)
+    if (pinned && pinned.index < first) virtualItems.unshift(pinned)
+    if (pinned && pinned.index > last) virtualItems.push(pinned)
+    return { totalSize, virtualItems }
 }

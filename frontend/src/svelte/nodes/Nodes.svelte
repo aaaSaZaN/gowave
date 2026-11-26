@@ -27,6 +27,8 @@
     import EmptyState from '../ui/EmptyState.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
     import EntityTagBar from '../ui/EntityTagBar.svelte'
+    import { applyEntityOrder } from '../ui/entity-order'
+    import Icon from '../ui/Icon.svelte'
     import MetricCard from '../ui/MetricCard.svelte'
     import { notifications } from '../ui/notification-state.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
@@ -62,7 +64,8 @@
     let confirmRestart = $state(false)
     let usageTargets = $state<string[]>()
     let sort = $state<{ column: Column; descending: boolean }>()
-    let ordered = $derived(nodes.data ?? [])
+    let pendingOrder = $state.raw<string[]>()
+    let ordered = $derived(applyEntityOrder(nodes.data ?? [], pendingOrder))
     const plugins = createQuery(() => ({
         ...nodePluginsQuery,
         enabled: ordered.some(({ activePluginUuid }) => activePluginUuid !== null)
@@ -142,6 +145,7 @@
     let offset = $state(0)
     const mobile = new MediaQuery('(max-width: 48em)')
     const cardSizes = new SvelteMap<string, number>()
+    let draggedNode = $state<string>()
     let rowHeight = $derived(mode === 'table' ? 50 : mobile.current ? 190 : 90)
     let range = $derived(fixedVirtualWindow(visible.length, rowHeight, offset, height))
     let cardLayout = $derived(
@@ -151,7 +155,8 @@
                       count: visible.length,
                       estimateSize: () => rowHeight,
                       getItemKey: (index) => visible[index]?.uuid ?? index,
-                      overscan: 4
+                      overscan: 4,
+                      ...(draggedNode ? { pinnedKey: draggedNode } : {})
                   },
                   // The first cards give the scroll container its measurable height.
                   { offset, height: height || rowHeight },
@@ -160,7 +165,6 @@
             : undefined
     )
     let cardItems = $derived(cardLayout?.virtualItems ?? [])
-    let cardTop = $derived(cardItems[0]?.start ?? 0)
     let cardBottom = $derived(
         cardItems.length
             ? Math.max(
@@ -200,14 +204,18 @@
                     await executeCommand(RestartAllNodesCommand)
             }
         },
-        onSuccess: () => {
+        onSuccess: (_data, change) => {
+            if (change.kind === 'order') return
             notifications.show({
                 title: t('common.message.success'),
                 message: t('common.message.operation-completed'),
                 color: 'teal'
             })
         },
-        onSettled: () => queryClient.invalidateQueries({ queryKey: nodesKey })
+        onSettled: (_, __, change) => {
+            if (change.kind === 'order') pendingOrder = undefined
+            return queryClient.invalidateQueries({ queryKey: nodesKey })
+        }
     }))
 
     async function executeOne(uuid: string, action: NodeAction): Promise<void> {
@@ -281,11 +289,11 @@
     }
 
     function move(direction: Move): void {
-        if (!canReorder) return
+        if (!canReorder || update.isPending) return
         const current = ordered.map(({ uuid }) => uuid)
         const next = moveSelection(current, selection, direction)
         if (next.every((uuid, index) => uuid === current[index])) return
-        update.mutate({ kind: 'order', ids: next })
+        saveOrder(next)
     }
 
     function reorder(source: string, target: string): void {
@@ -296,6 +304,11 @@
         if (from < 0 || to < 0) return
         ids.splice(from, 1)
         ids.splice(to, 0, source)
+        saveOrder(ids)
+    }
+
+    function saveOrder(ids: string[]): void {
+        pendingOrder = ids
         update.mutate({ kind: 'order', ids })
     }
 
@@ -499,9 +512,12 @@
             >
                 {#if mode === 'cards'}
                     <ul aria-label={t('constants.nodes')}>
-                        <li aria-hidden="true" style:height={`${cardTop}px`}></li>
-                        {#each cardItems as item (item.key)}
+                        {#each cardItems as item, index (item.key)}
                             {@const node = visible[item.index]}
+                            {@const gap = item.start - (cardItems[index - 1]?.end ?? 0)}
+                            {#if gap > 0}
+                                <li aria-hidden="true" style:height={`${gap}px`}></li>
+                            {/if}
                             {#if node}
                                 <NodeCard
                                     {node}
@@ -517,6 +533,8 @@
                                     }}
                                     onopen={(event) => openNode(node.uuid, event)}
                                     reorder={canReorder && !update.isPending ? reorder : undefined}
+                                    onreordering={(active) =>
+                                        (draggedNode = active ? node.uuid : undefined)}
                                 >
                                     {#snippet selection()}
                                         {@render select(node)}
@@ -535,16 +553,29 @@
                             <tr>
                                 <th scope="col">{t('common.action.select')}</th>
                                 {#each columns as column (column)}
-                                    <th
-                                        scope="col"
-                                        aria-sort={sort?.column === column
+                                    {@const direction =
+                                        sort?.column === column
                                             ? sort.descending
                                                 ? 'descending'
                                                 : 'ascending'
                                             : 'none'}
-                                    >
-                                        <button type="button" onclick={() => sortBy(column)}>
-                                            {label(column)}
+                                    <th scope="col" aria-sort={direction}>
+                                        <button
+                                            class="mantine-UnstyledButton-root table-sort-button"
+                                            type="button"
+                                            onclick={() => sortBy(column)}
+                                        >
+                                            <span>{label(column)}</span>
+                                            <span class="table-sort-indicator" aria-hidden="true">
+                                                <Icon
+                                                    name={direction === 'ascending'
+                                                        ? 'TbArrowUp'
+                                                        : direction === 'descending'
+                                                          ? 'TbArrowDown'
+                                                          : 'TbArrowsSort'}
+                                                    size={14}
+                                                />
+                                            </span>
                                         </button>
                                     </th>
                                 {/each}
@@ -747,6 +778,11 @@
         position: sticky;
         inset-block-start: 0;
         background: var(--gw-surface);
+    }
+    thead th {
+        height: 40px;
+        font-size: var(--mantine-font-size-sm);
+        box-shadow: inset 0 -1px var(--gw-border);
     }
     tbody tr:not([aria-hidden]) {
         border-block-end: 1px solid var(--gw-border);

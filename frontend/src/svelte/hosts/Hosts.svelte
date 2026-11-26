@@ -33,6 +33,7 @@
     import Overlay from '../ui/Overlay.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
     import SelectField from '../ui/SelectField.svelte'
+    import Tooltip from '../ui/Tooltip.svelte'
     import { type EntityViewMode, readHostView, writeHostView } from '../view-preferences'
     import HostConfirmation from './HostConfirmation.svelte'
     import HostDialog from './HostDialog.svelte'
@@ -40,21 +41,36 @@
     import { type Host, hostsKey, hostsQuery } from './queries'
 
     type Action = 'enable' | 'disable' | 'clone' | 'delete'
-    type Column = 'remark' | 'address' | 'port' | 'status' | 'inbound' | 'tags'
     const columns = {
         remark: 'base-host-form.remark',
+        status: 'common.field.status',
         address: 'common.field.address',
         port: 'common.field.port',
+        sni: 'base-host-form.sni',
+        profile: 'use-nodes-table-widget.config-profile',
         inbound: 'common.field.inbounds',
-        status: 'common.field.status',
         tags: 'common.field.tags'
     } as const
+    type Column = keyof typeof columns
+    const tableColumnCount = Object.keys(columns).length + 2
     const actionLabels = {
         enable: 'common.action.enable',
         disable: 'common.action.disable',
         clone: 'common.action.clone',
         delete: 'common.action.delete'
     } as const
+    const actionStyles = {
+        enable: { icon: 'PiPulseDuotone', color: 'green' },
+        disable: { icon: 'PiProhibitDuotone', color: 'gray' },
+        clone: { icon: 'TbCopy', color: 'indigo' },
+        delete: { icon: 'TbTrash', color: 'red' }
+    } as const
+    const moveActions = [
+        { mode: 'top', icon: 'TbArrowBarToUp', label: 'Move to top' },
+        { mode: 'up', icon: 'TbArrowBigUp', label: 'Move up' },
+        { mode: 'down', icon: 'TbArrowBigDown', label: 'Move down' },
+        { mode: 'bottom', icon: 'TbArrowBarToDown', label: 'Move to bottom' }
+    ] as const
     const bulkCommands = {
         enable: BulkEnableHostsCommand,
         disable: BulkDisableHostsCommand,
@@ -78,6 +94,8 @@
     let searchOpen = $state(false)
     let editing = $state<string | null>(null)
     let viewport = $state(1024)
+    let viewportHeight = $state(0)
+    let pageScroll = $state(0)
     const compact = $derived(viewport < 768)
     const hosts = createQuery(() => hostsQuery)
     const profiles = createQuery(() => profilesQuery)
@@ -92,9 +110,36 @@
     let scrollArea = $state<HTMLDivElement>()
     let height = $state(0)
     let scrollTop = $state(0)
-    let dragging = $state('')
-    let ordered = $derived(hosts.data ?? [])
+    let cardList = $state<HTMLUListElement>()
+    let drag = $state<{ uuid: string; from: number; to: number; offset: number }>()
+    let grab:
+        | {
+              handle: HTMLButtonElement
+              pointerId: number
+              uuid: string
+              index: number
+              startY: number
+              anchor: number
+              scrollTopEdge: number
+              clientY: number
+          }
+        | undefined
+    let scrollFrame: number | undefined
+    let ignoreGripClick = false
+    let pendingOrder = $state.raw<string[]>()
+    let ordered = $derived.by(() => {
+        const items = hosts.data ?? []
+        if (!pendingOrder) return items
+        const positions = new Map(pendingOrder.map((uuid, index) => [uuid, index]))
+        const end = positions.size
+        return [...items].sort(
+            (a, b) => (positions.get(a.uuid) ?? end) - (positions.get(b.uuid) ?? end)
+        )
+    })
     let selected = $derived(ordered.filter(({ uuid }) => selection.has(uuid)))
+    let profilesById = $derived(
+        new Map(profiles.data?.configProfiles.map((profile) => [profile.uuid, profile]))
+    )
     let inbounds = $derived(
         new Map(
             profiles.data?.configProfiles.flatMap((profile) =>
@@ -127,9 +172,32 @@
         })
     })
     let reorderable = $derived(!sort && !tag && !status && !search.trim())
-    let rowHeight = $derived(mode === 'table' ? 50 : compact ? 202 : 86)
-    let range = $derived(fixedVirtualWindow(filtered.length, rowHeight, scrollTop, height))
+    let rowHeight = $derived(mode === 'table' ? 50 : compact ? 202 : 88)
+    let range = $derived.by(() => {
+        if (mode === 'table')
+            return fixedVirtualWindow(filtered.length, rowHeight, scrollTop, height)
+        const listTop = scrollArea?.offsetTop ?? 0
+        return fixedVirtualWindow(
+            filtered.length,
+            rowHeight,
+            pageScroll - listTop,
+            viewportHeight - Math.max(0, listTop - pageScroll),
+            7
+        )
+    })
     let rows = $derived(filtered.slice(range.from, range.to))
+    let cardRows = $derived.by(() => {
+        const cards = rows.map((host, offset) => ({ host, index: range.from + offset }))
+        // The browser needs the drag source to stay mounted during autoscroll.
+        if (drag && (drag.from < range.from || drag.from >= range.to)) {
+            const host = filtered[drag.from]
+            if (host?.uuid === drag.uuid) {
+                cards.push({ host, index: drag.from })
+                cards.sort((a, b) => a.index - b.index)
+            }
+        }
+        return cards
+    })
 
     const update = createMutation(() => ({
         mutationFn: async (change: { ordered: string[] } | { action: Action; items: Host[] }) => {
@@ -170,7 +238,16 @@
                 })
             }
         },
-        onSettled: () => queryClient.invalidateQueries({ queryKey: hostsKey })
+        onError: (_error, change) => {
+            if ('ordered' in change) pendingOrder = undefined
+        },
+        onSettled: async (_data, _error, change) => {
+            try {
+                await queryClient.invalidateQueries({ queryKey: hostsKey })
+            } finally {
+                if ('ordered' in change) pendingOrder = undefined
+            }
+        }
     }))
 
     function stateOf(host: Host): string {
@@ -196,6 +273,18 @@
         }
     }
 
+    function profileName(host: Host): string {
+        return profilesById.get(host.inbound.configProfileUuid ?? '')?.name ?? ''
+    }
+
+    function inboundTag(host: Host): string {
+        const profile = profilesById.get(host.inbound.configProfileUuid ?? '')
+        return (
+            profile?.inbounds.find(({ uuid }) => uuid === host.inbound.configProfileInboundUuid)
+                ?.tag ?? ''
+        )
+    }
+
     function inboundOf(host: Host): string {
         const uuid = host.inbound.configProfileInboundUuid
         return uuid ? (inbounds.get(uuid) ?? uuid) : t('common.message.no-inbound-selected')
@@ -204,19 +293,22 @@
     function value(host: Host, column: Column): string {
         switch (column) {
             case 'inbound':
-                return inboundOf(host)
+                return inboundTag(host)
+            case 'profile':
+                return profileName(host)
             case 'status':
                 return stateLabel(host)
             case 'tags':
                 return host.tags.join(', ')
             default:
-                return String(host[column])
+                return String(host[column] ?? '')
         }
     }
 
     function scrollToStart(): void {
         if (scrollArea) scrollArea.scrollTop = 0
         scrollTop = 0
+        if (mode === 'cards') window.scrollTo({ top: 0, behavior: 'instant' })
     }
 
     function view(next: EntityViewMode): void {
@@ -289,7 +381,8 @@
     }
 
     function saveOrder(next: string[]): void {
-        if (next.every((id, index) => id === ordered[index]?.uuid)) return
+        if (update.isPending || next.every((id, index) => id === ordered[index]?.uuid)) return
+        pendingOrder = next
         update.mutate({ ordered: next })
     }
 
@@ -304,31 +397,129 @@
         )
     }
 
-    function startDrag(event: DragEvent, uuid: string): void {
-        if (!reorderable || update.isPending || !event.dataTransfer) return
-        dragging = uuid
-        event.dataTransfer.effectAllowed = 'move'
-        event.dataTransfer.setData('text/plain', uuid)
+    function grabHost(
+        event: PointerEvent & { currentTarget: HTMLButtonElement },
+        uuid: string
+    ): void {
+        if (
+            !reorderable ||
+            update.isPending ||
+            grab ||
+            !cardList ||
+            event.button !== 0 ||
+            !event.isPrimary
+        )
+            return
+        const index = ordered.findIndex((host) => host.uuid === uuid)
+        if (index === -1) return
+
+        const handle = event.currentTarget
+        handle.setPointerCapture(event.pointerId)
+        ignoreGripClick = false
+        const header = document.querySelector('.dashboard-header')
+        grab = {
+            handle,
+            pointerId: event.pointerId,
+            uuid,
+            index,
+            startY: event.clientY,
+            anchor: event.clientY - cardList.getBoundingClientRect().top - index * rowHeight,
+            scrollTopEdge: (header?.getBoundingClientRect().bottom ?? 0) + 64,
+            clientY: event.clientY
+        }
     }
 
-    function dragOver(event: DragEvent): void {
-        if (dragging && reorderable && !update.isPending) event.preventDefault()
+    function updateDragOffset(): void {
+        if (!grab || !drag || !cardList) return
+        const top = cardList.getBoundingClientRect().top
+        const offset = grab.clientY - top - grab.anchor
+        drag.offset = Math.max(0, Math.min((ordered.length - 1) * rowHeight, offset))
+        drag.to = Math.round(drag.offset / rowHeight)
     }
 
-    function drop(event: DragEvent, target: string): void {
-        if (!dragging || !reorderable || update.isPending) return
-        event.preventDefault()
-        const source = dragging
-        dragging = ''
-        if (source === target) return
-        const next = ordered.map(({ uuid }) => uuid)
-        const from = next.indexOf(source)
-        const to = next.indexOf(target)
-        if (from === -1 || to === -1) return
+    function scrollDuringDrag(): void {
+        scrollFrame = undefined
+        if (!grab || !drag) return
+        const top = grab.scrollTopEdge
+        const bottom = viewportHeight - 64
+        const distance =
+            grab.clientY < top ? grab.clientY - top : Math.max(0, grab.clientY - bottom)
+        if (distance === 0) return
+        const speed = Math.max(-18, Math.min(18, distance / 4))
+        window.scrollBy({ top: speed, behavior: 'instant' })
+        updateDragOffset()
+        scrollFrame = requestAnimationFrame(scrollDuringDrag)
+    }
+
+    function moveGrab(event: PointerEvent): void {
+        if (!grab || event.pointerId !== grab.pointerId) return
+        grab.clientY = event.clientY
+        if (!drag) {
+            if (Math.abs(event.clientY - grab.startY) < 5) return
+            const { index, uuid } = grab
+            drag = { uuid, from: index, to: index, offset: index * rowHeight }
+            ignoreGripClick = true
+        }
+        updateDragOffset()
+        scrollFrame ??= requestAnimationFrame(scrollDuringDrag)
+    }
+
+    function cardOffset(index: number): number {
+        if (!drag) return index * rowHeight
+        const { from, to, offset } = drag
+        if (index === from) return offset
+        if (from < index && index <= to) return (index - 1) * rowHeight
+        if (to <= index && index < from) return (index + 1) * rowHeight
+        return index * rowHeight
+    }
+
+    function cancelGrab(): void {
+        const active = grab
+        grab = undefined
+        drag = undefined
+        if (scrollFrame !== undefined) {
+            cancelAnimationFrame(scrollFrame)
+            scrollFrame = undefined
+        }
+        if (active?.handle.hasPointerCapture(active.pointerId)) {
+            active.handle.releasePointerCapture(active.pointerId)
+        }
+    }
+
+    function finishGrab(event: PointerEvent): void {
+        if (!grab || event.pointerId !== grab.pointerId) return
+        if (drag) {
+            grab.clientY = event.clientY
+            updateDragOffset()
+        }
+        const active = drag
+        const bounds = cardList?.getBoundingClientRect()
+        cancelGrab()
+        if (
+            !active ||
+            !bounds ||
+            event.clientX < bounds.left ||
+            event.clientX > bounds.right ||
+            event.clientY < bounds.top ||
+            event.clientY > bounds.bottom ||
+            !reorderable
+        )
+            return
+        const { uuid, from, to } = active
+        if (from === to || ordered[from]?.uuid !== uuid) return
+        const next = ordered.map((host) => host.uuid)
         next.splice(from, 1)
-        next.splice(to, 0, source)
+        next.splice(to, 0, uuid)
         saveOrder(next)
     }
+
+    function lostGrab(event: PointerEvent): void {
+        if (event.pointerId === grab?.pointerId) cancelGrab()
+    }
+
+    $effect(() => () => {
+        if (scrollFrame !== undefined) cancelAnimationFrame(scrollFrame)
+    })
 
     function openBulkEdit(): void {
         bulkIds = selected.map(({ uuid }) => uuid)
@@ -342,7 +533,14 @@
 
 <svelte:head><title>{t('constants.hosts')} | Gowave</title></svelte:head>
 
-<svelte:window bind:innerWidth={viewport} />
+<svelte:window
+    bind:innerWidth={viewport}
+    bind:innerHeight={viewportHeight}
+    bind:scrollY={pageScroll}
+    onkeydown={(event) => {
+        if (event.key === 'Escape' && grab) cancelGrab()
+    }}
+/>
 
 <main class="hosts-page">
     <PageHeader title={t('constants.hosts')} icon="TbListCheck">
@@ -435,46 +633,6 @@
         <p role="alert">{hosts.error.message}</p>
     {:else}
         <EntityTagBar items={ordered} active={tag} select={tagsChanged} />
-        {#if selected.length}
-            <div class="button-row toolbar">
-                <Button variant="subtle" onclick={() => selection.clear()}>
-                    {t('common.action.clear-selection')}
-                </Button>
-                <span>{t('common.message.selected', { count: selected.length })}</span>
-                <Button
-                    variant="soft"
-                    color="teal"
-                    disabled={update.isPending}
-                    onclick={openBulkEdit}
-                >
-                    {t('common.action.bulk-edit')}
-                </Button>
-                {#each Object.entries(actionLabels) as [action, label] (action)}
-                    <Button
-                        variant="soft"
-                        color={action === 'delete' ? 'red' : 'cyan'}
-                        disabled={update.isPending}
-                        onclick={() => apply(action as Action, selected)}
-                    >
-                        {t(label)}
-                    </Button>
-                {/each}
-                {#if reorderable}
-                    <Button disabled={update.isPending} onclick={() => move('top')}>
-                        Move to top
-                    </Button>
-                    <Button disabled={update.isPending} onclick={() => move('up')}>
-                        Move up
-                    </Button>
-                    <Button disabled={update.isPending} onclick={() => move('down')}>
-                        Move down
-                    </Button>
-                    <Button disabled={update.isPending} onclick={() => move('bottom')}>
-                        Move to bottom
-                    </Button>
-                {/if}
-            </div>
-        {/if}
         {#if update.error}
             <p role="alert">{update.error.message}</p>
         {/if}
@@ -489,10 +647,13 @@
                 onscroll={(event) => (scrollTop = event.currentTarget.scrollTop)}
             >
                 {#if mode === 'cards'}
-                    <ul aria-label={t('constants.hosts')}>
-                        <li aria-hidden="true" style:height={`${range.from * rowHeight}px`}></li>
-                        {#each rows as host (host.uuid)}
-                            {@const status = stateOf(host)}
+                    <ul
+                        class="card-list"
+                        aria-label={t('constants.hosts')}
+                        style:height={`${filtered.length * rowHeight}px`}
+                        bind:this={cardList}
+                    >
+                        {#each cardRows as { host, index } (host.uuid)}
                             {@const profile = profiles.data?.configProfiles.find(
                                 ({ uuid }) => uuid === host.inbound.configProfileUuid
                             )}
@@ -503,6 +664,8 @@
                                 class="host-card"
                                 class:selected={selection.has(host.uuid)}
                                 class:dangling={!profile}
+                                class:dragging={drag?.uuid === host.uuid}
+                                style:--host-offset={`${cardOffset(index)}px`}
                                 style:height={`${rowHeight - (compact ? 12 : 10)}px`}
                             >
                                 <div class="selection">
@@ -513,21 +676,7 @@
                                 </div>
                                 <div class="summary">
                                     <div class="host-heading">
-                                        <span
-                                            class="host-status"
-                                            class:disabled={status === 'disabled'}
-                                            class:hidden={status === 'hidden'}
-                                            title={stateLabel(host)}
-                                        >
-                                            <Icon
-                                                name={status === 'disabled'
-                                                    ? 'PiProhibit'
-                                                    : status === 'hidden'
-                                                      ? 'TbEyeOff'
-                                                      : 'PiPulse'}
-                                                size={16}
-                                            />
-                                        </span>
+                                        {@render statusIcon(host)}
                                         <button
                                             class="host-link mantine-UnstyledButton-root"
                                             type="button"
@@ -636,64 +785,100 @@
                                 </div>
                             </li>
                         {/each}
-                        <li
-                            aria-hidden="true"
-                            style:height={`${(filtered.length - range.to) * rowHeight}px`}
-                        ></li>
                     </ul>
                 {:else}
                     <table aria-label={t('constants.hosts')}>
                         <thead>
                             <tr>
-                                <th scope="col">{t('common.action.select')}</th>
+                                <th scope="col">
+                                    <input
+                                        class="mantine-Checkbox-input"
+                                        type="checkbox"
+                                        aria-label={t('common.action.select-all')}
+                                        checked={filtered.every(({ uuid }) => selection.has(uuid))}
+                                        onchange={(event) => {
+                                            for (const { uuid } of filtered) {
+                                                if (event.currentTarget.checked) selection.add(uuid)
+                                                else selection.delete(uuid)
+                                            }
+                                        }}
+                                    >
+                                </th>
                                 {#each Object.entries(columns) as [column, label] (column)}
-                                    <th
-                                        scope="col"
-                                        aria-sort={sort?.column === column
+                                    {@const direction =
+                                        sort?.column === column
                                             ? sort.descending
                                                 ? 'descending'
                                                 : 'ascending'
                                             : 'none'}
-                                    >
+                                    <th scope="col" aria-sort={direction}>
                                         <button
+                                            class="mantine-UnstyledButton-root table-sort-button"
                                             type="button"
                                             onclick={() => sortBy(column as Column)}
                                         >
-                                            {t(label)}
+                                            <span>{t(label)}</span>
+                                            <span class="table-sort-indicator" aria-hidden="true">
+                                                <Icon
+                                                    name={direction === 'ascending'
+                                                        ? 'TbArrowUp'
+                                                        : direction === 'descending'
+                                                          ? 'TbArrowDown'
+                                                          : 'TbArrowsSort'}
+                                                    size={14}
+                                                />
+                                            </span>
                                         </button>
                                     </th>
                                 {/each}
-                                <th scope="col">{t('common.action.actions')}</th>
+                                <th scope="col" aria-label={t('common.action.edit')}>
+                                    <Icon name="TbEdit" size={18} />
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr aria-hidden="true" style:height={`${range.from * rowHeight}px`}>
-                                <td colspan="8"></td>
+                                <td colspan={tableColumnCount}></td>
                             </tr>
                             {#each rows as host (host.uuid)}
-                                <tr style:height={`${rowHeight}px`}>
+                                <tr
+                                    class:selected={selection.has(host.uuid)}
+                                    style:height={`${rowHeight}px`}
+                                >
                                     <td>{@render check(host)}</td>
                                     <th scope="row">
-                                        <a
-                                            href={p('/dashboard/open/host/:id', {
-                                                params: { id: host.uuid }
-                                            })}
-                                            >{host.remark}</a
+                                        <button
+                                            class="mantine-UnstyledButton-root table-remark"
+                                            type="button"
+                                            onclick={() => (editing = host.uuid)}
                                         >
+                                            {host.remark}
+                                        </button>
                                     </th>
+                                    <td>{@render statusIcon(host)}</td>
                                     <td>{host.address}</td>
                                     <td>{host.port}</td>
-                                    <td>{inboundOf(host)}</td>
-                                    <td>{stateLabel(host)}</td>
+                                    <td>{host.sni || '–'}</td>
+                                    <td>{profileName(host) || '–'}</td>
+                                    <td>{inboundTag(host) || '–'}</td>
                                     <td>{host.tags.join(', ')}</td>
-                                    <td>{@render itemActions(host)}</td>
+                                    <td>
+                                        <ActionIcon
+                                            icon="TbEdit"
+                                            tone="teal"
+                                            size={28}
+                                            iconSize={18}
+                                            label={t('common.action.edit')}
+                                            onclick={() => (editing = host.uuid)}
+                                        />
+                                    </td>
                                 </tr>
                             {/each}
                             <tr
                                 aria-hidden="true"
                                 style:height={`${(filtered.length - range.to) * rowHeight}px`}
                             >
-                                <td colspan="8"></td>
+                                <td colspan={tableColumnCount}></td>
                             </tr>
                         </tbody>
                     </table>
@@ -745,7 +930,83 @@
     {#if editing !== null}
         <HostDialog uuid={editing || undefined} close={() => (editing = null)} />
     {/if}
+
+    {#if selected.length}
+        <section class="selection-panel" aria-label={t('common.action.bulk-edit')}>
+            <div class="selection-actions">
+                <div class="selection-heading">
+                    <span class="selection-count">
+                        {t('common.message.selected', { count: selected.length })}
+                    </span>
+                    <div class="selection-controls">
+                        <ActionIcon
+                            icon="TbSelectAll"
+                            label={t('common.action.select-all')}
+                            size={34}
+                            iconSize={20}
+                            subtle
+                            onclick={selectAll}
+                        />
+                        <ActionIcon
+                            icon="TbX"
+                            label={t('common.action.clear-selection')}
+                            size={28}
+                            iconSize={16}
+                            subtle
+                            onclick={() => selection.clear()}
+                        />
+                    </div>
+                </div>
+                {#if reorderable}
+                    <div class="selection-order">
+                        {#each moveActions as { mode, icon, label } (mode)}
+                            <Tooltip text={label}>
+                                <ActionIcon
+                                    {icon}
+                                    {label}
+                                    tone="gray"
+                                    size={34}
+                                    iconSize={20}
+                                    disabled={update.isPending}
+                                    onclick={() => move(mode)}
+                                />
+                            </Tooltip>
+                        {/each}
+                    </div>
+                {/if}
+                <div class="selection-status">
+                    {@render bulkAction('enable')}
+                    {@render bulkAction('disable')}
+                </div>
+                <Button
+                    variant="soft"
+                    color="cyan"
+                    icon="TbCategoryPlus"
+                    disabled={update.isPending}
+                    onclick={openBulkEdit}
+                >
+                    {t('common.action.update')}
+                </Button>
+                {@render bulkAction('clone')}
+                {@render bulkAction('delete')}
+            </div>
+        </section>
+    {/if}
 </main>
+
+{#snippet bulkAction(action: Action)}
+    {@const { color, icon } = actionStyles[action]}
+    <Button
+        {icon}
+        {color}
+        variant="soft"
+        block
+        disabled={update.isPending}
+        onclick={() => apply(action, selected)}
+    >
+        {t(actionLabels[action])}
+    </Button>
+{/snippet}
 
 {#snippet check(host: Host)}
     <input
@@ -762,48 +1023,38 @@
         class="mantine-UnstyledButton-root grip"
         type="button"
         disabled={!reorderable || update.isPending}
-        draggable={reorderable && !update.isPending}
         aria-label={`Reorder ${host.remark}`}
         title="Drag to reorder"
-        ondragstart={(event) => startDrag(event, host.uuid)}
-        ondragover={dragOver}
-        ondrop={(event) => drop(event, host.uuid)}
-        ondragend={() => (dragging = '')}
-        onclick={() => select(host.uuid)}
+        onpointerdown={(event) => grabHost(event, host.uuid)}
+        onpointermove={moveGrab}
+        onpointerup={finishGrab}
+        onpointercancel={lostGrab}
+        onlostpointercapture={lostGrab}
+        onclick={(event) => {
+            if (!ignoreGripClick || event.detail === 0) select(host.uuid)
+        }}
     >
         <Icon name="RiDraggable" size={24} />
     </button>
 {/snippet}
 
-{#snippet itemActions(host: Host)}
-    <div class="button-row actions">
-        {@render grip(host)}
-        <Button
-            size="compact-sm"
-            disabled={update.isPending}
-            onclick={() => apply(host.isDisabled ? 'enable' : 'disable', [host])}
-        >
-            {t(actionLabels[host.isDisabled ? 'enable' : 'disable'])}
-        </Button>
-        <Button
-            size="compact-sm"
-            disabled={update.isPending ||
-                !host.inbound.configProfileUuid ||
-                !host.inbound.configProfileInboundUuid}
-            onclick={() => apply('clone', [host])}
-        >
-            {t('common.action.clone')}
-        </Button>
-        <Button
-            size="compact-sm"
-            variant="soft"
-            color="red"
-            disabled={update.isPending}
-            onclick={() => apply('delete', [host])}
-        >
-            {t('common.action.delete')}
-        </Button>
-    </div>
+{#snippet statusIcon(host: Host)}
+    {@const status = stateOf(host)}
+    <span
+        class="host-status"
+        class:disabled={status === 'disabled'}
+        class:hidden={status === 'hidden'}
+        title={stateLabel(host)}
+    >
+        <Icon
+            name={status === 'disabled'
+                ? 'PiProhibit'
+                : status === 'hidden'
+                  ? 'TbEyeOff'
+                  : 'PiPulse'}
+            size={16}
+        />
+    </span>
 {/snippet}
 
 <style>
@@ -811,9 +1062,73 @@
         display: grid;
         gap: var(--mantine-spacing-md);
     }
-    .toolbar {
+    .selection-panel {
+        position: fixed;
+        z-index: 100;
+        inset-inline-end: 20px;
+        inset-block-end: max(20px, env(safe-area-inset-bottom));
+        width: min(300px, calc(100vw - 40px));
+        max-height: calc(100dvh - var(--page-top) - 20px);
+        overflow: auto;
+        padding: 4px;
+        border: 1px solid var(--mantine-color-default-border);
+        border-radius: var(--mantine-radius-default);
+        background: var(--gw-raised-bg);
+        box-shadow: var(--mantine-shadow-md);
+    }
+    .selection-actions {
+        display: grid;
+        gap: var(--mantine-spacing-md);
+        padding: var(--mantine-spacing-md);
+        border: 1px solid var(--mantine-color-default-border);
+        border-radius: calc(var(--mantine-radius-default) - 4px);
+    }
+    .selection-heading,
+    .selection-controls {
+        display: flex;
         align-items: center;
-        margin-block-end: 0.75rem;
+        justify-content: space-between;
+    }
+    .selection-count {
+        border-radius: 999px;
+        padding: 3px 10px;
+        background: var(--mantine-color-gray-light);
+        color: var(--mantine-color-gray-light-color);
+        font-size: var(--mantine-font-size-xs);
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .selection-order,
+    .selection-status {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .selection-order :global(button) {
+        width: 100%;
+        border-radius: 0;
+    }
+    .selection-order > :global(span:first-child) :global(button) {
+        border-start-start-radius: var(--mantine-radius-md);
+        border-end-start-radius: var(--mantine-radius-md);
+    }
+    .selection-order > :global(span:last-child) :global(button) {
+        border-start-end-radius: var(--mantine-radius-md);
+        border-end-end-radius: var(--mantine-radius-md);
+    }
+    .selection-status {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--mantine-spacing-xs);
+    }
+    @media (prefers-reduced-motion: no-preference) {
+        .selection-panel {
+            animation: selection-entry 200ms ease-out both;
+        }
+    }
+    @keyframes selection-entry {
+        from {
+            opacity: 0;
+            translate: 0 12px;
+        }
     }
     .scroll {
         max-height: min(65vh, 44rem);
@@ -822,7 +1137,8 @@
         border: 1px solid var(--gw-border);
         border-radius: 0.5rem;
     }
-    ul {
+    .card-list {
+        position: relative;
         margin: 0;
         padding: 0;
         list-style: none;
@@ -830,11 +1146,14 @@
     .scroll.cards {
         padding: 0 var(--mantine-spacing-md);
         border: 0;
-        margin-block-start: -6px;
+        max-height: none;
+        overflow: visible;
     }
 
     .host-card {
-        position: relative;
+        position: absolute;
+        inset: 0 0 auto;
+        transform: translateY(var(--host-offset));
         display: flex;
         align-items: center;
         gap: var(--mantine-spacing-md);
@@ -853,6 +1172,16 @@
     }
     .host-card.dangling {
         border-color: light-dark(var(--mantine-color-gray-2), var(--mantine-color-red-3));
+    }
+    .host-card.dragging {
+        z-index: 2;
+        border-color: var(--mantine-color-blue-4);
+        box-shadow: var(--mantine-shadow-xl);
+    }
+    @media (prefers-reduced-motion: no-preference) {
+        .host-card:not(.dragging) {
+            transition: transform 160ms ease-out;
+        }
     }
 
     .selection,
@@ -989,17 +1318,49 @@
         position: sticky;
         inset-block-start: 0;
         background: var(--gw-surface);
+        z-index: 1;
     }
     tbody tr:not([aria-hidden]) {
         border-block-end: 1px solid var(--gw-border);
+        background: var(--gw-surface);
+    }
+    tbody tr:nth-child(even of :not([aria-hidden])) {
+        background: var(--gw-card-bg);
+    }
+    tbody tr.selected {
+        background: var(--mantine-color-cyan-light);
+    }
+    table tr:not([aria-hidden]) > :not(:last-child) {
+        border-inline-end: 1px solid var(--gw-border);
+    }
+    table tr:not([aria-hidden]) > :last-child {
+        position: sticky;
+        inset-inline-end: 0;
+        background: var(--gw-surface);
+        text-align: end;
+    }
+    .table-remark {
+        font-weight: 600;
+    }
+    .table-remark:hover {
+        color: var(--mantine-color-teal-4);
     }
     th,
     td {
         padding-inline: 0.5rem;
         text-align: start;
     }
-    button[draggable="true"] {
-        cursor: grab;
+    thead th {
+        height: 40px;
+        font-size: var(--mantine-font-size-sm);
+        box-shadow: inset 0 -1px var(--gw-border);
+    }
+    .grip {
+        touch-action: none;
+        user-select: none;
+    }
+    .host-card.dragging .grip {
+        cursor: grabbing;
     }
     @media (max-width: 47.99em) {
         .scroll.cards {

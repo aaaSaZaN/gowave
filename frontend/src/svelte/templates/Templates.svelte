@@ -21,7 +21,7 @@
     import EntityCard from '../ui/EntityCard.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
     import EntityTagBar from '../ui/EntityTagBar.svelte'
-    import { entityOrder } from '../ui/entity-order'
+    import { applyEntityOrder, entityOrder } from '../ui/entity-order'
     import Icon from '../ui/Icon.svelte'
     import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
@@ -43,8 +43,14 @@
     )
     let selectedTags = $state<Partial<Record<TemplateType, string>>>({})
     let activeTag = $derived(selectedTags[type] ?? readSectionTag(`templates:${type}`))
+    const { drag, pendingOrder } = entityOrder(
+        () => templates,
+        async (order) => {
+            if (!mutate.isPending && !activeTag) await mutate.mutateAsync(order)
+        }
+    )
     let visible = $derived(
-        templates.filter(
+        applyEntityOrder(templates, $pendingOrder).filter(
             (template) =>
                 !activeTag ||
                 (activeTag === NO_TAG
@@ -126,13 +132,6 @@
         selectedTags[type] = tag
         writeSectionTag(`templates:${type}`, tag)
     }
-
-    const drag = entityOrder(
-        () => templates,
-        (order) => {
-            if (!mutate.isPending && !activeTag) mutate.mutate(order)
-        }
-    )
 
     function copyUuid(uuid: string): void {
         void navigator.clipboard.writeText(uuid).then(

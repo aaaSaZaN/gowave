@@ -29,10 +29,10 @@
 
     $effect(() => {
         if (!route.pathname || !page || reducedMotion.current) return
-        const entry = page.animate([{ opacity: 0.85 }, { opacity: 1 }], {
+        const entry = page.animate([{ opacity: 0 }, { opacity: 1 }], {
             id: 'dashboard-page-entry',
-            duration: 140,
-            easing: 'ease-out'
+            duration: 300,
+            easing: 'ease-in-out'
         })
         return () => entry.cancel()
     })
@@ -156,7 +156,13 @@
         <div class="navigation-loading"><RouteLoading compact /></div>
     {/if}
     <div class="dashboard-content" aria-busy={Boolean($navigationPending)} bind:this={page}>
-        {@render children()}
+        <div
+            class="route-content"
+            class:pending={Boolean($navigationPending)}
+            inert={Boolean($navigationPending)}
+        >
+            {@render children()}
+        </div>
     </div>
 </div>
 
@@ -189,6 +195,20 @@
         border-radius: var(--mantine-radius-md);
         background: var(--gw-raised-bg);
         pointer-events: none;
+        animation: show-loading 150ms ease-out 120ms both;
+    }
+
+    .route-content.pending {
+        visibility: hidden;
+    }
+
+    @keyframes show-loading {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
     }
 
     .dashboard.mobile {
@@ -296,6 +316,10 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+        .navigation-loading {
+            animation: none;
+        }
+
         .dashboard-header,
         .dashboard .dashboard-content,
         .dashboard-sidebar {

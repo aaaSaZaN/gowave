@@ -18,7 +18,7 @@
     import EntityCard from '../ui/EntityCard.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
     import EntityTagBar from '../ui/EntityTagBar.svelte'
-    import { entityOrder } from '../ui/entity-order'
+    import { applyEntityOrder, entityOrder } from '../ui/entity-order'
     import HelpDrawer from '../ui/HelpDrawer.svelte'
     import Icon from '../ui/Icon.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
@@ -79,8 +79,12 @@
     let tag = $state('')
     let t = $derived(locale.t)
     let ordered = $derived(squads.data?.internalSquads ?? [])
+    const { drag, pendingOrder } = entityOrder(
+        () => ordered,
+        (items) => saveOrder(items.map(({ uuid }) => uuid))
+    )
     let visible = $derived(
-        ordered.filter(
+        applyEntityOrder(ordered, $pendingOrder).filter(
             (squad) => !tag || (tag === NO_TAG ? !squad.tags.length : squad.tags.includes(tag))
         )
     )
@@ -96,9 +100,9 @@
         if (window.confirm(confirmation[action])) void apply({ action, uuid: squad.uuid })
     }
 
-    function saveOrder(ids: string[]): void {
+    async function saveOrder(ids: string[]): Promise<void> {
         if (pending || tag || visible.length !== ordered.length) return
-        void apply({ items: ids.map((uuid, viewPosition) => ({ uuid, viewPosition })) })
+        await apply({ items: ids.map((uuid, viewPosition) => ({ uuid, viewPosition })) })
     }
 
     function copy(uuid: string): void {
@@ -107,11 +111,6 @@
             clipboardError = error instanceof Error ? error.message : String(error)
         })
     }
-
-    const drag = entityOrder(
-        () => ordered,
-        (items) => saveOrder(items.map(({ uuid }) => uuid))
-    )
 </script>
 
 <svelte:head><title>{t('constants.internal-squads')} | Gowave</title></svelte:head>

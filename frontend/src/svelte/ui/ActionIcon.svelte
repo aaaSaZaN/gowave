@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { HTMLButtonAttributes } from 'svelte/elements'
+    import { type ReorderHandleOptions, reorderHandle } from './entity-order'
     import Icon from './Icon.svelte'
     import type { IconName } from './icons'
 
@@ -14,6 +15,7 @@
         iconSize?: number
         subtle?: boolean
         pending?: boolean
+        reorder?: ReorderHandleOptions | undefined
     }
 
     let {
@@ -27,6 +29,7 @@
         iconSize = 24,
         subtle = false,
         pending = false,
+        reorder,
         disabled,
         type = 'button',
         class: className,
@@ -44,6 +47,7 @@
 
 <svelte:element
     this={href ? 'a' : 'button'}
+    use:reorderHandle={reorder}
     {...attrs}
     type={href ? undefined : type}
     disabled={href ? undefined : disabled || pending}
@@ -84,7 +88,7 @@
         border-radius: var(--mantine-radius-md);
         background: var(--mantine-color-default);
         color: var(--action-ink);
-        cursor: pointer;
+        cursor: var(--reorder-cursor, pointer);
         vertical-align: middle;
         text-decoration: none;
     }

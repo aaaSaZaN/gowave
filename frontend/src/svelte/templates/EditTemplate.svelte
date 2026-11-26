@@ -6,7 +6,7 @@
     import type { editor } from 'monaco-editor'
     import { tick, untrack } from 'svelte'
     import { submitCommand } from '../commands'
-    import CodeEditor from '../editor/CodeEditor.svelte'
+    import CodeEditor, { type EditorDiagnostic } from '../editor/CodeEditor.svelte'
     import EditorActions from '../editor/EditorActions.svelte'
     import EditorFrame from '../editor/EditorFrame.svelte'
     import TemplatePicker from '../editor/TemplatePicker.svelte'
@@ -25,6 +25,8 @@
     } from './templates'
 
     let { template, type }: { template: Template; type: TemplateType } = $props()
+    // The YAML worker caches parses by URI and document version, which restarts for each editor.
+    const modelId = $props.id()
     const initial = untrack(() => templateText(template, type))
     const hosts = createQuery(() => ({
         ...hostsQuery,
@@ -37,6 +39,8 @@
     let dirty = $derived(draft !== saved)
     let showCatalog = $state(false)
     let error = $state('')
+    let schemaError = $state('')
+    let diagnostics = $state.raw<EditorDiagnostic[]>([])
     let language = $derived(templateTypes[type].language)
 
     const save = createMutation(() => ({
@@ -61,9 +65,12 @@
         const snapshot = hosts.data ?? []
         const editorType = type
         const languageMode = language
+        schemaError = ''
         void import('@shared/utils/setup-monaco/setup-monaco')
             .then(({ monaco }) => configureMonaco(monaco, languageMode, snapshot, editorType))
-            .catch(report)
+            .catch((reason: unknown) => {
+                schemaError = reason instanceof Error ? reason.message : String(reason)
+            })
     })
 
     function updateDraft(text: string): void {
@@ -97,15 +104,27 @@
         <CodeEditor
             {language}
             value={draft}
-            modelUri={getTemplateModelPath(type)}
+            modelUri={getTemplateModelPath(type, modelId)}
             label={`${templateTypes[type].title} template`}
             onchange={updateDraft}
             onready={(instance) => (current = instance)}
+            ondiagnostics={(markers) => (diagnostics = markers)}
         />
     {/snippet}
     {#snippet status()}
-        {#if error || save.error}
-            <p class="editor-status" role="alert"><code>{error || save.error?.message}</code></p>
+        {#if error || save.error || schemaError}
+            <p class="editor-status" role="alert">
+                <code>{error || save.error?.message || schemaError}</code>
+            </p>
+        {/if}
+        {#if diagnostics.length}
+            <ul class="editor-diagnostics" role="status">
+                {#each diagnostics as diagnostic}
+                    <li class:warning={diagnostic.warning}>
+                        <code>{diagnostic.line}:{diagnostic.column} {diagnostic.message}</code>
+                    </li>
+                {/each}
+            </ul>
         {/if}
     {/snippet}
     {#snippet actions()}
@@ -140,16 +159,28 @@
 {/if}
 
 <style>
-    .editor-status {
+    .editor-status,
+    .editor-diagnostics {
         margin: 0;
         flex: none;
         padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
         border-top: 1px solid rgb(241 65 65);
         background: rgb(241 65 65 / 10%);
     }
-    .editor-status code {
+    .editor-diagnostics {
+        max-height: 8rem;
+        overflow-y: auto;
+        list-style: none;
+        border-color: var(--mantine-color-default-border);
+        background: var(--gw-raised-bg);
+    }
+    .editor-status code,
+    .editor-diagnostics code {
         font-family: var(--mantine-font-family-monospace);
         font-size: var(--mantine-font-size-xs);
         color: var(--mantine-color-red-4);
+    }
+    .editor-diagnostics .warning code {
+        color: light-dark(var(--mantine-color-orange-9), var(--mantine-color-yellow-4));
     }
 </style>

@@ -5,7 +5,6 @@
     import { MediaQuery } from 'svelte/reactivity'
     import { locale } from '../i18n.svelte'
     import RouteLoading from '../RouteLoading.svelte'
-    import { p } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import ChartPlaceholder from '../ui/ChartPlaceholder.svelte'
     import Icon from '../ui/Icon.svelte'
@@ -44,6 +43,7 @@
     const platforms = $derived(devicePlatforms(stats.data?.byPlatform ?? []))
     const totalDevices = $derived(platforms.reduce((total, platform) => total + platform.count, 0))
     let activePlatform = $state<(typeof platforms)[number]>()
+    let selectedUser = $state<number>()
     $effect(() => {
         if (leaders.data && topPage > lastPage) topPage = lastPage
     })
@@ -189,14 +189,13 @@
                             {#each leaders.data.users as user (user.id)}
                                 <tr>
                                     <td>
-                                        <a
-                                            aria-label={t('common.action.open')}
-                                            class="view-user"
-                                            href={p('/dashboard/open/user/:id', {
-                                                params: { id: String(user.id) }
-                                            })}
-                                            ><Icon name="PiUserCircle" size={24} /></a
-                                        >
+                                        <ActionIcon
+                                            icon="PiUserCircle"
+                                            tone="cyan"
+                                            size={36}
+                                            label={t('node-active-session.item.widget.view-user')}
+                                            onclick={() => (selectedUser = user.id)}
+                                        />
                                     </td>
                                     <td>{user.username}</td>
                                     <td>{user.id}</td>
@@ -294,6 +293,12 @@
         load={loadDevices}
     />
 </main>
+
+{#if selectedUser !== undefined}
+    {#await import('../users/UserDialog.svelte') then { default: UserDialog }}
+        <UserDialog id={selectedUser} close={() => (selectedUser = undefined)} />
+    {/await}
+{/if}
 
 {#if activePlatform}
     <Overlay
@@ -527,16 +532,6 @@
     .device-count {
         color: var(--mantine-color-bright);
         font-weight: 600;
-    }
-    .view-user {
-        display: grid;
-        place-items: center;
-        width: 36px;
-        height: 36px;
-        border: 1px solid rgb(21 170 191 / 30%);
-        border-radius: var(--mantine-radius-md);
-        background: linear-gradient(135deg, rgb(21 170 191 / 15%), rgb(16 152 173 / 10%));
-        color: var(--mantine-color-cyan-4);
     }
     td:first-child,
     th:first-child {

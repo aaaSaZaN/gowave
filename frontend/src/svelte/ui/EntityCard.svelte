@@ -2,6 +2,7 @@
     import ColorHash from '@shared/lib/color'
     import type { Snippet } from 'svelte'
     import ActionMenu from './ActionMenu.svelte'
+    import { reorderHandle } from './entity-order'
     import Icon from './Icon.svelte'
     import type { IconName } from './icons'
 
@@ -37,23 +38,15 @@
         label: string
         reorder?:
             | {
-                  start: (event: DragEvent) => void
-                  over: (event: DragEvent) => void
-                  drop: (event: DragEvent) => void
-                  end: () => void
+                  key: string
+                  drop: (target: string) => void
               }
             | undefined
     } = $props()
     const colorHash = new ColorHash({ lightness: [0.65, 0.65, 0.65] })
 </script>
 
-<li
-    class="entity-card"
-    class:active
-    class:highlighted={highlight}
-    ondragover={reorder?.over}
-    ondrop={reorder?.drop}
->
+<li class="entity-card" class:active class:highlighted={highlight} data-reorder-key={reorder?.key}>
     <span class="card-rail"></span>
     <span class="card-icon"><Icon name={icon} size={22} /></span>
     <div class="card-content">
@@ -94,10 +87,8 @@
         <button
             type="button"
             class="mantine-UnstyledButton-root grip"
-            draggable="true"
             aria-label={`Reorder ${name}`}
-            ondragstart={reorder.start}
-            ondragend={reorder.end}
+            use:reorderHandle={{ axis: 'grid', drop: reorder.drop }}
         >
             <Icon name="RiDraggable" size={16} />
         </button>
@@ -225,7 +216,6 @@
         place-items: center;
         width: 18px;
         height: 30px;
-        cursor: grab;
         color: var(--mantine-color-gray-light-color);
     }
     .grip:hover {

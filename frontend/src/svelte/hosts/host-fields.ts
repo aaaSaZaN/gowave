@@ -24,11 +24,11 @@ export const switches = {
 } as const
 
 export const jsonOptions = {
-    xhttpExtraParams: 'base-host-form.extra-xhttp',
+    mapper: 'base-host-form.mapper',
     muxParams: 'base-host-form.mux-params',
-    sockoptParams: 'base-host-form.sockopt-params',
     finalMask: 'base-host-form.final-mask-params',
-    mapper: 'base-host-form.mapper'
+    xhttpExtraParams: 'base-host-form.xhttp-extra-params',
+    sockoptParams: 'base-host-form.sockopt-params'
 } as const
 
 export type HostField = keyof CreateHostCommand.RequestBody

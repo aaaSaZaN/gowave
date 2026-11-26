@@ -24,7 +24,7 @@
     import EntityCard from '../ui/EntityCard.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
     import EntityTagBar from '../ui/EntityTagBar.svelte'
-    import { entityOrder } from '../ui/entity-order'
+    import { applyEntityOrder, entityOrder } from '../ui/entity-order'
     import Icon from '../ui/Icon.svelte'
     import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
@@ -38,8 +38,14 @@
     let t = $derived(locale.t)
     let tag = $state(readSectionTag('subpageConfigs'))
     let items = $derived(list.data?.configs ?? [])
+    const { drag, pendingOrder } = entityOrder(
+        () => items,
+        async (order) => {
+            if (!action.isPending && !tag) await action.mutateAsync({ kind: 'reorder', order })
+        }
+    )
     let visible = $derived(
-        items.filter(
+        applyEntityOrder(items, $pendingOrder).filter(
             (item) => !tag || (tag === NO_TAG ? item.tags.length === 0 : item.tags.includes(tag))
         )
     )
@@ -115,13 +121,6 @@
         tag = value
         writeSectionTag('subpageConfigs', tag)
     }
-
-    const drag = entityOrder(
-        () => items,
-        (order) => {
-            if (!action.isPending && !tag) action.mutate({ kind: 'reorder', order })
-        }
-    )
 
     function copy(uuid: string): void {
         void navigator.clipboard.writeText(uuid).then(

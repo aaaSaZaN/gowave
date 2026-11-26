@@ -15,9 +15,8 @@
         reorderable,
         onstatus,
         onremove,
-        ondragstart,
-        ondragover,
-        ondrop,
+        orderKey,
+        onreorder,
         onmove
     }: {
         ip: string
@@ -27,9 +26,8 @@
         reorderable: boolean
         onstatus: (status: TNodeIpStatus) => void
         onremove: () => void
-        ondragstart: (event: DragEvent) => void
-        ondragover: (event: DragEvent) => void
-        ondrop: (event: DragEvent) => void
+        orderKey: string
+        onreorder: (target: string) => void
         onmove: (offset: -1 | 1) => void
     } = $props()
 
@@ -80,7 +78,7 @@
     }
 </script>
 
-<li class="ip-row" {ondragover} {ondrop}>
+<li class="ip-row" data-reorder-key={orderKey}>
     <ActionMenu
         icon={meta.icon}
         label={t(meta.label)}
@@ -156,9 +154,8 @@
         size={22}
         iconSize={18}
         subtle
-        draggable={reorderable}
+        reorder={reorderable ? { drop: onreorder } : undefined}
         disabled={!reorderable}
-        {ondragstart}
         onkeydown={(event) => {
             if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return
             event.preventDefault()
@@ -226,9 +223,6 @@
     }
     .ip-row :global(.grip) {
         height: 36px;
-    }
-    .ip-row :global(.grip[draggable="true"]) {
-        cursor: grab;
     }
     button.active {
         font-weight: 700;

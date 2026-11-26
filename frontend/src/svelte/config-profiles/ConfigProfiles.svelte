@@ -25,6 +25,7 @@
     import EmptyState from '../ui/EmptyState.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
     import EntityTagBar from '../ui/EntityTagBar.svelte'
+    import { applyEntityOrder, reorderHandle } from '../ui/entity-order'
     import HelpDrawer from '../ui/HelpDrawer.svelte'
     import Icon from '../ui/Icon.svelte'
     import Overlay from '../ui/Overlay.svelte'
@@ -42,7 +43,6 @@
     let renameDialog: HTMLDialogElement
     let renameName = $state('')
     let helpOpen = $state(false)
-    let dragging = $state<string>()
     let clipboardError = $state('')
     let tag = $state('')
     let tagsDialog: HTMLDialogElement
@@ -52,6 +52,7 @@
     let savingTags = $state(false)
     let reordering = $state(false)
     let reorderError = $state('')
+    let pendingOrder = $state.raw<string[]>()
     let name = $state('')
     let creating = $state(false)
     let t = $derived(locale.t)
@@ -61,7 +62,7 @@
     let relationsProfile = $derived(ordered.find((profile) => profile.uuid === relations?.uuid))
     let previewProfile = $derived(ordered.find((profile) => profile.uuid === preview?.uuid))
     let shown = $derived(
-        ordered.filter(
+        applyEntityOrder(ordered, pendingOrder).filter(
             (profile) =>
                 !tag || (tag === NO_TAG ? !profile.tags.length : profile.tags.includes(tag))
         )
@@ -81,6 +82,7 @@
         if (!moved) return
         ids.splice(to, 0, moved)
         reordering = true
+        pendingOrder = ids
         reorderError = ''
         try {
             const response = await submitCommand(ReorderConfigProfileCommand, {
@@ -90,15 +92,9 @@
         } catch (error) {
             reorderError = error instanceof Error ? error.message : String(error)
         } finally {
+            pendingOrder = undefined
             reordering = false
         }
-    }
-
-    function dropProfile(event: DragEvent, index: number): void {
-        event.preventDefault()
-        const from = ordered.findIndex((profile) => profile.uuid === dragging)
-        dragging = undefined
-        if (from !== -1) void reorderProfile(from, index)
     }
 
     function showPreview(uuid: string, computed: boolean): void {
@@ -283,10 +279,7 @@
                     <li
                         class="profile-row"
                         data-active={profile.nodes.length > 0}
-                        ondragover={(event) => {
-                            if (dragging && canReorder) event.preventDefault()
-                        }}
-                        ondrop={(event) => dropProfile(event, index)}
+                        data-reorder-key={profile.uuid}
                     >
                         <span class="profile-icon"><Icon name="XrayLogo" size={22} /></span>
                         <div class="profile-identity">
@@ -409,12 +402,16 @@
                                 class="profile-grip mantine-UnstyledButton-root"
                                 aria-label={`Reorder ${profile.name}`}
                                 title="Drag to reorder"
-                                draggable={canReorder && !reordering}
-                                ondragstart={(event) => {
-                                    dragging = profile.uuid
-                                    event.dataTransfer?.setData('text/plain', profile.uuid)
-                                }}
-                                ondragend={() => (dragging = undefined)}
+                                use:reorderHandle={canReorder && !reordering
+                                    ? {
+                                          axis: 'grid',
+                                          drop: (target) =>
+                                              void reorderProfile(
+                                                  index,
+                                                  ordered.findIndex(({ uuid }) => uuid === target)
+                                              )
+                                      }
+                                    : undefined}
                             >
                                 <Icon name="TbGripVertical" size={16} />
                             </button>
@@ -731,10 +728,6 @@
         border: 0;
         padding: 0;
         background: transparent;
-    }
-
-    .profile-grip[draggable="true"] {
-        cursor: grab;
     }
 
     .create-profile {

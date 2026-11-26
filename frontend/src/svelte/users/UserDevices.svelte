@@ -14,6 +14,7 @@
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
     import EmptyState from '../ui/EmptyState.svelte'
+    import { reorderHandle } from '../ui/entity-order'
     import FormCard from '../ui/FormCard.svelte'
     import Icon from '../ui/Icon.svelte'
     import { notifications } from '../ui/notification-state.svelte'
@@ -65,7 +66,6 @@
     let visible = $derived(order.filter((field) => !hidden.includes(field)))
     let sort = $state<SortField>('createdAt')
     let ascending = $state(false)
-    let dragging = $state<SortField>()
     let popup = $state<{
         anchor: HTMLElement
         mode: 'reset' | 'columns' | 'filter'
@@ -86,13 +86,12 @@
         }
     }
 
-    function reorder(target: SortField): void {
-        if (!dragging || dragging === target) return
-        const source = order.indexOf(dragging)
-        const destination = order.indexOf(target)
+    function reorder(field: SortField, target: string): void {
+        const source = order.indexOf(field)
+        const destination = order.indexOf(target as SortField)
+        if (source === -1 || destination === -1 || source === destination) return
         order.splice(source, 1)
-        order.splice(destination, 0, dragging)
-        dragging = undefined
+        order.splice(destination, 0, field)
     }
 
     function resetSort(): void {
@@ -250,27 +249,17 @@
                                             ? 'ascending'
                                             : 'descending'
                                         : 'none'}
-                                    ondragover={(event) => {
-                                        if (dragging) event.preventDefault()
-                                    }}
-                                    ondrop={(event) => {
-                                        event.preventDefault()
-                                        reorder(field)
-                                    }}
+                                    data-reorder-key={field}
                                 >
                                     <div class="column">
                                         <button
                                             type="button"
                                             class="mantine-UnstyledButton-root drag"
-                                            draggable="true"
                                             aria-label={`Reorder ${labels[field]}`}
-                                            ondragstart={(event) => {
-                                                if (!event.dataTransfer) return
-                                                dragging = field
-                                                event.dataTransfer.effectAllowed = 'move'
-                                                event.dataTransfer.setData('text/plain', field)
+                                            use:reorderHandle={{
+                                                axis: 'x',
+                                                drop: (target) => reorder(field, target)
                                             }}
-                                            ondragend={() => (dragging = undefined)}
                                             onkeydown={(event) => {
                                                 if (
                                                     event.key !== 'ArrowLeft' &&
@@ -284,8 +273,7 @@
                                                     ]
                                                 if (!target) return
                                                 event.preventDefault()
-                                                dragging = field
-                                                reorder(target)
+                                                reorder(field, target)
                                             }}
                                         >
                                             <Icon name="TbGripVertical" size={16} />
@@ -659,6 +647,12 @@
     th:first-child {
         z-index: 2;
     }
+    th:global([data-reorder-active]) {
+        z-index: 3;
+    }
+    td:global([data-reorder-moving]) {
+        background: var(--mantine-color-body);
+    }
     .column {
         display: flex;
         align-items: center;
@@ -667,7 +661,6 @@
     }
     .drag {
         color: var(--mantine-color-cyan-4);
-        cursor: grab;
     }
     .resize {
         position: absolute;

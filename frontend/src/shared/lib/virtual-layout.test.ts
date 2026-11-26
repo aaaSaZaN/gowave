@@ -51,6 +51,17 @@ test('virtual row sizes follow keys through filtering and reordering', () => {
     assert.equal(heights.size, 2)
 })
 
+test('virtual rows keep the dragged item mounted while scrolling past it', () => {
+    const options = { count: 1000, estimateSize: () => 40, overscan: 1, pinnedKey: 3 }
+    const layout = virtualLayout(options, { offset: 800, height: 100 }, new Map())
+    assert.deepEqual(
+        layout.virtualItems.map(({ key }) => key),
+        [3, 19, 20, 21, 22, 23]
+    )
+    assert.equal(layout.virtualItems[0]?.start, 120)
+    assert.equal(layout.totalSize, 40000)
+})
+
 test('virtual layout handles empty lists, hidden viewports, boundaries and shrinking data', () => {
     const options = { count: 0, estimateSize: () => 60, overscan: 1 }
     assert.deepEqual(virtualLayout(options, { offset: 0, height: 100 }, new Map()), {

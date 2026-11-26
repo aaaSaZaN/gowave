@@ -121,6 +121,54 @@ button:disabled:not([class*="mantine-"]) {
     cursor: progress;
 }
 
+.table-sort-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: var(--mantine-spacing-xs);
+    font-weight: inherit;
+}
+
+.table-sort-indicator {
+    display: inline-flex;
+    color: var(--mantine-color-dimmed);
+}
+
+.table-sort-button:is(:hover, :focus-visible) .table-sort-indicator,
+th[aria-sort]:not([aria-sort="none"]) .table-sort-indicator {
+    color: var(--gw-accent);
+}
+
+[data-reorder-handle] {
+    --reorder-cursor: grab;
+    cursor: var(--reorder-cursor);
+    touch-action: none;
+    user-select: none;
+}
+
+:where([data-reorder-moving]:not(th)) {
+    position: relative;
+}
+
+[data-reorder-moving] {
+    translate: var(--reorder-x) var(--reorder-y);
+}
+
+[data-reorder-active] {
+    z-index: 3;
+}
+
+[data-reorder-active] [data-reorder-handle] {
+    --reorder-cursor: grabbing;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    [data-reorder-moving]:not([data-reorder-active]) {
+        transition: translate 160ms ease-out;
+    }
+}
+
 :focus-visible {
     outline: 2px solid var(--mantine-color-cyan-4);
     outline-offset: 2px;

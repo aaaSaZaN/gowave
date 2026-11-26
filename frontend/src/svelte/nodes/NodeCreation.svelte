@@ -1,8 +1,12 @@
 <script lang="ts">
+    import { DotLottie } from '@lottiefiles/dotlottie-web'
+    import wasmUrl from '@lottiefiles/dotlottie-web/dotlottie-player.wasm?url'
     import { CreateNodeCommand } from '@remnawave/backend-contract'
     import { buildNodeInstallCommand } from '@shared/lib/node-install-command'
+    import { panelUrl } from '@shared/lib/panel-path'
     import { createMutation, createQuery } from '@tanstack/svelte-query'
     import { onDestroy, type Snippet } from 'svelte'
+    import { MediaQuery } from 'svelte/reactivity'
     import { submitCommand } from '../commands'
     import { profilesQuery } from '../config-profiles/queries'
     import { locale } from '../i18n.svelte'
@@ -38,6 +42,14 @@
     let failed = $state(false)
     let copied = $state<'secret' | 'install'>()
     let copyTimer: ReturnType<typeof setTimeout> | undefined
+    let statusCanvas = $state<HTMLCanvasElement>()
+    let animationReady = $state(false)
+    const reducedMotion = new MediaQuery('(prefers-reduced-motion: reduce)')
+    const statusEffects = {
+        connecting: { animation: 'satellite', icon: 'TbLink' },
+        connected: { animation: 'checkmark', icon: 'TbCircleCheck' },
+        error: { animation: 'stop-v2', icon: 'TbAlertCircle' }
+    } as const
     const t = $derived(locale.t)
     const fieldPrefix = $props.id()
     const secret = createQuery(() => nodeSecretQuery)
@@ -55,6 +67,25 @@
               ? 'error'
               : 'connecting'
     )
+    $effect(() => {
+        const canvas = statusCanvas
+        const { animation } = statusEffects[connectionState]
+        animationReady = false
+        if (!canvas || reducedMotion.current) return
+        DotLottie.setWasmUrl(wasmUrl)
+        const player = new DotLottie({
+            canvas,
+            src: panelUrl(`lotties/${animation}.lottie`),
+            autoplay: true,
+            loop: true,
+            renderConfig: { autoResize: true, devicePixelRatio: window.devicePixelRatio || 2 }
+        })
+        player.addEventListener('render', function firstFrame() {
+            animationReady = true
+            player.removeEventListener('render', firstFrame)
+        })
+        return () => player.destroy()
+    })
     const save = createMutation(() => ({
         mutationFn: (profile: ReturnType<typeof readConfigProfile>) =>
             submitCommand(CreateNodeCommand, { ...connection, configProfile: profile }),
@@ -343,14 +374,14 @@
     {:else}
         <div class="status-step">
             <div class="status-panel" data-state={connectionState}>
-                <Icon
-                    name={connectionState === 'connected'
-                        ? 'TbCircleCheck'
-                        : connectionState === 'error'
-                          ? 'TbAlertCircle'
-                          : 'TbLink'}
-                    size={96}
-                />
+                <div class="status-animation" aria-hidden="true">
+                    {#key connectionState}
+                        <canvas bind:this={statusCanvas} class:animationReady></canvas>
+                    {/key}
+                    {#if !animationReady}
+                        <Icon name={statusEffects[connectionState].icon} size={96} />
+                    {/if}
+                </div>
                 <strong
                     >{connectionState === 'connected'
                         ? t('create-node-modal.widget.connection-successful')
@@ -412,6 +443,26 @@
             rgb(255 255 255 / 15%) 0 6px,
             transparent 6px 12px
         );
+    }
+    @media (prefers-reduced-motion: no-preference) {
+        .step-bars .filled {
+            animation: step-stripes 1s linear infinite;
+        }
+        .connection,
+        .profile-step,
+        .status-step {
+            animation: step-enter 300ms ease;
+        }
+    }
+    @keyframes step-stripes {
+        to {
+            background-position: 17px 0;
+        }
+    }
+    @keyframes step-enter {
+        from {
+            opacity: 0;
+        }
     }
     .connection,
     .profile-step,
@@ -584,6 +635,22 @@
             var(--mantine-color-dark-6),
             var(--mantine-color-dark-7)
         );
+    }
+    .status-animation {
+        position: relative;
+        display: grid;
+        width: 96px;
+        height: 120px;
+        place-items: center;
+    }
+    .status-animation canvas {
+        position: absolute;
+        width: 100%;
+        height: 115px;
+        visibility: hidden;
+    }
+    .status-animation canvas.animationReady {
+        visibility: visible;
     }
     .status-panel > strong {
         color: var(--mantine-color-blue-4);

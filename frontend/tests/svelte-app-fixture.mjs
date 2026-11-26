@@ -10,8 +10,16 @@ const mihomoUuid = '53535353-5353-4353-8353-535353535353'
 const hostUuid = '54545454-5454-4454-8454-545454545454'
 const result = (response) => Response.json({ response })
 
+const templateValidationCases = ['MIHOMO', 'STASH', 'CLASH', 'SINGBOX', 'STASH'].map(
+    (type, index) => ({
+        type,
+        uuid: `53535353-5353-4353-8353-53535353535${index + 4}`,
+        syntaxError: index === 4
+    })
+)
+
 // Runs inside Chromium after the app entry module.
-async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
+async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateValidationCases }) {
     performance.setResourceTimingBufferSize(1500)
 
     async function until(read, message) {
@@ -53,6 +61,30 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
         document
             .elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)
             ?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+    }
+
+    function dragBetween(handle, source, target) {
+        const grip = handle.getBoundingClientRect()
+        const from = source.getBoundingClientRect()
+        const to = target.getBoundingClientRect()
+        const x = grip.left + grip.width / 2
+        const y = grip.top + grip.height / 2
+        const destinationX = x + to.left + to.width / 2 - from.left - from.width / 2
+        const destinationY = y + to.top + to.height / 2 - from.top - from.height / 2
+        handle.setPointerCapture = () => {}
+        const pointer = (type, clientX, clientY) =>
+            handle.dispatchEvent(
+                new PointerEvent(type, {
+                    bubbles: true,
+                    isPrimary: true,
+                    pointerId: 7,
+                    clientX,
+                    clientY
+                })
+            )
+        pointer('pointerdown', x, y)
+        pointer('pointermove', destinationX, destinationY)
+        return () => pointer('pointerup', destinationX, destinationY)
     }
 
     try {
@@ -344,9 +376,9 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
                         .some(
                             (animation) =>
                                 animation.id === 'dashboard-page-entry' &&
-                                animation.effect.getTiming().duration === 140
+                                animation.effect.getTiming().duration === 300
                         ),
-                'Changing dashboard pages did not play the short entry transition'
+                'Changing dashboard pages did not play the entry fade'
             )
         }
         const squadActions = await until(() => findButton('Squad actions'), 'Squads did not load')
@@ -717,15 +749,20 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
             throw new Error('Profile menu is missing Quick view or Download')
         }
         profileActions.hidePopover()
-        const profileDrag = new DataTransfer()
-        findButton('Reorder First profile', profileCards[0]).dispatchEvent(
-            new DragEvent('dragstart', { bubbles: true, dataTransfer: profileDrag })
-        )
-        profileCards[1].dispatchEvent(
-            new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: profileDrag })
-        )
+        const profileHandle = findButton('Reorder First profile', profileCards[0])
+        const releaseProfile = dragBetween(profileHandle, profileCards[0], profileCards[1])
         await until(
-            () => profileNames().join(',') === 'Second profile,First profile',
+            () =>
+                ['--reorder-x', '--reorder-y'].some(
+                    (property) => parseFloat(profileCards[1].style.getPropertyValue(property)) < 0
+                ),
+            'The next profile did not move out of the way during the drag'
+        )
+        releaseProfile()
+        await until(
+            () =>
+                profileNames().join(',') === 'Second profile,First profile' &&
+                profileHandle.hasAttribute('data-reorder-handle'),
             'Config profile reorder did not persist'
         )
         const secondProfile = select('.profile-list li')
@@ -883,6 +920,37 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
             () => select('main.nodes-page ul a[href*="/open/node/"]'),
             'Switching back to cards left the node list empty'
         )
+        const nodeCards = [...document.querySelectorAll('main.nodes-page .node-item')]
+        const firstNodeHandle = findButton('Actions', nodeCards[0])
+        const releaseNode = dragBetween(firstNodeHandle, nodeCards[0], nodeCards[1])
+        await until(
+            () => parseFloat(nodeCards[1].style.getPropertyValue('--reorder-y')) < 0,
+            'The next node did not move out of the way during the drag'
+        )
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', cancelable: true }))
+        releaseNode()
+        await until(
+            () => !nodeCards[1].hasAttribute('data-reorder-moving'),
+            'Cancelling did not restore the node cards'
+        )
+        if (select('main.nodes-page .node-item') !== nodeCards[0])
+            throw new Error('Cancelling changed the saved node order')
+        dragBetween(firstNodeHandle, nodeCards[0], nodeCards[1])()
+        await until(
+            () =>
+                select('main.nodes-page .node-item') === nodeCards[1] &&
+                firstNodeHandle.hasAttribute('data-reorder-handle'),
+            'The node order did not persist'
+        )
+        dragBetween(firstNodeHandle, nodeCards[0], nodeCards[1])()
+        await until(
+            () =>
+                select('main.nodes-page .node-item') === nodeCards[0] &&
+                firstNodeHandle.hasAttribute('data-reorder-handle'),
+            'The original node order did not return'
+        )
+        if (select('.notifications')?.textContent.includes('Operation completed'))
+            throw new Error('Reordering nodes showed a success notification')
         findButton('Search', select('main')).click()
         const nodeSearch = await until(
             () => select('dialog.entity-spotlight[open]'),
@@ -925,7 +993,45 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
             () => select('dialog.node-creation input[name=countryCode]')?.value === 'CA',
             'Enter did not select and serialize the country'
         )
-        findButton('Close', select('dialog.node-creation')).click()
+        const wizard = country.closest('dialog')
+        setValue(wizard.querySelector('input[name=name]'), 'Animation test node')
+        setValue(wizard.querySelector('input[name=address]'), '192.0.2.40')
+        findButton('Next', wizard).click()
+        const selectProfile = await until(
+            () => findButton('Select', wizard),
+            'The node wizard did not show profile selection'
+        )
+        selectProfile.click()
+        const profilePicker = await until(
+            () => select('dialog[open] .profile-heading')?.closest('dialog'),
+            'The profile picker did not open'
+        )
+        await until(() => findButton('Select all', profilePicker), 'No inbound was available').then(
+            (button) => button.click()
+        )
+        findButton('Save', profilePicker).click()
+        await until(() => !profilePicker.isConnected, 'The node profile selection did not close')
+        findButton('Create node', wizard).click()
+        const animateWizard = matchMedia('(prefers-reduced-motion: no-preference)').matches
+        for (const [state, asset] of [
+            ['connecting', 'satellite'],
+            ['error', 'stop-v2'],
+            ['connected', 'checkmark']
+        ]) {
+            await until(() => {
+                const panel = wizard.querySelector(`.status-panel[data-state="${state}"]`)
+                if (!animateWizard) return panel?.querySelector('.status-animation svg')
+                return (
+                    panel?.querySelector('canvas.animationReady') &&
+                    performance
+                        .getEntriesByType('resource')
+                        .some(({ name }) => name.endsWith(`/lotties/${asset}.lottie`))
+                )
+            }, `The node wizard did not render the ${state} state`)
+        }
+        if (animateWizard && !wizard.querySelector('.step-bars .filled').getAnimations().length)
+            throw new Error('The node wizard progress stripes did not animate')
+        findButton('Close', wizard).click()
         await until(() => !select('dialog.node-creation'), 'The node creation dialog did not close')
         const nodeList = select('main.nodes-page')
         nodeLink.click()
@@ -965,12 +1071,68 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
         )
         findButton('Run check', geo).click()
         await until(
-            () => geo.querySelector('[role=status]')?.textContent.includes('Running'),
-            'GeoCheck did not show progress'
+            () =>
+                geo.querySelector('canvas.ready') &&
+                geo.querySelector('[role=status]')?.textContent.includes('Running'),
+            'GeoCheck did not show the animated progress state'
         )
         await until(
-            () => geo.textContent.includes('Example trace'),
-            'GeoCheck did not poll and display the trace'
+            () =>
+                geo.querySelector('img[alt="GeoCheck"]')?.naturalWidth === 120 &&
+                !findButton('Download', geo)?.disabled &&
+                findButton('Copy', geo),
+            'GeoCheck did not display the SVG report with image export controls'
+        )
+        let geocheckDownload
+        const interceptGeocheckDownload = (event) => {
+            if (!(event.target instanceof HTMLAnchorElement)) return
+            if (!/^geocheck-.*\.png$/.test(event.target.download)) return
+            event.preventDefault()
+            geocheckDownload = fetch(event.target.href).then((response) => response.blob())
+        }
+        document.addEventListener('click', interceptGeocheckDownload, true)
+        try {
+            findButton('Download', geo).click()
+            const png = await until(() => geocheckDownload, 'GeoCheck did not export a PNG')
+            const bitmap = await createImageBitmap(png)
+            try {
+                if (png.type !== 'image/png' || bitmap.width <= 120 || bitmap.height <= 80)
+                    throw new Error('GeoCheck exported an image without the screenshot frame')
+            } finally {
+                bitmap.close()
+            }
+        } finally {
+            document.removeEventListener('click', interceptGeocheckDownload, true)
+        }
+        if (geo.querySelector('.trace')) throw new Error('The trace was visible on the image tab')
+        findButton('Traceroute', geo).click()
+        const targets = await until(() => {
+            const entries = geo.querySelectorAll('.trace-target')
+            return entries.length === 2 && entries
+        }, 'GeoCheck did not display the trace targets')
+        if (
+            targets[0].getAttribute('aria-pressed') !== 'true' ||
+            !geo.querySelector('.trace-detail')?.textContent.includes('Example trace')
+        )
+            throw new Error('The first route was not selected')
+        targets[1].click()
+        await until(
+            () =>
+                targets[1].getAttribute('aria-pressed') === 'true' &&
+                geo.querySelector('.hop-segment')?.textContent.includes('AS64500') &&
+                geo.querySelector('.hop-address')?.textContent.includes('192.0.2.1') &&
+                !geo.querySelector('img[alt="GeoCheck"]'),
+            'Changing the target did not show its grouped hops'
+        )
+        findButton('JSON', geo).click()
+        await until(
+            () => geo.querySelector('.json-report')?.textContent.includes('connectivity'),
+            'GeoCheck did not show the JSON tree'
+        )
+        findButton('Report', geo).click()
+        await until(
+            () => geo.querySelector('img[alt="GeoCheck"]')?.naturalWidth === 120,
+            'GeoCheck did not return to the report image'
         )
         findButton('Try again', geo).click()
         await until(() => findButton('Run check', geo), 'GeoCheck did not reset its form')
@@ -1276,6 +1438,19 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
         await until(
             () => leaders.querySelectorAll('tbody tr').length === 6,
             'Changing the leaderboard page size did not return to the first page'
+        )
+        const hwidPath = location.pathname
+        findButton('View user', leaders).click()
+        const leaderProfile = await until(() => {
+            const dialog = select('dialog[open]')
+            return dialog?.textContent.includes('fixture-42') ? dialog : null
+        }, 'Opening an HWID leaderboard entry did not open its profile')
+        if (location.pathname !== hwidPath)
+            throw new Error('The HWID leaderboard navigated away from its page')
+        findButton('Close', leaderProfile).click()
+        await until(
+            () => !leaderProfile.isConnected && leaders.querySelectorAll('tbody tr').length === 6,
+            'Closing the user profile lost the leaderboard state'
         )
 
         select('nav.sidebar-navigation a[href$="/tools/srh-inspector"]').click()
@@ -1649,6 +1824,13 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
             () => select('.navigation-loading [role=status]'),
             'A slow route change did not show navigation progress'
         )
+        const previousView = toggle.closest('.route-content')
+        if (
+            previousView?.isConnected &&
+            (!previousView.inert || getComputedStyle(previousView).visibility !== 'hidden')
+        ) {
+            throw new Error('The previous page remained visible while Users was loading')
+        }
         await until(
             () => select('.users-panel .table-loading .loading-state[role=status]'),
             'The users panel did not show its initial loading state'
@@ -1977,6 +2159,25 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
                 select('main h1')?.textContent === 'New template',
             'Creating a template did not open its editor'
         )
+        for (const { type, uuid, syntaxError } of templateValidationCases) {
+            const path = `dashboard/templates/${type}/${uuid}`
+            openPanelRoute(path)
+            await until(() => location.pathname === scope + path, `Did not open ${type} template`)
+            await until(
+                () => {
+                    const diagnostics = document.querySelectorAll('.editor-diagnostics li')
+                    return [...diagnostics].some((item) => {
+                        if (syntaxError) return !item.classList.contains('warning')
+                        const expected = type === 'SINGBOX' ? 'warn' : '65535'
+                        return (
+                            /^\d+:\d+ /.test(item.textContent.trim()) &&
+                            item.textContent.includes(expected)
+                        )
+                    })
+                },
+                `The ${type} editor did not show the ${syntaxError ? 'syntax' : 'schema'} diagnostic`
+            )
+        }
 
         openPanelRoute('dashboard/management/internal-squads')
         await until(
@@ -2049,8 +2250,99 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
             () => select('main.hosts-page') && findButton('Create', select('main.hosts-page')),
             'Hosts did not load'
         )
+        const [firstHost, secondHost] = await until(() => {
+            const cards = document.querySelectorAll('.host-card')
+            return cards.length === 2 && cards
+        }, 'Host cards did not load')
+        const originalTop = firstHost.getBoundingClientRect().top
+        firstHost.querySelector('input[type=checkbox]').click()
+        const selectionPanel = await until(
+            () => select('.selection-panel'),
+            'Selecting a host did not open the floating actions'
+        )
+        if (
+            getComputedStyle(selectionPanel).position !== 'fixed' ||
+            firstHost.getBoundingClientRect().top !== originalTop
+        ) {
+            throw new Error('Selecting a host moved the list')
+        }
+        findButton('Select all', selectionPanel).click()
+        await until(
+            () => secondHost.querySelector('input[type=checkbox]').checked,
+            'Select all did not include the second host'
+        )
+        findButton('Clear selection', selectionPanel).click()
+        await until(() => !selectionPanel.isConnected, 'Clearing selection did not close actions')
+
+        const grip = firstHost.querySelector('.grip')
+        const handle = grip.getBoundingClientRect()
+        const firstBox = firstHost.getBoundingClientRect()
+        const secondBox = secondHost.getBoundingClientRect()
+        const fromY = handle.top + handle.height / 2
+        const toY = fromY + secondBox.top - firstBox.top
+        let captured = false
+        grip.setPointerCapture = () => {
+            captured = true
+        }
+        const pointer = (type, clientY) =>
+            new PointerEvent(type, {
+                bubbles: true,
+                pointerId: 1,
+                isPrimary: true,
+                clientX: handle.left + handle.width / 2,
+                clientY
+            })
+        grip.dispatchEvent(pointer('pointerdown', fromY))
+        if (!captured) throw new Error('The host grip did not capture the pointer')
+        grip.dispatchEvent(pointer('pointermove', toY))
+        await until(
+            () =>
+                firstHost.classList.contains('dragging') &&
+                secondHost.style.getPropertyValue('--host-offset') === '0px',
+            'The cards did not rearrange during the drag'
+        )
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+        await until(
+            () =>
+                !firstHost.classList.contains('dragging') &&
+                firstHost.style.getPropertyValue('--host-offset') === '0px',
+            'Cancelling the drag did not restore the original order'
+        )
+        grip.dispatchEvent(pointer('pointerdown', fromY))
+        grip.dispatchEvent(pointer('pointermove', toY))
+        grip.dispatchEvent(pointer('pointerup', toY))
+        await until(
+            () => select('.host-card') === secondHost && secondHost.querySelector('.grip:enabled'),
+            'Dropping onto the second host card did not persist the order'
+        )
+
+        const hostView = findButton('Toggle view mode', select('main.hosts-page'))
+        hostView.click()
+        const hostHeaders = await until(() => {
+            const headers = document.querySelectorAll('.hosts-page thead th[aria-sort] button')
+            return headers.length > 0 && headers
+        }, 'Sortable host columns did not load')
+        for (const button of hostHeaders) {
+            const style = getComputedStyle(button)
+            if (style.backgroundColor !== 'rgba(0, 0, 0, 0)' || style.paddingInlineStart !== '0px')
+                throw new Error('A host column header used the filled button style')
+        }
+        const [sortHost] = hostHeaders
+        for (const direction of ['ascending', 'descending', 'none']) {
+            sortHost.click()
+            await until(
+                () => sortHost.closest('th').getAttribute('aria-sort') === direction,
+                `Host column did not cycle to ${direction}`
+            )
+        }
+        hostView.click()
+        await until(() => select('.host-card'), 'Host cards did not return')
+
         createHost.click()
         const hostEditor = await until(() => select('dialog[open]'), 'Host editor did not open')
+        if (hostEditor.querySelector('.option-group:not([hidden])')) {
+            throw new Error('A blank host editor displayed empty option groups')
+        }
         const addOption = findButton('Add', hostEditor)
         addOption.click()
         const hostSearch = await until(
@@ -2075,6 +2367,15 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid }) {
         )
         hostSearch.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
         await until(() => !hostSearch.isConnected, 'Enter did not select the highlighted option')
+        const visibleGroups = [...hostEditor.querySelectorAll('.option-group')].filter(
+            (group) => getComputedStyle(group).display !== 'none'
+        )
+        if (
+            visibleGroups.length !== 1 ||
+            visibleGroups[0].querySelector('.option-label')?.textContent !== 'Security'
+        ) {
+            throw new Error('Adding an option did not reveal only its group')
+        }
         if (document.activeElement !== addOption) throw new Error('Focus did not return to Add')
 
         async function addHostOption(label) {
@@ -2651,6 +2952,16 @@ export function startSvelteFixture(output) {
         versions: { node: '1.0.0 (Go)', xray: '26.0.0' }
     }
     const nodes = [geoNode, panelNode, legacyNode]
+    const setupNode = {
+        ...geoNode,
+        uuid: '55555555-5555-4555-8555-555555555558',
+        id: 4,
+        name: 'Animation test node',
+        address: '192.0.2.40',
+        isConnected: false,
+        isConnecting: true
+    }
+    let setupPolls = 0
     const inbound = {
         uuid: '66666666-6666-4666-8666-666666666666',
         profileUuid: profiles[1].uuid,
@@ -2701,8 +3012,17 @@ export function startSvelteFixture(output) {
         excludeFromSubscriptionTypes: [],
         mapper: {},
         includeInSrrRules: [],
+        tags: ['FIXTURE'],
         internalSquads: { mode: 'EXCLUDE', squads: [] }
     }
+    const secondHost = {
+        ...savedHost,
+        uuid: '55555555-5555-4555-8555-555555555555',
+        remark: 'Second host',
+        viewPosition: 1,
+        tags: []
+    }
+    let hosts = [savedHost, secondHost]
     let squadInbounds = [inbound]
     const savedSquad = () => ({
         uuid: squadUuid,
@@ -2787,7 +3107,20 @@ export function startSvelteFixture(output) {
                         return Response.json({ message: 'Invalid host reset' }, { status: 400 })
                     return result(Object.assign(savedHost, patch))
                 }
-                if (pathname === '/api/hosts/' && request.method === 'GET') return result([])
+                if (pathname === '/api/hosts/' && request.method === 'GET') return result(hosts)
+                if (pathname === '/api/hosts/actions/reorder' && request.method === 'POST') {
+                    const { hosts: order } = await request.json()
+                    if (
+                        order.length !== 2 ||
+                        order[0].uuid !== secondHost.uuid ||
+                        order[0].viewPosition !== 1 ||
+                        order[1].uuid !== hostUuid ||
+                        order[1].viewPosition !== 2
+                    )
+                        return new Response(null, { status: 400 })
+                    hosts = [secondHost, savedHost]
+                    return result({ isUpdated: true })
+                }
                 if (pathname === `/api/hosts/${hostUuid}`) return result(savedHost)
                 if (pathname === '/api/hosts/tags') return result({ tags: ['FIXTURE'] })
                 if (pathname === '/api/hosts/preview' && request.method === 'POST') {
@@ -3242,7 +3575,7 @@ export function startSvelteFixture(output) {
                     const start = Number(searchParams.get('start') ?? 0)
                     const size = Number(searchParams.get('size') ?? 5)
                     const users = Array.from({ length: 6 }, (_, index) => ({
-                        id: 100 + index,
+                        id: index === 0 ? 42 : 100 + index,
                         username: `device-user-${index + 1}`,
                         devicesCount: 10 - index
                     }))
@@ -3281,6 +3614,28 @@ export function startSvelteFixture(output) {
                 }
                 if (pathname === `/api/subscription-templates/${mihomoUuid}` && createdTemplate)
                     return result(createdTemplate)
+                const validationCase = templateValidationCases.find(
+                    ({ uuid }) => pathname === `/api/subscription-templates/${uuid}`
+                )
+                if (validationCase) {
+                    const { type, uuid, syntaxError } = validationCase
+                    return result({
+                        uuid,
+                        viewPosition: 0,
+                        name: `Diagnostic ${type}`,
+                        tags: [],
+                        templateType: type,
+                        templateJson: type === 'SINGBOX' ? { log: { level: 'quiet' } } : null,
+                        encodedTemplateYaml:
+                            type === 'SINGBOX'
+                                ? null
+                                : btoa(
+                                      syntaxError
+                                          ? 'rules: [foo'
+                                          : 'mixed-port: 7890\nredir-port: 78921231231212\n'
+                                  )
+                    })
+                }
                 if (pathname === `/api/external-squads/${externalUuid}`)
                     return result(externalSquad)
                 if (pathname === '/api/external-squads/') {
@@ -3559,7 +3914,35 @@ export function startSvelteFixture(output) {
                         }
                     })
                 }
-                if (pathname === '/api/nodes' || pathname === '/api/nodes/') return result(nodes)
+                if (pathname === '/api/nodes' || pathname === '/api/nodes/') {
+                    if (request.method === 'POST') {
+                        const body = await request.json()
+                        return body.name === setupNode.name && body.address === setupNode.address
+                            ? Response.json({ response: setupNode }, { status: 201 })
+                            : new Response(null, { status: 400 })
+                    }
+                    return result(nodes)
+                }
+                if (pathname === `/api/nodes/${setupNode.uuid}`) {
+                    const attempt = setupPolls++
+                    if (attempt === 0) return result(setupNode)
+                    return result({
+                        ...setupNode,
+                        isConnecting: false,
+                        isConnected: attempt > 1,
+                        lastStatusMessage: attempt === 1 ? 'Fixture connection failed' : null
+                    })
+                }
+                if (pathname === '/api/nodes/actions/reorder' && request.method === 'POST') {
+                    const { nodes: order } = await request.json()
+                    const reordered = order.map(({ uuid, viewPosition }) => {
+                        const node = nodes.find((item) => item.uuid === uuid)
+                        node.viewPosition = viewPosition
+                        return node
+                    })
+                    nodes.splice(0, nodes.length, ...reordered)
+                    return result(nodes)
+                }
                 if (pathname === `/api/metadata/node/${geoNode.uuid}`) {
                     return result({ metadata: { location: 'fixture-location' } })
                 }
@@ -3641,7 +4024,7 @@ export function startSvelteFixture(output) {
                     pathname === '/api/connections/geocheck/browser-geo' &&
                     request.method === 'GET'
                 ) {
-                    if (geoPolls++ === 0)
+                    if (geoPolls++ < 2)
                         return result({ isCompleted: false, isFailed: false, result: null })
                     return result({
                         isCompleted: true,
@@ -3649,7 +4032,14 @@ export function startSvelteFixture(output) {
                         result: {
                             success: true,
                             nodeUuid: geoNode.uuid,
-                            image: null,
+                            image: {
+                                format: 'svg',
+                                media_type: 'image/svg+xml',
+                                encoding: 'base64',
+                                data: btoa(
+                                    '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80"><rect width="120" height="80" fill="teal"/></svg>'
+                                )
+                            },
                             rawReport: {
                                 connectivity: {
                                     targets: [
@@ -3658,6 +4048,24 @@ export function startSvelteFixture(output) {
                                             verdict: 'direct',
                                             rtt_ms: 12,
                                             hops: []
+                                        },
+                                        {
+                                            name: 'Transit trace',
+                                            host: 'example.test',
+                                            verdict: 'transit',
+                                            rtt_ms: 21,
+                                            hops: [
+                                                {
+                                                    ttl: 1,
+                                                    addr: '192.0.2.1',
+                                                    asn: 64500,
+                                                    as_name: 'Example network',
+                                                    avg_ms: 3,
+                                                    loss: 0,
+                                                    recv: 3,
+                                                    sent: 3
+                                                }
+                                            ]
                                         }
                                     ]
                                 }
@@ -3718,7 +4126,7 @@ export function startSvelteFixture(output) {
             if (!pathname.startsWith(panel)) return new Response(null, { status: 404 })
             if (pathname === `${panel}__verify.js`) {
                 return new Response(
-                    `(${verify.toString()})(${JSON.stringify({ externalUuid, mihomoUuid, squadUuid, hostUuid })});`,
+                    `(${verify.toString()})(${JSON.stringify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateValidationCases })});`,
                     {
                         headers: { 'Content-Type': 'text/javascript' }
                     }
@@ -3730,9 +4138,23 @@ export function startSvelteFixture(output) {
                 if (/^assets\/Users-[^/]+\.js$|^lotties\/[^/]+\.lottie$/.test(relative)) {
                     await Bun.sleep(250)
                 }
-                return (await asset.exists())
-                    ? new Response(asset)
-                    : new Response(null, { status: 404 })
+                if (await asset.exists()) return new Response(asset)
+                if (relative === 'assets/mihomo.schema.json')
+                    return Response.json({
+                        type: 'object',
+                        properties: { 'redir-port': { type: 'integer', maximum: 65535 } }
+                    })
+                if (relative === 'assets/singbox.schema.json')
+                    return Response.json({
+                        type: 'object',
+                        properties: {
+                            log: {
+                                type: 'object',
+                                properties: { level: { enum: ['debug', 'info', 'warn'] } }
+                            }
+                        }
+                    })
+                return new Response(null, { status: 404 })
             }
             return new Response(entry, { headers: { 'Content-Type': 'text/html' } })
         }
