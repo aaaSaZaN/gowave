@@ -599,6 +599,7 @@
         --badge-text: white;
     }
     .option {
+        --gw-checkbox-size: 24px;
         display: flex;
         align-items: center;
         gap: var(--mantine-spacing-sm);
@@ -621,36 +622,6 @@
         color: var(--mantine-color-text);
         font-size: var(--mantine-font-size-sm);
         font-weight: 600;
-    }
-    .option input {
-        appearance: none;
-        display: grid;
-        place-content: center;
-        width: 24px;
-        height: 24px;
-        margin: 0;
-        flex: none;
-        border: 1px solid var(--mantine-color-default-border);
-        border-radius: var(--mantine-radius-sm);
-        background: var(--mantine-color-default);
-        color: var(--mantine-color-white);
-        cursor: pointer;
-    }
-    .option input::before {
-        width: 6px;
-        height: 10px;
-        border: solid currentColor;
-        border-width: 0 2px 2px 0;
-        content: "";
-        transform: rotate(45deg) scale(0);
-        transition: transform 120ms ease;
-    }
-    .option input:checked {
-        border-color: var(--mantine-color-cyan-8);
-        background: var(--mantine-color-cyan-8);
-    }
-    .option input:checked::before {
-        transform: rotate(45deg) scale(1);
     }
     .option input:focus-visible {
         outline: 2px solid var(--mantine-color-cyan-4);

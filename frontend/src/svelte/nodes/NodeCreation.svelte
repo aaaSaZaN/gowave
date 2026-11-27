@@ -5,21 +5,22 @@
     import { buildNodeInstallCommand } from '@shared/lib/node-install-command'
     import { panelUrl } from '@shared/lib/panel-path'
     import { createMutation, createQuery } from '@tanstack/svelte-query'
-    import { onDestroy, type Snippet } from 'svelte'
+    import { onDestroy } from 'svelte'
     import { MediaQuery } from 'svelte/reactivity'
     import { submitCommand } from '../commands'
     import { profilesQuery } from '../config-profiles/queries'
     import { locale } from '../i18n.svelte'
     import { nodePluginsQuery } from '../plugins/queries'
     import { queryClient } from '../query-client'
-    import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import CopyableField from '../ui/CopyableField.svelte'
     import { dismissContainingDialog } from '../ui/dialog-motion'
     import FormCard from '../ui/FormCard.svelte'
     import Icon from '../ui/Icon.svelte'
-    import type { IconName } from '../ui/icons'
+    import NumberInput from '../ui/NumberInput.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import SelectField from '../ui/SelectField.svelte'
+    import TextInput from '../ui/TextInput.svelte'
     import { COUNTRIES } from './countries'
     import { type NodePatch, readConfigProfile, readNodePatch } from './fields'
     import NodeProviderField from './NodeProviderField.svelte'
@@ -40,7 +41,7 @@
     let uuid = $state('')
     let feedback = $state('')
     let failed = $state(false)
-    let copied = $state<'secret' | 'install'>()
+    let copied = $state(false)
     let copyTimer: ReturnType<typeof setTimeout> | undefined
     let statusCanvas = $state<HTMLCanvasElement>()
     let animationReady = $state(false)
@@ -51,7 +52,6 @@
         error: { animation: 'stop-v2', icon: 'TbAlertCircle' }
     } as const
     const t = $derived(locale.t)
-    const fieldPrefix = $props.id()
     const secret = createQuery(() => nodeSecretQuery)
     const providers = createQuery(() => ({ ...providersQuery, enabled: additional }))
     const plugins = createQuery(() => ({ ...nodePluginsQuery, enabled: additional }))
@@ -117,17 +117,17 @@
         save.mutate(readConfigProfile(new FormData(event.currentTarget)))
     }
 
-    function copy(install: boolean): void {
+    function copyInstall(): void {
         const key = secret.data?.secretKey.trim()
         if (!key) return
-        const value = install ? buildNodeInstallCommand(key, port) : key
+        const value = buildNodeInstallCommand(key, port)
         void navigator.clipboard.writeText(value).then(
             () => {
                 failed = false
                 feedback = t('common.message.copied')
-                copied = install ? 'install' : 'secret'
+                copied = true
                 clearTimeout(copyTimer)
-                copyTimer = setTimeout(() => (copied = undefined), 2000)
+                copyTimer = setTimeout(() => (copied = false), 2000)
             },
             (error: unknown) => {
                 failed = true
@@ -139,41 +139,18 @@
     onDestroy(() => clearTimeout(copyTimer))
 </script>
 
-{#snippet field(
-    label: string,
-    icon: IconName | undefined,
-    fieldContent: Snippet<[string]>,
-    required = false
-)}
-    {@const controlId = `${fieldPrefix}-${encodeURIComponent(label)}`}
-    <label class="node-field" for={controlId}>
-        <span
-            >{label}
-            {#if required}
-                <span class="required"> *</span>
-            {/if}</span
-        >
-        <span class="control" class:with-icon={!!icon}>
-            {#if icon}
-                <span class="leading"><Icon name={icon} size={16} /></span>
-            {/if}
-            {@render fieldContent(controlId)}
-        </span>
-    </label>
-{/snippet}
-
 {#snippet installButton()}
     <Button
         class="install-command"
-        data-copied={copied === 'install' || undefined}
-        icon={copied === 'install' ? 'PiCheck' : 'TbTerminal'}
+        data-copied={copied || undefined}
+        icon={copied ? 'PiCheck' : 'TbTerminal'}
         iconSize={18}
         variant="filled"
-        color={copied === 'install' ? 'teal' : 'gray'}
+        color={copied ? 'teal' : 'gray'}
         size="md"
         block
         disabled={!secret.data}
-        onclick={() => copy(true)}
+        onclick={copyInstall}
         >{t('copy-node-install-command.widget.copy-install-command')}</Button
     >
     {#if feedback}
@@ -215,39 +192,25 @@
                     >{t('create-node-step-1-connection.learn-more')}</a
                 >
             </p>
-            {@render field('Secret Key (SECRET_KEY)', 'TbCertificate', secretField)}
-            {#snippet secretField(controlId: string)}
-                <input
-                    id={controlId}
-                    class="gw-input secret"
-                    readonly
-                    value={secret.data?.secretKey ?? ''}
-                    onclick={() => copy(false)}
-                >
-                <span class="copy-key"
-                    ><ActionIcon
-                        icon={copied === 'secret' ? 'PiCheck' : 'PiCopy'}
-                        {...copied === 'secret' ? { tone: 'teal' } : {}}
-                        subtle
-                        label={t('common.action.copy')}
-                        size={28}
-                        iconSize={16}
-                        disabled={!secret.data}
-                        onclick={() => copy(false)}
-                    /></span
-                >
-            {/snippet}
-            {@render field(t('base-node-form.internal-name'), 'TbId', nameField, true)}
-            {#snippet nameField(controlId: string)}
-                <input
-                    class="gw-input"
-                    id={controlId}
-                    name="name"
-                    bind:value={name}
-                    placeholder={t('base-node-form.internal-name-placeholder')}
-                    required
-                >
-            {/snippet}
+            <CopyableField
+                label="Secret Key (SECRET_KEY)"
+                leftIcon="TbCertificate"
+                value={secret.data?.secretKey ?? ''}
+                oncopy={(ok) => {
+                    if (ok) {
+                        failed = false
+                        feedback = t('common.message.copied')
+                    }
+                }}
+            />
+            <TextInput
+                label={t('base-node-form.internal-name')}
+                leftIcon="TbId"
+                name="name"
+                bind:value={name}
+                placeholder={t('base-node-form.internal-name-placeholder')}
+                required
+            />
             <SelectField
                 name="countryCode"
                 label={t('base-node-form.country')}
@@ -258,37 +221,24 @@
                 bind:value={countryCode}
             />
             <div class="connection-address">
-                {@render field(
-                    t('create-node-step-1-connection.domain-or-ip'),
-                    'TbWorld',
-                    addressField,
-                    true
-                )}
-                {#snippet addressField(controlId: string)}
-                    <input
-                        class="gw-input"
-                        id={controlId}
-                        name="address"
-                        bind:value={address}
-                        placeholder="192.168.1.1"
-                        required
-                    >
-                {/snippet}
-                {@render field('Node Port', undefined, portField, true)}
-                {#snippet portField(controlId: string)}
-                    <input
-                        class="gw-input"
-                        id={controlId}
-                        name="port"
-                        type="number"
-                        min="1"
-                        max="65535"
-                        step="1"
-                        required
-                        placeholder="2222"
-                        bind:value={port}
-                    >
-                {/snippet}
+                <TextInput
+                    label={t('create-node-step-1-connection.domain-or-ip')}
+                    leftIcon="TbWorld"
+                    name="address"
+                    bind:value={address}
+                    placeholder="192.168.1.1"
+                    required
+                />
+                <NumberInput
+                    label="Node Port"
+                    name="port"
+                    min={1}
+                    max={65535}
+                    step={1}
+                    required
+                    placeholder="2222"
+                    bind:value={port}
+                />
             </div>
             <div class="more">
                 <button
@@ -324,10 +274,7 @@
                     }))}
                     bind:value={plugin}
                 />
-                <label class="node-field">
-                    {t('common.field.tags')}
-                    <input class="gw-input" name="tags" bind:value={tags}>
-                </label>
+                <TextInput label={t('common.field.tags')} name="tags" bind:value={tags} />
             </div>
             <div class="form-footer">
                 {@render installButton()}
@@ -501,73 +448,6 @@
     }
     .instructions a:hover {
         text-decoration: underline;
-    }
-    .node-field {
-        display: grid;
-        gap: 0;
-        min-width: 0;
-        font-size: var(--mantine-font-size-sm);
-        font-weight: 500;
-        line-height: var(--mantine-line-height-sm);
-    }
-    .node-field > span:first-child {
-        min-height: calc(var(--mantine-font-size-md) * var(--mantine-line-height-md));
-    }
-    .node-field input {
-        width: 100%;
-        height: 36px;
-        min-height: 36px;
-        border-radius: var(--mantine-radius-md);
-        font-size: var(--mantine-font-size-sm);
-        background: var(--mantine-color-dark-6);
-    }
-    .node-field:first-of-type {
-        font-weight: 600;
-    }
-    .node-field input::placeholder {
-        color: var(--mantine-color-placeholder);
-    }
-    .required {
-        color: var(--mantine-color-error);
-    }
-    .control {
-        position: relative;
-        min-width: 0;
-    }
-    .control.with-icon input {
-        padding-inline-start: 36px;
-    }
-    .leading,
-    .copy-key {
-        position: absolute;
-        inset-block: 0;
-        display: grid;
-        place-items: center;
-        width: 36px;
-        color: var(--mantine-color-dimmed);
-    }
-    .leading {
-        inset-inline-start: 0;
-        pointer-events: none;
-    }
-    .copy-key {
-        inset-inline-end: 0;
-        z-index: 1;
-    }
-    .secret {
-        padding-inline-end: 30px;
-        font-family: var(--mantine-font-family-monospace);
-        font-weight: 400;
-        cursor: copy;
-    }
-    .control:has(.secret)::after {
-        position: absolute;
-        inset-block: 1px;
-        inset-inline-end: 10px;
-        width: 80px;
-        background: linear-gradient(90deg, transparent, var(--mantine-color-default) 70%);
-        pointer-events: none;
-        content: "";
     }
     .connection-address {
         display: grid;

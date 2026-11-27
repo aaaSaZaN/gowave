@@ -26,6 +26,7 @@
     import EmptyState from '../ui/EmptyState.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
     import EntityTagBar from '../ui/EntityTagBar.svelte'
+    import { withinReorderDropZone } from '../ui/entity-order'
     import HelpDrawer from '../ui/HelpDrawer.svelte'
     import Icon from '../ui/Icon.svelte'
     import type { IconName } from '../ui/icons'
@@ -502,18 +503,9 @@
             updateDragOffset()
         }
         const active = drag
-        const bounds = cardList?.getBoundingClientRect()
+        const valid = cardList && withinReorderDropZone(cardList, event)
         cancelGrab()
-        if (
-            !active ||
-            !bounds ||
-            event.clientX < bounds.left ||
-            event.clientX > bounds.right ||
-            event.clientY < bounds.top ||
-            event.clientY > bounds.bottom ||
-            !reorderable
-        )
-            return
+        if (!active || !valid || !reorderable) return
         const { uuid, from, to } = active
         if (from === to || ordered[from]?.uuid !== uuid) return
         const next = ordered.map((host) => host.uuid)

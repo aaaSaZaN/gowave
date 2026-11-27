@@ -4,8 +4,9 @@
     import semver from '@shared/lib/version'
     import {
         prettifyBytesUtil,
+        prettySiBytesUtil,
         prettySiRealtimeBytesUtil
-    } from '@shared/utils/bytes/pretty-bytes/pretty-bytes.util'
+    } from '@shared/utils/bytes'
     import { isGoNodeVersion } from '@shared/utils/misc/node-versions'
     import {
         formatDurationUtil,
@@ -28,6 +29,7 @@
     import EntityStage from '../ui/EntityStage.svelte'
     import FormCard from '../ui/FormCard.svelte'
     import Icon from '../ui/Icon.svelte'
+    import type { IconName } from '../ui/icons'
     import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import Tooltip from '../ui/Tooltip.svelte'
@@ -124,6 +126,37 @@
         )
     }
 </script>
+
+{#snippet rate(direction: 'RX' | 'TX', speed: number, total: number)}
+    <div>
+        <dt>
+            <Icon
+                name={direction === 'RX' ? 'PiArrowDownDuotone' : 'PiArrowUpDuotone'}
+                color={direction === 'RX'
+                    ? 'var(--mantine-color-teal-5)'
+                    : 'var(--mantine-color-cyan-5)'}
+                size={12}
+            />
+            {direction}
+        </dt>
+        <dd class="stat">{prettySiRealtimeBytesUtil(speed, true, true) || '0 B/s'}</dd>
+        <dd class="total">{t('common.field.total')}: {prettySiBytesUtil(total) || '0 B'}</dd>
+    </div>
+{/snippet}
+
+{#snippet fact(label: string, value: string, icon?: IconName, description = value)}
+    <dt>
+        {#if icon}
+            <Icon name={icon} size={12} />
+        {/if}
+        {label}
+    </dt>
+    <dd>
+        <Tooltip block text={description} disabled={!description}>
+            <span class="stat">{value || '—'}</span>
+        </Tooltip>
+    </dd>
+{/snippet}
 
 <svelte:head>
     {#if !nodeId}
@@ -474,123 +507,134 @@
                     </FormCard>
                 {/snippet}
                 {#snippet system()}
-                    {@const system = node.system}
-                    {#if system}
-                        {@const memoryTotal = system.info.memoryTotal}
-                        {@const memoryUsed = system.stats.memoryUsed}
-                        {@const memoryPercent = memoryTotal
-                            ? Math.min(100, Math.round((memoryUsed * 100) / memoryTotal))
-                            : 0}
-                        {@const network = system.stats.interface}
-                        <FormCard
-                            title={t('node-system-card.widget.system-info')}
-                            tone="violet"
-                            icon="TbDeviceDesktop"
-                        >
-                            {#snippet actions()}
-                                <div class="system-badges">
-                                    <Tooltip text={`${system.info.platform} / ${system.info.arch}`}>
-                                        <span class="system-platform"
-                                            >{system.info.platform}
-                                            / {system.info.arch}</span
-                                        >
-                                    </Tooltip>
-                                    <span class="system-uptime">
-                                        <Icon name="PiClockCountdown" size={14} />
-                                        {formatDurationUtil(system.stats.uptime)}
-                                    </span>
-                                </div>
-                            {/snippet}
-                            <section class="system-panel memory-panel">
-                                <div class="system-panel-heading">
-                                    {t('node-system-card.widget.memory')}
-                                </div>
-                                <div class="memory-values">
-                                    <strong
-                                        >{prettifyBytesUtil(memoryUsed, true)}
-                                        / {prettifyBytesUtil(memoryTotal, true)}</strong
-                                    >
-                                    <span>({memoryPercent}%)</span>
-                                </div>
-                                <div
-                                    class="system-meter"
-                                    role="progressbar"
-                                    aria-label="Memory usage"
-                                    aria-valuenow={memoryPercent}
-                                    aria-valuemin="0"
-                                    aria-valuemax="100"
-                                >
-                                    <span style:width={`${memoryPercent}%`}></span>
-                                </div>
-                            </section>
-                            {#if network}
-                                <section class="system-panel network-panel">
-                                    <div class="system-panel-heading">
-                                        <span>{t('common.field.interface')}</span>
-                                        <b>{network.interface || '—'}</b>
+                    {#if node.system}
+                        {@const { info, stats } = node.system}
+                        {@const memoryPercent =
+                            info.memoryTotal > 0
+                                ? Math.round(
+                                      Math.min(
+                                          1,
+                                          Math.max(0, stats.memoryUsed / info.memoryTotal)
+                                      ) * 100
+                                  )
+                                : 0}
+                        {@const memoryTone =
+                            memoryPercent > 90 ? 'red' : memoryPercent > 70 ? 'yellow' : 'teal'}
+                        {@const platform = [info.platform || info.type, info.arch]
+                            .filter(Boolean)
+                            .join(' / ')}
+                        {@const os =
+                            [info.platform, info.version].filter(Boolean).join(' ') || info.type}
+                        {@const interfaces = info.networkInterfaces.filter((name) => name !== 'lo')}
+                        {@const visibleInterfaces = interfaces.slice(0, 3).join(', ')}
+                        <div class="node-system-card">
+                            <FormCard
+                                title={t('node-system-card.widget.system-info')}
+                                tone="violet"
+                                icon="TbDeviceDesktop"
+                                gap="sm"
+                            >
+                                {#snippet actions()}
+                                    <div class="badges">
+                                        {#if platform}
+                                            <Tooltip text={platform} class="system-platform">
+                                                <span class="badge" data-tone="violet"
+                                                    >{platform}</span
+                                                >
+                                            </Tooltip>
+                                        {/if}
+                                        <span class="badge system-uptime" data-tone="teal">
+                                            <Icon name="PiTimerDuotone" size={12} />
+                                            {formatDurationUtil(Math.floor(stats.uptime))}
+                                        </span>
                                     </div>
-                                    <div class="network-stats">
-                                        <div>
-                                            <span
-                                                ><Icon name="PiArrowDownDuotone" size={14} />
-                                                RX</span
-                                            >
-                                            <strong
-                                                >{prettySiRealtimeBytesUtil(
-                                                    network.rxBytesPerSec,
-                                                    true,
-                                                    true
-                                                )}</strong
-                                            >
-                                            <small
-                                                >{t('common.field.total')}:
-                                                {prettifyBytesUtil(network.rxTotal, true)}</small
-                                            >
-                                        </div>
-                                        <div>
-                                            <span
-                                                ><Icon name="PiArrowUpDuotone" size={14} />
-                                                TX</span
-                                            >
-                                            <strong
-                                                >{prettySiRealtimeBytesUtil(
-                                                    network.txBytesPerSec,
-                                                    true,
-                                                    true
-                                                )}</strong
-                                            >
-                                            <small
-                                                >{t('common.field.total')}:
-                                                {prettifyBytesUtil(network.txTotal, true)}</small
-                                            >
-                                        </div>
+                                {/snippet}
+
+                                <section class="panel memory">
+                                    <h4>{t('node-system-card.widget.memory')}</h4>
+                                    <div class="memory-value">
+                                        {prettifyBytesUtil(stats.memoryUsed) || '0 B'}
+                                        /
+                                        {prettifyBytesUtil(info.memoryTotal) || '0 B'}
+                                        <span>({memoryPercent}%)</span>
+                                    </div>
+                                    <div
+                                        class="meter"
+                                        role="progressbar"
+                                        aria-label={t('node-system-card.widget.memory')}
+                                        aria-valuenow={memoryPercent}
+                                        aria-valuemin="0"
+                                        aria-valuemax="100"
+                                    >
+                                        <span
+                                            style:width={`${memoryPercent}%`}
+                                            style:background={`var(--mantine-color-${memoryTone}-6)`}
+                                        ></span>
                                     </div>
                                 </section>
-                            {/if}
-                            <section class="system-panel hardware-panel">
-                                <span class="system-panel-heading">{t('common.field.system')}</span>
-                                <div class="hardware-stats">
-                                    <div>
-                                        <span><Icon name="PiCpuDuotone" size={13} /> CPU</span>
-                                        <strong>{system.info.cpus} x {system.info.cpuModel}</strong>
-                                    </div>
-                                    <div>
-                                        <span>OS</span>
-                                        <strong
-                                            >{system.info.platform} {system.info.version}</strong
-                                        >
-                                    </div>
-                                    <div>
-                                        <span>{t('node-system-card.widget.kernel')}</span>
-                                        <strong>{system.info.release}</strong>
-                                    </div>
-                                    <div>
-                                        <span>{t('node-system-card.widget.network')}</span>
-                                        <strong>{system.info.networkInterfaces.join(', ')}</strong>
-                                    </div>
-                                </div>
-                            </section>
-                        </FormCard>
+
+                                {#if stats.interface}
+                                    {@const network = stats.interface}
+                                    <section class="panel network">
+                                        <div class="panel-heading">
+                                            <h4>{t('common.field.interface')}</h4>
+                                            {#if network.interface}
+                                                <span
+                                                    class="badge"
+                                                    data-tone="cyan"
+                                                    title={network.interface}
+                                                    >{network.interface}</span
+                                                >
+                                            {/if}
+                                        </div>
+                                        <dl class="network-stats">
+                                            {@render rate(
+                                                'RX',
+                                                network.rxBytesPerSec,
+                                                network.rxTotal
+                                            )}
+                                            {@render rate(
+                                                'TX',
+                                                network.txBytesPerSec,
+                                                network.txTotal
+                                            )}
+                                        </dl>
+                                    </section>
+                                {/if}
+
+                                <section class="panel hardware">
+                                    <h4>{t('common.field.system')}</h4>
+                                    <dl class="hardware-stats">
+                                        <div class="cpu">
+                                            {@render fact(
+                                                'CPU',
+                                                `${info.cpus} × ${info.cpuModel}`,
+                                                'PiCpuDuotone'
+                                            )}
+                                        </div>
+                                        <div>{@render fact('OS', os)}</div>
+                                        <div>
+                                            {@render fact(
+                                                t('node-system-card.widget.kernel'),
+                                                info.release
+                                            )}
+                                        </div>
+                                        {#if interfaces.length}
+                                            <div>
+                                                {@render fact(
+                                                    t('node-system-card.widget.network'),
+                                                    interfaces.length > 3
+                                                        ? `${visibleInterfaces} +${interfaces.length - 3}`
+                                                        : visibleInterfaces,
+                                                    'PiNetworkDuotone',
+                                                    interfaces.join(', ')
+                                                )}
+                                            </div>
+                                        {/if}
+                                    </dl>
+                                </section>
+                            </FormCard>
+                        </div>
                     {/if}
                 {/snippet}
                 {#snippet actions()}
@@ -845,143 +889,6 @@
         text-decoration: underline dotted;
         text-underline-offset: 3px;
     }
-    .system-uptime {
-        display: flex;
-        align-items: center;
-        gap: var(--mantine-spacing-xs);
-        padding: 4px 8px;
-        border-radius: var(--mantine-radius-md);
-        background: var(--mantine-color-teal-light);
-        color: var(--mantine-color-teal-light-color);
-        font-family: var(--mantine-font-family-monospace);
-        font-size: var(--mantine-font-size-xs);
-        font-weight: 700;
-        text-transform: uppercase;
-    }
-    .system-platform {
-        padding: 2px 8px;
-        border-radius: var(--mantine-radius-md);
-        background: var(--mantine-color-violet-light);
-        color: var(--mantine-color-violet-light-color);
-        font: bold 10px var(--mantine-font-family-monospace);
-        text-transform: uppercase;
-    }
-    .system-panel {
-        padding: var(--mantine-spacing-sm);
-        border: 1px solid rgba(var(--gw-fg-rgb), 0.08);
-        border-radius: var(--mantine-radius-sm);
-        background: var(--gw-raised-bg);
-    }
-    .memory-panel {
-        border-color: color-mix(in srgb, var(--mantine-color-teal-5) 25%, transparent);
-        background: color-mix(in srgb, var(--mantine-color-teal-6) 8%, var(--gw-raised-bg));
-    }
-    .network-panel {
-        border-color: color-mix(in srgb, var(--mantine-color-cyan-5) 25%, transparent);
-        background: color-mix(in srgb, var(--mantine-color-cyan-6) 7%, var(--gw-raised-bg));
-    }
-    .hardware-panel {
-        border-color: color-mix(in srgb, var(--mantine-color-violet-5) 25%, transparent);
-        background: color-mix(in srgb, var(--mantine-color-violet-6) 7%, var(--gw-raised-bg));
-    }
-    .system-panel-heading,
-    .network-stats > div > span,
-    .hardware-stats > div > span {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        color: var(--mantine-color-dimmed);
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-    }
-    .system-panel-heading {
-        margin-block-end: var(--mantine-spacing-xs);
-    }
-    .system-badges {
-        display: flex;
-        flex-wrap: nowrap;
-        align-items: center;
-        justify-content: flex-end;
-        gap: var(--mantine-spacing-xs);
-        min-width: 0;
-        max-width: 100%;
-    }
-    .system-uptime {
-        flex-shrink: 0;
-        white-space: nowrap;
-    }
-    .system-platform {
-        max-width: 22ch;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    @media (max-width: 40em) {
-        .system-platform {
-            display: none;
-        }
-    }
-    .memory-values {
-        display: flex;
-        gap: 4px;
-        margin-block-end: 5px;
-        font: 700 var(--mantine-font-size-xs) var(--mantine-font-family-monospace);
-    }
-    .memory-panel .memory-values span {
-        color: var(--mantine-color-dimmed);
-    }
-    .network-panel .system-panel-heading b {
-        margin-inline-start: auto;
-        padding: 1px 6px;
-        border: 1px solid var(--mantine-color-cyan-light-hover);
-        border-radius: var(--mantine-radius-xl);
-        color: var(--mantine-color-cyan-light-color);
-        background: var(--mantine-color-cyan-light);
-        font-family: var(--mantine-font-family-monospace);
-    }
-    .system-meter {
-        height: 5px;
-        overflow: hidden;
-        border-radius: var(--mantine-radius-sm);
-        background: var(--mantine-color-default-border);
-    }
-    .memory-panel .system-meter > span {
-        display: block;
-        height: 100%;
-        border-radius: inherit;
-        background: var(--mantine-color-teal-6);
-    }
-    .network-stats {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: var(--mantine-spacing-md);
-    }
-    .system-panel .network-stats > div,
-    .system-panel .hardware-stats > div {
-        display: grid;
-        min-width: 0;
-        gap: 2px;
-    }
-    .network-stats strong,
-    .hardware-stats strong {
-        overflow: hidden;
-        color: var(--mantine-color-text);
-        font-family: var(--mantine-font-family-monospace);
-        font-size: var(--mantine-font-size-xs);
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .network-stats small {
-        color: var(--mantine-color-dimmed);
-        font-size: 10px;
-    }
-    .hardware-stats {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: var(--mantine-spacing-sm);
-    }
     .error-message :global(.error-copy) {
         color: var(--mantine-color-dimmed);
     }
@@ -1027,9 +934,6 @@
         font-size: var(--mantine-font-size-xs);
     }
     @media (max-width: 48em) {
-        .hardware-stats {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
         .details-metrics {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
@@ -1043,6 +947,162 @@
     @media (max-width: 36em) {
         .details-metrics {
             grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .node-system-card {
+        container-type: inline-size;
+
+        .badges,
+        .panel-heading,
+        dt,
+        .badge {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .badges {
+            min-width: 0;
+            flex: 0 1 auto;
+            max-width: 100%;
+            gap: var(--mantine-spacing-xs);
+        }
+        .badge {
+            display: inline-block;
+            min-width: 0;
+            max-width: 100%;
+            padding: 2px 8px;
+            overflow: hidden;
+            border-radius: var(--mantine-radius-md);
+            font: 700 10px / 1.4 var(--mantine-font-family-monospace);
+            text-transform: uppercase;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--badge-ink);
+            background: var(--badge-bg);
+        }
+        .badge[data-tone="violet"] {
+            --badge-ink: var(--mantine-color-violet-light-color);
+            --badge-bg: var(--mantine-color-violet-light);
+        }
+        .badge[data-tone="teal"] {
+            --badge-ink: var(--mantine-color-teal-light-color);
+            --badge-bg: var(--mantine-color-teal-light);
+        }
+        .badge[data-tone="cyan"] {
+            --badge-ink: var(--mantine-color-cyan-light-color);
+            --badge-bg: var(--mantine-color-cyan-light);
+        }
+        .badges :global(.system-platform) {
+            max-width: 16ch;
+        }
+        .badge.system-uptime {
+            display: flex;
+            flex: none;
+            font-size: var(--mantine-font-size-xs);
+        }
+
+        .panel {
+            display: grid;
+            gap: 6px;
+            min-width: 0;
+            padding: 8px 12px;
+            border: 1px solid color-mix(in srgb, var(--panel-tint) 12%, transparent);
+            border-radius: var(--mantine-radius-sm);
+            background: color-mix(in srgb, var(--panel-tint) 6%, transparent);
+        }
+        .memory {
+            --panel-tint: var(--mantine-color-teal-4);
+        }
+        .network {
+            --panel-tint: var(--mantine-color-cyan-4);
+        }
+        .hardware {
+            --panel-tint: var(--mantine-color-violet-4);
+        }
+        .panel-heading {
+            justify-content: space-between;
+        }
+        h4 {
+            margin: 0;
+            color: var(--mantine-color-dimmed);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            line-height: 1.2;
+            text-transform: uppercase;
+        }
+        .memory-value,
+        .stat,
+        .total {
+            font-family: var(--mantine-font-family-monospace);
+        }
+        .memory-value,
+        .stat {
+            font-size: var(--mantine-font-size-xs);
+            font-weight: 600;
+        }
+        .memory-value span,
+        .total {
+            color: var(--mantine-color-dimmed);
+        }
+        .meter {
+            height: calc(0.3125rem * var(--mantine-scale));
+            overflow: hidden;
+            border-radius: var(--mantine-radius-xl);
+            background: var(--mantine-color-default-border);
+        }
+        .meter span {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+        }
+        dl,
+        dd {
+            min-width: 0;
+            margin: 0;
+        }
+        dl {
+            display: grid;
+            gap: 6px var(--mantine-spacing-sm);
+        }
+        dl > div {
+            min-width: 0;
+        }
+        dt {
+            color: var(--mantine-color-dimmed);
+            font-size: var(--mantine-font-size-xs);
+            font-weight: 500;
+            line-height: 1.2;
+        }
+        .stat {
+            display: block;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .total {
+            font-size: 10px;
+            overflow-wrap: anywhere;
+        }
+        .network-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .hardware-stats {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .cpu {
+            grid-column: 1 / -1;
+        }
+
+        @container (max-width: 24rem) {
+            .badges :global(.system-platform) {
+                display: none;
+            }
+            .hardware-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
         }
     }
 </style>

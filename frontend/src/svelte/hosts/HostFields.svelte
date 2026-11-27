@@ -921,26 +921,21 @@
                         {#each subscriptionTypeItems as item (item.value)}
                             {@const checked = excludedSubscriptions.includes(item.value)}
                             <label class="chip-card" class:checked>
-                                <input
-                                    type="checkbox"
-                                    name="excludeFromSubscriptionTypes"
-                                    value={item.value}
-                                    {checked}
-                                    onchange={(event) => {
-                                        excludedSubscriptions = event.currentTarget.checked
-                                            ? [...excludedSubscriptions, item.value]
-                                            : excludedSubscriptions.filter(
-                                                  (val) => val !== item.value
-                                              )
-                                        onfieldchange('excludeFromSubscriptionTypes')
-                                    }}
-                                >
                                 <span class="chip-left">
-                                    <span class="chip-indicator" aria-hidden="true">
-                                        {#if checked}
-                                            <Icon name="TbCheck" size={12} />
-                                        {/if}
-                                    </span>
+                                    <input
+                                        type="checkbox"
+                                        name="excludeFromSubscriptionTypes"
+                                        value={item.value}
+                                        {checked}
+                                        onchange={(event) => {
+                                            excludedSubscriptions = event.currentTarget.checked
+                                                ? [...excludedSubscriptions, item.value]
+                                                : excludedSubscriptions.filter(
+                                                      (val) => val !== item.value
+                                                  )
+                                            onfieldchange('excludeFromSubscriptionTypes')
+                                        }}
+                                    >
                                     <span class="chip-label">{item.label}</span>
                                 </span>
                                 <span class="chip-icon" aria-hidden="true">
@@ -1210,7 +1205,7 @@
     .squad-mode label {
         position: relative;
     }
-    :is(.squad-mode, .chip-card) input {
+    .squad-mode input {
         position: absolute;
         width: 1px;
         height: 1px;
@@ -1249,6 +1244,8 @@
         }
     }
     .chip-card {
+        --gw-checkbox-size: 18px;
+        --gw-checkbox-fill: var(--mantine-color-red-filled);
         position: relative;
         display: flex;
         align-items: center;
@@ -1273,24 +1270,6 @@
         align-items: center;
         gap: var(--mantine-spacing-xs);
         min-width: 0;
-    }
-    .chip-indicator {
-        display: inline-grid;
-        place-items: center;
-        flex: none;
-        width: 18px;
-        height: 18px;
-        border-radius: var(--mantine-radius-sm);
-        border: 1px solid var(--mantine-color-default-border);
-        background: var(--mantine-color-default);
-        color: var(--mantine-color-white);
-        transition:
-            background-color 150ms ease,
-            border-color 150ms ease;
-    }
-    .chip-card.checked .chip-indicator {
-        border-color: var(--mantine-color-red-filled);
-        background: var(--mantine-color-red-filled);
     }
     .chip-label {
         font-size: var(--mantine-font-size-sm);

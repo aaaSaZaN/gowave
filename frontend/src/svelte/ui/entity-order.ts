@@ -41,8 +41,10 @@ export function entityOrder<T extends { uuid: string }>(
     return { drag, pendingOrder }
 }
 
+type ReorderAxis = 'x' | 'y' | 'grid'
+
 export interface ReorderHandleOptions {
-    axis?: 'x' | 'y' | 'grid'
+    axis?: ReorderAxis
     drop: (target: string) => void
     onactive?: (active: boolean) => void
 }
@@ -62,8 +64,11 @@ function scrollContainers(group: HTMLElement): HTMLElement[] {
     const containers: HTMLElement[] = []
     for (let element: HTMLElement | null = group; element; element = element.parentElement) {
         const style = getComputedStyle(element)
+        if (element instanceof HTMLDialogElement) {
+            containers.push(element)
+            return containers
+        }
         if (/auto|scroll/.test(style.overflowX + style.overflowY)) containers.push(element)
-        if (element instanceof HTMLDialogElement) return containers
     }
     const root = document.scrollingElement
     if (root instanceof HTMLElement && !containers.includes(root)) containers.push(root)
@@ -80,6 +85,35 @@ function scrollBounds(element: HTMLElement): DOMRect {
         element.clientWidth,
         element.clientHeight
     )
+}
+
+export function withinReorderDropZone(
+    group: HTMLElement,
+    { clientX: x, clientY: y }: Pick<PointerEvent, 'clientX' | 'clientY'>,
+    axis: ReorderAxis = 'y'
+): boolean {
+    if (x < 0 || x > window.innerWidth || y < 0 || y > window.innerHeight) return false
+
+    // The pointer can pass the first or last item while staying in the list's lane.
+    const list = group.getBoundingClientRect()
+    if (axis === 'x' ? y < list.top || y > list.bottom : x < list.left || x > list.right)
+        return false
+
+    return scrollContainers(group).every((container) => {
+        const bounds = scrollBounds(container)
+        if (container instanceof HTMLDialogElement)
+            return x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom
+        const clipsX = container.scrollWidth > container.clientWidth
+        const clipsY = container.scrollHeight > container.clientHeight
+        return (
+            (!clipsX || (x >= bounds.left && x <= bounds.right)) &&
+            (!clipsY || (y >= bounds.top && y <= bounds.bottom))
+        )
+    })
+}
+
+function distanceToRange(point: number, start: number, end: number): number {
+    return Math.max(start - point, point - end, 0)
 }
 
 function edgeSpeed(point: number, start: number, end: number): number {
@@ -173,13 +207,11 @@ export function reorderHandle(handle: HTMLElement, initial?: ReorderHandleOption
             const groupBox = group.getBoundingClientRect()
             const left = Math.max(groupBox.left, Math.min(groupBox.right - box.width, x - anchorX))
             const top = Math.max(groupBox.top, Math.min(groupBox.bottom - box.height, y - anchorY))
-            const centerX = left + box.width / 2
-            const centerY = top + box.height / 2
             let best = Infinity
             let to = from
             for (const [index, entry] of entries.entries()) {
-                const dx = axis === 'y' ? 0 : centerX - entry.box.left - entry.box.width / 2
-                const dy = axis === 'x' ? 0 : centerY - entry.box.top - entry.box.height / 2
+                const dx = axis === 'y' ? 0 : distanceToRange(x, entry.box.left, entry.box.right)
+                const dy = axis === 'x' ? 0 : distanceToRange(y, entry.box.top, entry.box.bottom)
                 const distance = Math.hypot(dx, dy)
                 if (distance < best) {
                     best = distance
@@ -267,13 +299,7 @@ export function reorderHandle(handle: HTMLElement, initial?: ReorderHandleOption
             x = up.clientX
             y = up.clientY
             if (active) layout()
-            const inside = (box: DOMRect) =>
-                x >= box.left && x <= box.right && y >= box.top && y <= box.bottom
-            const valid =
-                active &&
-                target !== item &&
-                inside(group.getBoundingClientRect()) &&
-                containers.every((container) => inside(scrollBounds(container)))
+            const valid = active && target !== item && withinReorderDropZone(group, up, axis)
             const key = target.getAttribute('data-reorder-key')
             finish()
             if (valid && key !== null) options?.drop(key)

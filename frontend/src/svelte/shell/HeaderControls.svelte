@@ -302,7 +302,6 @@
         padding-inline: 10px;
         font-size: var(--mantine-font-size-sm);
         font-weight: 600;
-        font-family: var(--mantine-font-family-monospace);
     }
 
     .header-control.logout {

@@ -5,7 +5,7 @@
     import { layout } from './layout.svelte'
     import RouteLoading from './RouteLoading.svelte'
     import Recap from './recap/Recap.svelte'
-    import { navigationPending, route } from './router'
+    import { dashboardViewPath, navigationPending, route } from './router'
     import Brand from './shell/Brand.svelte'
     import HeaderControls from './shell/HeaderControls.svelte'
     import shell from './shell/layout.module.css'
@@ -26,9 +26,10 @@
     const metadata = createQuery(() => metadataQuery)
     const update = createQuery(() => updateCheckQuery())
     let page = $state<HTMLDivElement>()
+    const viewPath = $derived(dashboardViewPath(route.pathname))
 
     $effect(() => {
-        if (!route.pathname || !page || reducedMotion.current) return
+        if (!viewPath || !page || reducedMotion.current) return
         const entry = page.animate([{ opacity: 0 }, { opacity: 1 }], {
             id: 'dashboard-page-entry',
             duration: 300,

@@ -46,21 +46,9 @@
         type="number"
         {id}
         {required}
-        class="gw-input field-input"
+        class="mantine-Input-input"
         aria-invalid={error ? true : attributes['aria-invalid']}
         aria-describedby={describedBy || undefined}
         bind:value
     >
 </Field>
-
-<style>
-    input {
-        appearance: textfield;
-    }
-
-    input::-webkit-inner-spin-button,
-    input::-webkit-outer-spin-button {
-        appearance: none;
-        margin: 0;
-    }
-</style>

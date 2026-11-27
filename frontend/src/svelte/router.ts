@@ -25,15 +25,22 @@ const entityFallback = {
 } as const
 
 const oauthCallback = () => import('./auth/OauthCallback.svelte')
+const externalSquads = () => import('./external-squads/ExternalSquads.svelte')
+const externalSquadDetailsPath = /^\/dashboard\/open\/external-squad\/[^/]+$/
 const navigationTarget = writable('')
 export const navigationPending = { subscribe: navigationTarget.subscribe }
+
+export function dashboardViewPath(pathname: string): string {
+    const path = pathname.replace(/\/$/, '')
+    return externalSquadDetailsPath.test(path) ? management.EXTERNAL_SQUADS : path
+}
 
 export const { navigate, p, route } = createRouter(
     {
         hooks: {
             beforeLoad({ pathname }) {
                 const changingPage =
-                    pathname.replace(/\/$/, '') !== route.pathname.replace(/\/$/, '')
+                    dashboardViewPath(pathname) !== dashboardViewPath(route.pathname)
                 navigationTarget.set(changingPage ? pathname : '')
             },
             afterLoad: () => navigationTarget.set(''),
@@ -89,9 +96,11 @@ export const { navigate, p, route } = createRouter(
             '/open/host/:id': () => import('./hosts/HostDetails.svelte'),
             '/management/users': () => import('./users/Users.svelte'),
             '/open/user/:id': () => import('./users/UserDetails.svelte'),
-            '/open/external-squad/:id': () =>
-                import('./external-squads/ExternalSquadDetails.svelte'),
-            '/management/external-squads': () => import('./external-squads/ExternalSquads.svelte'),
+            '/open/external-squad/:id': {
+                layout: externalSquads,
+                '/': () => import('./external-squads/ExternalSquadDetails.svelte')
+            },
+            '/management/external-squads': externalSquads,
             '/tools/torrent-blocker-reports': () =>
                 import('./torrent-reports/TorrentReports.svelte'),
             '/tools/sessions-explorer': () => import('./sessions/SessionsExplorer.svelte'),

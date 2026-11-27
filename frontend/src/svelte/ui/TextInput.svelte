@@ -45,7 +45,7 @@
         {...attributes}
         {id}
         {required}
-        class="gw-input field-input"
+        class="mantine-Input-input"
         aria-invalid={error ? true : attributes['aria-invalid']}
         aria-describedby={describedBy || undefined}
         bind:value

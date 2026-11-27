@@ -10,6 +10,7 @@
     import { NO_TAG } from '@shared/constants/tag-filter'
     import { cloneString } from '@shared/utils/misc/clone-string'
     import { createMutation, createQuery } from '@tanstack/svelte-query'
+    import type { Snippet } from 'svelte'
     import { executeCommand, submitCommand } from '../commands'
     import { locale } from '../i18n.svelte'
     import { queryClient } from '../query-client'
@@ -31,6 +32,7 @@
     import { usersQueryKey } from '../users/queries'
     import { type ExternalSquad, externalSquadsKey, externalSquadsQuery } from './queries'
 
+    let { children }: { children?: Snippet } = $props()
     const confirmAction = useConfirmation()
 
     type Action = 'add' | 'remove' | 'delete' | 'clone'
@@ -340,6 +342,8 @@
         />
     {/if}
 </main>
+
+{@render children?.()}
 
 <style>
     .squads-page {

@@ -75,7 +75,7 @@
                 />
                 <div class="ip-copy-wrap">
                     <CopyableField
-                        size="sm"
+                        variant="unstyled"
                         value={session.ip}
                         ariaLabel={session.ip}
                         oncopy={(ok) => {

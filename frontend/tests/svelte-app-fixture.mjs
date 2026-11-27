@@ -102,14 +102,13 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
             ?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
     }
 
-    function dragBetween(handle, source, target) {
+    function dragBetween(handle, target, destination = {}) {
         const grip = handle.getBoundingClientRect()
-        const from = source.getBoundingClientRect()
         const to = target.getBoundingClientRect()
         const x = grip.left + grip.width / 2
         const y = grip.top + grip.height / 2
-        const destinationX = x + to.left + to.width / 2 - from.left - from.width / 2
-        const destinationY = y + to.top + to.height / 2 - from.top - from.height / 2
+        const destinationX = destination.x ?? to.left + to.width / 2
+        const destinationY = destination.y ?? to.top + to.height / 2
         handle.setPointerCapture = () => {}
         const pointer = (type, clientX, clientY) =>
             handle.dispatchEvent(
@@ -170,6 +169,10 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
         await until(() => !submit.disabled, 'Quick Open did not react to a valid entity ID')
         submit.click()
         await until(
+            () => select('dialog[open] .loading-state[role=status]'),
+            'A slow user request did not show loading progress'
+        )
+        await until(
             () =>
                 location.pathname === `${scope}dashboard/open/user/42` &&
                 select('dialog[open] h2')?.textContent === 'fixture-42',
@@ -201,8 +204,15 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
             }, `The table did not open user ${id}`)
         const firstUserLink = await until(() => userLink(42), 'The first user row did not load')
         const secondUserLink = userLink(43)
+        let flashed = false
+        const dialogs = new MutationObserver(() => {
+            flashed ||= Boolean(select('dialog[open] .loading-state[role=status]'))
+        })
+        dialogs.observe(document.body, { childList: true, subtree: true })
         secondUserLink.click()
         const cachedUserDialog = await waitForUserDialog(43)
+        dialogs.disconnect()
+        if (flashed) throw new Error('A short user request flashed a loading dialog')
         const strategy = cachedUserDialog
             .querySelector('input[name=trafficLimitStrategy]')
             .closest('.select-field')
@@ -219,6 +229,22 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
 
         firstUserLink.click()
         const firstUserDialog = await waitForUserDialog(42)
+        const subscribeUrl = firstUserDialog.querySelector('input[id="subscription-url-42"]')
+        const urlStyle = getComputedStyle(subscribeUrl)
+        if (urlStyle.borderTopWidth !== '1px' || urlStyle.borderTopStyle !== 'solid')
+            throw new Error('The subscription URL is missing its input border')
+        const amount = firstUserDialog.querySelector('input[name="trafficLimit"]')
+        const unit = firstUserDialog.querySelector('[role=combobox][aria-label="Traffic unit"]')
+        const expiration = firstUserDialog.querySelector('button[id$="-expiration"]')
+        const amountRect = amount.getBoundingClientRect()
+        const unitRect = unit.getBoundingClientRect()
+        if (
+            Math.abs(amountRect.height - unitRect.height) > 1 ||
+            Math.abs(amountRect.top - unitRect.top) > 1 ||
+            getComputedStyle(expiration).fontSize !== getComputedStyle(amount).fontSize
+        ) {
+            throw new Error('User form fields do not share the same control size and alignment')
+        }
         const hwidLabel = firstUserDialog.querySelector('.hwid-checkbox')
         const hwidCheckbox = hwidLabel.querySelector('input[type=checkbox]')
         const hwidLimit = firstUserDialog.querySelector('input[name=hwidDeviceLimit]')
@@ -235,6 +261,30 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
             () => !hwidCheckbox.checked && !hwidLimit.disabled,
             'The HWID limit did not become editable again'
         )
+
+        findButton('HWID devices', firstUserDialog).click()
+        const hwidDialog = await until(
+            () => select('dialog.hwid-modal[open]'),
+            'The HWID devices dialog did not open'
+        )
+        const deviceColumns = () => [...hwidDialog.querySelectorAll('th[data-reorder-key]')]
+        const originalColumns = deviceColumns()
+        dragBetween(findButton('Reorder Platform', originalColumns[0]), originalColumns[2], {
+            x: originalColumns[2].getBoundingClientRect().left + 5
+        })()
+        await until(
+            () =>
+                deviceColumns()
+                    .slice(0, 3)
+                    .every(
+                        (column, index) =>
+                            column ===
+                            [originalColumns[1], originalColumns[2], originalColumns[0]][index]
+                    ),
+            'The first HWID column did not move across the second'
+        )
+        findButton('Close', hwidDialog).click()
+        await until(() => !hwidDialog.isConnected, 'The HWID devices dialog did not close')
 
         const squadChoice = await until(
             () => firstUserDialog.querySelector('.squad input[type=checkbox]'),
@@ -623,12 +673,27 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
             () => select(`.squad-list a[href$="/external-squad/${externalUuid}"]`),
             'External squad did not load'
         )
+        const squadsView = externalCard.closest('.dashboard-content')
+        await until(
+            () =>
+                !squadsView
+                    .getAnimations()
+                    .some((animation) => animation.id === 'dashboard-page-entry'),
+            'The squads list entry animation did not finish'
+        )
         externalCard.click()
         const external = await until(
             () =>
                 select('dialog.external-squad-drawer[open] input[name=MIHOMO]')?.closest('dialog'),
             'External squad template selectors did not load'
         )
+        if (
+            !externalCard.isConnected ||
+            externalCard.closest('.route-content').inert ||
+            squadsView.getAnimations().some((animation) => animation.id === 'dashboard-page-entry')
+        ) {
+            throw new Error('Opening the squad drawer did not preserve the squads list')
+        }
         const templateTypes = [...external.querySelectorAll('input[type=hidden]')].map(
             (field) => field.name
         )
@@ -711,6 +776,8 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
                 findButton('Squad actions', select('.squad-list li') ?? document),
             'Closing the drawer did not return to the external squads list'
         )
+        if (!externalCard.isConnected)
+            throw new Error('Closing the squad drawer remounted the squads list')
         externalActions.click()
         const renameExternal = await until(
             () => findButton('Rename', select('.squad-list li') ?? document),
@@ -810,7 +877,9 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
         }
         profileActions.hidePopover()
         const profileHandle = findButton('Reorder First profile', profileCards[0])
-        const releaseProfile = dragBetween(profileHandle, profileCards[0], profileCards[1])
+        const releaseProfile = dragBetween(profileHandle, profileCards[1], {
+            x: profileCards[1].getBoundingClientRect().left + 8
+        })
         await until(
             () =>
                 ['--reorder-x', '--reorder-y'].some(
@@ -977,11 +1046,19 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
             'Switching back to cards left the node list empty'
         )
         const nodeCards = [...document.querySelectorAll('main.nodes-page .node-item')]
+        const vitals = nodeCards[0].querySelector('.vitals')
+        const ram = vitals.querySelector('.memory').getBoundingClientRect()
+        const cpu = vitals.querySelector('.la-metric').getBoundingClientRect()
+        if (Math.abs(ram.top + ram.height / 2 - cpu.top - cpu.height / 2) > 2)
+            throw new Error('Node metrics wrap to a second line on desktop')
         const firstNodeHandle = findButton('Actions', nodeCards[0])
-        const releaseNode = dragBetween(firstNodeHandle, nodeCards[0], nodeCards[1])
+        const releaseNode = dragBetween(firstNodeHandle, nodeCards[2])
         await until(
-            () => parseFloat(nodeCards[1].style.getPropertyValue('--reorder-y')) < 0,
-            'The next node did not move out of the way during the drag'
+            () =>
+                nodeCards
+                    .slice(1)
+                    .every((card) => parseFloat(card.style.getPropertyValue('--reorder-y')) < 0),
+            'The two intervening nodes did not move out of the way during the drag'
         )
         window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', cancelable: true }))
         releaseNode()
@@ -991,17 +1068,30 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
         )
         if (select('main.nodes-page .node-item') !== nodeCards[0])
             throw new Error('Cancelling changed the saved node order')
-        dragBetween(firstNodeHandle, nodeCards[0], nodeCards[1])()
+        const list = nodeCards[0].parentElement
+        const nodeOrder = () => [...list.querySelectorAll('.node-item')]
+        dragBetween(firstNodeHandle, nodeCards[2], {
+            x: list.getBoundingClientRect().left - 8
+        })()
+        await new Promise(requestAnimationFrame)
+        if (nodeOrder()[0] !== nodeCards[0])
+            throw new Error('Dropping outside the node list lane changed the order')
+
+        dragBetween(firstNodeHandle, nodeCards[2], {
+            y: list.getBoundingClientRect().bottom + 16
+        })()
         await until(
             () =>
-                select('main.nodes-page .node-item') === nodeCards[1] &&
+                nodeOrder()[0] === nodeCards[1] &&
+                nodeOrder()[1] === nodeCards[2] &&
+                nodeOrder()[2] === nodeCards[0] &&
                 firstNodeHandle.hasAttribute('data-reorder-handle'),
-            'The node order did not persist'
+            'Dropping past the last node did not persist the three-card order'
         )
-        dragBetween(firstNodeHandle, nodeCards[0], nodeCards[1])()
+        dragBetween(firstNodeHandle, nodeCards[1])()
         await until(
             () =>
-                select('main.nodes-page .node-item') === nodeCards[0] &&
+                nodeOrder().every((card, index) => card === nodeCards[index]) &&
                 firstNodeHandle.hasAttribute('data-reorder-handle'),
             'The original node order did not return'
         )
@@ -1024,6 +1114,38 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
         )
         if (!location.pathname.endsWith('/management/nodes'))
             throw new Error('Node spotlight changed the current route')
+        const systemCard = await until(
+            () => foundNode.querySelector('.node-system-card'),
+            'The node system card did not render telemetry'
+        )
+        const meter = systemCard.querySelector('[role=progressbar]')
+        if (getComputedStyle(meter).height !== '5px')
+            throw new Error('The system memory indicator is taller than the reference')
+        if (
+            meter.getAttribute('aria-valuenow') !== '92' ||
+            meter.firstElementChild.style.background !== 'var(--mantine-color-red-6)'
+        ) {
+            throw new Error('High memory usage did not show the correct warning')
+        }
+        if (
+            !systemCard.textContent.includes('12.00 Mb/s') ||
+            !systemCard.textContent.includes('3.00 TB') ||
+            !systemCard.textContent.includes('ens3, docker0, wg0 +1')
+        ) {
+            throw new Error('System metrics or the network summary are incorrect')
+        }
+        systemCard.style.width = '300px'
+        const hardware = systemCard.querySelector('.hardware-stats')
+        const cpuRow = hardware.firstElementChild
+        if (
+            cpuRow.getBoundingClientRect().width !== hardware.getBoundingClientRect().width ||
+            systemCard.scrollWidth > systemCard.clientWidth
+        ) {
+            throw new Error(
+                'The system card overflowed or truncated the CPU column at narrow widths'
+            )
+        }
+        systemCard.style.removeProperty('width')
         findButton('Close', foundNode).click()
         await until(() => !foundNode.isConnected, 'Node spotlight details did not close')
 
@@ -1914,6 +2036,7 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
             'The users table did not replace the initial loading state'
         )
         const refreshUsers = findButton('Update', select('.users-panel .table-title'))
+        await until(() => !refreshUsers.disabled, 'The users table did not settle before refresh')
         refreshUsers.click()
         await until(
             () => refreshUsers.disabled && refreshUsers.getAttribute('aria-busy') === 'true',
@@ -2377,12 +2500,13 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
                 firstHost.style.getPropertyValue('--host-offset') === '0px',
             'Cancelling the drag did not restore the original order'
         )
+        const afterHosts = firstHost.parentElement.getBoundingClientRect().bottom + 16
         grip.dispatchEvent(pointer('pointerdown', fromY))
-        grip.dispatchEvent(pointer('pointermove', toY))
-        grip.dispatchEvent(pointer('pointerup', toY))
+        grip.dispatchEvent(pointer('pointermove', afterHosts))
+        grip.dispatchEvent(pointer('pointerup', afterHosts))
         await until(
             () => select('.host-card') === secondHost && secondHost.querySelector('.grip:enabled'),
-            'Dropping onto the second host card did not persist the order'
+            'Dropping past the last host card did not persist the order'
         )
 
         const hostView = findButton('Toggle view mode', select('main.hosts-page'))
@@ -2688,6 +2812,18 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
                 ),
             'The subpage editor did not mount its iOS platform'
         )
+        const connectionKeys = [...document.querySelectorAll('label.option')]
+            .find((label) => label.textContent.includes('Show connection keys'))
+            ?.querySelector('input[type=checkbox]')
+        if (!connectionKeys) throw new Error('The connection keys checkbox did not render')
+        if (!connectionKeys.checked) connectionKeys.click()
+        await until(() => connectionKeys.checked, 'The connection keys checkbox did not toggle')
+        if (
+            getComputedStyle(connectionKeys, '::before').content !== 'none' ||
+            getComputedStyle(connectionKeys, '::after').content === 'none' ||
+            getComputedStyle(connectionKeys).backgroundColor === 'rgba(0, 0, 0, 0)'
+        )
+            throw new Error('The selected option must render a filled checkbox with one mark')
         const platformHeader = ios.querySelector('summary')
         platformHeader.click()
         const iconPicker = await until(
@@ -3011,6 +3147,33 @@ export function startSvelteFixture(output) {
     const snippetName = 'Demo snippet'
     const fragments = [{ name: snippetName, snippet: [{ log: { loglevel: 'debug' } }] }]
     const profileList = () => result({ total: profiles.length, configProfiles: profiles })
+    const nodeSystem = {
+        info: {
+            arch: 'amd64',
+            cpus: 16,
+            cpuModel: 'AMD Ryzen 9 7950X 16-Core Processor',
+            memoryTotal: 2 ** 31,
+            hostname: 'fixture-node',
+            platform: 'Debian GNU/Linux 12 (bookworm)',
+            release: '6.1.0-45-amd64',
+            type: 'Linux',
+            version: '12',
+            networkInterfaces: ['lo', 'ens3', 'docker0', 'wg0', 'veth0']
+        },
+        stats: {
+            memoryUsed: Math.round(2 ** 31 * 0.92),
+            memoryFree: Math.round(2 ** 31 * 0.08),
+            uptime: 10_120_000,
+            loadAvg: [0.21, 0.21, 0.09],
+            interface: {
+                interface: 'ens3',
+                rxBytesPerSec: 1_500_000,
+                txBytesPerSec: 1_000_000,
+                rxTotal: 3_000_000_000_000,
+                txTotal: 2_000_000_000_000
+            }
+        }
+    }
     const geoNode = {
         uuid: '55555555-5555-4555-8555-555555555555',
         id: 1,
@@ -3169,7 +3332,7 @@ export function startSvelteFixture(output) {
     let geoPolls = 0
     let homeStatsRequests = 0
     let savedUserEdits = 0
-    let userListRequests = 0
+    const requestedUsers = new Set()
     const server = Bun.serve({
         hostname: '127.0.0.1',
         port: 0,
@@ -3416,8 +3579,11 @@ export function startSvelteFixture(output) {
                         updatedAt: '2025-05-01T11:00:00Z'
                     })
                 }
+                if (pathname === '/api/hwid/devices/42' && request.method === 'GET') {
+                    return result({ total: 0, devices: [] })
+                }
                 if (pathname === '/api/users/' && request.method === 'GET') {
-                    if (++userListRequests <= 2) await Bun.sleep(250)
+                    await Bun.sleep(250)
                     return result({ total: users.length, users })
                 }
                 if (pathname.replace(/\/$/, '') === '/api/users' && request.method === 'PATCH') {
@@ -3440,7 +3606,13 @@ export function startSvelteFixture(output) {
                 }
                 if (request.method === 'GET') {
                     const user = users.find(({ id }) => pathname === `/api/users/${id}`)
-                    if (user) return result(user)
+                    if (user) {
+                        if (!requestedUsers.has(user.id)) {
+                            requestedUsers.add(user.id)
+                            await Bun.sleep(user.id === 42 ? 1500 : 300)
+                        }
+                        return result(user)
+                    }
                 }
                 if (pathname === '/api/users/bulk/all/update' && request.method === 'POST') {
                     const body = await request.json()
@@ -4068,7 +4240,7 @@ export function startSvelteFixture(output) {
                     return result({ metadata: { location: 'fixture-location' } })
                 }
                 const node = nodes.find(({ uuid }) => pathname === `/api/nodes/${uuid}`)
-                if (node) return result(node)
+                if (node) return result(node === geoNode ? { ...node, system: nodeSystem } : node)
                 const updateNode = nodes.find(({ uuid }) =>
                     pathname.startsWith(`/api/nodes/${uuid}/updates`)
                 )

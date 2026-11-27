@@ -10,6 +10,7 @@
         children,
         description,
         headingSize,
+        gap = 'md',
         actions,
         class: className
     }: {
@@ -19,12 +20,13 @@
         children?: Snippet
         description?: string | undefined
         headingSize?: 'lg' | 'xl'
+        gap?: 'sm' | 'md'
         actions?: Snippet
         class?: string
     } = $props()
 </script>
 
-<section class={['form-card', className]}>
+<section class={['form-card', className]} style:--form-card-gap={`var(--mantine-spacing-${gap})`}>
     <header
         class:has-content={!!children}
         class:large={headingSize === 'lg'}
@@ -66,8 +68,8 @@
     }
 
     header.has-content {
-        padding-block-end: var(--mantine-spacing-md);
-        margin-block-end: var(--mantine-spacing-md);
+        padding-block-end: var(--form-card-gap);
+        margin-block-end: var(--form-card-gap);
         border-block-end: 1px solid rgba(var(--gw-fg-rgb), 0.06);
     }
 
@@ -107,6 +109,6 @@
 
     .card-body {
         display: grid;
-        gap: var(--mantine-spacing-md);
+        gap: var(--form-card-gap);
     }
 </style>

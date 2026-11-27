@@ -10,7 +10,9 @@
         id: passedId,
         label,
         value,
+        placeholder,
         size = 'sm',
+        variant = 'default',
         monospace = true,
         leftIcon,
         leftIconSize = 16,
@@ -22,7 +24,9 @@
         id?: string
         label?: string
         value: string | number
+        placeholder?: string
         size?: 'xs' | 'sm' | 'md' | 'lg'
+        variant?: 'default' | 'unstyled'
         monospace?: boolean
         leftIcon?: IconName
         leftIconSize?: number
@@ -71,6 +75,7 @@
     <div
         class="mantine-Input-wrapper input-wrapper"
         data-size={size}
+        data-variant={variant}
         data-with-left-section={hasLeft ? true : undefined}
         data-with-right-section="true"
     >
@@ -88,6 +93,8 @@
             class="mantine-Input-input copy-input"
             class:monospace
             readonly
+            spellcheck={false}
+            {placeholder}
             aria-label={label ? undefined : (ariaLabel ?? t('common.action.copy'))}
             value={String(value)}
             onclick={copy}
@@ -100,6 +107,7 @@
                     ? t('common.message.copied')
                     : [t('common.action.copy'), ariaLabel ?? label].filter(Boolean).join(' ')}
                 tone={copied ? 'teal' : 'gray'}
+                disabled={String(value) === ''}
                 subtle
                 size={size === 'xs' ? 24 : 28}
                 iconSize={16}
@@ -141,6 +149,28 @@
         --input-fz: var(--mantine-font-size-lg);
     }
 
+    .input-wrapper[data-variant="default"]::after {
+        position: absolute;
+        z-index: 1;
+        inset-block: 1px;
+        inset-inline-end: 1px;
+        width: min(80px, 30%);
+        border-start-end-radius: inherit;
+        border-end-end-radius: inherit;
+        background: linear-gradient(to right, transparent, var(--input-bg) 65%);
+        pointer-events: none;
+        content: "";
+    }
+
+    .input-wrapper {
+        --input-radius: var(--mantine-radius-md);
+        border-radius: var(--input-radius);
+    }
+
+    .input-wrapper[data-variant="default"]:dir(rtl)::after {
+        background: linear-gradient(to left, transparent, var(--input-bg) 65%);
+    }
+
     .section {
         z-index: 2;
         pointer-events: all;
@@ -150,9 +180,13 @@
         cursor: copy;
         padding-inline-end: 34px;
         overflow: hidden;
-        text-overflow: ellipsis;
+        text-overflow: clip;
         white-space: nowrap;
         font-size: var(--input-fz, var(--mantine-font-size-sm));
+    }
+
+    .input-wrapper[data-variant="unstyled"] .copy-input {
+        text-overflow: ellipsis;
     }
 
     .copy-input.monospace {

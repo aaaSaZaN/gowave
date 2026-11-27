@@ -80,7 +80,7 @@
                   : '239, 68, 68'
     )
     let health = $derived.by(() => {
-        if (node.isDisabled) return { icon: 'PiProhibitDuotone', color: 'gray-6' } as const
+        if (node.isDisabled) return { icon: 'PiProhibitDuotone', color: 'dark-2' } as const
         if (rejected) return { icon: 'PiWarningCircle', color: 'orange-5' } as const
         if (online) return { icon: 'PiPulseDuotone', color: 'teal-6' } as const
         if (node.isConnecting) return { icon: 'PiCloudArrowUpDuotone', color: 'yellow-3' } as const
@@ -277,7 +277,7 @@
         </div>
         <div class="vitals">
             <Tooltip
-                block={!mobile}
+                class="memory-trigger"
                 disabled={memory === undefined}
                 text={memory === undefined ? undefined : `${memory}%`}
             >
@@ -558,6 +558,7 @@
         gap: 4px;
         color: var(--mantine-color-dimmed);
         font-size: var(--mantine-font-size-xs);
+        line-height: var(--mantine-line-height-xs);
     }
     .traffic-values,
     .uptime {
@@ -597,12 +598,15 @@
         flex-wrap: wrap;
         gap: 6px clamp(8px, 1.2vw, 16px);
         margin-block-start: 8px;
+        line-height: var(--mantine-line-height-xs);
         white-space: nowrap;
     }
-    .memory {
-        min-width: 82px;
+    .vitals :global(.memory-trigger) {
+        flex: 1 1 120px;
         max-width: 200px;
-        flex: 1 1 82px;
+    }
+    .memory {
+        width: 100%;
         gap: 6px;
     }
     .memory > span {
@@ -666,10 +670,6 @@
     @container (max-width: 660px) {
         .vitals {
             gap: 6px 10px;
-        }
-        .memory {
-            min-width: 72px;
-            flex: 1 1 72px;
         }
         .versions {
             margin-inline-start: 0;
@@ -737,7 +737,7 @@
     .mobile .uptime {
         font-size: var(--mantine-font-size-xs);
     }
-    .mobile .memory {
+    .mobile .vitals :global(.memory-trigger) {
         max-width: 160px;
     }
     .mobile .handle {

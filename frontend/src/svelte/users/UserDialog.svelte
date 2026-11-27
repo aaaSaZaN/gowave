@@ -41,6 +41,15 @@
     const metadata = createQuery(() => userMetadataQuery(id))
     const nodes = createQuery(() => nodesQuery)
     let user = $derived(record.data)
+    let showLoading = $state(false)
+    $effect(() => {
+        if (!record.isPending) return
+        const timer = setTimeout(() => (showLoading = true), 650)
+        return () => {
+            clearTimeout(timer)
+            showLoading = false
+        }
+    })
     let lastNode = $derived(
         user?.userTraffic.lastConnectedNodeUuid
             ? nodes.data?.find((item) => item.uuid === user.userTraffic.lastConnectedNodeUuid)
@@ -531,7 +540,7 @@
             {/if}
         {/snippet}
     </UserForm>
-{:else}
+{:else if record.error || showLoading}
     <Overlay
         title={t('view-user-modal.widget.edit-user-headline')}
         icon="TbUser"

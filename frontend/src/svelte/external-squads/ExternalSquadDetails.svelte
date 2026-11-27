@@ -6,7 +6,6 @@
     import RouteLoading from '../RouteLoading.svelte'
     import { navigate, route } from '../router'
     import ActionIcon from '../ui/ActionIcon.svelte'
-    import EntityStage from '../ui/EntityStage.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import ExternalSquadEditor from './ExternalSquadEditor.svelte'
     import { externalSquadQuery } from './queries'
@@ -38,7 +37,6 @@
     ><title>{t('external-squads.drawer.widget.edit-external-squad')} | Gowave</title></svelte:head
 >
 
-<EntityStage {id} title={t('constants.external-squads')} icon="TbWebhook" />
 <Overlay
     title={t('external-squads.drawer.widget.edit-external-squad')}
     icon="TbWebhook"

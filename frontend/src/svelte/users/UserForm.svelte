@@ -11,12 +11,14 @@
     import { queryClient } from '../query-client'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import Field from '../ui/Field.svelte'
     import FormCard from '../ui/FormCard.svelte'
     import Icon from '../ui/Icon.svelte'
-    import type { IconName } from '../ui/icons'
     import NumberInput from '../ui/NumberInput.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import SelectField from '../ui/SelectField.svelte'
+    import Textarea from '../ui/Textarea.svelte'
+    import TextInput from '../ui/TextInput.svelte'
     import ExpirationPicker from './ExpirationPicker.svelte'
     import { isoDateTime, localDateTime, numberField, textField } from './form-values'
     import {
@@ -85,6 +87,8 @@
         )
     )
     const fieldPrefix = $props.id()
+    const expirationId = `${fieldPrefix}-expiration`
+    const deviceLimitId = `${fieldPrefix}-device-limit`
 
     const squads = createQuery(() => squadsQuery)
     const external = createQuery(() => externalSquadsQuery)
@@ -172,32 +176,6 @@
     }
 </script>
 
-{#snippet inputField(
-    label: string,
-    description: string,
-    icon: IconName,
-    content: Snippet<[string]>,
-    required = false,
-    fieldClass = ''
-)}
-    {@const controlId = `${fieldPrefix}-${encodeURIComponent(label)}`}
-    <label class="form-field {fieldClass}" for={controlId}>
-        <span
-            >{label}
-            {#if required}
-                <span class="required"> *</span>
-            {/if}</span
-        >
-        {#if description}
-            <small>{description}</small>
-        {/if}
-        <span class="input-wrap">
-            <span class="leading"><Icon name={icon} size={16} /></span>
-            {@render content(controlId)}
-        </span>
-    </label>
-{/snippet}
-
 <Overlay
     title={original?.username ?? t('create-user-modal.widget.create-user')}
     icon="TbUser"
@@ -223,22 +201,16 @@
                         tone="blue"
                     >
                         {#snippet children()}
-                            {@render inputField(
-                                t('common.field.username'),
-                                t('create-user-modal.widget.username-cannot-be-changed-later'),
-                                'PiUserDuotone',
-                                username,
-                                true
-                            )}
-                            {#snippet username(controlId: string)}
-                                <input
-                                    class="gw-input"
-                                    id={controlId}
-                                    name="username"
-                                    value={original?.username ?? ''}
-                                    required
-                                >
-                            {/snippet}
+                            <TextInput
+                                label={t('common.field.username')}
+                                description={t(
+                                    'create-user-modal.widget.username-cannot-be-changed-later'
+                                )}
+                                leftIcon="PiUserDuotone"
+                                name="username"
+                                value={original?.username ?? ''}
+                                required
+                            />
                             <input type="hidden" name="status" value="ACTIVE">
                         {/snippet}
                     </FormCard>
@@ -259,17 +231,14 @@
                             value={original?.telegramId ?? undefined}
                             placeholder="Enter user's Telegram ID (optional)"
                         />
-                        {@render inputField('Email', '', 'PiEnvelopeDuotone', email)}
-                        {#snippet email(controlId: string)}
-                            <input
-                                class="gw-input"
-                                id={controlId}
-                                type="email"
-                                name="email"
-                                value={original?.email ?? ''}
-                                placeholder="Enter user's email (optional)"
-                            >
-                        {/snippet}
+                        <TextInput
+                            label="Email"
+                            leftIcon="PiEnvelopeDuotone"
+                            type="email"
+                            name="email"
+                            value={original?.email ?? ''}
+                            placeholder="Enter user's email (optional)"
+                        />
                     {/snippet}
                 </FormCard>
 
@@ -280,8 +249,8 @@
                     tone="orange"
                 >
                     {#snippet children()}
-                        <div class="form-field device-limit">
-                            <label class="hwid-title" for="device-limit"
+                        <div class="device-limit">
+                            <label class="hwid-title" for={deviceLimitId}
                                 >{t('create-user-modal.widget.hwid-device-limit')}</label
                             >
                             <small class="hwid-description">
@@ -307,7 +276,7 @@
                                 {t('create-user-modal.widget.disable-hwid-limit')}
                             </label>
                             <NumberInput
-                                id="device-limit"
+                                id={deviceLimitId}
                                 name="hwidDeviceLimit"
                                 leftIcon="TbDevices2"
                                 min={0}
@@ -336,17 +305,14 @@
                                 touched.add('tag')
                             }}
                         />
-                        <label class="form-field description-field">
-                            <span>{t('common.field.description')}</span>
-                            <small>{t('create-user-modal.widget.user-description')}</small>
-                            <textarea
-                                class="gw-input"
-                                name="description"
-                                oninput={() => touched.add('description')}
-                                rows="2"
-                                value={original?.description ?? ''}
-                            ></textarea>
-                        </label>
+                        <Textarea
+                            label={t('common.field.description')}
+                            description={t('create-user-modal.widget.user-description')}
+                            name="description"
+                            oninput={() => touched.add('description')}
+                            rows={2}
+                            value={original?.description ?? ''}
+                        />
                     {/snippet}
                 </FormCard>
             </div>
@@ -422,46 +388,39 @@
                     tone="indigo"
                 >
                     {#snippet children()}
-                        {@render inputField(
-                            t('create-user-modal.widget.expiry-date'),
-                            t('create-user-modal.widget.expire-at-description'),
-                            'PiCalendarDuotone',
-                            expiration
-                        )}
-                        {#snippet expiration(controlId: string)}
+                        <Field
+                            id={expirationId}
+                            label={t('create-user-modal.widget.expiry-date')}
+                            description={t('create-user-modal.widget.expire-at-description')}
+                            leftIcon="PiCalendarDuotone"
+                        >
                             <input type="hidden" name="expireAt" value={expireAt}>
                             <button
-                                class="mantine-UnstyledButton-root date"
+                                class="mantine-Input-input"
                                 type="button"
-                                id={controlId}
+                                id={expirationId}
+                                aria-describedby={`${expirationId}-description`}
                                 aria-haspopup="dialog"
                                 aria-expanded={expirationOpen}
                                 onclick={() => (expirationOpen = true)}
                             >
                                 {dateText}
                             </button>
-                        {/snippet}
+                        </Field>
                         <fieldset class="squads">
                             <legend>{t('common.field.internal-squads')}</legend>
                             <small
                                 >{t('create-user-modal.widget.internal-squads-description')}</small
                             >
-                            <span class="input-wrap">
-                                <span class="leading"
-                                    ><Icon name="TbCirclesRelation" size={16} /></span
-                                >
-                                <input
-                                    class="gw-input"
-                                    type="search"
-                                    aria-label={t(
-                                        'internal-squads-list.widget.search-internal-squads'
-                                    )}
-                                    placeholder={t(
-                                        'internal-squads-list.widget.search-internal-squads'
-                                    )}
-                                    bind:value={squadSearch}
-                                >
-                            </span>
+                            <TextInput
+                                type="search"
+                                leftIcon="TbCirclesRelation"
+                                aria-label={t('internal-squads-list.widget.search-internal-squads')}
+                                placeholder={t(
+                                    'internal-squads-list.widget.search-internal-squads'
+                                )}
+                                bind:value={squadSearch}
+                            />
                             <div
                                 class="squad-list"
                                 style:height={`${Math.min(200, Math.max(1, visibleSquads.length) * 80)}px`}
@@ -475,7 +434,6 @@
                                         <label class="checkbox">
                                             <input
                                                 type="checkbox"
-                                                class="mantine-Checkbox-input"
                                                 bind:group={chosenSquads}
                                                 value={squad.uuid}
                                             >
@@ -573,13 +531,10 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         align-items: start;
     }
-    .form-column {
-        --select-label-weight: 500;
-    }
     form {
         margin: 0;
     }
-    .form-field,
+    .device-limit,
     .squads {
         min-width: 0;
         display: grid;
@@ -599,13 +554,6 @@
         font-weight: 400;
         line-height: var(--mantine-line-height-xs);
     }
-    .description-field small {
-        line-height: 1.2;
-    }
-    .description-field {
-        margin-block-start: 2px;
-        gap: 1px;
-    }
     .hwid-description {
         line-height: 1;
     }
@@ -617,23 +565,6 @@
         font-family: var(--mantine-font-family-monospace);
         font-size: var(--mantine-font-size-xs);
         line-height: var(--mantine-line-height);
-    }
-    .input-wrap {
-        position: relative;
-        display: grid;
-        min-width: 0;
-        margin-block-start: 2px;
-    }
-    .leading {
-        display: grid;
-        width: 34px;
-        place-items: center;
-        position: absolute;
-        inset-block: 0;
-        inset-inline-start: 0;
-        z-index: 1;
-        color: var(--mantine-color-dimmed);
-        pointer-events: none;
     }
     @media (prefers-reduced-motion: no-preference) {
         .form-column > :global(.form-card) {
@@ -658,39 +589,14 @@
         }
     }
 
-    .input-wrap :is(input:not([type="hidden"]), .date) {
-        min-width: 0;
-        width: 100%;
-        min-height: 36px;
-        height: 36px;
-        border: 1px solid var(--mantine-color-default-border);
-        border-radius: var(--mantine-radius-md);
-        background: var(--mantine-color-dark-6);
-        padding-block: 0;
-        padding-inline-start: 34px;
-    }
-    .form-field input::placeholder,
-    .squads input::placeholder {
-        color: var(--mantine-color-placeholder);
-        opacity: 1;
-    }
-    .date {
-        position: relative;
-        display: flex;
-        align-items: center;
-        font-weight: 400;
-    }
-    .date:focus-visible {
-        border-color: var(--mantine-primary-color-filled);
+    button.mantine-Input-input {
+        cursor: pointer;
     }
     .traffic-limit {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 92px;
         gap: var(--mantine-spacing-xs);
         align-items: end;
-    }
-    .required {
-        color: var(--mantine-color-error);
     }
     .squads {
         padding: 2.4px 0 0;
@@ -706,9 +612,6 @@
     .squads > small {
         line-height: 1.2;
         margin-block-start: 1.2px;
-    }
-    .squads > .input-wrap {
-        margin-block-start: 4px;
     }
     .checkbox {
         display: flex;
@@ -791,13 +694,6 @@
             display: none;
         }
     }
-    textarea {
-        padding: 5.5px 12px;
-        resize: vertical;
-    }
-    .description-field > textarea {
-        margin-block-start: 4px;
-    }
     .user-footer {
         position: sticky;
         bottom: -1px;
@@ -814,62 +710,9 @@
     .error {
         white-space: pre-wrap;
     }
-    @media (width > 64rem) {
-        .tag-field > span:first-child {
-            position: relative;
-            inset-block-start: 1px;
-        }
-        :global(.select-field > span:first-child) {
-            position: relative;
-            inset-block-start: 0.7px;
-        }
-        form:not(.editing) .tag-field > span:first-child {
-            inset-block-start: 3px;
-        }
-        form:not(.editing) .description-field > span:first-child {
-            position: relative;
-            inset-block-start: 2px;
-        }
-        .form-field:not(.tag-field):not(.description-field):not(.device-limit) > span:first-child {
-            position: relative;
-            inset-block-start: 2.5px;
-        }
-    }
     @media (max-width: 64rem) {
         .form-columns {
             grid-template-columns: minmax(0, 1fr);
-        }
-        .squads > .input-wrap {
-            margin-block-start: 0;
-        }
-        .form-field.tag-field:not(.device-limit) > .input-wrap {
-            margin-block-start: 4px;
-        }
-        .form-column > :global(.access) :global(.card-body) {
-            padding-block-start: 2px;
-        }
-        .form-field:not(.tag-field):not(.device-limit) > .input-wrap {
-            margin-block-start: 1px;
-        }
-        form:not(.editing) .form-column > :global(.form-card.identity) :global(.card-body) {
-            padding-block-start: 2px;
-        }
-        form:not(.editing) .form-column > :global(.form-card.identity) {
-            margin-block-start: 1px;
-        }
-        form:not(.editing) .form-column > :global(.traffic .form-field > .input-wrap) {
-            margin-block-start: 1.7px;
-        }
-        form:not(.editing) .form-column > :global(.form-card.identity .form-field > .input-wrap) {
-            margin-block-start: -0.3px;
-        }
-        form.editing .form-column > :global(.identity.identity-card) {
-            margin-block-start: 1px;
-            padding-block-start: calc(var(--mantine-spacing-md) - 1px);
-            padding-block-end: calc(var(--mantine-spacing-md) - 0.7px);
-        }
-        form.editing .form-column > :global(.form-card.traffic .card-body) {
-            padding-block-start: 0.7px;
         }
         .form-column {
             display: contents;

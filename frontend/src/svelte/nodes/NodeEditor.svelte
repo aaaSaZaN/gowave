@@ -31,12 +31,16 @@
     import { queryClient } from '../query-client'
     import ActionIcon from '../ui/ActionIcon.svelte'
     import Button from '../ui/Button.svelte'
+    import CopyableField from '../ui/CopyableField.svelte'
     import { useConfirmation } from '../ui/confirmation'
     import FormCard from '../ui/FormCard.svelte'
     import Icon from '../ui/Icon.svelte'
+    import NumberInput from '../ui/NumberInput.svelte'
     import { notifications } from '../ui/notification-state.svelte'
     import SelectField from '../ui/SelectField.svelte'
     import Switch from '../ui/Switch.svelte'
+    import Textarea from '../ui/Textarea.svelte'
+    import TextInput from '../ui/TextInput.svelte'
     import { COUNTRIES } from './countries'
     import { type NodeField, type NodePatch, readConfigProfile, readNodePatch } from './fields'
     import NodeInstall from './NodeInstall.svelte'
@@ -79,7 +83,6 @@
     const providers = createQuery(() => ({ ...providersQuery, enabled: !profileOnly }))
     const plugins = createQuery(() => ({ ...nodePluginsQuery, enabled: !profileOnly }))
     const secret = createQuery(() => ({ ...nodeSecretQuery, enabled: mode === 'edit' }))
-    const secretKeyId = $props.id()
     let providerUuid = $state(untrack(() => initial?.providerUuid ?? ''))
     let activePluginUuid = $state(untrack(() => initial?.activePluginUuid ?? ''))
     let ports = $state<number | undefined>(untrack(() => initial?.port ?? undefined))
@@ -331,107 +334,56 @@
     }
                         }
                     />
-                    <label>
-                        <span class="field-caption"
-                            >{t('base-node-form.internal-name')}
-                            <span class="required">*</span></span
-                        >
-                        <span class="node-input">
-                            <Icon name="PiUserDuotone" size={16} />
-                            <input
-                                class="gw-input"
-                                name="name"
-                                required
-                                minlength="3"
-                                maxlength="30"
-                                value={initial?.name ?? ''}
-                            >
-                        </span>
-                    </label>
+                    <TextInput
+                        label={t('base-node-form.internal-name')}
+                        leftIcon="PiUserDuotone"
+                        name="name"
+                        required
+                        minlength={3}
+                        maxlength={30}
+                        value={initial?.name ?? ''}
+                    />
                     <div class="connection">
-                        <label>
-                            <span class="field-caption"
-                                >{t('common.field.address')} <span class="required">*</span></span
-                            >
-                            <span class="node-input">
-                                <Icon name="TbWorld" size={16} />
-                                <input
-                                    class="gw-input"
-                                    name="address"
-                                    placeholder={t('base-node-form.e-g-example-com')}
-                                    required
-                                    minlength="2"
-                                    value={initial?.address ?? ''}
-                                >
-                            </span>
-                        </label>
-                        <label>
-                            <span class="field-caption"
-                                >Node Port <span class="required">*</span></span
-                            >
-                            <input
-                                name="port"
-                                class="gw-input node-port"
-                                type="number"
-                                required
-                                min="1"
-                                max="65535"
-                                placeholder="2222"
-                                bind:value={ports}
-                            >
-                        </label>
+                        <TextInput
+                            label={t('common.field.address')}
+                            leftIcon="TbWorld"
+                            name="address"
+                            placeholder={t('base-node-form.e-g-example-com')}
+                            required
+                            minlength={2}
+                            value={initial?.address ?? ''}
+                        />
+                        <NumberInput
+                            label="Node Port"
+                            name="port"
+                            required
+                            min={1}
+                            max={65535}
+                            placeholder="2222"
+                            bind:value={ports}
+                        />
                     </div>
                     {#if mode === 'create'}
                         <NodeInstall port={ports} />
                     {:else if mode === 'edit'}
-                        <div class="secret-key">
-                            <label class="field-caption" for={secretKeyId}
-                                >Secret Key (SECRET_KEY)</label
-                            >
-                            <span class="node-input secret-input">
-                                <Icon name="TbCertificate" size={16} />
-                                <input
-                                    class="gw-input"
-                                    id={secretKeyId}
-                                    readonly
-                                    value={secret.data?.secretKey ?? 'Error loading...'}
-                                    spellcheck="false"
-                                >
-                                <span class="secret-copy">
-                                    <ActionIcon
-                                        icon="PiCopy"
-                                        label={t('common.action.copy')}
-                                        subtle
-                                        size={28}
-                                        iconSize={16}
-                                        disabled={!secret.data}
-                                        onclick={() => {
-                                            const value = secret.data?.secretKey
-                                            if (value) void navigator.clipboard.writeText(value)
-                                        }}
-                                    />
-                                </span>
-                            </span>
-                        </div>
+                        <CopyableField
+                            label="Secret Key (SECRET_KEY)"
+                            leftIcon="TbCertificate"
+                            value={secret.data?.secretKey ?? ''}
+                            placeholder={secret.error ? 'Error loading...' : ''}
+                        />
                     {/if}
                     {@render entry('activePluginUuid', t('node-vitals.card.plugin'), pluginField)}
-                    <label>
-                        {t('node-vitals.card.proxy-url')}
-                        <small class="proxy-description"
-                            >{t('node-vitals.card.proxy-url-description')}</small
-                        >
-                        <span class="node-input">
-                            <Icon name="TbNetwork" size={16} />
-                            <input
-                                class="gw-input"
-                                name="proxyUrl"
-                                placeholder="socks5://user:pass@address:port"
-                                value={initial?.proxyUrl ?? ''}
-                                autocomplete="off"
-                                spellcheck="false"
-                            >
-                        </span>
-                    </label>
+                    <TextInput
+                        label={t('node-vitals.card.proxy-url')}
+                        description={t('node-vitals.card.proxy-url-description')}
+                        leftIcon="TbNetwork"
+                        name="proxyUrl"
+                        placeholder="socks5://user:pass@address:port"
+                        value={initial?.proxyUrl ?? ''}
+                        autocomplete="off"
+                        spellcheck={false}
+                    />
                 </FormCard>
                 <FormCard
                     class="consumption"
@@ -540,25 +492,19 @@
                             <fieldset class="tracking-contents" disabled={!tracking}>
                                 <div class="tracking-body">
                                     <div class="tracking-limit">
-                                        <label>
-                                            {t('base-node-form.limit')}
-                                            <span class="node-input">
-                                                <Icon name="TbChartLine" size={16} />
-                                                <input
-                                                    class="gw-input"
-                                                    type="number"
-                                                    min="0"
-                                                    step="any"
-                                                    bind:value={limitDisplay}
-                                                    oninput={setTrafficLimit}
-                                                >
-                                            </span>
-                                            <input
-                                                type="hidden"
-                                                name="trafficLimitBytes"
-                                                value={limitBytes ?? ''}
-                                            >
-                                        </label>
+                                        <NumberInput
+                                            label={t('base-node-form.limit')}
+                                            leftIcon="TbChartLine"
+                                            min={0}
+                                            step="any"
+                                            bind:value={limitDisplay}
+                                            oninput={setTrafficLimit}
+                                        />
+                                        <input
+                                            type="hidden"
+                                            name="trafficLimitBytes"
+                                            value={limitBytes ?? ''}
+                                        >
                                         <SelectField
                                             label="Unit"
                                             hideLabel
@@ -577,36 +523,24 @@
                                         />
                                     </div>
                                     <div class="tracking-settings">
-                                        <label>
-                                            {t('base-node-form.reset-day')}
-                                            <span class="node-input">
-                                                <Icon name="TbClock" size={16} />
-                                                <input
-                                                    class="gw-input"
-                                                    name="trafficResetDay"
-                                                    type="number"
-                                                    min="1"
-                                                    max="31"
-                                                    placeholder={t('base-node-form.e-g-1-31')}
-                                                    bind:value={resetDay}
-                                                >
-                                            </span>
-                                        </label>
-                                        <label>
-                                            {t('base-node-form.notify-percent')}
-                                            <span class="node-input">
-                                                <Icon name="TbBell" size={16} />
-                                                <input
-                                                    class="gw-input"
-                                                    name="notifyPercent"
-                                                    type="number"
-                                                    min="0"
-                                                    max="100"
-                                                    placeholder={t('base-node-form.e-g-50')}
-                                                    bind:value={notifyPercent}
-                                                >
-                                            </span>
-                                        </label>
+                                        <NumberInput
+                                            label={t('base-node-form.reset-day')}
+                                            leftIcon="TbClock"
+                                            name="trafficResetDay"
+                                            min={1}
+                                            max={31}
+                                            placeholder={t('base-node-form.e-g-1-31')}
+                                            bind:value={resetDay}
+                                        />
+                                        <NumberInput
+                                            label={t('base-node-form.notify-percent')}
+                                            leftIcon="TbBell"
+                                            name="notifyPercent"
+                                            min={0}
+                                            max={100}
+                                            placeholder={t('base-node-form.e-g-50')}
+                                            bind:value={notifyPercent}
+                                        />
                                     </div>
                                     {#if node}
                                         <fieldset class="tracking-start">
@@ -652,16 +586,13 @@
                         </div>
                     </div>
                     {@render input('tags', t('common.field.tags'), initial?.tags.join(', ') ?? '')}
-                    <label class="note">
-                        {t('node-tracking-and-billing.card.note')}
-                        <textarea
-                            class="gw-input"
-                            name="note"
-                            maxlength="255"
-                            rows="1"
-                            value={initial?.note ?? ''}
-                        ></textarea>
-                    </label>
+                    <Textarea
+                        label={t('node-tracking-and-billing.card.note')}
+                        name="note"
+                        maxlength={255}
+                        rows={1}
+                        value={initial?.note ?? ''}
+                    />
                 </FormCard>
             </div>
         {/if}
@@ -748,7 +679,7 @@
 
 {#snippet input(key: NodeField, label: string, value: string, maxlength?: number)}
     {#snippet field()}
-        <label>{label} <input class="gw-input" name={key} {value} {maxlength}></label>
+        <TextInput {label} name={key} {value} {maxlength} />
     {/snippet}
     {@render entry(key, label, field)}
 {/snippet}
@@ -762,19 +693,7 @@
     min = 0
 )}
     {#snippet field()}
-        <label
-            >{label}
-            <input
-                class="gw-input"
-                name={key}
-                type="number"
-                {value}
-                {min}
-                {max}
-                {step}
-                required={!!ids}
-            ></label
-        >
+        <NumberInput {label} name={key} {value} {min} {max} {step} required={!!ids} />
     {/snippet}
     {@render entry(key, label, field)}
 {/snippet}
@@ -805,86 +724,11 @@
         font-size: var(--mantine-font-size-sm);
         font-weight: 500;
     }
-    .field-caption {
-        min-height: calc(1.55rem * var(--mantine-scale));
-    }
-    .node-input input {
-        height: 36px;
-    }
-    .proxy-description {
-        color: var(--mantine-color-dimmed);
-        font-size: var(--mantine-font-size-xs);
-        font-weight: 400;
-    }
-    .required {
-        color: var(--mantine-color-error);
-    }
-    .node-input {
-        position: relative;
-        display: grid;
-        min-width: 0;
-    }
-    .node-input > :global(svg) {
-        position: absolute;
-        inset-inline-start: 10px;
-        inset-block-start: 10px;
-        color: var(--mantine-color-dimmed);
-        pointer-events: none;
-    }
-    .node-input input {
-        padding-inline-start: 36px;
-    }
-    .secret-key {
-        display: grid;
-        gap: 0;
-        min-width: 0;
-    }
-    .secret-input input {
-        overflow: hidden;
-        padding-inline-end: 36px;
-        font-family: var(--mantine-font-family-monospace);
-        text-overflow: clip;
-        white-space: nowrap;
-        cursor: copy;
-    }
-    .secret-input::after {
-        position: absolute;
-        inset-block: 1px;
-        inset-inline-end: 10px;
-        width: 80px;
-        background: linear-gradient(to right, transparent, var(--mantine-color-default) 70%);
-        content: "";
-        pointer-events: none;
-        z-index: 1;
-    }
-    .secret-copy {
-        position: absolute;
-        inset-block: 0;
-        inset-inline-end: 6px;
-        display: grid;
-        place-items: center;
-        z-index: 10;
-    }
-    .secret-copy :global(svg) {
-        position: static;
-        pointer-events: auto;
-    }
     .connection {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         align-items: end;
         gap: var(--mantine-spacing-xs);
-    }
-    .node-port {
-        appearance: textfield;
-    }
-    .node-port::-webkit-inner-spin-button,
-    .node-port::-webkit-outer-spin-button {
-        appearance: none;
-    }
-    .connection input {
-        height: 36px;
-        min-width: 0;
     }
     .check,
     .tracking-header,
@@ -945,19 +789,6 @@
         grid-template-columns: minmax(0, 1fr) 92px;
         gap: var(--mantine-spacing-xs);
     }
-    .tracking-limit input,
-    .tracking-settings input {
-        height: 36px;
-        min-width: 0;
-        font-size: var(--mantine-font-size-sm);
-    }
-    .tracking input[type="number"] {
-        appearance: textfield;
-    }
-    .tracking input[type="number"]::-webkit-inner-spin-button,
-    .tracking input[type="number"]::-webkit-outer-spin-button {
-        appearance: none;
-    }
     .tracking-start {
         display: grid;
         min-width: 0;
@@ -999,10 +830,6 @@
         margin-block-start: 4px;
         color: var(--mantine-color-dimmed);
         font-size: 10px;
-    }
-    .note textarea {
-        min-height: 36px;
-        resize: vertical;
     }
     .empty-ips {
         padding: var(--mantine-spacing-xs) 0;

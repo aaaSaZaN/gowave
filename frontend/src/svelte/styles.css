@@ -40,49 +40,6 @@ a {
     accent-color: var(--mantine-primary-color-filled);
 }
 
-:where(input[type="checkbox"]:not([role="switch"])) {
-    appearance: none;
-    display: inline-grid;
-    place-items: center;
-    flex: none;
-    width: var(--gw-checkbox-size, 20px);
-    height: var(--gw-checkbox-size, 20px);
-    margin: 0;
-    padding: 0;
-    border: 1px solid var(--mantine-color-default-border);
-    border-radius: var(--mantine-radius-sm);
-    background-color: var(--mantine-color-default);
-    color: var(--mantine-color-bright);
-    cursor: pointer;
-    vertical-align: middle;
-}
-
-:where(input[type="checkbox"]:not([role="switch"])):is(:checked, :indeterminate) {
-    border-color: light-dark(var(--mantine-color-cyan-7), var(--mantine-color-cyan-4));
-    background-color: transparent;
-}
-
-:where(input[type="checkbox"]:not([role="switch"])):is(:checked, :indeterminate)::after {
-    width: 65%;
-    aspect-ratio: 1;
-    background: currentColor;
-    mask:
-        center / contain no-repeat
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m2 8 4 4 8-8' fill='none' stroke='black' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    content: "";
-}
-
-:where(input[type="checkbox"]:not([role="switch"])):indeterminate::after {
-    height: 2.5px;
-    border-radius: 999px;
-    mask: none;
-}
-
-:where(input[type="checkbox"]:not([role="switch"])):disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
 :where(.mantine-UnstyledButton-root) {
     appearance: none;
     border: 0;

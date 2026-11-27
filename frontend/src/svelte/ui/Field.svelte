@@ -12,6 +12,7 @@
         required,
         leftIcon,
         rightSection,
+        multiline = false,
         children,
         class: className
     }: {
@@ -22,108 +23,70 @@
         required?: boolean | undefined
         leftIcon?: IconName | undefined
         rightSection?: Snippet | undefined
+        multiline?: boolean
         children: Snippet
         class?: ClassValue | undefined
     } = $props()
 </script>
 
-<div class={['field', className]}>
+<div class={['mantine-InputWrapper-root field', className]}>
     {#if label}
-        <label for={id}>
+        <label for={id} class="mantine-InputWrapper-label">
             {label}
             {#if required}
-                <span class="required" aria-hidden="true"> *</span>
+                <span class="mantine-InputWrapper-required" aria-hidden="true"> *</span>
             {/if}
         </label>
     {/if}
     {#if description}
-        <div class="description" id={`${id}-description`}>{description}</div>
+        <div class="mantine-InputWrapper-description" id={`${id}-description`}>{description}</div>
     {/if}
-    <div class="control" class:with-left={!!leftIcon} class:with-right={!!rightSection}>
+    <div
+        class="mantine-Input-wrapper control"
+        data-variant="default"
+        data-with-left-section={!!leftIcon || undefined}
+        data-with-right-section={!!rightSection || undefined}
+        data-multiline={multiline || undefined}
+        data-error={!!error || undefined}
+    >
         {#if leftIcon}
-            <span class="left" aria-hidden="true"><Icon name={leftIcon} size={16} /></span>
+            <span class="mantine-Input-section" data-position="left" aria-hidden="true"
+                ><Icon name={leftIcon} size={16} /></span
+            >
         {/if}
         {@render children()}
         {#if rightSection}
-            <div class="right">{@render rightSection()}</div>
+            <div class="mantine-Input-section" data-position="right">{@render rightSection()}</div>
         {/if}
     </div>
     {#if error}
-        <div class="error" id={`${id}-error`}>{error}</div>
+        <div class="mantine-InputWrapper-error" id={`${id}-error`}>{error}</div>
     {/if}
 </div>
 
 <style>
     .field {
         min-width: 0;
-        font-size: var(--mantine-font-size-sm);
-    }
-
-    label {
-        font-weight: 600;
-    }
-
-    .description,
-    .error {
-        font-size: var(--mantine-font-size-xs);
-    }
-
-    .description {
-        color: var(--mantine-color-dimmed);
-    }
-
-    .required,
-    .error {
-        color: var(--mantine-color-error);
     }
 
     .control {
-        position: relative;
-        min-width: 0;
+        --input-fz: var(--mantine-font-size-sm);
+        --input-radius: var(--mantine-radius-md);
+        --input-right-section-width: var(--field-right-width, 36px);
+        --input-right-section-pointer-events: auto;
+        --input-left-section-pointer-events: none;
     }
 
-    .control :global(.field-input) {
-        width: 100%;
+    .mantine-InputWrapper-description + .control {
+        margin-block-start: 5px;
     }
 
-    .control :global(.field-input:focus) {
-        border-color: var(--mantine-primary-color-filled);
+    .control :global(.mantine-Input-input[aria-invalid="true"]) {
+        --input-bd: var(--mantine-color-error);
     }
 
-    .control :global(.field-input[aria-invalid="true"]) {
-        border-color: var(--mantine-color-error);
-    }
-
-    .control :global(.field-input:disabled) {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-
-    .with-left :global(.field-input) {
-        padding-inline-start: 36px;
-    }
-
-    .with-right :global(.field-input) {
-        padding-inline-end: var(--field-right-width, 36px);
-    }
-
-    .left,
-    .right {
-        position: absolute;
-        inset-block: 0;
-        display: grid;
-        place-items: center;
-        color: var(--mantine-color-dimmed);
-    }
-
-    .left {
-        inset-inline-start: 0;
-        width: 36px;
-        pointer-events: none;
-    }
-
-    .right {
-        inset-inline-end: 0;
-        width: var(--field-right-width, 36px);
+    .control[data-multiline] {
+        --input-padding-y: var(--input-padding-y-sm);
+        --input-resize: vertical;
     }
 </style>
