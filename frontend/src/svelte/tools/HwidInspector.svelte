@@ -105,195 +105,185 @@
             color="orange"
         />
     </div>
-    <div class="panels">
-        <section class="platform-panel" aria-labelledby="hwid-platforms">
-            <h2 id="hwid-platforms">
-                <span class="icon-box"><Icon name="TbChartArcs3" size={20} /></span>
-                {t('hwid-inspector-metrics.widget.platform-distribution')}
-            </h2>
-            {#if stats.data}
-                {#if platforms.length}
-                    <div class="platform-grid">
-                        {#each platforms as platform (platform)}
-                            {@const share = (platform.count / totalDevices) * 100}
-                            <button
-                                type="button"
-                                class="platform"
-                                aria-haspopup="dialog"
-                                style:--platform-color={platform.color}
-                                onclick={() => (activePlatform = platform)}
-                            >
-                                <span class="platform-heading">
-                                    <span class="platform-dot" aria-hidden="true"></span>
-                                    <span class="platform-name" title={platform.name}
-                                        >{platform.name}</span
-                                    >
-                                    <span class="platform-totals">
-                                        <strong>{count(platform.count)}</strong>
-                                        <small>{formatPercentage(share, { precision: 1 })}</small>
-                                    </span>
-                                </span>
-                                <span class="platform-track" aria-hidden="true">
-                                    <span style:width={`${share}%`}></span>
-                                </span>
-                                {#if platform.preview.length}
-                                    <span class="platform-apps">
-                                        {#each platform.preview as app (app)}
-                                            <span class="platform-app">
-                                                <span class="platform-name" title={app.name}
-                                                    >{app.name}</span
-                                                >
-                                                <strong>{count(app.count)}</strong>
-                                            </span>
-                                        {/each}
-                                    </span>
-                                {/if}
-                            </button>
-                        {/each}
-                    </div>
-                {:else}
-                    <ChartPlaceholder
-                        icon="PiChartPieDuotone"
-                        iconSize={48}
-                        height={280}
-                        label={t('hwid-inspector-metrics.widget.no-platform-data')}
-                    />
-                {/if}
-            {/if}
-        </section>
-        <section class="leaderboard" aria-label="Top users by devices">
-            {#if leaders.isPending}
-                <RouteLoading compact />
-            {/if}
-            {#if leaders.error}
-                <p role="alert">{leaders.error.message}</p>
-            {/if}
-            {#if leaders.data}
-                <div class="leaders-scroll">
-                    <DataTable class="hwid-inspector-table" aria-label="Top users by devices">
-                        <thead>
-                            <tr>
-                                <th aria-label={t('common.action.open')}>
-                                    <Icon name="TbUser" size={18} />
-                                </th>
-                                <th>{t('common.field.username')}</th>
-                                <th>ID</th>
-                                <th
-                                    aria-label={t(
-                                        'hwid-inspector-metrics.widget.total-hwid-devices'
-                                    )}
+    <section class="platform-panel" aria-labelledby="hwid-platforms">
+        <h2 id="hwid-platforms">
+            <span class="icon-box"><Icon name="TbChartArcs3" size={20} /></span>
+            {t('hwid-inspector-metrics.widget.platform-distribution')}
+        </h2>
+        {#if stats.data}
+            {#if platforms.length}
+                <div class="platform-grid">
+                    {#each platforms as platform (platform)}
+                        {@const share = (platform.count / totalDevices) * 100}
+                        <button
+                            type="button"
+                            class="platform"
+                            aria-haspopup="dialog"
+                            style:--platform-color={platform.color}
+                            onclick={() => (activePlatform = platform)}
+                        >
+                            <span class="platform-heading">
+                                <span class="platform-dot" aria-hidden="true"></span>
+                                <span class="platform-name" title={platform.name}
+                                    >{platform.name}</span
                                 >
-                                    <Icon name="TbSum" size={18} />
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {#each leaders.data.users as user (user.id)}
-                                <tr>
-                                    <td>
-                                        <ActionIcon
-                                            icon="PiUserCircle"
-                                            tone="cyan"
-                                            size={36}
-                                            label={t('node-active-session.item.widget.view-user')}
-                                            onclick={() => (selectedUser = user.id)}
-                                        />
-                                    </td>
-                                    <td>{user.username}</td>
-                                    <td>{user.id}</td>
-                                    <td>
-                                        <strong class="device-count"
-                                            >{count(user.devicesCount)}</strong
-                                        >
-                                    </td>
-                                </tr>
-                            {/each}
-                        </tbody>
-                    </DataTable>
-                    {#if !leaders.data.users.length}
-                        <div class="no-records">
-                            <span><Icon name="TbDatabaseOff" size={24} /></span>
-                            No records
-                        </div>
-                    {/if}
+                                <span class="platform-totals">
+                                    <strong>{count(platform.count)}</strong>
+                                    <small>{formatPercentage(share, { precision: 1 })}</small>
+                                </span>
+                            </span>
+                            <span class="platform-track" aria-hidden="true">
+                                <span style:width={`${share}%`}></span>
+                            </span>
+                            {#if platform.preview.length}
+                                <span class="platform-apps">
+                                    {#each platform.preview as app (app)}
+                                        <span class="platform-app">
+                                            <span class="platform-name" title={app.name}
+                                                >{app.name}</span
+                                            >
+                                            <strong>{count(app.count)}</strong>
+                                        </span>
+                                    {/each}
+                                </span>
+                            {/if}
+                        </button>
+                    {/each}
                 </div>
-                {#if leaders.data.total > 0}
-                    <div class="button-row pages">
-                        <span class="page-range">
-                            {topPage * topSize + 1}
-                            - {Math.min((topPage + 1) * topSize, leaders.data.total)}
-                            / {leaders.data.total}
-                        </span>
-                        <ActionIcon
-                            icon="TbRefresh"
-                            label={t('common.action.refresh')}
-                            tone="cyan"
-                            size={28}
-                            iconSize={20}
-                            pending={leaders.isFetching}
-                            onclick={() => void leaders.refetch()}
-                        />
-                        <div class="top-page-size">
-                            <SelectField
-                                label="Users per page"
-                                placeholder=""
-                                value={String(topSize)}
-                                options={[5, 10, 25, 50, 100].map((size) => ({
-                                    value: String(size),
-                                    label: String(size)
-                                }))}
-                                hideLabel
-                                searchable={false}
-                                clearable={false}
-                                onchoose={(value) => {
-                                    topSize = Number(value)
-                                    topPage = 0
-                                }}
-                            />
-                        </div>
-                        <div class="page-buttons">
-                            <ActionIcon
-                                icon="PiCaretLeft"
-                                label="Previous"
-                                size={26}
-                                iconSize={16}
-                                subtle
-                                disabled={topPage === 0}
-                                onclick={() => (topPage -= 1)}
-                            />
-                            {#each topPageItems as pageIndex (`${pageIndex}`)}
-                                {#if typeof pageIndex === 'number'}
-                                    <button
-                                        type="button"
-                                        class="page-number"
-                                        class:current={topPage === pageIndex}
-                                        aria-label={`Page ${pageIndex + 1}`}
-                                        aria-current={topPage === pageIndex ? 'page' : undefined}
-                                        onclick={() => (topPage = pageIndex)}
-                                    >
-                                        {pageIndex + 1}
-                                    </button>
-                                {:else}
-                                    <span class="page-ellipsis" aria-hidden="true"
-                                        >{pageIndex}</span
-                                    >
-                                {/if}
-                            {/each}
-                            <ActionIcon
-                                icon="PiCaretRight"
-                                label={t('common.action.next')}
-                                size={26}
-                                iconSize={16}
-                                subtle
-                                disabled={topPage >= lastPage}
-                                onclick={() => (topPage += 1)}
-                            />
-                        </div>
+            {:else}
+                <ChartPlaceholder
+                    icon="PiChartPieDuotone"
+                    iconSize={48}
+                    height={280}
+                    label={t('hwid-inspector-metrics.widget.no-platform-data')}
+                />
+            {/if}
+        {/if}
+    </section>
+    <section class="leaderboard" aria-label="Top users by devices">
+        {#if leaders.isPending}
+            <RouteLoading compact />
+        {/if}
+        {#if leaders.error}
+            <p role="alert">{leaders.error.message}</p>
+        {/if}
+        {#if leaders.data}
+            <div class="leaders-scroll">
+                <DataTable class="hwid-inspector-table" aria-label="Top users by devices">
+                    <thead>
+                        <tr>
+                            <th aria-label={t('common.action.open')}>
+                                <Icon name="TbUser" size={18} />
+                            </th>
+                            <th>{t('common.field.username')}</th>
+                            <th>ID</th>
+                            <th aria-label={t('hwid-inspector-metrics.widget.total-hwid-devices')}>
+                                <Icon name="TbSum" size={18} />
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#each leaders.data.users as user (user.id)}
+                            <tr>
+                                <td>
+                                    <ActionIcon
+                                        icon="PiUserCircle"
+                                        tone="cyan"
+                                        size={36}
+                                        label={t('node-active-session.item.widget.view-user')}
+                                        onclick={() => (selectedUser = user.id)}
+                                    />
+                                </td>
+                                <td>{user.username}</td>
+                                <td>{user.id}</td>
+                                <td>
+                                    <strong class="device-count">{count(user.devicesCount)}</strong>
+                                </td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </DataTable>
+                {#if !leaders.data.users.length}
+                    <div class="no-records">
+                        <span><Icon name="TbDatabaseOff" size={24} /></span>
+                        No records
                     </div>
                 {/if}
+            </div>
+            {#if leaders.data.total > 0}
+                <div class="button-row pages">
+                    <span class="page-range">
+                        {topPage * topSize + 1}
+                        - {Math.min((topPage + 1) * topSize, leaders.data.total)}
+                        / {leaders.data.total}
+                    </span>
+                    <ActionIcon
+                        icon="TbRefresh"
+                        label={t('common.action.refresh')}
+                        tone="cyan"
+                        size={28}
+                        iconSize={20}
+                        pending={leaders.isFetching}
+                        onclick={() => void leaders.refetch()}
+                    />
+                    <div class="top-page-size">
+                        <SelectField
+                            label="Users per page"
+                            placeholder=""
+                            value={String(topSize)}
+                            options={[5, 10, 25, 50, 100].map((size) => ({
+                                value: String(size),
+                                label: String(size)
+                            }))}
+                            hideLabel
+                            searchable={false}
+                            clearable={false}
+                            onchoose={(value) => {
+                                topSize = Number(value)
+                                topPage = 0
+                            }}
+                        />
+                    </div>
+                    <div class="page-buttons">
+                        <ActionIcon
+                            icon="PiCaretLeft"
+                            label="Previous"
+                            size={26}
+                            iconSize={16}
+                            subtle
+                            disabled={topPage === 0}
+                            onclick={() => (topPage -= 1)}
+                        />
+                        {#each topPageItems as pageIndex (`${pageIndex}`)}
+                            {#if typeof pageIndex === 'number'}
+                                <button
+                                    type="button"
+                                    class="page-number"
+                                    class:current={topPage === pageIndex}
+                                    aria-label={`Page ${pageIndex + 1}`}
+                                    aria-current={topPage === pageIndex ? 'page' : undefined}
+                                    onclick={() => (topPage = pageIndex)}
+                                >
+                                    {pageIndex + 1}
+                                </button>
+                            {:else}
+                                <span class="page-ellipsis" aria-hidden="true">{pageIndex}</span>
+                            {/if}
+                        {/each}
+                        <ActionIcon
+                            icon="PiCaretRight"
+                            label={t('common.action.next')}
+                            size={26}
+                            iconSize={16}
+                            subtle
+                            disabled={topPage >= lastPage}
+                            onclick={() => (topPage += 1)}
+                        />
+                    </div>
+                </div>
             {/if}
-        </section>
-    </div>
+        {/if}
+    </section>
     <InspectorTable
         icon="TbDeviceAnalytics"
         title={t('hwid-inspector-table.widget.hwid-devices-list')}
@@ -333,8 +323,7 @@
 
 <style>
     main,
-    .metrics,
-    .panels {
+    .metrics {
         display: grid;
         min-width: 0;
         gap: var(--mantine-spacing-md);
@@ -345,9 +334,6 @@
         }
     }
     @media (min-width: 80em) {
-        .panels {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
         .metrics {
             grid-template-columns: repeat(3, minmax(0, 1fr));
         }

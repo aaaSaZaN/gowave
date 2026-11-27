@@ -1637,6 +1637,14 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
             () => select('section[aria-label="Top users by devices"]:has(.page-range)'),
             'The device leaderboard did not load'
         )
+        const platformBounds = platform.closest('section').getBoundingClientRect()
+        const leadersBounds = leaders.getBoundingClientRect()
+        if (
+            leadersBounds.top < platformBounds.bottom ||
+            leadersBounds.width < platformBounds.width - 1
+        ) {
+            throw new Error('The device leaderboard did not span its own row below the platforms')
+        }
         if (leaders.querySelectorAll('tbody tr').length !== 5) {
             throw new Error('The device leaderboard did not show five users on the first page')
         }
