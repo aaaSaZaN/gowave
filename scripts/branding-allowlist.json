@@ -151,6 +151,11 @@
       "count": 12,
       "sha256": "009dee1f4412eefba7a431e05acd7e0e76b237de65e777aa4749ae53ea475524"
     },
+    "backend/internal/server/host_preview_test.go": {
+      "reason": "Existing Xray template extension key used by the host preview regression test.",
+      "count": 1,
+      "sha256": "3ccd48682950f450ae6b08f44ee1f1926eea51fedc6a91023b2155d48f0cb7e0"
+    },
     "backend/internal/server/server.go": {
       "reason": "Legacy protocol or stored data identifier required for compatibility.",
       "count": 2,
@@ -190,6 +195,11 @@
       "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",
       "count": 3,
       "sha256": "81e59ffab1949ff739eddf1edf79ba0628cbaeb0e7ed445b14161fe2d2c15123"
+    },
+    "backend/internal/subtpl/render.go": {
+      "reason": "Existing Xray template extension key used to detect host injection.",
+      "count": 1,
+      "sha256": "898097024596ea12bd856cba193454ff7ca8b79a6a2fe2b7bf4dcff40002d835"
     },
     "backend/internal/subtpl/testdata/matrix.json": {
       "reason": "Reference parity fixtures or subscription template extension/cache identifiers consumed by existing clients.",

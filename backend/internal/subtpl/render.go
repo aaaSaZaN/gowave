@@ -17,6 +17,7 @@ type RenderRequest struct {
 	OverrideTemplateName       string
 	IgnoreHostXrayJSONTemplate bool
 	Resolve                    ResolveOptions
+	XrayPreviewCandidates      []*Host
 }
 
 // ContentTypes ports SUBSCRIPTION_CONFIG_TYPES.
@@ -72,7 +73,25 @@ func Render(request RenderRequest, templates Templates) (body, contentType strin
 		if t == nil {
 			return "", ContentTypes["XRAY_JSON"]
 		}
-		return GenerateXrayJSON(XrayJSONParams{Hosts: hosts, IsExtendedClient: request.IsExtendedClient, Template: t, IgnoreHostXrayJSONTemplate: request.IgnoreHostXrayJSONTemplate}), ContentTypes["XRAY_JSON"]
+		params := XrayJSONParams{
+			Hosts: hosts, IsExtendedClient: request.IsExtendedClient, Template: t,
+			IgnoreHostXrayJSONTemplate: request.IgnoreHostXrayJSONTemplate,
+		}
+		if len(request.XrayPreviewCandidates) > 0 && len(request.Resolve.Hosts) == 1 && len(hosts) == 1 &&
+			hosts[0].Meta.UUID == request.Resolve.Hosts[0].UUID {
+			options := request.Resolve
+			target := options.Hosts[0]
+			base := xrayTemplate(params, target.XrayJSONTemplate)
+			if ojson.Truthy(get(base, "remnawave", "injectHosts")) {
+				options.Hosts = append([]*Host{target}, request.XrayPreviewCandidates...)
+				for _, candidate := range ResolveProxyConfig(options) {
+					if candidate.Meta.UUID != target.UUID {
+						params.InjectionHosts = append(params.InjectionHosts, candidate)
+					}
+				}
+			}
+		}
+		return GenerateXrayJSON(params), ContentTypes["XRAY_JSON"]
 	}
 	return "", ""
 }

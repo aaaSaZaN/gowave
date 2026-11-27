@@ -10,6 +10,7 @@ import (
 // XrayJSONParams mirrors IGenerateConfigParams.
 type XrayJSONParams struct {
 	Hosts                      []*Resolved
+	InjectionHosts             []*Resolved
 	IsExtendedClient           bool
 	Template                   *ojson.Object
 	IgnoreHostXrayJSONTemplate bool
@@ -18,18 +19,17 @@ type XrayJSONParams struct {
 // GenerateXrayJSON ports XrayJsonGeneratorService.generateConfig.
 func GenerateXrayJSON(params XrayJSONParams) string {
 	configs := []any{}
+	injectionHosts := params.InjectionHosts
+	if injectionHosts == nil {
+		injectionHosts = params.Hosts
+	}
 	for _, host := range params.Hosts {
 		if host.Meta.IsHidden || contains(host.Meta.ExcludeFromSubscriptionTypes, "XRAY_JSON") {
 			continue
 		}
-		base := params.Template
-		if !params.IgnoreHostXrayJSONTemplate {
-			if template, ok := host.XrayJSONTemplate.(*ojson.Object); ok && template != nil {
-				base = template
-			}
-		}
+		base := xrayTemplate(params, host.XrayJSONTemplate)
 		if ojson.Truthy(base.Value("remnawave")) {
-			if injected := applyTemplateInjector(base, host, params.Hosts, params.IsExtendedClient); injected != nil {
+			if injected := applyTemplateInjector(base, host, injectionHosts, params.IsExtendedClient); injected != nil {
 				configs = append(configs, injected)
 			}
 			continue
@@ -42,6 +42,13 @@ func GenerateXrayJSON(params XrayJSONParams) string {
 		configs = append(configs, config)
 	}
 	return ojson.Stringify(configs)
+}
+
+func xrayTemplate(params XrayJSONParams, hostTemplate any) *ojson.Object {
+	if template, ok := hostTemplate.(*ojson.Object); !params.IgnoreHostXrayJSONTemplate && ok && template != nil {
+		return template
+	}
+	return params.Template
 }
 
 func xrayMeta(host *Resolved, isExtendedClient bool) any {

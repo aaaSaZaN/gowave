@@ -310,12 +310,16 @@ func (ctx *srrContext) includeHiddenHosts() bool {
 }
 
 func (h *Handler) renderConfig(ctx *srrContext, tplUser *subtpl.User, hosts []*subtpl.Host, overrides *subtpl.HostOverrides, fallback *subtpl.FallbackOptions) (string, string) {
+	return subtpl.Render(h.renderRequest(ctx, tplUser, hosts, overrides, fallback), h.templates)
+}
+
+func (h *Handler) renderRequest(ctx *srrContext, tplUser *subtpl.User, hosts []*subtpl.Host, overrides *subtpl.HostOverrides, fallback *subtpl.FallbackOptions) subtpl.RenderRequest {
 	matchedRuleName := ""
 	if ctx.RuleName != nil {
 		matchedRuleName = *ctx.RuleName
 	}
 
-	return subtpl.Render(subtpl.RenderRequest{
+	return subtpl.RenderRequest{
 		ResponseType: ctx.ResponseType, IsExtendedClient: ctx.IsExtendedClient,
 		OverrideTemplateName: ctx.OverrideTemplateName, IgnoreHostXrayJSONTemplate: ctx.IgnoreHostXrayJSONTemplate,
 		Resolve: subtpl.ResolveOptions{
@@ -323,7 +327,7 @@ func (h *Handler) renderConfig(ctx *srrContext, tplUser *subtpl.User, hosts []*s
 			MatchedRuleName:    matchedRuleName,
 			ExcludeHostsByTags: ctx.ExcludeHostsByTags, SubPublicDomain: h.subPublicDomain,
 		},
-	}, h.templates)
+	}
 }
 
 func (h *Handler) serveRuleRemarks(w http.ResponseWriter, r *http.Request, ctx *srrContext, user *subtpl.User) bool {

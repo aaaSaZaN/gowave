@@ -107,3 +107,87 @@ func TestHostPreviewUsesSubscriptionRules(t *testing.T) {
 		}
 	}
 }
+
+func TestHostPreviewInjectsXrayOutbounds(t *testing.T) {
+	e := newProbeEnv(t)
+	profile := e.mustCreate("/api/config-profiles", map[string]any{
+		"name": "Injector preview", "config": json.RawMessage(probeXrayConfig),
+	}, "uuid")
+	var inbound database.ConfigProfileInbound
+	if err := e.db.Where("profile_uuid = ?", profile).First(&inbound).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	status, body := e.do(http.MethodPatch, "/api/subscription-settings", json.RawMessage(`{
+		"responseRules": {
+			"version": "1",
+			"rules": [{"name":"Xray preview","enabled":true,"responseType":"XRAY_JSON","conditions":[]}]
+		}
+	}`))
+	if status != http.StatusOK {
+		t.Fatalf("settings update returned %d: %s", status, body)
+	}
+
+	if err := e.db.Model(&database.SubscriptionTemplate{}).Where("template_type = ?", "XRAY_JSON").
+		Update("template_json", `{
+			"remnawave":{"injectHosts":[
+				{"selectFrom":"HIDDEN","selector":{"type":"remarkRegex","pattern":"^inject "}}
+			]},
+			"outbounds":[{"tag":"direct","protocol":"freedom"}]
+		}`).Error; err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range []struct {
+		remark, address  string
+		hidden, disabled bool
+	}{
+		{"inject hidden", "hidden.example.com", true, false},
+		{"inject visible", "visible.example.com", false, false},
+		{"inject disabled", "disabled.example.com", true, true},
+		{"other hidden", "other.example.com", true, false},
+	} {
+		e.mustCreate("/api/hosts", map[string]any{
+			"remark": candidate.remark, "address": candidate.address, "port": 443,
+			"isHidden": candidate.hidden, "isDisabled": candidate.disabled,
+			"inbound": map[string]string{"configProfileUuid": profile, "configProfileInboundUuid": inbound.UUID},
+		}, "uuid")
+	}
+
+	target := map[string]any{
+		"remark": "Autoselect", "address": "virtual.example.com", "port": 443,
+		"inbound": map[string]string{"configProfileUuid": profile, "configProfileInboundUuid": inbound.UUID},
+	}
+	id := e.mustCreate("/api/hosts", target, "uuid")
+	for name, input := range map[string]map[string]any{
+		"saved": {"hostUuid": id, "userAgent": "Happ/2.0"},
+		"draft": {"host": target, "userAgent": "Happ/2.0"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			var envelope struct {
+				Response struct {
+					Type   string `json:"clientType"`
+					Status int    `json:"status"`
+					Body   string `json:"previewContent"`
+				} `json:"response"`
+			}
+			status, body := e.do(http.MethodPost, "/api/hosts/preview", input)
+			if err := json.Unmarshal(body, &envelope); err != nil || status != http.StatusOK {
+				t.Fatalf("preview returned %d: %s (%v)", status, body, err)
+			}
+			result := envelope.Response
+			var configs []struct {
+				Remarks   string            `json:"remarks"`
+				Outbounds []json.RawMessage `json:"outbounds"`
+			}
+			if err := json.Unmarshal([]byte(result.Body), &configs); err != nil ||
+				result.Type != "XRAY_JSON" || result.Status != http.StatusOK ||
+				len(configs) != 1 || configs[0].Remarks != "Autoselect" || len(configs[0].Outbounds) != 2 {
+				t.Fatalf("unexpected Xray preview: %#v (%v)", result, err)
+			}
+			if !strings.Contains(string(configs[0].Outbounds[0]), "hidden.example.com") ||
+				!strings.Contains(string(configs[0].Outbounds[1]), `"tag":"direct"`) {
+				t.Fatalf("unexpected outbounds: %s", result.Body)
+			}
+		})
+	}
+}

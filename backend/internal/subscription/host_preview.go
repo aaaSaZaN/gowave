@@ -203,7 +203,25 @@ func (h *Handler) serveHostPreview(w http.ResponseWriter, r *http.Request, ctx *
 		return
 	}
 
-	body, contentType := h.renderConfig(ctx, user, hosts, nil, nil)
+	request := h.renderRequest(ctx, user, hosts, nil, nil)
+	if ctx.ResponseType == "XRAY_JSON" && len(hosts) == 1 && !host.IsHidden {
+		var candidates []database.Host
+		err := h.db.WithContext(r.Context()).Preload("ConfigProfileInbound").
+			Where("is_disabled = ? AND config_profile_inbound_uuid IS NOT NULL", false).
+			Order("view_position ASC, uuid ASC").Find(&candidates).Error
+		if err != nil {
+			httpx.Error(w, r, http.StatusInternalServerError, httpx.CodeInternal, "Could not load Xray injection hosts for preview")
+			return
+		}
+		for i := range candidates {
+			candidate := &candidates[i]
+			if inbound := candidate.ConfigProfileInbound; candidate.UUID != host.UUID && inbound != nil {
+				request.XrayPreviewCandidates = append(request.XrayPreviewCandidates,
+					templateHost(candidate, parseJSONColumn(inbound.RawInbound), inbound.Tag, nil))
+			}
+		}
+	}
+	body, contentType := subtpl.Render(request, h.templates)
 	h.finalize(w, r, ctx, subscriptionResult{
 		Headers: h.profileHeaders(user, settings, settings.Hwid.Enabled && !ctx.DisableHwidCheck),
 		Body:    body, ContentType: contentType,
