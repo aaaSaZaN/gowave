@@ -627,6 +627,10 @@ func syncInbounds(tx *gorm.DB, profileUUID string, configBytes []byte, creating 
 		if _, stillExists := seenTags[oldInbound.Tag]; stillExists {
 			continue
 		}
+		if err := tx.Model(&database.Host{}).Where("config_profile_inbound_uuid = ?", oldInbound.UUID).
+			Update("config_profile_inbound_uuid", nil).Error; err != nil {
+			return err
+		}
 		if err := tx.Where("uuid = ?", oldInbound.UUID).Delete(&database.ConfigProfileInbound{}).Error; err != nil {
 			return err
 		}

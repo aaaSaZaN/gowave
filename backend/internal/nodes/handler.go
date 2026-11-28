@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -131,7 +132,7 @@ func formatNodeWithInbounds(service *Service, n *database.Node, inbounds []datab
 
 	var lastStatusChange *string
 	if n.LastStatusChange != nil {
-		s := n.LastStatusChange.UTC().Format(time.RFC3339)
+		s := n.LastStatusChange.UTC().Format(time.RFC3339Nano)
 		lastStatusChange = &s
 	}
 
@@ -624,16 +625,25 @@ func (h *Handler) RestartNode(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) RestartAllNodes(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	nodes, _ := h.service.GetAll()
-	for _, n := range nodes {
-		go h.service.StartNode(&n, true)
+	// Older clients omitted the body and always forced a restart.
+	body := struct {
+		ForceRestart bool `json:"forceRestart"`
+	}{ForceRestart: true}
+	if err := httpx.Decode(r, 1024, &body); err != nil && !errors.Is(err, io.EOF) {
+		httpx.Error(w, r, http.StatusBadRequest, "E000", "Invalid request body")
+		return
 	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": map[string]interface{}{
-			"success": true,
-		},
-	})
+	nodes, err := h.service.GetAll()
+	if err != nil {
+		httpx.Error(w, r, http.StatusInternalServerError, httpx.CodeInternal, "Failed to get nodes")
+		return
+	}
+	for _, n := range nodes {
+		if !n.IsDisabled {
+			go h.service.StartNode(&n, body.ForceRestart)
+		}
+	}
+	httpx.Response(w, map[string]bool{"success": true})
 }
 
 func (h *Handler) ReorderNodes(w http.ResponseWriter, r *http.Request) {

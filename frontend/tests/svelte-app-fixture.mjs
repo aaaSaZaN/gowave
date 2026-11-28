@@ -805,20 +805,26 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
             () => location.pathname.includes('/management/config-profiles/'),
             'Clicking a profile card outside its title did not open it'
         )
-        const configSave = await until(() => {
-            const actions = select('.editor-actions')
-            if (!actions?.querySelector('button')) return undefined
-            const save = findButton('Save', actions)
-            return save && !save.disabled ? save : findButton('Save anyway', actions)
-        }, 'Config editor had no save action')
-        configSave.click()
-        if (configSave.textContent.trim() === 'Save anyway') {
-            const saveAnyway = await until(
-                () => select('dialog[open]'),
-                'Saving an unvalidated config did not ask for confirmation'
-            )
-            findButton('Save', saveAnyway).click()
+        const saveProfile = async () => {
+            const configSave = await until(() => {
+                const editorError = select('.editor-paper .code-editor [role=alert]')
+                if (editorError) throw new Error(editorError.textContent)
+                const actions = select('.editor-actions')
+                if (!actions?.querySelector('button')) return undefined
+                const save = findButton('Save', actions)
+                return save && !save.disabled ? save : findButton('Save anyway', actions)
+            }, 'Config editor had no save action')
+            configSave.click()
+            if (configSave.textContent.trim() === 'Save anyway') {
+                const saveAnyway = await until(
+                    () => select('dialog[open]'),
+                    'Saving an unvalidated config did not ask for confirmation'
+                )
+                findButton('Save', saveAnyway).click()
+                await until(() => !saveAnyway.isConnected, 'Save confirmation did not close')
+            }
         }
+        await saveProfile()
         const configError = await until(
             () => select('.mantine-Notification-root[role=alert]'),
             'Config save failure did not show a notification'
@@ -828,11 +834,82 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
                 'Update Config Profile' ||
             !configError
                 .querySelector('.mantine-Notification-description')
-                ?.textContent.includes('FOREIGN KEY constraint failed (787)')
+                ?.textContent.includes('duplicate inbound tag')
         )
             throw new Error('The profile save notification lost its operation or backend message')
         findButton('Close', configError).click()
         await until(() => !configError.isConnected, 'The profile save notification did not close')
+
+        const statusButton = (label) => {
+            const summary = select('.application-status .status-summary')
+            return summary && findButton(label, summary)
+        }
+        const statusDetails = () => select('.application-status .status-details:not([hidden])')
+        const previousFailures = await until(
+            () => statusButton('Failed 25'),
+            'The editor did not count all nodes with the same persisted rejection'
+        )
+        if (statusDetails() || select('.application-status').offsetHeight > 64)
+            throw new Error('A large number of failures expanded the status bar')
+        previousFailures.click()
+        const failures = await until(statusDetails, 'Failed nodes did not expand')
+        if (
+            failures.querySelectorAll('li').length !== 25 ||
+            failures.querySelectorAll('code').length !== 1 ||
+            !failures.textContent.includes('Previous config rejected')
+        )
+            throw new Error('Expanding the failure count did not group nodes by their error')
+        previousFailures.click()
+        await until(() => !statusDetails(), 'Failed nodes did not collapse')
+        const configLine = await until(
+            () => select('.editor-paper .monaco-editor .view-line'),
+            'The config editor did not render its document'
+        )
+        const originalConfigLine = configLine.textContent
+        const { x: configX, y: configY, height: configHeight } = configLine.getBoundingClientRect()
+        document.body.dataset.editorInput = JSON.stringify({
+            text: ' ',
+            x: configX + 4,
+            y: configY + configHeight / 2
+        })
+        await until(
+            () =>
+                select('.editor-paper .monaco-editor .view-line')?.textContent !==
+                originalConfigLine,
+            'The config editor did not accept the edit before saving'
+        )
+        await saveProfile()
+        await until(
+            () => statusButton('Checking 2'),
+            'The editor treated the saved profile as already applied on its online nodes'
+        )
+        if (statusButton('Failed 25') || statusDetails())
+            throw new Error('The editor showed an old rejection as the result of the new save')
+        await until(
+            () => statusButton('Checking 1') && statusButton('Failed 1'),
+            'One node rejecting the config hid another node still applying it'
+        )
+        const applied = await until(
+            () => statusButton('Applied 1'),
+            'The editor did not confirm successful application on the node'
+        )
+        applied.click()
+        await until(
+            () => statusDetails()?.querySelector('li')?.textContent === 'GeoCheck node',
+            'The successful nodes did not expand'
+        )
+        statusButton('Failed 1').click()
+        const failed = await until(
+            () =>
+                statusDetails()?.querySelector('code')?.textContent ===
+                    'Fixture Xray rejected the config' && statusDetails(),
+            'The editor did not show the current Xray error on expansion'
+        )
+        if (
+            failed.querySelectorAll('li').length !== 1 ||
+            failed.querySelector('li').textContent !== 'Panel core node'
+        )
+            throw new Error('The editor lost the rejected node or reported a disabled node')
 
         select('nav a[href$="/management/config-profiles"]').click()
         await until(() => select('.profile-list li'), 'Config profiles did not reopen')
@@ -1034,6 +1111,41 @@ async function verify({ externalUuid, mihomoUuid, squadUuid, hostUuid, templateV
         await until(
             () => select('main.nodes-page ul a[href*="/open/node/"]'),
             'Node cards did not render before the scroll container could measure them'
+        )
+        const openRestartOptions = async () => {
+            const trigger = await until(() => {
+                const button = findButton('Restart all nodes')
+                return button && !button.disabled && button
+            }, 'The restart-all action did not become available')
+            trigger.click()
+            return until(
+                () => select('dialog[open] .restart-options')?.closest('dialog'),
+                'The spiral action did not open the restart options dialog'
+            )
+        }
+        const cancelledRestart = await openRestartOptions()
+        findButton('Close', cancelledRestart).click()
+        await until(() => !cancelledRestart.isConnected, 'Restart options did not close')
+        for (const label of ['Graceful', 'Force']) {
+            const dialog = await openRestartOptions()
+            const option = [...dialog.querySelectorAll('button')].find(
+                (button) => button.querySelector('strong')?.textContent.trim() === label
+            )
+            if (!option?.querySelector('small')?.textContent.trim())
+                throw new Error(`The restart dialog did not explain ${label}`)
+            option.click()
+            await until(() => !dialog.isConnected, `The ${label} restart did not close the dialog`)
+        }
+        const restartModes = await fetch('/fixture/restart-modes').then((response) =>
+            response.json()
+        )
+        if (JSON.stringify(restartModes) !== '[false,true]')
+            throw new Error(
+                'The restart choices did not send distinct modes or closing sent a request'
+            )
+        await until(
+            () => !findButton('Restart all nodes').disabled,
+            'The restart request did not finish refreshing the nodes'
         )
         findButton('Table', select('main')).click()
         await until(
@@ -3235,6 +3347,18 @@ export function startSvelteFixture(output) {
         versions: { node: '1.0.0 (Go)', xray: '26.0.0' }
     }
     const nodes = [geoNode, panelNode, legacyNode]
+    const previouslyRejectedNodes = Array.from({ length: 24 }, (_, index) => ({
+        ...panelNode,
+        uuid: `99999999-9999-4999-8999-${String(index + 1).padStart(12, '0')}`,
+        id: index + 10,
+        name: `Rejected node ${index + 1}`,
+        configProfile: { ...panelNode.configProfile, activeConfigProfileUuid: profiles[0].uuid },
+        lastStatusMessage: 'Previous config rejected'
+    }))
+    let configSaveAttempts = 0
+    let applyPolls = 0
+    let configSavedAt
+    const restartModes = []
     const setupNode = {
         ...geoNode,
         uuid: '55555555-5555-4555-8555-555555555558',
@@ -3346,6 +3470,7 @@ export function startSvelteFixture(output) {
         port: 0,
         async fetch(request) {
             const { pathname, searchParams } = new URL(request.url)
+            if (pathname === '/fixture/restart-modes') return Response.json(restartModes)
             if (pathname === '/api/auth/login' && request.method === 'POST')
                 return Response.json({ message: 'Forbidden' }, { status: 403 })
             if (pathname === '/api/auth/oauth2/callback' && request.method === 'POST') {
@@ -4014,15 +4139,20 @@ export function startSvelteFixture(output) {
                     }
                     if (request.method === 'PATCH') {
                         const { uuid, name, config } = await request.json()
-                        if (config)
+                        if (config && configSaveAttempts++ === 0) {
                             return Response.json(
-                                {
-                                    message:
-                                        'constraint failed: FOREIGN KEY constraint failed (787)'
-                                },
-                                { status: 500 }
+                                { message: 'duplicate inbound tag "fixture-inbound"' },
+                                { status: 400 }
                             )
+                        }
                         const profile = profiles.find((item) => item.uuid === uuid)
+                        if (profile && config) {
+                            configSavedAt = new Date().toISOString()
+                            profile.config = config
+                            profile.updatedAt = configSavedAt
+                            applyPolls = 0
+                            return result(profile)
+                        }
                         if (!profile || !name) return new Response(null, { status: 400 })
                         profile.name = name
                         return result(profile)
@@ -4222,7 +4352,41 @@ export function startSvelteFixture(output) {
                             ? Response.json({ response: setupNode }, { status: 201 })
                             : new Response(null, { status: 400 })
                     }
+                    if (applyPolls < 3) {
+                        if (configSavedAt) applyPolls++
+                        const currentNodes = nodes.map((node) => ({
+                            ...node,
+                            configProfile: {
+                                ...node.configProfile,
+                                activeConfigProfileUuid: profiles[0].uuid
+                            },
+                            isDisabled: node === legacyNode,
+                            isConnecting: node === geoNode && applyPolls === 2,
+                            lastStatusChange:
+                                applyPolls >= 2 && (node === panelNode || applyPolls === 3)
+                                    ? configSavedAt
+                                    : node.createdAt,
+                            lastStatusMessage:
+                                node === panelNode
+                                    ? applyPolls >= 2
+                                        ? 'Fixture Xray rejected the config'
+                                        : 'Previous config rejected'
+                                    : null
+                        }))
+                        return result(
+                            configSavedAt
+                                ? currentNodes
+                                : [...currentNodes, ...previouslyRejectedNodes]
+                        )
+                    }
                     return result(nodes)
+                }
+                if (pathname === '/api/nodes/actions/restart-all' && request.method === 'POST') {
+                    const { forceRestart } = await request.json()
+                    if (typeof forceRestart !== 'boolean')
+                        return new Response(null, { status: 400 })
+                    restartModes.push(forceRestart)
+                    return new Response(null, { status: 204 })
                 }
                 if (pathname === `/api/nodes/${setupNode.uuid}`) {
                     const attempt = setupPolls++

@@ -14,7 +14,7 @@
     } from '@shared/utils/bytes/pretty-bytes/pretty-bytes.util'
     import { createMutation, createQuery } from '@tanstack/svelte-query'
     import { MediaQuery, SvelteMap, SvelteSet } from 'svelte/reactivity'
-    import { executeCommand, submitCommand, submitVoidCommand } from '../commands'
+    import { submitCommand, submitVoidCommand } from '../commands'
     import { profilesQuery } from '../config-profiles/queries'
     import { locale } from '../i18n.svelte'
     import { nodePluginsQuery } from '../plugins/queries'
@@ -26,6 +26,7 @@
     import Button from '../ui/Button.svelte'
     import { useConfirmation } from '../ui/confirmation'
     import DataTable from '../ui/DataTable.svelte'
+    import { dismissContainingDialog } from '../ui/dialog-motion'
     import EmptyState from '../ui/EmptyState.svelte'
     import EntitySpotlight from '../ui/EntitySpotlight.svelte'
     import EntityTagBar from '../ui/EntityTagBar.svelte'
@@ -35,6 +36,7 @@
     import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
     import PageHeader from '../ui/PageHeader.svelte'
+    import ThemeIcon from '../ui/ThemeIcon.svelte'
     import { type EntityViewMode, readNodeView, writeNodeView } from '../view-preferences'
     import { type NodeAction, nodeActionLabels, runNodeAction } from './actions'
     import { flag } from './analytics'
@@ -187,7 +189,7 @@
                 | { kind: 'bulk'; ids: string[]; action: BulkAction }
                 | { kind: 'one'; uuid: string; action: NodeAction }
                 | { kind: 'order'; ids: string[] }
-                | { kind: 'restartAll' }
+                | { kind: 'restartAll'; forceRestart: boolean }
         ) => {
             switch (change.kind) {
                 case 'one':
@@ -205,14 +207,19 @@
                     return
                 }
                 case 'restartAll':
-                    await executeCommand(RestartAllNodesCommand)
+                    return submitVoidCommand(RestartAllNodesCommand, {
+                        forceRestart: change.forceRestart
+                    })
             }
         },
         onSuccess: (_data, change) => {
             if (change.kind === 'order') return
             notifications.show({
                 title: t('common.message.success'),
-                message: t('common.message.operation-completed'),
+                message:
+                    change.kind === 'restartAll'
+                        ? t('nodes-header-action-buttons.feature.restart-requested')
+                        : t('common.message.operation-completed'),
                 color: 'teal'
             })
         },
@@ -407,28 +414,6 @@
             onclick={() => (creating = true)}
         />
     </PageHeader>
-    {#if confirmRestart}
-        <fieldset
-            class="button-row toolbar restart-actions"
-            aria-label={t('nodes-header-action-buttons.feature.restart-all-nodes')}
-        >
-            <Button
-                type="button"
-                disabled={!ordered.length || update.isPending}
-                onclick={async () => {
-                    if (await confirmAction(t('common.message.confirm-action-description'))) {
-                        update.mutate({ kind: 'restartAll' })
-                        confirmRestart = false
-                    }
-                }}
-            >
-                {t('nodes-header-action-buttons.feature.restart-all-nodes')}
-            </Button>
-            <Button type="button" onclick={() => (confirmRestart = false)}>
-                {t('common.action.cancel')}
-            </Button>
-        </fieldset>
-    {/if}
     <EntityTagBar
         items={ordered}
         active={tag}
@@ -645,6 +630,52 @@
     {/if}
 </main>
 
+{#if confirmRestart}
+    <Overlay
+        title={t('nodes-header-action-buttons.feature.restart-all-nodes')}
+        icon="TbRocket"
+        tone="teal"
+        width={440}
+        fullscreenOnMobile={false}
+        close={() => (confirmRestart = false)}
+    >
+        <div class="restart-options">
+            {#each [true, false] as forceRestart (forceRestart)}
+                <button
+                    type="button"
+                    class="restart-option"
+                    disabled={!ordered.length || update.isPending}
+                    onclick={(event) => {
+                        update.mutate({ kind: 'restartAll', forceRestart })
+                        dismissContainingDialog(event)
+                    }}
+                >
+                    <ThemeIcon
+                        icon={forceRestart ? 'TbAlertCircle' : 'TbRocket'}
+                        tone={forceRestart ? 'red' : 'teal'}
+                    />
+                    <span>
+                        <strong>
+                            {t(
+                                forceRestart
+                                    ? 'nodes-header-action-buttons.feature.force'
+                                    : 'nodes-header-action-buttons.feature.graceful'
+                            )}
+                        </strong>
+                        <small>
+                            {t(
+                                forceRestart
+                                    ? 'nodes-header-action-buttons.feature.force-restart-description'
+                                    : 'nodes-header-action-buttons.feature.graceful-restart-description-1'
+                            )}
+                        </small>
+                    </span>
+                </button>
+            {/each}
+        </div>
+    </Overlay>
+{/if}
+
 {#snippet select(node: Node)}
     <input
         type="checkbox"
@@ -720,14 +751,36 @@
         }
     }
 
-    .restart-actions {
-        padding: 0;
-        margin: 0;
-        border: 0;
-    }
     .toolbar {
         align-items: center;
         margin-block-end: 0.75rem;
+    }
+    .restart-options {
+        display: grid;
+        gap: var(--mantine-spacing-sm);
+    }
+    .restart-option {
+        display: flex;
+        align-items: center;
+        gap: var(--mantine-spacing-sm);
+        padding: var(--mantine-spacing-sm);
+        text-align: start;
+        border: 1px solid var(--gw-border);
+        border-radius: var(--mantine-radius-md);
+        background: var(--gw-raised-bg);
+        color: var(--mantine-color-text);
+    }
+    .restart-option:hover:not(:disabled) {
+        background: var(--mantine-color-default-hover);
+    }
+    .restart-option:disabled {
+        opacity: 0.5;
+    }
+    .restart-option :is(strong, small) {
+        display: block;
+    }
+    .restart-option small {
+        color: var(--mantine-color-dimmed);
     }
     .scroll {
         max-height: min(65vh, 44rem);

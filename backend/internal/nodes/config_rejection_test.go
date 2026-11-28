@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"gowave/internal/database"
 	"gowave/internal/testdb"
@@ -91,6 +92,9 @@ func TestStartNodeKeepsServingNodeWhenNewConfigIsRejected(t *testing.T) {
 			if node.IsConnected != tc.wantOnline || node.IsConnecting {
 				t.Fatalf("connected=%v connecting=%v, want connected=%v", node.IsConnected, node.IsConnecting, tc.wantOnline)
 			}
+			if node.LastStatusChange == nil {
+				t.Fatal("failed config application did not record when it finished")
+			}
 			if !equalPtr(node.LastStatusMessage, tc.wantStatus) || !equalPtr(node.XrayConfigError, tc.wantConfig) {
 				t.Fatalf("status=%v configError=%v, want %v and %v", deref(node.LastStatusMessage), deref(node.XrayConfigError), deref(tc.wantStatus), deref(tc.wantConfig))
 			}
@@ -107,7 +111,8 @@ func TestStartNodeKeepsServingNodeWhenNewConfigIsRejected(t *testing.T) {
 
 func TestConfigErrorSurvivesHealthChecksUntilStartSucceeds(t *testing.T) {
 	db := testdb.Open(t)
-	node := database.Node{UUID: "node", Name: "node", Address: "example.com", IsConnected: true, XrayConfigError: strPtr(rejectedXrayReason)}
+	rejectedAt := time.Unix(123, 0).UTC()
+	node := database.Node{UUID: "node", Name: "node", Address: "example.com", IsConnected: true, XrayConfigError: strPtr(rejectedXrayReason), LastStatusChange: &rejectedAt}
 	if err := db.Create(&node).Error; err != nil {
 		t.Fatal(err)
 	}
@@ -119,6 +124,9 @@ func TestConfigErrorSurvivesHealthChecksUntilStartSucceeds(t *testing.T) {
 	if !node.IsConnected || !equalPtr(node.XrayConfigError, strPtr(rejectedXrayReason)) {
 		t.Fatalf("health check changed connected=%v configError=%v", node.IsConnected, deref(node.XrayConfigError))
 	}
+	if node.LastStatusChange == nil || !node.LastStatusChange.Equal(rejectedAt) {
+		t.Fatalf("steady health check changed the node status timestamp: %v", node.LastStatusChange)
+	}
 
 	if ok, err := NewService(db, fakeXrayNode(t, "", true, true)).StartNode(&node, true); !ok || err != nil {
 		t.Fatalf("StartNode = %v, %v", ok, err)
@@ -128,6 +136,9 @@ func TestConfigErrorSurvivesHealthChecksUntilStartSucceeds(t *testing.T) {
 	}
 	if node.XrayConfigError != nil {
 		t.Fatalf("successful start kept configError %q", *node.XrayConfigError)
+	}
+	if node.LastStatusChange == nil || !node.LastStatusChange.After(rejectedAt) {
+		t.Fatalf("successful start did not update the node status timestamp: %v", node.LastStatusChange)
 	}
 }
 

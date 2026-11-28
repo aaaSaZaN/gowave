@@ -9,6 +9,70 @@ import (
 	"gowave/internal/testdb"
 )
 
+func TestUpdateProfileDetachesHostsFromRenamedInbound(t *testing.T) {
+	service := NewService(testdb.Open(t))
+	profile, err := service.CreateProfile("test profile", []byte(`{
+		"inbounds": [
+			{"tag":"old","protocol":"vless","port":443},
+			{"tag":"kept","protocol":"vless","port":444}
+		]
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	inbounds, err := service.GetInboundsByProfileUUID(profile.UUID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	byTag := make(map[string]string)
+	hosts := make(map[string]string)
+	for _, inbound := range inbounds {
+		byTag[inbound.Tag] = inbound.UUID
+		host, err := service.CreateHost(CreateHostDTO{
+			Remark: inbound.Tag, Address: inbound.Tag + ".example.com", Port: 443,
+			ConfigProfileUUID: profile.UUID, ConfigProfileInboundUUID: inbound.UUID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		hosts[inbound.Tag] = host.UUID
+	}
+	if _, err := service.UpdateProfile(profile.UUID, nil, []byte(`{
+		"inbounds": [
+			{"tag":"renamed","protocol":"vless","port":443},
+			{"tag":"kept","protocol":"vless","port":444}
+		]
+	}`)); err != nil {
+		t.Fatalf("rename inbound: %v", err)
+	}
+	inbounds, err = service.GetInboundsByProfileUUID(profile.UUID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated := make(map[string]string)
+	for _, inbound := range inbounds {
+		updated[inbound.Tag] = inbound.UUID
+	}
+	if len(updated) != 2 || updated["kept"] != byTag["kept"] || updated["renamed"] == "" {
+		t.Fatalf("unexpected inbounds after rename: %v", updated)
+	}
+	for _, tag := range []string{"old", "kept"} {
+		host, err := service.GetHostByUUID(hosts[tag])
+		if err != nil {
+			t.Fatal(err)
+		}
+		if host.ConfigProfileUUID == nil || *host.ConfigProfileUUID != profile.UUID || host.Remark != tag {
+			t.Fatalf("rename changed the host or its profile: %+v", host)
+		}
+		if tag == "old" && host.ConfigProfileInboundUUID != nil {
+			t.Fatalf("host kept an inbound after rename: %q", *host.ConfigProfileInboundUUID)
+		}
+		if tag == "kept" && (host.ConfigProfileInboundUUID == nil || *host.ConfigProfileInboundUUID != byTag[tag]) {
+			t.Fatal("rename cleared an unrelated host's inbound")
+		}
+	}
+}
+
 func TestHostResponseRuleRestrictions(t *testing.T) {
 	db := testdb.Open(t)
 	service := NewService(db)

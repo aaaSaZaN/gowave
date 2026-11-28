@@ -22,13 +22,16 @@
     import KeypairGenerator from '../editor/KeypairGenerator.svelte'
     import TemplatePicker from '../editor/TemplatePicker.svelte'
     import UnsavedChanges from '../editor/UnsavedChanges.svelte'
+    import { hostsKey } from '../hosts/queries'
     import { locale } from '../i18n.svelte'
+    import { nodesQuery } from '../nodes/queries'
     import { queryClient } from '../query-client'
     import Button from '../ui/Button.svelte'
     import { dismissContainingDialog } from '../ui/dialog-motion'
     import Icon from '../ui/Icon.svelte'
     import { notifications } from '../ui/notification-state.svelte'
     import Overlay from '../ui/Overlay.svelte'
+    import ConfigApplyStatus, { type ConfigApplyCheck } from './ConfigApplyStatus.svelte'
     import ProfilePreview from './ProfilePreview.svelte'
     import { computedProfileQuery, profileQuery, profilesQuery } from './queries'
 
@@ -51,6 +54,7 @@
     )
     let validation = $state<string | null | undefined>(undefined)
     let validationTime = $state('')
+    let applyCheck = $state.raw<ConfigApplyCheck>()
     let confirmSave = $state(false)
     const configValid = $derived(validator.status === 'ready' && validation === null)
     let importOpen = $state(false)
@@ -59,21 +63,35 @@
     let t = $derived(locale.t)
 
     const save = createMutation(() => ({
-        mutationFn: (config: unknown) =>
-            submitCommand(UpdateConfigProfileCommand, {
+        mutationFn: async (config: unknown) => {
+            const previousStatuses = new Map(
+                queryClient
+                    .getQueryData(nodesQuery.queryKey)
+                    ?.map((node) => [node.uuid, node.lastStatusChange?.getTime()])
+            )
+            const updated = await submitCommand(UpdateConfigProfileCommand, {
                 uuid: profile.uuid,
                 config
-            }),
-        onSuccess: (updated) => {
+            })
+            return { updated, previousStatuses }
+        },
+        onSuccess: ({ updated, previousStatuses }) => {
             saved = JSON.stringify(updated.config ?? {}, null, 2)
             draft = saved
+            applyCheck = {
+                savedAt: updated.updatedAt.getTime(),
+                previousStatuses,
+                beforeRefetch: queryClient.getQueryState(nodesQuery.queryKey)?.dataUpdatedAt ?? 0
+            }
+            void queryClient.invalidateQueries({ queryKey: nodesQuery.queryKey })
             notifications.show({
                 title: t('common.message.success'),
-                message: t('common.message.operation-completed'),
+                message: t('node-error-message.profile-saved'),
                 color: 'teal'
             })
             queryClient.setQueryData(profileQuery(updated.uuid).queryKey, updated)
             void queryClient.invalidateQueries({ queryKey: profilesQuery.queryKey })
+            void queryClient.invalidateQueries({ queryKey: hostsKey })
             void queryClient.invalidateQueries({
                 queryKey: computedProfileQuery(updated.uuid).queryKey
             })
@@ -190,6 +208,9 @@
         />
     {/snippet}
     {#snippet status()}
+        {#key applyCheck}
+            <ConfigApplyStatus profileUuid={profile.uuid} check={applyCheck} />
+        {/key}
         <div class="status" class:invalid={!configValid} class:wasm={validator.status !== 'ready'}>
             {#if validator.status === 'idle' || validator.status === 'loading'}
                 <p class="loading" role="status">

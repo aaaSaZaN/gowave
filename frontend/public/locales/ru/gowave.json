@@ -242,6 +242,7 @@
   "nodes-header-action-buttons": {
     "feature": {
       "restart-all-nodes": "Перезапустить все ноды",
+      "restart-requested": "Запрос на перезапуск отправлен. Дождитесь, пока ноды подключатся снова.",
       "search-nodes": "Поиск нод",
       "force-restart-description": "Гарантирует, что все ноды полностью перезапустят Xray Core.",
       "graceful-restart-description-1": "Отправляет всем нодам запрос на перезапуск Xray, но запрос может остаться без ответа, если хеш ноды совпадает с текущим. Вариант по умолчанию.",
@@ -1832,8 +1833,12 @@
     }
   },
   "node-error-message": {
-    "config-checking": "Проверяем конфиг на нодах: {{nodes}}",
+    "profile-saved": "Профиль конфига сохранён",
+    "config-checking": "Проверяются",
+    "config-applied": "Применено",
+    "config-failed": "Ошибки",
     "config-not-applied": "Новый конфиг не применён",
+    "config-unconfirmed": "Не подтверждено",
     "config-not-applied-description": "Xray отклонил конфиг, нода продолжает работать на предыдущем. Исправьте профиль конфига и сохраните его снова."
   },
   "oauth-callback": {

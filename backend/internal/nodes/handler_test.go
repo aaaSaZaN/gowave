@@ -8,12 +8,81 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"gowave/internal/database"
 	"gowave/internal/testdb"
 
 	"github.com/go-chi/chi/v5"
 )
+
+func TestRestartAllNodesMode(t *testing.T) {
+	for _, tc := range []struct {
+		name, body string
+		force      bool
+		status     int
+	}{
+		{"graceful", `{"forceRestart":false}`, false, http.StatusOK},
+		{"forced", `{"forceRestart":true}`, true, http.StatusOK},
+		{"legacy client", "", true, http.StatusOK},
+		{"invalid mode", `{"forceRestart":"false"}`, false, http.StatusBadRequest},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			db := testdb.Open(t)
+			node := database.Node{UUID: "node", Name: "node", Address: "example.com"}
+			if err := db.Create(&node).Error; err != nil {
+				t.Fatal(err)
+			}
+			mode := make(chan *bool, 1)
+			client := &Client{httpClient: &http.Client{Transport: nodeRoundTrip(func(r *http.Request) (*http.Response, error) {
+				reply := httptest.NewRecorder()
+				if r.URL.Path == "/node/xray/start" {
+					var payload struct{ Internals struct{ ForceRestart *bool } }
+					if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+						t.Error(err)
+					}
+					mode <- payload.Internals.ForceRestart
+					// A failed start avoids background user sync after the test ends.
+					_, _ = reply.WriteString(`{"response":{"isStarted":false}}`)
+				} else {
+					_, _ = reply.WriteString(`{"response":{"isAlive":false}}`)
+				}
+				return reply.Result(), nil
+			})}}
+			handler := NewHandler(NewService(db, client))
+			recorder := httptest.NewRecorder()
+			handler.RestartAllNodes(recorder, httptest.NewRequest(http.MethodPost, "/api/nodes/actions/restart-all", strings.NewReader(tc.body)))
+			if recorder.Code != tc.status {
+				t.Fatalf("restart all: got %d, want %d: %s", recorder.Code, tc.status, recorder.Body)
+			}
+			if tc.status != http.StatusOK {
+				return
+			}
+			select {
+			case got := <-mode:
+				if got == nil || *got != tc.force {
+					t.Errorf("node did not receive forceRestart=%v", tc.force)
+				}
+			case <-time.After(5 * time.Second):
+				t.Fatal("node did not receive a restart request")
+			}
+			deadline := time.Now().Add(5 * time.Second)
+			for {
+				var stored database.Node
+				if err := db.First(&stored, "uuid = ?", node.UUID).Error; err != nil {
+					t.Fatal(err)
+				}
+				if stored.LastStatusChange != nil {
+					break
+				}
+				if time.Now().After(deadline) {
+					t.Fatal("restart did not finish")
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
+		})
+	}
+}
 
 func TestLocalCoreStatusAndUpdateConflict(t *testing.T) {
 	db := testdb.Open(t)

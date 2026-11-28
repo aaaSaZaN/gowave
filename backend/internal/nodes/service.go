@@ -233,8 +233,9 @@ func (s *Service) CheckNodeHealth(node *database.Node) (bool, string) {
 	msg := hr.StatusMsg
 	now := time.Now().UTC()
 	updates := map[string]interface{}{
-		"is_connected":        alive,
-		"last_status_change":  &now,
+		"is_connected": alive,
+		// A steady health check is not a new Xray start result.
+		"last_status_change":  gorm.Expr("CASE WHEN is_connected = ? THEN last_status_change ELSE ? END", alive, now),
 		"last_status_message": nil,
 	}
 	if err != nil {
@@ -497,8 +498,9 @@ func (s *Service) StartNode(node *database.Node, force bool) (bool, error) {
 		if health, healthErr := client.CheckHealth(node); healthErr == nil && health.IsAlive {
 			reason := summarizeXrayError(err.Error())
 			s.db.Model(&database.Node{}).Where("uuid = ?", node.UUID).Updates(map[string]interface{}{
-				"is_connecting":     false,
-				"xray_config_error": reason,
+				"is_connecting":      false,
+				"last_status_change": time.Now().UTC(),
+				"xray_config_error":  reason,
 			})
 			return false, &ConfigRejectedError{Reason: reason, Invalid: strings.Contains(err.Error(), xrayConfigInvalidPrefix)}
 		}

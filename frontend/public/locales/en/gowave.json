@@ -242,6 +242,7 @@
   "nodes-header-action-buttons": {
     "feature": {
       "restart-all-nodes": "Restart all nodes",
+      "restart-requested": "Restart requested. Wait for the nodes to reconnect.",
       "search-nodes": "Search nodes",
       "force-restart-description": "Guarantees that all nodes fully restart Xray Core.",
       "graceful-restart-description-1": "Sends a request to all nodes to restart Xray, but the request may go unfulfilled if the node hash matches the current one. This is the default option.",
@@ -1832,8 +1833,12 @@
     }
   },
   "node-error-message": {
-    "config-checking": "Checking the config on nodes: {{nodes}}",
+    "profile-saved": "Config profile saved",
+    "config-checking": "Checking",
+    "config-applied": "Applied",
+    "config-failed": "Failed",
     "config-not-applied": "New config not applied",
+    "config-unconfirmed": "Unconfirmed",
     "config-not-applied-description": "Xray rejected the config, so the node keeps serving the previous one. Fix the config profile and save it again."
   },
   "oauth-callback": {
